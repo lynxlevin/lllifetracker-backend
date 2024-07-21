@@ -1,6 +1,14 @@
 [package]
 name = "llwinecellar-actix-backend"
 version = "0.1.0"
+authors = ["LynxLevin <lynx.levin88@gmail.com>"]
 edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+path = "src/main.rs"
+name = "llwinecellar-actix-backend"
 
 [dependencies]
