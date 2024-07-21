@@ -24,3 +24,6 @@ sea-orm = { version = "^0.12.0", features = [
     "with-json",
     "with-uuid",
 ] }
+
+[dev-dependencies]
+cargo-watch = "8.5.2"
