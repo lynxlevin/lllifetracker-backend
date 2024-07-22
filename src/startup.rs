@@ -1,3 +1,5 @@
+use sea_orm::*;
+use std::env;
 pub struct Application {
     port: u16,
     server: actix_web::dev::Server,
@@ -5,6 +7,7 @@ pub struct Application {
 
 impl Application {
     pub async fn build(settings: crate::settings::Settings) -> Result<Self, std::io::Error> {
+        let db = get_database_connection().await;
         let address = format!(
             "{}:{}",
             settings.application.host, settings.application.port
@@ -12,7 +15,7 @@ impl Application {
 
         let listener = std::net::TcpListener::bind(&address)?;
         let port = listener.local_addr().unwrap().port();
-        let server = run(listener).await?;
+        let server = run(listener, db).await?;
 
         Ok(Self { port, server })
     }
@@ -26,9 +29,46 @@ impl Application {
     }
 }
 
-async fn run(listener: std::net::TcpListener) -> Result<actix_web::dev::Server, std::io::Error> {
+pub async fn get_database_connection() -> DatabaseConnection {
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let db = Database::connect(&database_url)
+        .await
+        .expect("Failed to open DB connection.");
+    match db.get_database_backend() {
+        DbBackend::MySql => {
+            let url = format!("{}", &database_url);
+            Database::connect(&url)
+                .await
+                .expect("Failed to open DB connection.")
+        }
+        DbBackend::Postgres => {
+            let url = format!("{}", &database_url);
+            Database::connect(&url)
+                .await
+                .expect("Failed to open DB connection.")
+        }
+        DbBackend::Sqlite => db,
+    }
+}
+
+async fn run(
+    listener: std::net::TcpListener,
+    db: DatabaseConnection,
+) -> Result<actix_web::dev::Server, std::io::Error> {
+    let db_pool_data = actix_web::web::Data::new(db);
+
+    let redis_url = env::var("REDIS_URL").expect("REDIS_URL must be set");
+    let cfg = deadpool_redis::Config::from_url(redis_url);
+    let redis_pool = cfg
+        .create_pool(Some(deadpool_redis::Runtime::Tokio1))
+        .expect("Cannot create deadpool redis.");
+    let redis_pool_data = actix_web::web::Data::new(redis_pool);
+
     let server = actix_web::HttpServer::new(move || {
-        actix_web::App::new().service(crate::routes::health_check)
+        actix_web::App::new()
+            .service(crate::routes::health_check)
+            .app_data(db_pool_data.clone())
+            .app_data(redis_pool_data.clone())
     })
     .listen(listener)?
     .run();

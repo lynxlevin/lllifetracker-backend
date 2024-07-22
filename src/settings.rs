@@ -2,6 +2,7 @@
 pub struct Settings {
     pub application: ApplicasionSettings,
     pub debug: bool,
+    pub redis: RedisSettings,
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -10,6 +11,14 @@ pub struct ApplicasionSettings {
     pub host: String,
     pub base_url: String,
     pub protocol: String,
+}
+
+#[derive(serde::Deserialize, Clone, Debug)]
+pub struct RedisSettings {
+    pub pool_max_open: u64,
+    pub pool_max_idle: u64,
+    pub pool_timeout_seconds: u64,
+    pub pool_expire_seconds: u64,
 }
 
 pub enum Environment {
