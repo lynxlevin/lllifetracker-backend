@@ -1980,6 +1980,7 @@ dependencies = [
  "pasetors",
  "sea-orm",
  "serde",
+ "serde_json",
  "tracing",
  "tracing-subscriber",
  "uuid",
