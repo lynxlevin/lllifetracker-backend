@@ -13,10 +13,15 @@ name = "llwinecellar-actix-backend"
 
 [dependencies]
 actix-web = "4.8.0"
+argon2 = "0.5.3"
+chrono = "0.4.38"
 config = { version = "0.14.0", features = ["yaml"] }
 deadpool-redis = "0.15.1"
 dotenvy = "0.15.7"
 futures = "0.3.28"
+hex = "0.4.3"
+once_cell = "1.19.0"
+pasetors = "0.6.8"
 # Features here: https://www.sea-ql.org/SeaORM/docs/install-and-config/database-and-async-runtime/#extra-features
 sea-orm = { version = "^0.12.0", features = [
     "sqlx-postgres",
