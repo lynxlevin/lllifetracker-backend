@@ -1976,6 +1976,7 @@ dependencies = [
  "dotenvy",
  "futures",
  "hex",
+ "minijinja",
  "once_cell",
  "pasetors",
  "sea-orm",
@@ -2089,6 +2090,15 @@ name = "mime"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
+
+[[package]]
+name = "minijinja"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "45f7e8e35b6c7b169bf40b0176d2c79291ab8ee53290b84e0668ab21d841aa9d"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "minimal-lexical"
