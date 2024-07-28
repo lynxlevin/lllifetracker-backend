@@ -1,8 +1,13 @@
 {
   "cSpell.words": [
+    "actix",
     "chrono",
     "deadpool",
+    "dotenv",
+    "dotenvy",
     "hmac",
+    "llwinecellar",
+    "pasetor",
     "pasetors"
   ]
 }

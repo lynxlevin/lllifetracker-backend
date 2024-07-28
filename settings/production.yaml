@@ -4,3 +4,6 @@ application:
   base_url: ""
 
 debug: false
+
+secret:
+  token_expiration: 30
