@@ -1,7 +1,7 @@
 use argon2::password_hash::rand_core::{OsRng, RngCore};
 use deadpool_redis::redis::AsyncCommands;
-use pasetors::{claims::Claims, keys::SymmetricKey, local};
 use pasetors::version4::V4;
+use pasetors::{claims::Claims, keys::SymmetricKey, local};
 
 const SESSION_KEY_PREFIX: &str = "valid_session_key_for_{}";
 
@@ -63,13 +63,23 @@ pub async fn issue_confirmation_token_pasetors(
         .map_err(|e| {
             tracing::event!(target: "backend", tracing::Level::ERROR, "RedisError (expiry): {}", e);
             e
-        })
+        })?;
 
     let mut claims = Claims::new().unwrap();
     claims.expiration(&dt.to_rfc3339()).unwrap();
-    claims.add_additional("user_id", serde_json::json!(user_id)).unwrap();
-    claims.add_additional("session_key", serde_json::json!(session_key)).unwrap();
+    claims
+        .add_additional("user_id", serde_json::json!(user_id))
+        .unwrap();
+    claims
+        .add_additional("session_key", serde_json::json!(session_key))
+        .unwrap();
 
     let sk = SymmetricKey::<V4>::from(settings.secret.secret_key.as_bytes()).unwrap();
-    Ok(local::encrypt(&sk, &claims, None, Some(settings.secret.hmac_secret.as_bytes())).unwrap())
+    Ok(local::encrypt(
+        &sk,
+        &claims,
+        None,
+        Some(settings.secret.hmac_secret.as_bytes()),
+    )
+    .unwrap())
 }

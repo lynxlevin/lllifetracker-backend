@@ -1,12 +1,13 @@
 #[derive(serde::Deserialize, Clone)]
 pub struct Settings {
-    pub application: ApplicasionSettings,
+    pub application: ApplicationSettings,
     pub debug: bool,
     pub redis: RedisSettings,
+    pub secret: Secret,
 }
 
 #[derive(serde::Deserialize, Clone)]
-pub struct ApplicasionSettings {
+pub struct ApplicationSettings {
     pub port: u16,
     pub host: String,
     pub base_url: String,
@@ -19,6 +20,13 @@ pub struct RedisSettings {
     pub pool_max_idle: u64,
     pub pool_timeout_seconds: u64,
     pub pool_expire_seconds: u64,
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct Secret {
+    pub secret_key: String,
+    pub token_expiration: i64,
+    pub hmac_secret: String,
 }
 
 pub enum Environment {
