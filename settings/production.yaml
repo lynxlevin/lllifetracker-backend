@@ -7,3 +7,5 @@ debug: false
 
 secret:
   token_expiration: 30
+
+frontend_url: "https://localhost:3000"
