@@ -6,7 +6,9 @@
     "dotenv",
     "dotenvy",
     "hmac",
+    "lettre",
     "llwinecellar",
+    "minijinja",
     "pasetor",
     "pasetors"
   ]
