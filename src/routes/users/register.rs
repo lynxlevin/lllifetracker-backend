@@ -5,9 +5,8 @@ use actix_web::{
     HttpResponse,
 };
 use sea_orm::*;
-use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(serde::Deserialize, Debug, serde::Serialize)]
 pub struct NewUser {
     email: String,
     password: String,

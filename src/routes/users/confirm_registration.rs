@@ -6,9 +6,8 @@ use actix_web::{
     HttpResponse,
 };
 use sea_orm::*;
-use serde::Deserialize;
 
-#[derive(Deserialize)]
+#[derive(serde::Deserialize)]
 pub struct Parameters {
     token: String,
 }
