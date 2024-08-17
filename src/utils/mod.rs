@@ -1,2 +1,2 @@
-mod auth;
-mod emails;
+pub mod auth;
+pub mod emails;

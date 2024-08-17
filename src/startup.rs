@@ -1,8 +1,15 @@
+use deadpool_redis::Pool;
 use sea_orm::*;
 use std::env;
 pub struct Application {
     port: u16,
     server: actix_web::dev::Server,
+}
+
+#[derive(Debug, Clone)]
+pub struct AppState {
+    pub conn: DatabaseConnection,
+    pub redis_pool: Pool,
 }
 
 impl Application {
@@ -55,20 +62,21 @@ async fn run(
     listener: std::net::TcpListener,
     db: DatabaseConnection,
 ) -> Result<actix_web::dev::Server, std::io::Error> {
-    let db_pool_data = actix_web::web::Data::new(db);
-
     let redis_url = env::var("REDIS_URL").expect("REDIS_URL must be set");
     let cfg = deadpool_redis::Config::from_url(redis_url);
     let redis_pool = cfg
         .create_pool(Some(deadpool_redis::Runtime::Tokio1))
         .expect("Cannot create deadpool redis.");
-    let redis_pool_data = actix_web::web::Data::new(redis_pool);
+    let state = AppState {
+        conn: db,
+        redis_pool,
+    };
 
     let server = actix_web::HttpServer::new(move || {
         actix_web::App::new()
             .service(crate::routes::health_check)
-            .app_data(db_pool_data.clone())
-            .app_data(redis_pool_data.clone())
+            .configure(crate::routes::auth_routes_config)
+            .app_data(actix_web::web::Data::new(state.clone()))
     })
     .listen(listener)?
     .run();
