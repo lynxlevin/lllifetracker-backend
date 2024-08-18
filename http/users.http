@@ -1,0 +1,29 @@
+# Users
+
+###
+# @name register
+POST {{endpoint}}/users/register
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}",
+  "first_name": "Lynx",
+  "last_name": "Levin"
+}
+
+###
+# @name login
+POST {{endpoint}}/users/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+
+###
+# @name logout
+POST {{endpoint}}/users/logout
+Content-Type: application/json

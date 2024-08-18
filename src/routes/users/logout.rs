@@ -1,5 +1,6 @@
 use actix_web::{post, HttpResponse};
 
+// MYMEMO: this somehow doesn't work.
 #[tracing::instrument(name = "Log out user", skip(session))]
 #[post("/logout")]
 pub async fn log_out(session: actix_session::Session) -> HttpResponse {
