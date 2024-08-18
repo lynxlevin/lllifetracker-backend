@@ -82,15 +82,17 @@ async fn run(
                     actix_session::storage::CookieSessionStore::default(),
                     secret_key.clone(),
                 )
-                .cookie_http_only(true)
+                .cookie_name("sessionId".to_string())
                 .cookie_same_site(cookie::SameSite::None)
-                .cookie_secure(true)
+                .cookie_secure(false)
                 .build()
             } else {
-                actix_session::SessionMiddleware::new(
+                actix_session::SessionMiddleware::builder(
                     actix_session::storage::CookieSessionStore::default(),
                     secret_key.clone(),
                 )
+                .cookie_name("sessionId".to_string())
+                .build()
             })
             .service(crate::routes::health_check)
             .configure(crate::routes::auth_routes_config)
