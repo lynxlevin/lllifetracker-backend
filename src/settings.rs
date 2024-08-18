@@ -33,6 +33,7 @@ pub struct Secret {
 
 #[derive(serde::Deserialize, Clone)]
 pub struct EmailSettings {
+    pub no_verify: bool,
     pub host: String,
     pub host_user: String,
     pub host_user_password: String,

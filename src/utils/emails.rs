@@ -22,7 +22,7 @@ pub async fn send_email(
 
     let email = Message::builder()
         .from(
-            format!(
+            match format!(
                 "{} <{}>",
                 "LynxLevin",
                 if sender_email.is_some() {
@@ -31,8 +31,13 @@ pub async fn send_email(
                     settings.email.host_user.clone()
                 }
             )
-            .parse()
-            .unwrap(),
+            .parse() {
+                Ok(mailbox) => mailbox,
+                Err(e) => {
+                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed to get sender mailbox setting: {:#?}", e);
+                    return Err(e.to_string());
+                }
+            },
         )
         .to(format!(
             "{} <{}>",

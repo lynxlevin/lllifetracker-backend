@@ -20,7 +20,7 @@ pub struct LoginUser {
 }
 
 #[tracing::instrument(name = "Logging a user in", skip(data, req_user, session), fields(user_email = &req_user.email))]
-#[post("/login/")]
+#[post("/login")]
 async fn login_user(
     data: Data<AppState>,
     req_user: Json<LoginUser>,

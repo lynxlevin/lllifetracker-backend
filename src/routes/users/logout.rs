@@ -1,7 +1,7 @@
 use actix_web::{post, HttpResponse};
 
 #[tracing::instrument(name = "Log out user", skip(session))]
-#[post("/logout/")]
+#[post("/logout")]
 pub async fn log_out(session: actix_session::Session) -> HttpResponse {
     match session_user_id(&session).await {
         Ok(_) => {
