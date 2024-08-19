@@ -73,6 +73,7 @@ pub async fn confirm(
                 });
         }
     };
+    // MYMEMO: Check  updated_at
     user.is_active = Set(true);
     match user.update(&data.conn).await {
         Ok(_) => {

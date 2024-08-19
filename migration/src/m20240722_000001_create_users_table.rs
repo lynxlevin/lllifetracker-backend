@@ -18,6 +18,7 @@ impl MigrationTrait for Migration {
                     .col(string(User::FirstName))
                     .col(string(User::LastName))
                     .col(boolean(User::IsActive).default(false))
+                    // MYMEMO: this default is fixed at migration time.
                     .col(timestamp_with_time_zone(User::CreatedAt).default(Utc::now()))
                     .col(timestamp_with_time_zone(User::UpdatedAt).default(Utc::now()))
                     .to_owned(),

@@ -37,6 +37,7 @@ pub async fn register_user(
         last_name: new_user.0.last_name,
     };
 
+    // MYMEMO: Check created_at and updated_at
     let user = user::ActiveModel {
         id: Set(uuid::Uuid::new_v4()),
         password: Set(create_new_user.password.clone()),

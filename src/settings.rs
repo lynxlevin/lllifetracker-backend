@@ -37,6 +37,7 @@ pub struct EmailSettings {
     pub host: String,
     pub host_user: String,
     pub host_user_password: String,
+    pub sender: String,
 }
 
 pub enum Environment {

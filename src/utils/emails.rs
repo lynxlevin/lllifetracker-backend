@@ -1,7 +1,10 @@
 use lettre::{
     message::{header::ContentType, MultiPart, SinglePart},
-    transport::smtp::authentication::Credentials,
-    AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
+    transport::smtp::{
+        authentication::{Credentials, Mechanism},
+        PoolConfig,
+    },
+    Message, SmtpTransport, Transport,
 };
 
 // MYMEMO: add limit for each execution {key: email, max_count: 5, ttl: 3}
@@ -11,7 +14,6 @@ use lettre::{
     fields(recipient_email = %recipient_email, recipient_first_name = %recipient_first_name, recipient_last_name = %recipient_last_name)
 )]
 pub async fn send_email(
-    sender_email: Option<String>,
     recipient_email: String,
     recipient_first_name: String,
     recipient_last_name: String,
@@ -22,17 +24,7 @@ pub async fn send_email(
     let settings = crate::settings::get_settings().expect("Failed to read settings.");
 
     let email = Message::builder()
-        .from(
-            match format!(
-                "{} <{}>",
-                "LynxLevin",
-                if sender_email.is_some() {
-                    sender_email.unwrap()
-                } else {
-                    settings.email.host_user.clone()
-                }
-            )
-            .parse() {
+        .from(match settings.email.sender.parse() {
                 Ok(mailbox) => mailbox,
                 Err(e) => {
                     tracing::event!(target: "backend", tracing::Level::ERROR, "Failed to get sender mailbox setting: {:#?}", e);
@@ -64,14 +56,14 @@ pub async fn send_email(
         .unwrap();
 
     let credentials = Credentials::new(settings.email.host_user, settings.email.host_user_password);
+    let sender = SmtpTransport::starttls_relay(&settings.email.host)
+        .unwrap()
+        .credentials(credentials)
+        .authentication(vec![Mechanism::Plain])
+        .pool_config(PoolConfig::new().max_size(20))
+        .build();
 
-    let mailer: AsyncSmtpTransport<Tokio1Executor> =
-        AsyncSmtpTransport::<Tokio1Executor>::relay(&settings.email.host)
-            .unwrap()
-            .credentials(credentials)
-            .build();
-
-    match mailer.send(email).await {
+    match sender.send(&email) {
         Ok(_) => {
             tracing::event!(target: "backend", tracing::Level::INFO, "Email successfully sent!");
             Ok(())
@@ -138,7 +130,7 @@ pub async fn send_multipart_email(
             )
         } else {
             format!(
-                "{}/users/register/confirm/?token={}",
+                "{}/users/register/confirm?token={}",
                 web_address, issued_token,
             )
         }
@@ -166,7 +158,6 @@ pub async fn send_multipart_email(
     );
 
     actix_web::rt::spawn(send_email(
-        None,
         recipient_email,
         recipient_first_name,
         recipient_last_name,
