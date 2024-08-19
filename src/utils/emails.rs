@@ -4,6 +4,7 @@ use lettre::{
     AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
 };
 
+// MYMEMO: add limit for each execution {key: email, max_count: 5, ttl: 3}
 #[tracing::instrument(
     name = "Generic e-mail sending function.",
     skip(recipient_email, recipient_first_name, recipient_last_name, subject, html_content, text_content),

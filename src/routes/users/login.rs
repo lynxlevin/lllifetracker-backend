@@ -19,6 +19,7 @@ pub struct LoginUser {
     password: String,
 }
 
+// MYMEMO: add countermeasures for Brute force attack.
 #[tracing::instrument(name = "Logging a user in", skip(data, req_user, session), fields(user_email = &req_user.email))]
 #[post("/login")]
 async fn login_user(
