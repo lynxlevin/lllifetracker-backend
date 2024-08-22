@@ -1,3 +1,4 @@
+use actix_session::{config::PersistentSession, storage, SessionMiddleware};
 use actix_web::{cookie, dev::Server, web::Data, App, HttpServer};
 use deadpool_redis::Pool;
 use sea_orm::*;
@@ -65,7 +66,7 @@ async fn run(
     settings: crate::settings::Settings,
 ) -> Result<Server, std::io::Error> {
     let redis_url = env::var("REDIS_URL").expect("REDIS_URL must be set");
-    let cfg = deadpool_redis::Config::from_url(redis_url);
+    let cfg = deadpool_redis::Config::from_url(redis_url.clone());
     let redis_pool = cfg
         .create_pool(Some(deadpool_redis::Runtime::Tokio1))
         .expect("Cannot create deadpool redis.");
@@ -75,26 +76,27 @@ async fn run(
     };
 
     let secret_key = cookie::Key::from(settings.secret.hmac_secret.as_bytes());
+    let redis_store = storage::RedisSessionStore::new(redis_url)
+        .await
+        .expect("Cannot unwrap redis session.");
     let server = HttpServer::new(move || {
         App::new()
             .wrap(if settings.debug {
-                actix_session::SessionMiddleware::builder(
-                    actix_session::storage::CookieSessionStore::default(),
-                    secret_key.clone(),
-                )
-                .cookie_name("sessionId".to_string())
-                .cookie_same_site(cookie::SameSite::None)
-                .cookie_secure(false)
-                .build()
+                SessionMiddleware::builder(redis_store.clone(), secret_key.clone())
+                    .session_lifecycle(
+                        PersistentSession::default().session_ttl(cookie::time::Duration::days(7)),
+                    )
+                    .cookie_name("sessionId".to_string())
+                    .cookie_same_site(cookie::SameSite::None)
+                    .cookie_secure(false)
+                    .build()
             } else {
-                actix_session::SessionMiddleware::builder(
-                    // MYMEMO: With Cookie store, logging out cannot invalidate the old cookie and susceptible to replay attacks.
-                    // MYMEMO: better change to Redis store.
-                    actix_session::storage::CookieSessionStore::default(),
-                    secret_key.clone(),
-                )
-                .cookie_name("sessionId".to_string())
-                .build()
+                SessionMiddleware::builder(redis_store.clone(), secret_key.clone())
+                    .session_lifecycle(
+                        PersistentSession::default().session_ttl(cookie::time::Duration::days(7)),
+                    )
+                    .cookie_name("sessionId".to_string())
+                    .build()
             })
             .service(crate::routes::health_check)
             .configure(crate::routes::auth_routes_config)
