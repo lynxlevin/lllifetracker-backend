@@ -12,7 +12,10 @@ path = "src/main.rs"
 name = "llwinecellar-actix-backend"
 
 [dependencies]
-actix-session = { version = "0.10.0", features = ["cookie-session"] }
+actix-session = { version = "0.10.0", features = [
+    "redis-session",
+    "redis-session-native-tls",
+] }
 actix-web = "4.8.0"
 argon2 = "0.5.3"
 chrono = "0.4.38"

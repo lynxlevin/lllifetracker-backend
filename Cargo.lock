@@ -132,6 +132,8 @@ dependencies = [
  "actix-web",
  "anyhow",
  "derive_more",
+ "rand",
+ "redis 0.26.1",
  "serde",
  "serde_json",
  "tracing",
@@ -348,6 +350,12 @@ name = "anyhow"
 version = "1.0.86"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b3d1d046238990b9cf5bcde22a3fb3584ee5cf65fb2765f454ed428c7a0063da"
+
+[[package]]
+name = "arc-swap"
+version = "1.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "69f7f8c3906b62b754cd5326047894316021dcfe5a194c8ea52bdd94934a3457"
 
 [[package]]
 name = "argon2"
@@ -1192,7 +1200,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ff315fab2a7a42132352909afc81140d06b8bbfd1414b098ce278e3f95dd1b9"
 dependencies = [
  "deadpool",
- "redis",
+ "redis 0.25.4",
 ]
 
 [[package]]
@@ -2916,6 +2924,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "pin-project"
+version = "1.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6bf43b791c5b9e34c3d182969b4abb522f9343702850a2e57f460d00d09b4b3"
+dependencies = [
+ "pin-project-internal",
+]
+
+[[package]]
+name = "pin-project-internal"
+version = "1.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f38a4412a78282e09a2cf38d195ea5420d15ba0602cb375210efbc877243965"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.71",
+]
+
+[[package]]
 name = "pin-project-lite"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3150,6 +3178,31 @@ dependencies = [
  "pin-project-lite",
  "ryu",
  "tokio",
+ "tokio-util",
+ "url",
+]
+
+[[package]]
+name = "redis"
+version = "0.26.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e902a69d09078829137b4a5d9d082e0490393537badd7c91a3d69d14639e115f"
+dependencies = [
+ "arc-swap",
+ "async-trait",
+ "bytes",
+ "combine",
+ "futures",
+ "futures-util",
+ "itoa",
+ "native-tls",
+ "num-bigint",
+ "percent-encoding",
+ "pin-project-lite",
+ "ryu",
+ "tokio",
+ "tokio-native-tls",
+ "tokio-retry",
  "tokio-util",
  "url",
 ]
@@ -4188,6 +4241,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbae76ab933c85776efabc971569dd6119c580d8f5d448769dec1764bf796ef2"
 dependencies = [
  "native-tls",
+ "tokio",
+]
+
+[[package]]
+name = "tokio-retry"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f57eb36ecbe0fc510036adff84824dd3c24bb781e21bfa67b69d556aa85214f"
+dependencies = [
+ "pin-project",
+ "rand",
  "tokio",
 ]
 
