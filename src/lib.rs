@@ -1,5 +1,6 @@
 pub mod entities;
 pub mod routes;
+pub mod services;
 pub mod settings;
 pub mod startup;
 pub mod telemetry;

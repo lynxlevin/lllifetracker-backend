@@ -6,6 +6,7 @@
     "dotenv",
     "dotenvy",
     "hmac",
+    "Iden",
     "lettre",
     "llwinecellar",
     "minijinja",

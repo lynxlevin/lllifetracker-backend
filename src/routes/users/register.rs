@@ -1,19 +1,17 @@
-use crate::entities::user;
+use crate::services::user;
 use actix_web::{
     post,
     web::{Data, Json},
     HttpResponse,
 };
-use sea_orm::*;
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
-pub struct NewUser {
+struct RequestBody {
     email: String,
     password: String,
     first_name: String,
     last_name: String,
 }
-
 #[tracing::instrument(name = "Adding a new user",
 skip(data, new_user),
 fields(
@@ -24,31 +22,21 @@ fields(
 #[post("/register")]
 pub async fn register_user(
     data: Data<crate::startup::AppState>,
-    new_user: Json<NewUser>,
+    new_user: Json<RequestBody>,
 ) -> HttpResponse {
     let settings = crate::settings::get_settings().expect("Failed to read settings.");
 
     let hashed_password = crate::utils::auth::password::hash(new_user.0.password.as_bytes()).await;
 
-    let create_new_user = NewUser {
+    let create_new_user = user::NewUser {
         password: hashed_password,
         email: new_user.0.email,
         first_name: new_user.0.first_name,
         last_name: new_user.0.last_name,
+        is_active: settings.email.no_verify,
     };
 
-    // MYMEMO: Check created_at and updated_at
-    let user = user::ActiveModel {
-        id: Set(uuid::Uuid::new_v4()),
-        password: Set(create_new_user.password.clone()),
-        email: Set(create_new_user.email.clone()),
-        first_name: Set(create_new_user.first_name.clone()),
-        last_name: Set(create_new_user.last_name.clone()),
-        is_active: Set(settings.email.no_verify),
-        ..Default::default()
-    };
-
-    let user_id = match user.insert(&data.conn).await {
+    let user_id = match user::Mutation::create_user(&data.conn, create_new_user.clone()).await {
         Ok(user) => user.id,
         Err(e) => {
             tracing::event!(target: "backend", tracing::Level::ERROR, "Failed to create user: {:#?}", e);

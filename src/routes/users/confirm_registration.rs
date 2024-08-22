@@ -1,11 +1,10 @@
-use crate::entities::{user, user::Entity as User};
+use crate::services::user;
 use actix_web::{
     get,
     http::header,
     web::{Data, Query},
     HttpResponse,
 };
-use sea_orm::*;
 
 #[derive(serde::Deserialize)]
 pub struct Parameters {
@@ -56,26 +55,7 @@ pub async fn confirm(
         }
     };
 
-    let mut user: user::ActiveModel = match User::find_by_id(confirmation_token.user_id)
-        .one(&data.conn)
-        .await
-    {
-        Ok(user) => user.unwrap().into(),
-        Err(e) => {
-            tracing::event!(target: "backend", tracing::Level::ERROR, "Cannot activate account: {}", e);
-            return HttpResponse::SeeOther()
-                .insert_header((
-                    header::LOCATION,
-                    format!("{}/auth/error?reason={e}", settings.frontend_url),
-                ))
-                .json(crate::types::ErrorResponse {
-                    error: "We cannot activate your account at the moment".to_string(),
-                });
-        }
-    };
-    // MYMEMO: Check  updated_at
-    user.is_active = Set(true);
-    match user.update(&data.conn).await {
+    match user::Mutation::activate_user_by_id(&data.conn, confirmation_token.user_id).await {
         Ok(_) => {
             tracing::event!(target: "backend", tracing::Level::INFO, "New user was activated successfully.");
             HttpResponse::SeeOther()

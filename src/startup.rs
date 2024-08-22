@@ -88,6 +88,8 @@ async fn run(
                 .build()
             } else {
                 actix_session::SessionMiddleware::builder(
+                    // MYMEMO: With Cookie store, logging out cannot invalidate the old cookie and susceptible to replay attacks.
+                    // MYMEMO: better change to Redis store.
                     actix_session::storage::CookieSessionStore::default(),
                     secret_key.clone(),
                 )

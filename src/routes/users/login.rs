@@ -1,3 +1,10 @@
+use crate::{
+    entities::user,
+    services::user as user_service,
+    startup::AppState,
+    types::{USER_EMAIL_KEY, USER_ID_KEY},
+    utils::auth::password::verify_password,
+};
 use actix_web::{
     post,
     rt::task,
@@ -5,14 +12,6 @@ use actix_web::{
     HttpResponse,
 };
 use deadpool_redis::redis::{AsyncCommands, SetExpiry, SetOptions};
-use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
-
-use crate::{
-    entities::user::{self, Entity as User},
-    startup::AppState,
-    types::{USER_EMAIL_KEY, USER_ID_KEY},
-    utils::auth::password::verify_password,
-};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 pub struct LoginUser {
@@ -57,11 +56,11 @@ async fn login_user(
         });
     };
 
-    let user: user::ActiveModel = match User::find()
-        .filter(user::Column::Email.eq(req_user.email.clone()))
-        .filter(user::Column::IsActive.eq(true))
-        .one(&data.conn)
-        .await
+    let user: user::ActiveModel = match user_service::Query::find_active_by_email(
+        &data.conn,
+        req_user.email.clone(),
+    )
+    .await
     {
         Ok(user) => user.unwrap().into(),
         Err(e) => {
