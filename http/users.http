@@ -26,6 +26,10 @@ Content-Type: application/json
   "password": "{{password}}"
 }
 
+###
+# @name get_me
+GET {{endpoint}}/users/me
+
 
 ###
 # @name logout

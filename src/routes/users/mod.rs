@@ -1,4 +1,5 @@
 mod confirm_registration;
+mod get_user;
 mod login;
 mod logout;
 mod register;
@@ -9,6 +10,7 @@ pub fn auth_routes_config(cfg: &mut actix_web::web::ServiceConfig) {
             .service(register::register_user)
             .service(confirm_registration::confirm)
             .service(login::login_user)
-            .service(logout::log_out),
+            .service(logout::log_out)
+            .service(get_user::get_user),
     );
 }

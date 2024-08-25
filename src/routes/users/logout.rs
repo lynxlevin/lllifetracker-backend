@@ -5,7 +5,7 @@ use actix_web::{post, HttpResponse};
 pub async fn log_out(session: actix_session::Session) -> HttpResponse {
     match session_user_id(&session).await {
         Ok(_) => {
-            tracing::event!(target: "backend", tracing::Level::INFO, "User retrieved from the DB.");
+            tracing::event!(target: "backend", tracing::Level::INFO, "User_id retrieved from the session.");
             session.purge();
             HttpResponse::Ok().json(crate::types::SuccessResponse {
                 message: "You have successfully logged out".to_string(),
