@@ -1,9 +1,10 @@
 use std::{
+    cell::RefCell,
     future::{ready, Ready},
     rc::Rc,
 };
 
-use actix_session::Session;
+use actix_session::SessionExt;
 use actix_web::{
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
     web::Data,
@@ -67,18 +68,24 @@ where
                     .into();
                     println!("user_from_db: {}", user.id.unwrap())
                 }
-                None => println!("No app_data found"),
+                None => println!("No db found"),
             };
-
-            let binding = req.request().extensions();
-            match binding.get::<Session>() {
-                Some(session) => {
-                    let user_id = session_user_id(session).await.unwrap();
-                    println!("Hi, user_id = {}", user_id);
+            let session = req.get_session();
+            // MYMEMO: This session is somehow empty.
+            println!("{:?}", session.entries());
+            let user_id = match session_user_id(&session).await {
+                Ok(user_id) => {
+                    println!("Hi, user_id is {}", user_id);
+                    Some(user_id)
                 }
-                None => println!("Hi, no session found"),
+                Err(e) => {
+                    println!(
+                        "Error getting user_id from session in the middleware! {}",
+                        e
+                    );
+                    None
+                }
             };
-            drop(binding);
 
             let res = svc.call(req).await?;
 
