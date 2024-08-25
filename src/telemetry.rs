@@ -17,7 +17,7 @@ pub fn get_subscriber(debug: bool) -> (impl tracing::Subscriber + Send + Sync, W
         None
     };
 
-    let file_appender = tracing_appender::rolling::hourly("./logs", "");
+    let file_appender = tracing_appender::rolling::daily("./logs", "");
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
     let file_log = tracing_subscriber::fmt::layer().with_writer(non_blocking);
 

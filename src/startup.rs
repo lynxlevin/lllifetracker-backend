@@ -3,6 +3,8 @@ use actix_web::{cookie, dev::Server, web::Data, App, HttpServer};
 use deadpool_redis::Pool;
 use sea_orm::*;
 use std::env;
+
+use crate::utils::auth::auth_middleware::AuthenticateUser;
 pub struct Application {
     port: u16,
     server: Server,
@@ -98,6 +100,7 @@ async fn run(
                     .cookie_name("sessionId".to_string())
                     .build()
             })
+            .wrap(AuthenticateUser)
             .service(crate::routes::health_check)
             .configure(crate::routes::auth_routes_config)
             .app_data(Data::new(state.clone()))
