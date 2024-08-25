@@ -1,14 +1,22 @@
-use std::future::{ready, Ready};
+use std::{
+    future::{ready, Ready},
+    rc::Rc,
+};
 
+use actix_session::Session;
 use actix_web::{
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
-    Error,
+    web::Data,
+    Error, HttpMessage,
 };
 use futures::future::LocalBoxFuture;
+use uuid::uuid;
+
+use crate::{entities::user, services::user as user_service, startup::AppState};
 
 pub struct AuthenticateUser;
 
-impl<S, B> Transform<S, ServiceRequest> for AuthenticateUser
+impl<S: 'static, B> Transform<S, ServiceRequest> for AuthenticateUser
 where
     S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
     S::Future: 'static,
@@ -21,17 +29,19 @@ where
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
-        ready(Ok(AuthenticateUserMiddleware { service }))
+        ready(Ok(AuthenticateUserMiddleware {
+            service: Rc::new(service),
+        }))
     }
 }
 
 pub struct AuthenticateUserMiddleware<S> {
-    service: S,
+    service: Rc<S>,
 }
 
 impl<S, B> Service<ServiceRequest> for AuthenticateUserMiddleware<S>
 where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
     S::Future: 'static,
     B: 'static,
 {
@@ -43,14 +53,48 @@ where
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
         println!("Hi from start. You requested: {}", req.path());
-
-        let fut = self.service.call(req);
-
+        let svc = self.service.clone();
         Box::pin(async move {
-            let res = fut.await?;
+            match req.app_data::<Data<AppState>>() {
+                Some(data) => {
+                    let user: user::ActiveModel = user_service::Query::find_by_id(
+                        &data.conn,
+                        uuid!("22cae525-8dca-4c1f-bfb9-8efe15ef65e3"),
+                    )
+                    .await
+                    .unwrap()
+                    .unwrap()
+                    .into();
+                    println!("user_from_db: {}", user.id.unwrap())
+                }
+                None => println!("No app_data found"),
+            };
+
+            let binding = req.request().extensions();
+            match binding.get::<Session>() {
+                Some(session) => {
+                    let user_id = session_user_id(session).await.unwrap();
+                    println!("Hi, user_id = {}", user_id);
+                }
+                None => println!("Hi, no session found"),
+            };
+            drop(binding);
+
+            let res = svc.call(req).await?;
 
             println!("Hi from response");
             Ok(res)
         })
+    }
+}
+
+// MYMEMO: Make this a common function
+async fn session_user_id(session: &actix_session::Session) -> Result<uuid::Uuid, String> {
+    match session.get(crate::types::USER_ID_KEY) {
+        Ok(user_id) => match user_id {
+            None => Err("You are not authenticated".to_string()),
+            Some(id) => Ok(id),
+        },
+        Err(e) => Err(format!("{e}")),
     }
 }
