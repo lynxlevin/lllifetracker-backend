@@ -23,8 +23,7 @@ impl Mutation {
             first_name: Set(form_data.first_name.to_owned()),
             last_name: Set(form_data.last_name.to_owned()),
             is_active: Set(form_data.is_active.to_owned()),
-            created_at: Set(Utc::now().into()),
-            updated_at: Set(Utc::now().into()),
+            ..Default::default()
         }
         .insert(db)
         .await
