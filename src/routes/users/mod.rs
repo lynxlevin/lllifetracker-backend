@@ -12,5 +12,11 @@ pub fn auth_routes_config(cfg: &mut actix_web::web::ServiceConfig) {
             .service(login::login_user)
             .service(logout::log_out)
             .service(get_user::get_user),
+        // MYMEMO: Can restrict AuthenticateUser this way.
+        // .service(
+        //     actix_web::web::scope("")
+        //         .wrap(AuthenticateUser)
+        //         .service(get_user::get_user),
+        // ),
     );
 }

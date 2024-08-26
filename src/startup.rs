@@ -83,6 +83,7 @@ async fn run(
         .expect("Cannot unwrap redis session.");
     let server = HttpServer::new(move || {
         App::new()
+            .wrap(AuthenticateUser)
             .wrap(if settings.debug {
                 SessionMiddleware::builder(redis_store.clone(), secret_key.clone())
                     .session_lifecycle(
@@ -100,7 +101,6 @@ async fn run(
                     .cookie_name("sessionId".to_string())
                     .build()
             })
-            .wrap(AuthenticateUser)
             .service(crate::routes::health_check)
             .configure(crate::routes::auth_routes_config)
             .app_data(Data::new(state.clone()))

@@ -1,5 +1,4 @@
 use std::{
-    cell::RefCell,
     future::{ready, Ready},
     rc::Rc,
 };
@@ -11,7 +10,6 @@ use actix_web::{
     Error, HttpMessage,
 };
 use futures::future::LocalBoxFuture;
-use uuid::uuid;
 
 use crate::{entities::user, services::user as user_service, startup::AppState};
 
@@ -52,44 +50,39 @@ where
 
     forward_ready!(service);
 
+    // MYMEMO: maybe add redirect if not logged in.
+    // MYMEMO: then, maybe there's a way to make user not-optional?
     fn call(&self, req: ServiceRequest) -> Self::Future {
-        println!("Hi from start. You requested: {}", req.path());
         let svc = self.service.clone();
         Box::pin(async move {
-            match req.app_data::<Data<AppState>>() {
-                Some(data) => {
-                    let user: user::ActiveModel = user_service::Query::find_by_id(
-                        &data.conn,
-                        uuid!("22cae525-8dca-4c1f-bfb9-8efe15ef65e3"),
-                    )
-                    .await
-                    .unwrap()
-                    .unwrap()
-                    .into();
-                    println!("user_from_db: {}", user.id.unwrap())
-                }
-                None => println!("No db found"),
-            };
             let session = req.get_session();
-            // MYMEMO: This session is somehow empty.
-            println!("{:?}", session.entries());
-            let user_id = match session_user_id(&session).await {
-                Ok(user_id) => {
-                    println!("Hi, user_id is {}", user_id);
-                    Some(user_id)
-                }
+            // MYMEMO: refactor
+            match session_user_id(&session).await {
+                Ok(user_id) => match req.app_data::<Data<AppState>>() {
+                    Some(data) => {
+                        match user_service::Query::find_by_id(&data.conn, user_id)
+                            .await
+                            .unwrap()
+                        {
+                            Some(user) => {
+                                let user: user::ActiveModel = user.into();
+                                req.extensions_mut().insert(user);
+                            }
+                            None => (),
+                        }
+                    }
+                    None => (),
+                },
                 Err(e) => {
                     println!(
                         "Error getting user_id from session in the middleware! {}",
                         e
                     );
-                    None
                 }
             };
 
             let res = svc.call(req).await?;
 
-            println!("Hi from response");
             Ok(res)
         })
     }
