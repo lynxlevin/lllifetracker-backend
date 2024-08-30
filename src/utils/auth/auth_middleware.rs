@@ -11,7 +11,10 @@ use actix_web::{
 };
 use futures::future::LocalBoxFuture;
 
-use crate::{entities::user, services::user as user_service, startup::AppState};
+use crate::{
+    entities::user, services::user::Query as UserQuery, startup::AppState,
+    utils::auth::session::get_user_id,
+};
 
 pub struct AuthenticateUser;
 
@@ -55,31 +58,13 @@ where
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let svc = self.service.clone();
         Box::pin(async move {
-            let session = req.get_session();
-            // MYMEMO: refactor
-            match session_user_id(&session).await {
-                Ok(user_id) => match req.app_data::<Data<AppState>>() {
-                    Some(data) => {
-                        match user_service::Query::find_by_id(&data.conn, user_id)
-                            .await
-                            .unwrap()
-                        {
-                            Some(user) => {
-                                let user: user::ActiveModel = user.into();
-                                req.extensions_mut().insert(user);
-                            }
-                            None => (),
-                        }
-                    }
-                    None => (),
-                },
+            match set_user3(&req).await {
+                Ok(_) => (),
                 Err(e) => {
-                    println!(
-                        "Error getting user_id from session in the middleware! {}",
-                        e
-                    );
+                    // MYMEMO: use log
+                    println!("Error in the auth middleware! {e}");
                 }
-            };
+            }
 
             let res = svc.call(req).await?;
 
@@ -88,13 +73,33 @@ where
     }
 }
 
-// MYMEMO: Make this a common function
-async fn session_user_id(session: &actix_session::Session) -> Result<uuid::Uuid, String> {
-    match session.get(crate::types::USER_ID_KEY) {
-        Ok(user_id) => match user_id {
-            None => Err("You are not authenticated".to_string()),
-            Some(id) => Ok(id),
+async fn set_user3(req: &ServiceRequest) -> Result<(), String> {
+    let session = req.get_session();
+    let user_id = match get_user_id(&session).await {
+        Ok(id) => id,
+        Err(e) => {
+            return Err(e);
+        }
+    };
+
+    match req.app_data::<Data<AppState>>() {
+        Some(data) => match UserQuery::find_by_id(&data.conn, user_id).await {
+            Ok(user) => match user {
+                Some(user) => {
+                    let user: user::ActiveModel = user.into();
+                    req.extensions_mut().insert(user);
+                    return Ok(());
+                }
+                None => {
+                    return Err("No user found for the user_id".to_string());
+                }
+            },
+            Err(e) => {
+                return Err(e.to_string());
+            }
         },
-        Err(e) => Err(format!("{e}")),
+        None => {
+            return Err("Error acquiring DB connection.".to_string());
+        }
     }
 }
