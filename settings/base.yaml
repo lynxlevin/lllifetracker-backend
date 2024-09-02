@@ -1,5 +1,6 @@
 application:
   port: 5000
+  max_log_files: 14
 
 redis:
   pool_max_open: 16

@@ -14,6 +14,7 @@ pub struct ApplicationSettings {
     pub host: String,
     pub base_url: String,
     pub protocol: String,
+    pub max_log_files: usize,
 }
 
 #[derive(serde::Deserialize, Clone, Debug)]

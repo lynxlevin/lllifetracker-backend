@@ -1,7 +1,13 @@
-use tracing_appender::non_blocking::WorkerGuard;
+use tracing_appender::{
+    non_blocking::WorkerGuard,
+    rolling::{RollingFileAppender, Rotation},
+};
 use tracing_subscriber::layer::SubscriberExt;
 
-pub fn get_subscriber(debug: bool) -> (impl tracing::Subscriber + Send + Sync, WorkerGuard) {
+pub fn get_subscriber(
+    debug: bool,
+    max_log_files: usize,
+) -> (impl tracing::Subscriber + Send + Sync, WorkerGuard) {
     let env_filter = if debug {
         "trace".to_string()
     } else {
@@ -17,7 +23,12 @@ pub fn get_subscriber(debug: bool) -> (impl tracing::Subscriber + Send + Sync, W
         None
     };
 
-    let file_appender = tracing_appender::rolling::daily("./logs", "");
+    let file_appender = RollingFileAppender::builder()
+        .rotation(Rotation::DAILY)
+        .filename_suffix("log")
+        .max_log_files(max_log_files)
+        .build("./logs")
+        .expect("initializing rolling file appender failed");
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
     let file_log = tracing_subscriber::fmt::layer().with_writer(non_blocking);
 
@@ -31,8 +42,8 @@ pub fn get_subscriber(debug: bool) -> (impl tracing::Subscriber + Send + Sync, W
     (subscriber, _guard)
 }
 
-pub fn init_subscriber(debug: bool) -> WorkerGuard {
-    let (subscriber, _guard) = get_subscriber(debug);
+pub fn init_subscriber(debug: bool, max_log_files: usize) -> WorkerGuard {
+    let (subscriber, _guard) = get_subscriber(debug, max_log_files);
     tracing::subscriber::set_global_default(subscriber).expect("Failed to set subscriber");
     _guard
 }
