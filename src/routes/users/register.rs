@@ -61,7 +61,7 @@ pub async fn register_user(
     let message: String;
     if !settings.email.no_verify {
         crate::utils::emails::send_multipart_email(
-            "Lynx Levin's WineCellar - Let's get you verified".to_string(),
+            "Lynx Levin's LifeTracker - Let's get you verified".to_string(),
             user_id,
             create_new_user.email,
             create_new_user.first_name,

@@ -59,4 +59,15 @@ impl Query {
             .one(db)
             .await
     }
+
+    pub async fn find_inactive_by_email(
+        db: &DbConn,
+        email: String,
+    ) -> Result<Option<user::Model>, DbErr> {
+        user::Entity::find()
+            .filter(user::Column::Email.eq(email))
+            .filter(user::Column::IsActive.eq(false))
+            .one(db)
+            .await
+    }
 }

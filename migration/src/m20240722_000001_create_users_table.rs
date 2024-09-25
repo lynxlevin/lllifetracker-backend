@@ -17,6 +17,7 @@ impl MigrationTrait for Migration {
                     .col(string(User::FirstName))
                     .col(string(User::LastName))
                     .col(boolean(User::IsActive).default(false))
+                    // MYMEMO: Add timezone
                     .col(
                         timestamp_with_time_zone(User::CreatedAt)
                             .default(Expr::current_timestamp()),

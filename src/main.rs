@@ -1,4 +1,4 @@
-use llwinecellar_actix_backend::{settings as backend_settings, startup, telemetry};
+use lllifetracker_backend::{settings as backend_settings, startup, telemetry};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

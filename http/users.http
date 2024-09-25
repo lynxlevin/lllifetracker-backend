@@ -17,6 +17,15 @@ Content-Type: application/json
 GET {{endpoint}}/users/register/confirm?token=
 
 ###
+# @name resend_email
+POST {{endpoint}}/users/register/resend-email
+Content-Type: application/json
+
+{
+  "email": "{{email}}"
+}
+
+###
 # @name login
 POST {{endpoint}}/users/login
 Content-Type: application/json
