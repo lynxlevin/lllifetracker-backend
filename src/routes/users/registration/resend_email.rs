@@ -11,7 +11,7 @@ struct RequestBody {
     email: String,
 }
 #[tracing::instrument(name = "Resending registration confirmation email", skip(data, req))]
-#[post("register/resend-email")]
+#[post("/resend-email")]
 pub async fn resend_email(
     data: Data<crate::startup::AppState>,
     req: Json<RequestBody>,

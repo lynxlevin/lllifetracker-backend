@@ -12,7 +12,7 @@ pub struct Parameters {
 }
 
 #[tracing::instrument(name = "Activating a new user", skip(data, parameters))]
-#[get("register/confirm")]
+#[get("/confirm")]
 pub async fn confirm(
     parameters: Query<Parameters>,
     data: Data<crate::startup::AppState>,
