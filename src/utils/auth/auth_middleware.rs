@@ -58,7 +58,7 @@ where
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let svc = self.service.clone();
         Box::pin(async move {
-            match set_user3(&req).await {
+            match set_user(&req).await {
                 Ok(_) => (),
                 Err(e) => {
                     // MYMEMO: use log
@@ -73,7 +73,7 @@ where
     }
 }
 
-async fn set_user3(req: &ServiceRequest) -> Result<(), String> {
+async fn set_user(req: &ServiceRequest) -> Result<(), String> {
     let session = req.get_session();
     let user_id = match get_user_id(&session).await {
         Ok(id) => id,
@@ -82,14 +82,10 @@ async fn set_user3(req: &ServiceRequest) -> Result<(), String> {
         }
     };
 
-    match req.app_data::<Data<AppState>>() {
+    let user: user::ActiveModel = match req.app_data::<Data<AppState>>() {
         Some(data) => match UserQuery::find_by_id(&data.conn, user_id).await {
             Ok(user) => match user {
-                Some(user) => {
-                    let user: user::ActiveModel = user.into();
-                    req.extensions_mut().insert(user);
-                    return Ok(());
-                }
+                Some(user) => user.into(),
                 None => {
                     return Err("No user found for the user_id".to_string());
                 }
@@ -101,5 +97,8 @@ async fn set_user3(req: &ServiceRequest) -> Result<(), String> {
         None => {
             return Err("Error acquiring DB connection.".to_string());
         }
-    }
+    };
+
+    req.extensions_mut().insert(user);
+    Ok(())
 }
