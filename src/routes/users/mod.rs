@@ -1,4 +1,5 @@
 use actix_web::web::scope;
+use password_change::request_factory;
 use registration::{confirm_factory, register_factory, resend_email_factory};
 
 mod get_user;
@@ -18,7 +19,8 @@ pub fn auth_routes_config(cfg: &mut actix_web::web::ServiceConfig) {
                     .service(register_factory)
                     .service(confirm_factory)
                     .service(resend_email_factory),
-            ),
+            )
+            .service(scope("/password-change").service(request_factory)),
         // MYMEMO: Can restrict AuthenticateUser this way.
         // .service(
         //     actix_web::web::scope("")

@@ -44,7 +44,7 @@ pub async fn resend_email(
         .expect("Redis connection cannot be gotten.");
 
     crate::utils::emails::send_multipart_email(
-        "Lynx Levin's LifeTracker - Let's get you verified".to_string(),
+        "Let's get you verified".to_string(),
         user.id.unwrap(),
         user.email.unwrap(),
         user.first_name.unwrap(),

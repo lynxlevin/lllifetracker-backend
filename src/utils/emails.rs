@@ -94,7 +94,7 @@ pub async fn send_multipart_email(
     redis_connection: &mut deadpool_redis::Connection,
 ) -> Result<(), String> {
     let settings = crate::settings::get_settings();
-    let title = subject.clone();
+    let title = format!("Lynx Levin's LifeTracker - {subject}");
 
     let issued_token = match crate::utils::auth::tokens::issue_confirmation_token_pasetors(
         user_id,
