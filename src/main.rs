@@ -4,7 +4,7 @@ use lllifetracker_backend::{settings as backend_settings, startup, telemetry};
 async fn main() -> std::io::Result<()> {
     dotenvy::dotenv().ok();
 
-    let settings = backend_settings::get_settings().expect("Failed to read settings.");
+    let settings = backend_settings::get_settings();
 
     // MYMEMO: introduce tracing_actix_web
     let _guard =

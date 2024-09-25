@@ -17,7 +17,7 @@ pub async fn confirm(
     parameters: Query<Parameters>,
     data: Data<crate::startup::AppState>,
 ) -> HttpResponse {
-    let settings = crate::settings::get_settings().expect("Failed to read settings.");
+    let settings = crate::settings::get_settings();
 
     let redis_con = &mut data
         .redis_pool

@@ -24,7 +24,7 @@ pub async fn register_user(
     data: Data<crate::startup::AppState>,
     new_user: Json<RequestBody>,
 ) -> HttpResponse {
-    let settings = crate::settings::get_settings().expect("Failed to read settings.");
+    let settings = crate::settings::get_settings();
 
     let hashed_password = crate::utils::auth::password::hash(new_user.0.password.as_bytes()).await;
 

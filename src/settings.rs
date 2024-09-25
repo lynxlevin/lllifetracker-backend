@@ -70,7 +70,7 @@ impl TryFrom<String> for Environment {
     }
 }
 
-pub fn get_settings() -> Result<Settings, config::ConfigError> {
+pub fn get_settings() -> Settings {
     let base_path = std::env::current_dir().expect("Failed to determine the current directory.");
     let settings_directory = base_path.join("settings");
 
@@ -91,7 +91,10 @@ pub fn get_settings() -> Result<Settings, config::ConfigError> {
                 .prefix_separator("_")
                 .separator("__"),
         )
-        .build()?;
+        .build()
+        .expect("Failed to build config.");
 
-    settings.try_deserialize::<Settings>()
+    settings
+        .try_deserialize::<Settings>()
+        .expect("Failed to read settings.")
 }

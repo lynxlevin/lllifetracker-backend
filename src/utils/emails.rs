@@ -20,7 +20,7 @@ pub async fn send_email(
     html_content: impl Into<String>,
     text_content: impl Into<String>,
 ) -> Result<(), String> {
-    let settings = crate::settings::get_settings().expect("Failed to read settings.");
+    let settings = crate::settings::get_settings();
 
     let email = Message::builder()
         .from(match settings.email.sender.parse() {
@@ -93,7 +93,7 @@ pub async fn send_multipart_email(
     template_name: &str,
     redis_connection: &mut deadpool_redis::Connection,
 ) -> Result<(), String> {
-    let settings = crate::settings::get_settings().expect("Failed to read settings.");
+    let settings = crate::settings::get_settings();
     let title = subject.clone();
 
     let issued_token = match crate::utils::auth::tokens::issue_confirmation_token_pasetors(
