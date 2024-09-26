@@ -26,11 +26,14 @@ impl MigrationTrait for Migration {
                     .col(string(User::Password))
                     .col(string(User::FirstName))
                     .col(string(User::LastName))
-                    .col(enumeration(
-                        User::Timezone,
-                        Alias::new("timezone_enum"),
-                        TimezoneVariants::iter(),
-                    ))
+                    .col(
+                        enumeration(
+                            User::Timezone,
+                            Alias::new("timezone_enum"),
+                            TimezoneVariants::iter(),
+                        )
+                        .default(TimezoneVariants::AsiaTokyo.to_string()),
+                    )
                     .col(boolean(User::IsActive).default(false))
                     .col(
                         timestamp_with_time_zone(User::CreatedAt)
