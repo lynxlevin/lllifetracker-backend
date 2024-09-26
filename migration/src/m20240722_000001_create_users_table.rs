@@ -56,7 +56,8 @@ impl MigrationTrait for Migration {
                     .col(User::IsActive)
                     .to_owned(),
             )
-            .await
+            .await?;
+        Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
@@ -72,12 +73,13 @@ impl MigrationTrait for Migration {
             .await?;
         manager
             .drop_type(Type::drop().if_exists().name(TimezoneEnum).to_owned())
-            .await
+            .await?;
+        Ok(())
     }
 }
 
 #[derive(DeriveIden)]
-enum User {
+pub enum User {
     Table,
     Id,
     Email,
