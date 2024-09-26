@@ -5,7 +5,7 @@ use actix_web::{
 };
 
 #[derive(serde::Deserialize, Debug)]
-pub struct UserEmail {
+struct UserEmail {
     email: String,
 }
 

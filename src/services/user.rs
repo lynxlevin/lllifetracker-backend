@@ -40,6 +40,22 @@ impl Mutation {
         user.updated_at = Set(Utc::now().into());
         user.update(db).await
     }
+
+    pub async fn update_user_password(
+        db: &DbConn,
+        id: uuid::Uuid,
+        password: String,
+    ) -> Result<user::Model, DbErr> {
+        match Query::find_by_id(db, id).await {
+            Ok(_user) => {
+                let mut user: user::ActiveModel = _user.unwrap().into();
+                user.password = Set(password);
+                user.updated_at = Set(Utc::now().into());
+                user.update(db).await
+            }
+            Err(e) => Err(e),
+        }
+    }
 }
 
 pub struct Query;

@@ -12,7 +12,7 @@ use crate::{
 };
 
 #[derive(serde::Deserialize)]
-pub struct Parameters {
+struct Parameters {
     token: String,
 }
 

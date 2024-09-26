@@ -1,5 +1,7 @@
 use actix_web::web::scope;
-use password_change::{request_password_change, verify_password_change_token};
+use password_change::{
+    request_password_change, submit_password_change, verify_password_change_token,
+};
 use registration::{confirm_factory, register_factory, resend_email_factory};
 
 mod get_user;
@@ -23,7 +25,8 @@ pub fn auth_routes_config(cfg: &mut actix_web::web::ServiceConfig) {
             .service(
                 scope("/password-change")
                     .service(request_password_change)
-                    .service(verify_password_change_token),
+                    .service(verify_password_change_token)
+                    .service(submit_password_change),
             ),
         // MYMEMO: Can restrict AuthenticateUser this way.
         // .service(
