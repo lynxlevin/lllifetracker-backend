@@ -1,0 +1,70 @@
+# Users
+
+###
+# @name register
+POST {{endpoint}}/users/register
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}",
+  "first_name": "Lynx",
+  "last_name": "Levin"
+}
+
+###
+# @name confirm
+GET {{endpoint}}/users/register/confirm?token=
+
+###
+# @name resend_email
+POST {{endpoint}}/users/register/resend-email
+Content-Type: application/json
+
+{
+  "email": "{{email}}"
+}
+
+###
+# @name login
+POST {{endpoint}}/users/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+###
+# @name get_me
+GET {{endpoint}}/users/me
+
+
+###
+# @name logout
+POST {{endpoint}}/users/logout
+Content-Type: application/json
+
+###
+# @name request_password_change
+POST {{endpoint}}/users/password-change/email-verification
+Content-Type: application/json
+
+{
+  "email": "{{email}}"
+}
+
+###
+# @name verify_password_change_token
+GET {{endpoint}}/users/password-change/email-verification?token=
+
+###
+# @name submit_password_change
+POST {{endpoint}}/users/password-change
+Content-Type: application/json
+
+{
+  "token": "",
+  "password": "{{password}}"
+}
+

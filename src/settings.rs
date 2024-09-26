@@ -1,15 +1,44 @@
 #[derive(serde::Deserialize, Clone)]
 pub struct Settings {
-    pub application: ApplicasionSettings,
+    pub application: ApplicationSettings,
     pub debug: bool,
+    pub redis: RedisSettings,
+    pub secret: Secret,
+    pub email: EmailSettings,
+    pub frontend_url: String,
 }
 
 #[derive(serde::Deserialize, Clone)]
-pub struct ApplicasionSettings {
+pub struct ApplicationSettings {
     pub port: u16,
     pub host: String,
     pub base_url: String,
     pub protocol: String,
+    pub max_log_files: usize,
+}
+
+#[derive(serde::Deserialize, Clone, Debug)]
+pub struct RedisSettings {
+    pub pool_max_open: u64,
+    pub pool_max_idle: u64,
+    pub pool_timeout_seconds: u64,
+    pub pool_expire_seconds: u64,
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct Secret {
+    pub secret_key: String,
+    pub token_expiration: i64,
+    pub hmac_secret: String,
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct EmailSettings {
+    pub no_verify: bool,
+    pub host: String,
+    pub host_user: String,
+    pub host_user_password: String,
+    pub sender: String,
 }
 
 pub enum Environment {
@@ -41,7 +70,7 @@ impl TryFrom<String> for Environment {
     }
 }
 
-pub fn get_settings() -> Result<Settings, config::ConfigError> {
+pub fn get_settings() -> Settings {
     let base_path = std::env::current_dir().expect("Failed to determine the current directory.");
     let settings_directory = base_path.join("settings");
 
@@ -62,7 +91,10 @@ pub fn get_settings() -> Result<Settings, config::ConfigError> {
                 .prefix_separator("_")
                 .separator("__"),
         )
-        .build()?;
+        .build()
+        .expect("Failed to build config.");
 
-    settings.try_deserialize::<Settings>()
+    settings
+        .try_deserialize::<Settings>()
+        .expect("Failed to read settings.")
 }

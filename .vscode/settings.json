@@ -1,0 +1,17 @@
+{
+  "cSpell.words": [
+    "actix",
+    "chrono",
+    "deadpool",
+    "dotenv",
+    "dotenvy",
+    "hmac",
+    "Iden",
+    "lettre",
+    "lllifetracker",
+    "minijinja",
+    "pasetor",
+    "pasetors"
+  ],
+  "rest-client.followredirect": false
+}

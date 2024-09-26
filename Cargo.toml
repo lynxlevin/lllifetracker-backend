@@ -1,5 +1,5 @@
 [package]
-name = "llwinecellar-actix-backend"
+name = "lllifetracker-backend"
 version = "0.1.0"
 authors = ["LynxLevin <lynx.levin88@gmail.com>"]
 edition = "2021"
@@ -9,15 +9,27 @@ path = "src/lib.rs"
 
 [[bin]]
 path = "src/main.rs"
-name = "llwinecellar-actix-backend"
+name = "lllifetracker-backend"
 
 [dependencies]
+actix-session = { version = "0.10.0", features = [
+    "redis-session",
+    "redis-session-native-tls",
+] }
 actix-web = "4.8.0"
+argon2 = "0.5.3"
+chrono = "0.4.38"
 config = { version = "0.14.0", features = ["yaml"] }
+deadpool-redis = "0.15.1"
 dotenvy = "0.15.7"
 futures = "0.3.28"
+hex = "0.4.3"
+lettre = { version = "0.11.7", features = ["builder", "tokio1-native-tls"] }
+minijinja = { version = "2.1.0", features = ["loader"] }
+once_cell = "1.19.0"
+pasetors = "0.6.8"
 # Features here: https://www.sea-ql.org/SeaORM/docs/install-and-config/database-and-async-runtime/#extra-features
-sea-orm = { version = "^0.12.0", features = [
+sea-orm = { version = "~1.0", features = [
     "sqlx-postgres",
     "runtime-tokio-native-tls",
     "macros",
@@ -26,7 +38,9 @@ sea-orm = { version = "^0.12.0", features = [
     "with-uuid",
 ] }
 serde = "1.0.204"
+serde_json = { version = "1.0.120", features = ["raw_value"] }
 tracing = "0.1.40"
+tracing-appender = "0.2.3"
 tracing-subscriber = { version = "0.3.18", features = [
     "fmt",
     "std",
@@ -35,6 +49,7 @@ tracing-subscriber = { version = "0.3.18", features = [
     "json",
     "tracing-log",
 ] }
+uuid = { version = "1.10.0", features = ["v4", "serde"] }
 
 [dev-dependencies]
 cargo-watch = "8.5.2"
