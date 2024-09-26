@@ -12,5 +12,6 @@
     "minijinja",
     "pasetor",
     "pasetors"
-  ]
+  ],
+  "rest-client.followredirect": false
 }

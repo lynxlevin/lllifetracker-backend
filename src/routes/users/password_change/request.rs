@@ -10,14 +10,17 @@ pub struct UserEmail {
 }
 
 #[tracing::instrument(name = "Requesting a password change", skip(data))]
-#[actix_web::post("")]
-pub async fn request(data: Data<crate::startup::AppState>, req: Json<UserEmail>) -> HttpResponse {
+#[actix_web::post("/email-verification")]
+pub async fn request_password_change(
+    data: Data<crate::startup::AppState>,
+    req: Json<UserEmail>,
+) -> HttpResponse {
     match user_service::Query::find_active_by_email(&data.conn, req.email.clone()).await {
         Ok(_user) => match _user {
             Some(user) => {
                 let user_model: user::ActiveModel = user.into();
                 match data.redis_pool.get().await {
-                    Ok(ref mut redis_conn) => {
+                    Ok(ref mut redis_con) => {
                         send_multipart_email(
                             "Password Reset Instructions".to_string(),
                             user_model.id.unwrap(),
@@ -25,7 +28,7 @@ pub async fn request(data: Data<crate::startup::AppState>, req: Json<UserEmail>)
                             user_model.first_name.unwrap(),
                             user_model.last_name.unwrap(),
                             "password_reset_email.html",
-                            redis_conn,
+                            redis_con,
                         )
                         .await
                         .unwrap();

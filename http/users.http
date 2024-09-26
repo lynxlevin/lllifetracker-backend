@@ -47,10 +47,24 @@ Content-Type: application/json
 
 ###
 # @name request_password_change
-POST {{endpoint}}/users/password-change
+POST {{endpoint}}/users/password-change/email-verification
 Content-Type: application/json
 
 {
   "email": "{{email}}"
 }
+
+###
+# @name verify_password_change_token
+GET {{endpoint}}/users/password-change/email-verification?token=
+
+# ###
+# # @name submit_password_change
+# POST {{endpoint}}/users/password-change
+# Content-Type: application/json
+
+# {
+#   "token": "",
+#   "password": "{{password}}"
+# }
 
