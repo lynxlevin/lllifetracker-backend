@@ -7,6 +7,9 @@ async fn main() -> std::io::Result<()> {
     let settings = backend_settings::get_settings();
 
     // MYMEMO: introduce tracing_actix_web
+    // - Should log some message at the beginning of all main functions.
+    // - Logs should be more readable.
+    // - More system info should be collected automatically.
     let _guard =
         telemetry::init_subscriber(settings.debug.clone(), settings.application.max_log_files);
 

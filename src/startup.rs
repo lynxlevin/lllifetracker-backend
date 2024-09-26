@@ -67,6 +67,7 @@ async fn run(
     db: DatabaseConnection,
     settings: crate::settings::Settings,
 ) -> Result<Server, std::io::Error> {
+    // MYMEMO: refactor redis usage referencing deadpool redis official. Would like to remove boiler plates at getting connections.
     let redis_url = env::var("REDIS_URL").expect("REDIS_URL must be set");
     let cfg = deadpool_redis::Config::from_url(redis_url.clone());
     let redis_pool = cfg
