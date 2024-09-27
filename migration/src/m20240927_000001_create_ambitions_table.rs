@@ -25,16 +25,13 @@ impl MigrationTrait for Migration {
                         timestamp_with_time_zone(Ambition::UpdatedAt)
                             .default(Expr::current_timestamp()),
                     )
-                    .to_owned(),
-            )
-            .await?;
-        manager
-            .create_foreign_key(
-                sea_query::ForeignKey::create()
-                    .name("ambitions_user_fkey")
-                    .from(Ambition::Table, Ambition::UserId)
-                    .to(User::Table, User::Id)
-                    .on_delete(sea_query::ForeignKeyAction::Cascade)
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("fk-ambitions-user_id")
+                            .from(Ambition::Table, Ambition::UserId)
+                            .to(User::Table, User::Id)
+                            .on_delete(ForeignKeyAction::Cascade),
+                    )
                     .to_owned(),
             )
             .await?;
@@ -42,13 +39,6 @@ impl MigrationTrait for Migration {
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        manager
-            .drop_foreign_key(
-                sea_query::ForeignKey::drop()
-                    .name("ambitions_user_fkey")
-                    .to_owned(),
-            )
-            .await?;
         manager
             .drop_table(Table::drop().table(Ambition::Table).to_owned())
             .await?;

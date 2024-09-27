@@ -2,7 +2,9 @@
 
 pub use super::action::Entity as Action;
 pub use super::ambition::Entity as Ambition;
+pub use super::ambitions_objectives::Entity as AmbitionsObjectives;
 pub use super::objective::Entity as Objective;
+pub use super::objectives_actions::Entity as ObjectivesActions;
 pub use super::record::Entity as Record;
 pub use super::tag::Entity as Tag;
 pub use super::user::Entity as User;

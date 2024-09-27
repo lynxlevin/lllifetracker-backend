@@ -24,16 +24,13 @@ impl MigrationTrait for Migration {
                         timestamp_with_time_zone(Objective::UpdatedAt)
                             .default(Expr::current_timestamp()),
                     )
-                    .to_owned(),
-            )
-            .await?;
-        manager
-            .create_foreign_key(
-                sea_query::ForeignKey::create()
-                    .name("objectives_user_fkey")
-                    .from(Objective::Table, Objective::UserId)
-                    .to(User::Table, User::Id)
-                    .on_delete(sea_query::ForeignKeyAction::Cascade)
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("fk-objectives-user_id")
+                            .from(Objective::Table, Objective::UserId)
+                            .to(User::Table, User::Id)
+                            .on_delete(ForeignKeyAction::Cascade),
+                    )
                     .to_owned(),
             )
             .await?;
@@ -41,13 +38,6 @@ impl MigrationTrait for Migration {
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        manager
-            .drop_foreign_key(
-                sea_query::ForeignKey::drop()
-                    .name("objectives_user_fkey")
-                    .to_owned(),
-            )
-            .await?;
         manager
             .drop_table(Table::drop().table(Objective::Table).to_owned())
             .await?;

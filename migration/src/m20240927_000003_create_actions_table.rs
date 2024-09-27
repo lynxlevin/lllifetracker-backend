@@ -24,16 +24,13 @@ impl MigrationTrait for Migration {
                         timestamp_with_time_zone(Action::UpdatedAt)
                             .default(Expr::current_timestamp()),
                     )
-                    .to_owned(),
-            )
-            .await?;
-        manager
-            .create_foreign_key(
-                sea_query::ForeignKey::create()
-                    .name("actions_user_fkey")
-                    .from(Action::Table, Action::UserId)
-                    .to(User::Table, User::Id)
-                    .on_delete(sea_query::ForeignKeyAction::Cascade)
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("fk-actions-user_id")
+                            .from(Action::Table, Action::UserId)
+                            .to(User::Table, User::Id)
+                            .on_delete(ForeignKeyAction::Cascade),
+                    )
                     .to_owned(),
             )
             .await?;
@@ -41,13 +38,6 @@ impl MigrationTrait for Migration {
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        manager
-            .drop_foreign_key(
-                sea_query::ForeignKey::drop()
-                    .name("actions_user_fkey")
-                    .to_owned(),
-            )
-            .await?;
         manager
             .drop_table(Table::drop().table(Action::Table).to_owned())
             .await?;

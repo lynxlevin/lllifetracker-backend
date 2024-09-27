@@ -2,6 +2,8 @@ use sea_orm::{EnumIter, Iterable};
 use sea_orm_migration::prelude::extension::postgres::Type;
 use sea_orm_migration::{prelude::*, schema::*};
 
+const INDEX_NAME: &str = "users_id_email_is_active_index";
+
 #[derive(DeriveMigrationName)]
 pub struct Migration;
 
@@ -48,8 +50,8 @@ impl MigrationTrait for Migration {
             .await?;
         manager
             .create_index(
-                sea_query::Index::create()
-                    .name("users_id_email_is_active_index")
+                Index::create()
+                    .name(INDEX_NAME)
                     .table(User::Table)
                     .col(User::Id)
                     .col(User::Email)
@@ -62,11 +64,7 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_index(
-                sea_query::Index::drop()
-                    .name("users_id_email_is_active_index")
-                    .to_owned(),
-            )
+            .drop_index(Index::drop().name(INDEX_NAME).to_owned())
             .await?;
         manager
             .drop_table(Table::drop().table(User::Table).to_owned())

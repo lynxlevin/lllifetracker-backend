@@ -4,7 +4,9 @@ pub mod prelude;
 
 pub mod action;
 pub mod ambition;
+pub mod ambitions_objectives;
 pub mod objective;
+pub mod objectives_actions;
 pub mod record;
 pub mod sea_orm_active_enums;
 pub mod tag;

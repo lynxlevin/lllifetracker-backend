@@ -1,7 +1,9 @@
 use sea_orm_migration::{prelude::*, schema::*};
 
 use crate::m20240722_000001_create_users_table::User;
-use crate::m20240927_000004_create_tags_table::Tag;
+use crate::m20240927_000006_create_tags_table::Tag;
+
+const INDEX_NAME: &str = "records_user_id_started_at_index";
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -30,33 +32,27 @@ impl MigrationTrait for Migration {
                         timestamp_with_time_zone(Record::UpdatedAt)
                             .default(Expr::current_timestamp()),
                     )
-                    .to_owned(),
-            )
-            .await?;
-        manager
-            .create_foreign_key(
-                sea_query::ForeignKey::create()
-                    .name("records_user_fkey")
-                    .from(Record::Table, Record::UserId)
-                    .to(User::Table, User::Id)
-                    .on_delete(sea_query::ForeignKeyAction::SetNull)
-                    .to_owned(),
-            )
-            .await?;
-        manager
-            .create_foreign_key(
-                sea_query::ForeignKey::create()
-                    .name("records_tag_fkey")
-                    .from(Record::Table, Record::TagId)
-                    .to(Tag::Table, Tag::Id)
-                    .on_delete(sea_query::ForeignKeyAction::Cascade)
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("fk-records-user_id")
+                            .from(Record::Table, Record::UserId)
+                            .to(User::Table, User::Id)
+                            .on_delete(ForeignKeyAction::SetNull),
+                    )
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("fk-records-tag_id")
+                            .from(Record::Table, Record::TagId)
+                            .to(Tag::Table, Tag::Id)
+                            .on_delete(ForeignKeyAction::Cascade),
+                    )
                     .to_owned(),
             )
             .await?;
         manager
             .create_index(
-                sea_query::Index::create()
-                    .name("records_user_id_started_at_index")
+                Index::create()
+                    .name(INDEX_NAME)
                     .table(Record::Table)
                     .col(Record::UserId)
                     .col(Record::StartedAt)
@@ -68,25 +64,7 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_index(
-                sea_query::Index::drop()
-                    .name("users_id_email_is_active_index")
-                    .to_owned(),
-            )
-            .await?;
-        manager
-            .drop_foreign_key(
-                sea_query::ForeignKey::drop()
-                    .name("records_tag_fkey")
-                    .to_owned(),
-            )
-            .await?;
-        manager
-            .drop_foreign_key(
-                sea_query::ForeignKey::drop()
-                    .name("records_user_fkey")
-                    .to_owned(),
-            )
+            .drop_index(Index::drop().name(INDEX_NAME).to_owned())
             .await?;
         manager
             .drop_table(Table::drop().table(Record::Table).to_owned())

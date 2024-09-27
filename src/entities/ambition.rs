@@ -16,6 +16,8 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
+    #[sea_orm(has_many = "super::ambitions_objectives::Entity")]
+    AmbitionsObjectives,
     #[sea_orm(has_one = "super::tag::Entity")]
     Tag,
     #[sea_orm(
@@ -28,6 +30,12 @@ pub enum Relation {
     User,
 }
 
+impl Related<super::ambitions_objectives::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::AmbitionsObjectives.def()
+    }
+}
+
 impl Related<super::tag::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Tag.def()
@@ -37,6 +45,15 @@ impl Related<super::tag::Entity> for Entity {
 impl Related<super::user::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::User.def()
+    }
+}
+
+impl Related<super::objective::Entity> for Entity {
+    fn to() -> RelationDef {
+        super::ambitions_objectives::Relation::Objective.def()
+    }
+    fn via() -> Option<RelationDef> {
+        Some(super::ambitions_objectives::Relation::Ambition.def().rev())
     }
 }
 
