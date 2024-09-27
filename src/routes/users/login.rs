@@ -56,11 +56,18 @@ async fn login_user(
     };
 
     let user = match UserQuery::find_active_by_email(&data.conn, req_user.email.clone()).await {
-        Ok(user) => user.unwrap(),
+        Ok(user) => match user {
+            Some(user) => user,
+            None => {
+                return HttpResponse::NotFound().json(crate::types::ErrorResponse {
+                    error: not_found_message.to_string(),
+                });
+            }
+        },
         Err(e) => {
             tracing::event!(target: "sea-orm", tracing::Level::ERROR, "User not found:{:#?}", e);
-            return HttpResponse::NotFound().json(crate::types::ErrorResponse {
-                error: not_found_message.to_string(),
+            return HttpResponse::InternalServerError().json(crate::types::ErrorResponse {
+                error: "Something unexpected happened. Kindly try again".to_string(),
             });
         }
     };

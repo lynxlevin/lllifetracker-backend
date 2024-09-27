@@ -16,11 +16,18 @@ pub async fn resend_email(
     req: Json<RequestBody>,
 ) -> HttpResponse {
     let user = match UserQuery::find_inactive_by_email(&data.conn, req.email.clone()).await {
-        Ok(user) => user.unwrap(),
+        Ok(user) => match user {
+            Some(user) => user,
+            None => {
+                return HttpResponse::NotFound().json(crate::types::ErrorResponse {
+                    error: "User with this email was not found. This happens if you have already activated this user.".to_string(),
+                });
+            }
+        },
         Err(e) => {
             tracing::event!(target: "backend", tracing::Level::ERROR, "User not found : {:#?}", e);
             return HttpResponse::InternalServerError().json(crate::types::ErrorResponse {
-                error: "User with this email was not found. This error happens if you have already activated this user.".to_string(),
+                error: "Something unexpected happened. Kindly try again".to_string(),
             });
         }
     };
