@@ -9,6 +9,7 @@ pub struct Model {
     pub id: Uuid,
     pub user_id: Uuid,
     pub tag_id: Option<Uuid>,
+    pub action_name: Option<String>,
     pub started_at: DateTimeWithTimeZone,
     pub ended_at: Option<DateTimeWithTimeZone>,
     pub created_at: DateTimeWithTimeZone,
@@ -22,7 +23,7 @@ pub enum Relation {
         from = "Column::TagId",
         to = "super::tag::Column::Id",
         on_update = "NoAction",
-        on_delete = "Cascade"
+        on_delete = "SetNull"
     )]
     Tag,
     #[sea_orm(
@@ -30,7 +31,7 @@ pub enum Relation {
         from = "Column::UserId",
         to = "super::user::Column::Id",
         on_update = "NoAction",
-        on_delete = "SetNull"
+        on_delete = "Cascade"
     )]
     User,
 }
