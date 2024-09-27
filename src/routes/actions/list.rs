@@ -14,20 +14,20 @@ use actix_web::{
 #[get("")]
 pub async fn list_actions(
     data: Data<AppState>,
-    user: Option<ReqData<user_entity::ActiveModel>>,
+    user: Option<ReqData<user_entity::Model>>,
 ) -> HttpResponse {
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ActionQuery::find_all_by_user_id(&data.conn, user.id.unwrap()).await {
+            match ActionQuery::find_all_by_user_id(&data.conn, user.id).await {
                 Ok(actions) => HttpResponse::Ok().json(
                     actions
                         .iter()
-                        .map(|a| ActionVisible {
-                            id: a.id,
-                            name: a.name.clone(),
-                            created_at: a.created_at,
-                            updated_at: a.updated_at,
+                        .map(|action| ActionVisible {
+                            id: action.id,
+                            name: action.name.clone(),
+                            created_at: action.created_at,
+                            updated_at: action.updated_at,
                         })
                         .collect::<Vec<ActionVisible>>(),
                 ),

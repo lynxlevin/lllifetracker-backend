@@ -1,6 +1,5 @@
 use crate::{
-    entities::user,
-    services::user as user_service,
+    services::user::Query as UserQuery,
     startup::AppState,
     types::{USER_EMAIL_KEY, USER_ID_KEY},
     utils::auth::password::verify_password,
@@ -56,13 +55,8 @@ async fn login_user(
         });
     };
 
-    let user: user::ActiveModel = match user_service::Query::find_active_by_email(
-        &data.conn,
-        req_user.email.clone(),
-    )
-    .await
-    {
-        Ok(user) => user.unwrap().into(),
+    let user = match UserQuery::find_active_by_email(&data.conn, req_user.email.clone()).await {
+        Ok(user) => user.unwrap(),
         Err(e) => {
             tracing::event!(target: "sea-orm", tracing::Level::ERROR, "User not found:{:#?}", e);
             return HttpResponse::NotFound().json(crate::types::ErrorResponse {
@@ -71,10 +65,7 @@ async fn login_user(
         }
     };
     match task::spawn_blocking(move || {
-        verify_password(
-            user.password.unwrap().as_ref(),
-            req_user.password.clone().as_bytes(),
-        )
+        verify_password(user.password.as_ref(), req_user.password.clone().as_bytes())
     })
     .await
     .expect("Unable to unwrap JoinError.")
@@ -87,17 +78,17 @@ async fn login_user(
                 .map_err(|e| format!("{}", e));
             session.renew();
             session
-                .insert(USER_ID_KEY, user.id.clone().unwrap())
+                .insert(USER_ID_KEY, user.id)
                 .expect(format!("`{}` cannot be inserted into session", USER_ID_KEY).as_str());
             session
-                .insert(USER_EMAIL_KEY, &user.email.clone().unwrap())
+                .insert(USER_EMAIL_KEY, &user.email)
                 .expect(format!("`{}` cannot be inserted into session", USER_EMAIL_KEY).as_str());
             HttpResponse::Ok().json(crate::types::UserVisible {
-                id: user.id.unwrap(),
-                email: user.email.unwrap(),
-                first_name: user.first_name.unwrap(),
-                last_name: user.last_name.unwrap(),
-                is_active: user.is_active.unwrap(),
+                id: user.id,
+                email: user.email,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                is_active: user.is_active,
             })
         }
         Err(e) => {

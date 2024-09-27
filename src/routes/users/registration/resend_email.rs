@@ -1,5 +1,4 @@
-use crate::entities::user as user_entity;
-use crate::services::user as user_service;
+use crate::services::user::Query as UserQuery;
 use actix_web::{
     post,
     web::{Data, Json},
@@ -16,13 +15,8 @@ pub async fn resend_email(
     data: Data<crate::startup::AppState>,
     req: Json<RequestBody>,
 ) -> HttpResponse {
-    let user: user_entity::ActiveModel = match user_service::Query::find_inactive_by_email(
-        &data.conn,
-        req.email.clone(),
-    )
-    .await
-    {
-        Ok(user) => user.unwrap().into(),
+    let user = match UserQuery::find_inactive_by_email(&data.conn, req.email.clone()).await {
+        Ok(user) => user.unwrap(),
         Err(e) => {
             tracing::event!(target: "backend", tracing::Level::ERROR, "User not found : {:#?}", e);
             return HttpResponse::InternalServerError().json(crate::types::ErrorResponse {
@@ -45,10 +39,10 @@ pub async fn resend_email(
 
     crate::utils::emails::send_multipart_email(
         "Let's get you verified".to_string(),
-        user.id.unwrap(),
-        user.email.unwrap(),
-        user.first_name.unwrap(),
-        user.last_name.unwrap(),
+        user.id,
+        user.email,
+        user.first_name,
+        user.last_name,
         "verification_email.html",
         redis_con,
     )
