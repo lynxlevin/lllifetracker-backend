@@ -28,3 +28,18 @@ Content-Type: application/json
 {
   "name": "Second action"
 }
+
+###
+# @name update
+PUT {{endpoint}}/actions/{{action_id}}
+Content-Type: application/json
+
+{
+  "name": "Second action"
+}
+
+# MYMEMO: can be deleted freely, as no records will be cascade deleted.
+###
+# @name delete
+DELETE {{endpoint}}/actions/{{action_id}}
+

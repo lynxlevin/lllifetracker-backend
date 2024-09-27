@@ -28,7 +28,7 @@ pub async fn register(
 
     let hashed_password = crate::utils::auth::password::hash(new_user.0.password.as_bytes()).await;
 
-    let create_new_user = user::NewUser {
+    let new_user = user::NewUser {
         password: hashed_password,
         email: new_user.0.email,
         first_name: new_user.0.first_name,
@@ -36,48 +36,43 @@ pub async fn register(
         is_active: settings.email.no_verify,
     };
 
-    let user_id = match user::Mutation::create_user(&data.conn, create_new_user.clone()).await {
-        Ok(user) => user.id,
+    match user::Mutation::create_user(&data.conn, new_user).await {
+        Ok(user) => match data.redis_pool.get().await {
+            Ok(ref mut redis_con) => {
+                let message: String;
+                if !settings.email.no_verify {
+                    crate::utils::emails::send_multipart_email(
+                        "Let's get you verified".to_string(),
+                        user.id,
+                        user.email,
+                        user.first_name,
+                        user.last_name,
+                        "verification_email.html",
+                        redis_con,
+                    )
+                    .await
+                    .unwrap();
+
+                    message = "Your account was created successfully. Check your email address to activate your account as we just sent you an activation link. Ensure you activate your account before the link expires".to_string();
+                } else {
+                    message = "Your account was created successfully.".to_string();
+                }
+
+                tracing::event!(target: "backend", tracing::Level::INFO, "User created successfully.");
+                HttpResponse::Ok().json(crate::types::SuccessResponse { message: message })
+            }
+            Err(e) => {
+                tracing::event!(target: "backend", tracing::Level::ERROR, "{}", e);
+                HttpResponse::InternalServerError().json(crate::types::ErrorResponse {
+                    error: "We cannot activate your account at the moment".to_string(),
+                })
+            }
+        },
         Err(e) => {
             tracing::event!(target: "backend", tracing::Level::ERROR, "Failed to create user: {:#?}", e);
-            return HttpResponse::InternalServerError().json(crate::types::ErrorResponse {
-                error: "Some error on user registration.".to_string(),
-            });
-        }
-    };
-
-    let redis_con = &mut data
-        .redis_pool
-        .get()
-        .await
-        .map_err(|e| {
-            tracing::event!(target: "backend", tracing::Level::ERROR, "{}", e);
             HttpResponse::InternalServerError().json(crate::types::ErrorResponse {
-                error: "We cannot activate your account at the moment".to_string(),
+                error: "Some error on user registration.".to_string(),
             })
-        })
-        .expect("Redis connection cannot be gotten.");
-
-    let message: String;
-    if !settings.email.no_verify {
-        crate::utils::emails::send_multipart_email(
-            "Let's get you verified".to_string(),
-            user_id,
-            create_new_user.email,
-            create_new_user.first_name,
-            create_new_user.last_name,
-            "verification_email.html",
-            redis_con,
-        )
-        .await
-        .unwrap();
-
-        message = "Your account was created successfully. Check your email address to activate your account as we just sent you an activation link. Ensure you activate your account before the link expires".to_string();
-    } else {
-        message = "Your account was created successfully.".to_string();
+        }
     }
-
-    tracing::event!(target: "backend", tracing::Level::INFO, "User created successfully.");
-
-    HttpResponse::Ok().json(crate::types::SuccessResponse { message: message })
 }
