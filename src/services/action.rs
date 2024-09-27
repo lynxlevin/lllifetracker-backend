@@ -43,4 +43,15 @@ impl Query {
             .all(db)
             .await
     }
+
+    pub async fn find_by_id_and_user_id(
+        db: &DbConn,
+        action_id: uuid::Uuid,
+        user_id: uuid::Uuid,
+    ) -> Result<Option<action::Model>, DbErr> {
+        action::Entity::find_by_id(action_id)
+            .filter(action::Column::UserId.eq(user_id))
+            .one(db)
+            .await
+    }
 }

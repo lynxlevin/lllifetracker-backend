@@ -10,7 +10,12 @@ Content-Type: application/json
   "password": "password"
 }
 
-
 ###
 # @name list
 GET {{endpoint}}/actions
+
+@action_id=dbfee866-97ec-4876-b309-c1e36c52ad44
+
+###
+# @name get
+GET {{endpoint}}/actions/{{action_id}}
