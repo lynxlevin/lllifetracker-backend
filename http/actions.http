@@ -19,3 +19,12 @@ GET {{endpoint}}/actions
 ###
 # @name get
 GET {{endpoint}}/actions/{{action_id}}
+
+###
+# @name create
+POST {{endpoint}}/actions
+Content-Type: application/json
+
+{
+  "name": "Second action"
+}

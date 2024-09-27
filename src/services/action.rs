@@ -1,34 +1,27 @@
 use crate::entities::action;
-// use chrono::Utc;
 use sea_orm::entity::prelude::*;
-use sea_orm::QueryOrder;
+use sea_orm::{QueryOrder, Set};
 
-// #[derive(serde::Deserialize, Debug, serde::Serialize, Clone)]
-// pub struct NewUser {
-//     pub email: String,
-//     pub password: String,
-//     pub first_name: String,
-//     pub last_name: String,
-//     pub is_active: bool,
-// }
+#[derive(serde::Deserialize, Debug, serde::Serialize, Clone)]
+pub struct NewAction {
+    pub name: String,
+    pub user_id: uuid::Uuid,
+}
 
-// pub struct Mutation;
+pub struct Mutation;
 
-// impl Mutation {
-//     pub async fn create_user(db: &DbConn, form_data: NewUser) -> Result<user::Model, DbErr> {
-//         user::ActiveModel {
-//             id: Set(uuid::Uuid::new_v4()),
-//             email: Set(form_data.email.to_owned()),
-//             password: Set(form_data.password.to_owned()),
-//             first_name: Set(form_data.first_name.to_owned()),
-//             last_name: Set(form_data.last_name.to_owned()),
-//             is_active: Set(form_data.is_active.to_owned()),
-//             ..Default::default()
-//         }
-//         .insert(db)
-//         .await
-//     }
-// }
+impl Mutation {
+    pub async fn create(db: &DbConn, form_data: NewAction) -> Result<action::Model, DbErr> {
+        action::ActiveModel {
+            id: Set(uuid::Uuid::new_v4()),
+            user_id: Set(form_data.user_id),
+            name: Set(form_data.name.to_owned()),
+            ..Default::default()
+        }
+        .insert(db)
+        .await
+    }
+}
 
 pub struct Query;
 
