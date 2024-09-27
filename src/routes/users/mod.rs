@@ -1,4 +1,4 @@
-use actix_web::web::scope;
+use actix_web::web::{scope, ServiceConfig};
 use password_change::{
     request_password_change, submit_password_change, verify_password_change_token,
 };
@@ -10,7 +10,7 @@ mod logout;
 mod password_change;
 mod registration;
 
-pub fn auth_routes_config(cfg: &mut actix_web::web::ServiceConfig) {
+pub fn auth_routes(cfg: &mut ServiceConfig) {
     cfg.service(
         scope("/users")
             .service(login::login_user)

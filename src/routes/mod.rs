@@ -1,3 +1,5 @@
+mod actions;
 mod users;
 
-pub use users::auth_routes_config;
+pub use actions::action_routes;
+pub use users::auth_routes;

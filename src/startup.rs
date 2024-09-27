@@ -4,7 +4,10 @@ use deadpool_redis::Pool;
 use sea_orm::*;
 use std::env;
 
-use crate::utils::auth::auth_middleware::AuthenticateUser;
+use crate::{
+    routes::{action_routes, auth_routes},
+    utils::auth::auth_middleware::AuthenticateUser,
+};
 pub struct Application {
     port: u16,
     server: Server,
@@ -102,7 +105,8 @@ async fn run(
                     .cookie_name("sessionId".to_string())
                     .build()
             })
-            .configure(crate::routes::auth_routes_config)
+            .configure(auth_routes)
+            .configure(action_routes)
             .app_data(Data::new(state.clone()))
     })
     .listen(listener)?
