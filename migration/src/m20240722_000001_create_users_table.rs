@@ -29,7 +29,7 @@ impl MigrationTrait for Migration {
                     .col(
                         enumeration(
                             User::Timezone,
-                            Alias::new("timezone_enum"),
+                            Alias::new(TimezoneEnum.to_string()),
                             TimezoneVariants::iter(),
                         )
                         .default(TimezoneVariants::AsiaTokyo.to_string()),
@@ -96,7 +96,7 @@ pub enum User {
 struct TimezoneEnum;
 
 #[derive(DeriveIden, EnumIter)]
-pub enum TimezoneVariants {
+enum TimezoneVariants {
     #[sea_orm(iden = "Asia/Tokyo")]
     AsiaTokyo,
     #[sea_orm(iden = "UTC")]

@@ -21,13 +21,45 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
+    #[sea_orm(has_many = "super::action::Entity")]
+    Action,
+    #[sea_orm(has_many = "super::ambition::Entity")]
+    Ambition,
+    #[sea_orm(has_many = "super::objective::Entity")]
+    Objective,
     #[sea_orm(has_many = "super::record::Entity")]
     Record,
+    #[sea_orm(has_many = "super::tag::Entity")]
+    Tag,
+}
+
+impl Related<super::action::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Action.def()
+    }
+}
+
+impl Related<super::ambition::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Ambition.def()
+    }
+}
+
+impl Related<super::objective::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Objective.def()
+    }
 }
 
 impl Related<super::record::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Record.def()
+    }
+}
+
+impl Related<super::tag::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Tag.def()
     }
 }
 

@@ -1,6 +1,7 @@
 use sea_orm_migration::{prelude::*, schema::*};
 
 use crate::m20240722_000001_create_users_table::User;
+use crate::m20240927_000004_create_tags_table::Tag;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -15,6 +16,7 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(uuid(Record::Id).primary_key())
                     .col(uuid(Record::UserId))
+                    .col(uuid_null(Record::TagId))
                     .col(
                         timestamp_with_time_zone(Record::StartedAt)
                             .default(Expr::current_timestamp()),
@@ -37,6 +39,16 @@ impl MigrationTrait for Migration {
                     .name("records_user_fkey")
                     .from(Record::Table, Record::UserId)
                     .to(User::Table, User::Id)
+                    .on_delete(sea_query::ForeignKeyAction::SetNull)
+                    .to_owned(),
+            )
+            .await?;
+        manager
+            .create_foreign_key(
+                sea_query::ForeignKey::create()
+                    .name("records_tag_fkey")
+                    .from(Record::Table, Record::TagId)
+                    .to(Tag::Table, Tag::Id)
                     .on_delete(sea_query::ForeignKeyAction::Cascade)
                     .to_owned(),
             )
@@ -65,6 +77,13 @@ impl MigrationTrait for Migration {
         manager
             .drop_foreign_key(
                 sea_query::ForeignKey::drop()
+                    .name("records_tag_fkey")
+                    .to_owned(),
+            )
+            .await?;
+        manager
+            .drop_foreign_key(
+                sea_query::ForeignKey::drop()
                     .name("records_user_fkey")
                     .to_owned(),
             )
@@ -81,6 +100,7 @@ enum Record {
     Table,
     Id,
     UserId,
+    TagId,
     StartedAt,
     EndedAt,
     CreatedAt,

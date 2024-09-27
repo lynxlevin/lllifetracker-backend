@@ -2,6 +2,10 @@
 
 pub mod prelude;
 
+pub mod action;
+pub mod ambition;
+pub mod objective;
 pub mod record;
 pub mod sea_orm_active_enums;
+pub mod tag;
 pub mod user;
