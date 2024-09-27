@@ -102,7 +102,6 @@ async fn run(
                     .cookie_name("sessionId".to_string())
                     .build()
             })
-            .service(crate::routes::health_check)
             .configure(crate::routes::auth_routes_config)
             .app_data(Data::new(state.clone()))
     })
