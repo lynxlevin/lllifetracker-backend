@@ -141,6 +141,7 @@ fn renew_session(
     email: String,
 ) -> Result<(), SessionInsertError> {
     session.renew();
+    // MYMEMO: maybe ? does the same as this if let Err(e)
     if let Err(e) = session.insert(USER_ID_KEY, id) {
         return Err(e);
     }

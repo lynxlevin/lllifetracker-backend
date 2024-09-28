@@ -1,4 +1,5 @@
 use crate::entities::action;
+use chrono::Utc;
 use sea_orm::entity::prelude::*;
 use sea_orm::{QueryOrder, Set};
 
@@ -20,6 +21,26 @@ impl Mutation {
         }
         .insert(db)
         .await
+    }
+
+    pub async fn update(
+        db: &DbConn,
+        action_id: uuid::Uuid,
+        user_id: uuid::Uuid,
+        name: String,
+    ) -> Option<Result<action::Model, DbErr>> {
+        match Query::find_by_id_and_user_id(db, action_id, user_id).await {
+            Ok(action) => match action {
+                Some(action) => {
+                    let mut action: action::ActiveModel = action.into();
+                    action.name = Set(name);
+                    action.updated_at = Set(Utc::now().into());
+                    Some(action.update(db).await)
+                }
+                None => None,
+            },
+            Err(e) => Some(Err(e)),
+        }
     }
 }
 
