@@ -14,7 +14,7 @@ Content-Type: application/json
 # @name list
 GET {{endpoint}}/actions
 
-@action_id=dbfee866-97ec-4876-b309-c1e36c52ad44
+@action_id=747a6e88-6cbd-4916-954c-14b5b925b3c6
 
 ###
 # @name get
@@ -38,7 +38,6 @@ Content-Type: application/json
   "name": "My action edited"
 }
 
-# MYMEMO: can be deleted freely, as no records will be cascade deleted.
 ###
 # @name delete
 DELETE {{endpoint}}/actions/{{action_id}}

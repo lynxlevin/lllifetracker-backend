@@ -42,6 +42,23 @@ impl Mutation {
             Err(e) => Some(Err(e)),
         }
     }
+
+    pub async fn delete(
+        db: &DbConn,
+        action_id: uuid::Uuid,
+        user_id: uuid::Uuid,
+    ) -> Result<(), DbErr> {
+        match Query::find_by_id_and_user_id(db, action_id, user_id).await {
+            Ok(action) => match action {
+                Some(action) => {
+                    action.delete(db).await?;
+                    Ok(())
+                }
+                None => Ok(()),
+            },
+            Err(e) => Err(e),
+        }
+    }
 }
 
 pub struct Query;
