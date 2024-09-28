@@ -2,7 +2,7 @@ use crate::{
     entities::user as user_entity,
     services::action::Query as ActionQuery,
     startup::AppState,
-    types::{self, ActionVisible},
+    types::{self, ActionVisible, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
     get,
@@ -42,7 +42,7 @@ pub async fn get_action(
                 Err(e) => {
                     tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
                     HttpResponse::InternalServerError().json(types::ErrorResponse {
-                        error: "Something unexpected happened. Kindly try again".to_string(),
+                        error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
                     })
                 }
             }

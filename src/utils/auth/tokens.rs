@@ -8,6 +8,7 @@ use pasetors::{local, Local};
 
 const SESSION_KEY_PREFIX: &str = "valid_session_key_for_{}";
 
+// MYMEMO: refactor
 #[tracing::instrument(name = "Issue pasetors token", skip(redis_connection))]
 pub async fn issue_confirmation_token_pasetors(
     user_id: uuid::Uuid,
@@ -87,6 +88,7 @@ pub async fn issue_confirmation_token_pasetors(
     .unwrap())
 }
 
+// MYMEMO: refactor
 #[tracing::instrument(name = "Verify pasetors token", skip(token, redis_connection))]
 pub async fn verify_confirmation_token_pasetor(
     token: String,

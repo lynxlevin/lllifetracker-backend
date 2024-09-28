@@ -7,6 +7,7 @@ use lettre::{
     Message, SmtpTransport, Transport,
 };
 
+// MYMEMO: refactor
 #[tracing::instrument(
     name = "Generic e-mail sending function.",
     skip(recipient_email, recipient_first_name, recipient_last_name, subject, html_content, text_content),
@@ -74,6 +75,7 @@ pub async fn send_email(
     }
 }
 
+// MYMEMO: refactor
 #[tracing::instrument(
     name = "Generic multipart e-mail sending function.",
     skip(redis_connection),

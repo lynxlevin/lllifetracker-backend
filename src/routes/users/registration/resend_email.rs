@@ -1,4 +1,7 @@
-use crate::{services::user::Query as UserQuery, utils::emails::send_multipart_email};
+use crate::{
+    services::user::Query as UserQuery, types::INTERNAL_SERVER_ERROR_MESSAGE,
+    utils::emails::send_multipart_email,
+};
 use actix_web::{
     post,
     web::{Data, Json},
@@ -52,7 +55,7 @@ pub async fn resend_email(
         Err(e) => {
             tracing::event!(target: "backend", tracing::Level::ERROR, "User not found : {:#?}", e);
             HttpResponse::InternalServerError().json(crate::types::ErrorResponse {
-                error: "Something unexpected happened. Kindly try again".to_string(),
+                error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
             })
         }
     }

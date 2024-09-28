@@ -7,7 +7,7 @@ use actix_web::{
 use crate::{
     services::user as user_service,
     startup::AppState,
-    types,
+    types::{self, INTERNAL_SERVER_ERROR_MESSAGE},
     utils::auth::{password, tokens::verify_confirmation_token_pasetor},
 };
 
@@ -36,7 +36,7 @@ pub async fn submit_password_change(data: Data<AppState>, req: Json<Parameters>)
                         Err(e) => {
                             tracing::event!(target: "backend", tracing::Level::ERROR, "Failed to change user password: {:#?}", e);
                             HttpResponse::InternalServerError().json(types::ErrorResponse {
-                                error: "Something unexpected happened. Kindly try again".to_string(),
+                                error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
                             })
                         }
                     }
@@ -50,7 +50,7 @@ pub async fn submit_password_change(data: Data<AppState>, req: Json<Parameters>)
         Err(e) => {
             tracing::event!(target: "backend", tracing::Level::ERROR, "{e}");
             HttpResponse::InternalServerError().json(types::ErrorResponse {
-                error: "Something unexpected happened. Kindly try again".to_string(),
+                error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
             })
         }
     }

@@ -8,6 +8,7 @@ use actix_web::{
 use crate::{
     settings,
     startup::AppState,
+    types::INTERNAL_SERVER_ERROR_MESSAGE,
     utils::auth::tokens::{issue_confirmation_token_pasetors, verify_confirmation_token_pasetor},
 };
 
@@ -67,7 +68,12 @@ pub async fn verify_password_change_token(
         Err(e) => {
             tracing::event!(target: "backend", tracing::Level::ERROR, "{e}");
             // MYMEMO: Change url later.
-            HttpResponse::SeeOther().insert_header((header::LOCATION, format!("{frontend_url}/auth/error?reason=Something unexpected happened. Kindly try again"))).finish()
+            HttpResponse::SeeOther()
+                .insert_header((
+                    header::LOCATION,
+                    format!("{frontend_url}/auth/error?reason={INTERNAL_SERVER_ERROR_MESSAGE}"),
+                ))
+                .finish()
         }
     }
 }
