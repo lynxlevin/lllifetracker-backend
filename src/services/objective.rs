@@ -1,4 +1,4 @@
-use crate::entities::{objective, tag};
+use crate::entities::{objective, objectives_actions, tag};
 use chrono::Utc;
 use sea_orm::entity::prelude::*;
 use sea_orm::{QueryOrder, Set, TransactionError, TransactionTrait};
@@ -71,6 +71,41 @@ impl Mutation {
             Ok(objective) => match objective {
                 Some(objective) => {
                     objective.delete(db).await?;
+                    Ok(())
+                }
+                None => Ok(()),
+            },
+            Err(e) => Err(e),
+        }
+    }
+
+    pub async fn connect_action(
+        db: &DbConn,
+        objective_id: uuid::Uuid,
+        action_id: uuid::Uuid,
+    ) -> Result<objectives_actions::Model, DbErr> {
+        objectives_actions::ActiveModel {
+            objective_id: Set(objective_id),
+            action_id: Set(action_id),
+        }
+        .insert(db)
+        .await
+    }
+
+    pub async fn disconnect_action(
+        db: &DbConn,
+        objective_id: uuid::Uuid,
+        action_id: uuid::Uuid,
+    ) -> Result<(), DbErr> {
+        match objectives_actions::Entity::find()
+            .filter(objectives_actions::Column::ObjectiveId.eq(objective_id))
+            .filter(objectives_actions::Column::ActionId.eq(action_id))
+            .one(db)
+            .await
+        {
+            Ok(connection) => match connection {
+                Some(connection) => {
+                    connection.delete(db).await?;
                     Ok(())
                 }
                 None => Ok(()),

@@ -1,5 +1,7 @@
+mod connect;
 mod create;
 mod delete;
+mod disconnect;
 mod get;
 mod list;
 mod update;
@@ -13,7 +15,9 @@ pub fn objective_routes(cfg: &mut ServiceConfig) {
             .service(get::get_objective)
             .service(create::create_objective)
             .service(update::update_objective)
-            .service(delete::delete_objective),
+            .service(delete::delete_objective)
+            .service(connect::connect_action)
+            .service(disconnect::disconnect_action),
         // MYMEMO: Can restrict AuthenticateUser this way.
         // .service(
         //     actix_web::web::scope("")
