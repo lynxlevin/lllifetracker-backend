@@ -1,4 +1,4 @@
-use crate::entities::{ambition, tag};
+use crate::entities::{ambition, ambitions_objectives, tag};
 use chrono::Utc;
 use sea_orm::entity::prelude::*;
 use sea_orm::{QueryOrder, Set, TransactionError, TransactionTrait};
@@ -81,6 +81,19 @@ impl Mutation {
             },
             Err(e) => Err(e),
         }
+    }
+
+    pub async fn connect_objective(
+        db: &DbConn,
+        ambition_id: uuid::Uuid,
+        objective_id: uuid::Uuid,
+    ) -> Result<ambitions_objectives::Model, DbErr> {
+        ambitions_objectives::ActiveModel {
+            ambition_id: Set(ambition_id),
+            objective_id: Set(objective_id),
+        }
+        .insert(db)
+        .await
     }
 }
 

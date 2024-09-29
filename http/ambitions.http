@@ -14,7 +14,7 @@ Content-Type: application/json
 # @name list
 GET {{endpoint}}/ambitions
 
-@ambition_id=717db59b-736f-4a89-b3e0-b34f8735aba3
+@ambition_id=2a42258f-37c3-4751-9a7b-b8a183f49eb4
 
 ###
 # @name get
@@ -42,3 +42,13 @@ Content-Type: application/json
 # @name delete
 DELETE {{endpoint}}/ambitions/{{ambition_id}}
 
+@objective_id=3bea9c2e-0db8-4e77-9d91-529972f9786c
+
+###
+# @name connect
+POST {{endpoint}}/ambitions/{{ambition_id}}/objectives/{{objective_id}}/connection
+Content-Type: application/json
+
+###
+# @name disconnect
+DELETE {{endpoint}}/ambitions/{{ambition_id}}/objectives/{{objective_id}}/connection
