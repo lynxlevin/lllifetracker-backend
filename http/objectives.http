@@ -1,0 +1,44 @@
+# Objectives
+
+###
+# @name login
+POST {{endpoint}}/users/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "password"
+}
+
+###
+# @name list
+GET {{endpoint}}/objectives
+
+@objective_id=57ef4be8-9022-4ea4-b0c8-9ea5a19153d2
+
+###
+# @name get
+GET {{endpoint}}/objectives/{{objective_id}}
+
+###
+# @name create
+POST {{endpoint}}/objectives
+Content-Type: application/json
+
+{
+  "name": "Second objective"
+}
+
+###
+# @name update
+PUT {{endpoint}}/objectives/{{objective_id}}
+Content-Type: application/json
+
+{
+  "name": "My objective edited"
+}
+
+###
+# @name delete
+DELETE {{endpoint}}/objectives/{{objective_id}}
+

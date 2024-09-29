@@ -14,7 +14,7 @@ Content-Type: application/json
 # @name list
 GET {{endpoint}}/actions
 
-@action_id=747a6e88-6cbd-4916-954c-14b5b925b3c6
+@action_id=95233de1-88e2-432b-a1f8-23da045c6b93
 
 ###
 # @name get
