@@ -1,0 +1,44 @@
+# Actions
+
+###
+# @name login
+POST {{endpoint}}/users/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "password"
+}
+
+###
+# @name list
+GET {{endpoint}}/ambitions
+
+@ambition_id=717db59b-736f-4a89-b3e0-b34f8735aba3
+
+###
+# @name get
+GET {{endpoint}}/ambitions/{{ambition_id}}
+
+###
+# @name create
+POST {{endpoint}}/ambitions
+Content-Type: application/json
+
+{
+  "name": "Second ambition"
+}
+
+###
+# @name update
+PUT {{endpoint}}/ambitions/{{ambition_id}}
+Content-Type: application/json
+
+{
+  "name": "My ambition edited"
+}
+
+###
+# @name delete
+DELETE {{endpoint}}/ambitions/{{ambition_id}}
+

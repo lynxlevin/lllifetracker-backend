@@ -5,7 +5,7 @@ use sea_orm::*;
 use std::env;
 
 use crate::{
-    routes::{action_routes, auth_routes, objective_routes},
+    routes::{action_routes, ambition_routes, auth_routes, objective_routes},
     utils::auth::auth_middleware::AuthenticateUser,
 };
 pub struct Application {
@@ -106,6 +106,7 @@ async fn run(
                     .build()
             })
             .configure(auth_routes)
+            .configure(ambition_routes)
             .configure(objective_routes)
             .configure(action_routes)
             .app_data(Data::new(state.clone()))
