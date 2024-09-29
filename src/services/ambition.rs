@@ -95,6 +95,28 @@ impl Mutation {
         .insert(db)
         .await
     }
+
+    pub async fn disconnect_objective(
+        db: &DbConn,
+        ambition_id: uuid::Uuid,
+        objective_id: uuid::Uuid,
+    ) -> Result<(), DbErr> {
+        match ambitions_objectives::Entity::find()
+            .filter(ambitions_objectives::Column::AmbitionId.eq(ambition_id))
+            .filter(ambitions_objectives::Column::ObjectiveId.eq(objective_id))
+            .one(db)
+            .await
+        {
+            Ok(connection) => match connection {
+                Some(connection) => {
+                    connection.delete(db).await?;
+                    Ok(())
+                }
+                None => Ok(()),
+            },
+            Err(e) => Err(e),
+        }
+    }
 }
 
 pub struct Query;

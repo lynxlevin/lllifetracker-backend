@@ -1,6 +1,7 @@
 mod connect;
 mod create;
 mod delete;
+mod disconnect;
 mod get;
 mod list;
 mod update;
@@ -15,7 +16,8 @@ pub fn ambition_routes(cfg: &mut ServiceConfig) {
             .service(create::create_ambition)
             .service(update::update_ambition)
             .service(delete::delete_ambition)
-            .service(connect::connect_objective),
+            .service(connect::connect_objective)
+            .service(disconnect::disconnect_objective),
         // MYMEMO: Can restrict AuthenticateUser this way.
         // .service(
         //     actix_web::web::scope("")
