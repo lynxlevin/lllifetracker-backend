@@ -25,7 +25,7 @@ pub async fn create_action(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ActionMutation::create(
+            match ActionMutation::create_with_tag(
                 &data.conn,
                 NewAction {
                     name: req.name.clone(),
