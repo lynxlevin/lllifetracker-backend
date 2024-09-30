@@ -1,4 +1,5 @@
 use crate::entities::{objective, objectives_actions, tag};
+use crate::types::CustomDbErr;
 use chrono::Utc;
 use sea_orm::entity::prelude::*;
 use sea_orm::{QueryOrder, Set, TransactionError, TransactionTrait};
@@ -47,19 +48,14 @@ impl Mutation {
         objective_id: uuid::Uuid,
         user_id: uuid::Uuid,
         name: String,
-    ) -> Option<Result<objective::Model, DbErr>> {
-        match Query::find_by_id_and_user_id(db, objective_id, user_id).await {
-            Ok(objective) => match objective {
-                Some(objective) => {
-                    let mut objective: objective::ActiveModel = objective.into();
-                    objective.name = Set(name);
-                    objective.updated_at = Set(Utc::now().into());
-                    Some(objective.update(db).await)
-                }
-                None => None,
-            },
-            Err(e) => Some(Err(e)),
-        }
+    ) -> Result<objective::Model, DbErr> {
+        let mut objective: objective::ActiveModel =
+            Query::find_by_id_and_user_id(db, objective_id, user_id)
+                .await?
+                .into();
+        objective.name = Set(name);
+        objective.updated_at = Set(Utc::now().into());
+        objective.update(db).await
     }
 
     pub async fn delete(
@@ -67,16 +63,11 @@ impl Mutation {
         objective_id: uuid::Uuid,
         user_id: uuid::Uuid,
     ) -> Result<(), DbErr> {
-        match Query::find_by_id_and_user_id(db, objective_id, user_id).await {
-            Ok(objective) => match objective {
-                Some(objective) => {
-                    objective.delete(db).await?;
-                    Ok(())
-                }
-                None => Ok(()),
-            },
-            Err(e) => Err(e),
-        }
+        Query::find_by_id_and_user_id(db, objective_id, user_id)
+            .await?
+            .delete(db)
+            .await?;
+        Ok(())
     }
 
     pub async fn connect_action(
@@ -133,10 +124,11 @@ impl Query {
         db: &DbConn,
         objective_id: uuid::Uuid,
         user_id: uuid::Uuid,
-    ) -> Result<Option<objective::Model>, DbErr> {
+    ) -> Result<objective::Model, DbErr> {
         objective::Entity::find_by_id(objective_id)
             .filter(objective::Column::UserId.eq(user_id))
             .one(db)
-            .await
+            .await?
+            .ok_or(DbErr::Custom(CustomDbErr::NotFound.to_string()))
     }
 }

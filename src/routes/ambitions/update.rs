@@ -2,13 +2,14 @@ use crate::{
     entities::user as user_entity,
     services::ambition::Mutation as AmbitionMutation,
     startup::AppState,
-    types::{self, AmbitionVisible, INTERNAL_SERVER_ERROR_MESSAGE},
+    types::{self, AmbitionVisible, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
     put,
     web::{Data, Json, Path, ReqData},
     HttpResponse,
 };
+use sea_orm::DbErr;
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -41,24 +42,28 @@ pub async fn update_ambition(
             )
             .await
             {
-                Some(result) => match result {
-                    Ok(ambition) => HttpResponse::Ok().json(AmbitionVisible {
-                        id: ambition.id,
-                        name: ambition.name,
-                        description: ambition.description,
-                        created_at: ambition.created_at,
-                        updated_at: ambition.updated_at,
-                    }),
-                    Err(e) => {
+                Ok(ambition) => HttpResponse::Ok().json(AmbitionVisible {
+                    id: ambition.id,
+                    name: ambition.name,
+                    description: ambition.description,
+                    created_at: ambition.created_at,
+                    updated_at: ambition.updated_at,
+                }),
+                Err(e) => match e {
+                    DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
+                        CustomDbErr::NotFound => {
+                            HttpResponse::NotFound().json(types::ErrorResponse {
+                                error: "Ambition with this id was not found".to_string(),
+                            })
+                        }
+                    },
+                    e => {
                         tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
                         HttpResponse::InternalServerError().json(types::ErrorResponse {
                             error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
                         })
                     }
                 },
-                None => HttpResponse::NotFound().json(types::ErrorResponse {
-                    error: "Ambition with this id was not found".to_string(),
-                }),
             }
         }
         None => HttpResponse::Unauthorized().json(types::ErrorResponse {

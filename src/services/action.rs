@@ -1,4 +1,5 @@
 use crate::entities::{action, tag};
+use crate::types::CustomDbErr;
 use chrono::Utc;
 use sea_orm::entity::prelude::*;
 use sea_orm::{QueryOrder, Set, TransactionError, TransactionTrait};
@@ -47,19 +48,13 @@ impl Mutation {
         action_id: uuid::Uuid,
         user_id: uuid::Uuid,
         name: String,
-    ) -> Option<Result<action::Model, DbErr>> {
-        match Query::find_by_id_and_user_id(db, action_id, user_id).await {
-            Ok(action) => match action {
-                Some(action) => {
-                    let mut action: action::ActiveModel = action.into();
-                    action.name = Set(name);
-                    action.updated_at = Set(Utc::now().into());
-                    Some(action.update(db).await)
-                }
-                None => None,
-            },
-            Err(e) => Some(Err(e)),
-        }
+    ) -> Result<action::Model, DbErr> {
+        let mut action: action::ActiveModel = Query::find_by_id_and_user_id(db, action_id, user_id)
+            .await?
+            .into();
+        action.name = Set(name);
+        action.updated_at = Set(Utc::now().into());
+        action.update(db).await
     }
 
     pub async fn delete(
@@ -67,16 +62,11 @@ impl Mutation {
         action_id: uuid::Uuid,
         user_id: uuid::Uuid,
     ) -> Result<(), DbErr> {
-        match Query::find_by_id_and_user_id(db, action_id, user_id).await {
-            Ok(action) => match action {
-                Some(action) => {
-                    action.delete(db).await?;
-                    Ok(())
-                }
-                None => Ok(()),
-            },
-            Err(e) => Err(e),
-        }
+        Query::find_by_id_and_user_id(db, action_id, user_id)
+            .await?
+            .delete(db)
+            .await?;
+        Ok(())
     }
 }
 
@@ -98,10 +88,11 @@ impl Query {
         db: &DbConn,
         action_id: uuid::Uuid,
         user_id: uuid::Uuid,
-    ) -> Result<Option<action::Model>, DbErr> {
+    ) -> Result<action::Model, DbErr> {
         action::Entity::find_by_id(action_id)
             .filter(action::Column::UserId.eq(user_id))
             .one(db)
-            .await
+            .await?
+            .ok_or(DbErr::Custom(CustomDbErr::NotFound.to_string()))
     }
 }

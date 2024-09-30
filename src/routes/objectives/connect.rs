@@ -5,14 +5,14 @@ use crate::{
         objective::{Mutation as ObjectiveMutation, Query as ObjectiveQuery},
     },
     startup::AppState,
-    types::{self, INTERNAL_SERVER_ERROR_MESSAGE},
+    types::{self, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
     post,
     web::{Data, Path, ReqData},
     HttpResponse,
 };
-use sea_orm::DbConn;
+use sea_orm::{DbConn, DbErr};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -71,26 +71,29 @@ async fn validate_ownership(
     db: &DbConn,
     user_id: uuid::Uuid,
     path_param: &Path<PathParam>,
-) -> Result<(), String> {
+) -> Result<(), ()> {
     match ObjectiveQuery::find_by_id_and_user_id(db, path_param.objective_id, user_id).await {
-        Ok(objective) => match objective {
-            Some(_) => {
-                match ActionQuery::find_by_id_and_user_id(db, path_param.action_id, user_id).await {
-                    Ok(action) => match action {
-                        Some(_) => Ok(()),
-                        None => Err("Action not found".to_string()),
-                    },
-                    Err(e) => {
-                        tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                        Err("Action not found".to_string())
-                    }
+        Ok(_) => match ActionQuery::find_by_id_and_user_id(db, path_param.action_id, user_id).await
+        {
+            Ok(_) => Ok(()),
+            Err(e) => match e {
+                DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
+                    CustomDbErr::NotFound => Err(()),
+                },
+                e => {
+                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
+                    Err(())
                 }
-            }
-            None => Err("Objective not found".to_string()),
+            },
         },
-        Err(e) => {
-            tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-            Err("Objective not found".to_string())
-        }
+        Err(e) => match e {
+            DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
+                CustomDbErr::NotFound => Err(()),
+            },
+            e => {
+                tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
+                Err(())
+            }
+        },
     }
 }

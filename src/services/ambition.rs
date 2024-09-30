@@ -1,4 +1,5 @@
 use crate::entities::{ambition, ambitions_objectives, tag};
+use crate::types::CustomDbErr;
 use chrono::Utc;
 use sea_orm::entity::prelude::*;
 use sea_orm::{QueryOrder, Set, TransactionError, TransactionTrait};
@@ -50,20 +51,15 @@ impl Mutation {
         user_id: uuid::Uuid,
         name: String,
         description: Option<String>,
-    ) -> Option<Result<ambition::Model, DbErr>> {
-        match Query::find_by_id_and_user_id(db, ambition_id, user_id).await {
-            Ok(ambition) => match ambition {
-                Some(ambition) => {
-                    let mut ambition: ambition::ActiveModel = ambition.into();
-                    ambition.name = Set(name);
-                    ambition.description = Set(description);
-                    ambition.updated_at = Set(Utc::now().into());
-                    Some(ambition.update(db).await)
-                }
-                None => None,
-            },
-            Err(e) => Some(Err(e)),
-        }
+    ) -> Result<ambition::Model, DbErr> {
+        let mut ambition: ambition::ActiveModel =
+            Query::find_by_id_and_user_id(db, ambition_id, user_id)
+                .await?
+                .into();
+        ambition.name = Set(name);
+        ambition.description = Set(description);
+        ambition.updated_at = Set(Utc::now().into());
+        ambition.update(db).await
     }
 
     pub async fn delete(
@@ -71,16 +67,11 @@ impl Mutation {
         ambition_id: uuid::Uuid,
         user_id: uuid::Uuid,
     ) -> Result<(), DbErr> {
-        match Query::find_by_id_and_user_id(db, ambition_id, user_id).await {
-            Ok(ambition) => match ambition {
-                Some(ambition) => {
-                    ambition.delete(db).await?;
-                    Ok(())
-                }
-                None => Ok(()),
-            },
-            Err(e) => Err(e),
-        }
+        Query::find_by_id_and_user_id(db, ambition_id, user_id)
+            .await?
+            .delete(db)
+            .await?;
+        Ok(())
     }
 
     pub async fn connect_objective(
@@ -137,10 +128,11 @@ impl Query {
         db: &DbConn,
         ambition_id: uuid::Uuid,
         user_id: uuid::Uuid,
-    ) -> Result<Option<ambition::Model>, DbErr> {
+    ) -> Result<ambition::Model, DbErr> {
         ambition::Entity::find_by_id(ambition_id)
             .filter(ambition::Column::UserId.eq(user_id))
             .one(db)
-            .await
+            .await?
+            .ok_or(DbErr::Custom(CustomDbErr::NotFound.to_string()))
     }
 }
