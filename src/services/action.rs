@@ -96,3 +96,72 @@ impl Query {
             .ok_or(DbErr::Custom(CustomDbErr::NotFound.to_string()))
     }
 }
+
+// MYMEMO: Would also like to try MockDatabase, but to do that, need to change the entire structure.
+// https://github.com/SeaQL/sea-orm/issues/830
+#[cfg(test)]
+mod tests {
+    use migration::{Migrator, MigratorTrait};
+    use sea_orm::{DbConn, DbErr};
+
+    use crate::{
+        entities::{tag, user},
+        startup::get_database_connection,
+    };
+
+    use super::*;
+
+    #[actix_web::test]
+    async fn main() -> Result<(), DbErr> {
+        dotenvy::from_filename(".env.test").unwrap();
+        // NOTE: Ideally, Sqlite should be used instead of Postgres but cannot,
+        // because programmatic migration for Sqlite using Migrator is not supported
+        // nor migration from entities do not set default constraints.
+        let db = get_database_connection().await;
+        Migrator::up(&db, None).await.unwrap();
+
+        flush(&db).await?;
+        test_create_with_tag(&db).await?;
+
+        Ok(())
+    }
+
+    async fn flush(db: &DbConn) -> Result<(), DbErr> {
+        tag::Entity::delete_many().exec(db).await?;
+        action::Entity::delete_many().exec(db).await?;
+        Ok(())
+    }
+
+    async fn test_create_with_tag(db: &DbConn) -> Result<(), DbErr> {
+        let user = user::Entity::find()
+            .filter(user::Column::Email.eq("test@test.com".to_string()))
+            .one(db)
+            .await?
+            .unwrap();
+
+        let form_data = NewAction {
+            name: "Test action".to_string(),
+            user_id: user.id,
+        };
+
+        let created_action = Mutation::create_with_tag(db, form_data).await.unwrap();
+        assert_eq!(created_action.name, "Test action".to_string());
+        assert_eq!(created_action.user_id, user.id);
+
+        let action_from_db = action::Entity::find_by_id(created_action.id)
+            .filter(action::Column::Name.eq("Test action".to_string()))
+            .filter(action::Column::UserId.eq(user.id))
+            .one(db)
+            .await?;
+        assert_ne!(action_from_db, None);
+
+        let tag_from_db = tag::Entity::find()
+            .filter(tag::Column::ActionId.eq(created_action.id))
+            .filter(tag::Column::UserId.eq(user.id))
+            .one(db)
+            .await?;
+        assert_ne!(tag_from_db, None);
+
+        Ok(())
+    }
+}
