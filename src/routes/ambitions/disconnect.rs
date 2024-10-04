@@ -4,7 +4,6 @@ use crate::{
         ambition::{Mutation as AmbitionMutation, Query as AmbitionQuery},
         objective::Query as ObjectiveQuery,
     },
-    startup::AppState,
     types::{self, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
@@ -22,21 +21,21 @@ struct PathParam {
 
 #[tracing::instrument(
     name = "Disconnecting an objective from an ambition",
-    skip(data, user, path_param)
+    skip(db, user, path_param)
 )]
 #[delete("/{ambition_id}/objectives/{objective_id}/connection")]
 pub async fn disconnect_objective(
-    data: Data<AppState>,
+    db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
     path_param: Path<PathParam>,
 ) -> HttpResponse {
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match validate_ownership(&data.conn, user.id, &path_param).await {
+            match validate_ownership(&db, user.id, &path_param).await {
                 Ok(_) => {
                     match AmbitionMutation::disconnect_objective(
-                        &data.conn,
+                        &db,
                         path_param.ambition_id,
                         path_param.objective_id,
                     )

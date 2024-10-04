@@ -1,7 +1,6 @@
 use crate::{
     entities::user as user_entity,
     services::ambition::Query as AmbitionQuery,
-    startup::AppState,
     types::{self, AmbitionVisible, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
@@ -9,25 +8,24 @@ use actix_web::{
     web::{Data, Path, ReqData},
     HttpResponse,
 };
-use sea_orm::DbErr;
+use sea_orm::{DbConn, DbErr};
 
 #[derive(serde::Deserialize, Debug)]
 struct PathParam {
     ambition_id: uuid::Uuid,
 }
 
-#[tracing::instrument(name = "Getting an ambition", skip(data, user))]
+#[tracing::instrument(name = "Getting an ambition", skip(db, user))]
 #[get("/{ambition_id}")]
 pub async fn get_ambition(
-    data: Data<AppState>,
+    db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
     path_param: Path<PathParam>,
 ) -> HttpResponse {
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match AmbitionQuery::find_by_id_and_user_id(&data.conn, path_param.ambition_id, user.id)
-                .await
+            match AmbitionQuery::find_by_id_and_user_id(&db, path_param.ambition_id, user.id).await
             {
                 Ok(ambition) => HttpResponse::Ok().json(AmbitionVisible {
                     id: ambition.id,

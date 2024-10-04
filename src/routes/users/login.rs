@@ -1,6 +1,5 @@
 use crate::{
     services::user::Query as UserQuery,
-    startup::AppState,
     types::{INTERNAL_SERVER_ERROR_MESSAGE, USER_EMAIL_KEY, USER_ID_KEY},
     utils::auth::password::verify_password,
 };
@@ -13,8 +12,9 @@ use actix_web::{
 };
 use deadpool_redis::{
     redis::{AsyncCommands, SetExpiry, SetOptions},
-    Connection,
+    Connection, Pool,
 };
+use sea_orm::DbConn;
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 pub struct LoginUser {
@@ -22,18 +22,19 @@ pub struct LoginUser {
     password: String,
 }
 
-#[tracing::instrument(name = "Logging a user in", skip(data, req_user, session), fields(user_email = &req_user.email))]
+#[tracing::instrument(name = "Logging a user in", skip(db, redis_pool, req_user, session), fields(user_email = &req_user.email))]
 #[post("/login")]
 async fn login_user(
-    data: Data<AppState>,
+    db: Data<DbConn>,
+    redis_pool: Data<Pool>,
     req_user: Json<LoginUser>,
     session: actix_session::Session,
 ) -> HttpResponse {
     let not_found_message = "A user with these details does not exist. If you registered with these details, ensure you activate your account by clicking on the link sent to your e-mail address.";
-    match data.redis_pool.get().await {
+    match redis_pool.get().await {
         Ok(ref mut redis_con) => match validate_request_count(redis_con, &req_user.email).await {
             Ok((login_request_count_key, login_request_count)) => {
-                match UserQuery::find_active_by_email(&data.conn, req_user.email.clone()).await {
+                match UserQuery::find_active_by_email(&db, req_user.email.clone()).await {
                     Ok(user) => match user {
                         Some(user) => {
                             match task::spawn_blocking(move || {

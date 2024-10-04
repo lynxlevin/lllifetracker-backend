@@ -4,10 +4,10 @@ use actix_web::{
     web::{Data, Query},
     HttpResponse,
 };
+use deadpool_redis::Pool;
 
 use crate::{
     settings,
-    startup::AppState,
     types::INTERNAL_SERVER_ERROR_MESSAGE,
     utils::auth::tokens::{issue_confirmation_token_pasetors, verify_confirmation_token_pasetor},
 };
@@ -17,14 +17,14 @@ struct Parameters {
     token: String,
 }
 
-#[tracing::instrument(name = "Confirming change password token", skip(query, data))]
+#[tracing::instrument(name = "Confirming change password token", skip(query, redis_pool))]
 #[get("/email-verification")]
 pub async fn verify_password_change_token(
     query: Query<Parameters>,
-    data: Data<AppState>,
+    redis_pool: Data<Pool>,
 ) -> HttpResponse {
     let frontend_url = settings::get_settings().frontend_url;
-    match data.redis_pool.get().await {
+    match redis_pool.get().await {
         Ok(ref mut redis_con) => {
             match verify_confirmation_token_pasetor(query.token.clone(), redis_con, None).await {
                 Ok(confirmation_token) => {

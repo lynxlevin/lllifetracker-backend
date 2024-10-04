@@ -1,7 +1,6 @@
 use crate::{
     entities::user as user_entity,
     services::ambition::Query as AmbitionQuery,
-    startup::AppState,
     types::{self, AmbitionVisible, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
@@ -9,17 +8,18 @@ use actix_web::{
     web::{Data, ReqData},
     HttpResponse,
 };
+use sea_orm::DbConn;
 
-#[tracing::instrument(name = "Listing a user's ambitions", skip(data, user))]
+#[tracing::instrument(name = "Listing a user's ambitions", skip(db, user))]
 #[get("")]
 pub async fn list_ambitions(
-    data: Data<AppState>,
+    db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
 ) -> HttpResponse {
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match AmbitionQuery::find_all_by_user_id(&data.conn, user.id).await {
+            match AmbitionQuery::find_all_by_user_id(&db, user.id).await {
                 Ok(ambitions) => HttpResponse::Ok().json(
                     ambitions
                         .iter()

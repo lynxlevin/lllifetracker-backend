@@ -3,21 +3,24 @@ use actix_web::{
     web::{Data, Json},
     HttpResponse,
 };
+use deadpool_redis::Pool;
+use sea_orm::DbConn;
 
 #[derive(serde::Deserialize, Debug)]
 struct UserEmail {
     email: String,
 }
 
-#[tracing::instrument(name = "Requesting a password change", skip(data))]
+#[tracing::instrument(name = "Requesting a password change", skip(db, redis_pool))]
 #[actix_web::post("/email-verification")]
 pub async fn request_password_change(
-    data: Data<crate::startup::AppState>,
+    db: Data<DbConn>,
+    redis_pool: Data<Pool>,
     req: Json<UserEmail>,
 ) -> HttpResponse {
-    match UserQuery::find_active_by_email(&data.conn, req.email.clone()).await {
+    match UserQuery::find_active_by_email(&db, req.email.clone()).await {
         Ok(_user) => match _user {
-            Some(user) => match data.redis_pool.get().await {
+            Some(user) => match redis_pool.get().await {
                 Ok(ref mut redis_con) => {
                     send_multipart_email(
                         "Password Reset Instructions".to_string(),

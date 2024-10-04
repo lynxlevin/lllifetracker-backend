@@ -1,7 +1,6 @@
 use crate::{
     entities::user as user_entity,
     services::ambition::Mutation as AmbitionMutation,
-    startup::AppState,
     types::{self, AmbitionVisible, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
@@ -9,7 +8,7 @@ use actix_web::{
     web::{Data, Json, Path, ReqData},
     HttpResponse,
 };
-use sea_orm::DbErr;
+use sea_orm::{DbConn, DbErr};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -22,10 +21,10 @@ struct RequestBody {
     description: Option<String>,
 }
 
-#[tracing::instrument(name = "Updating an ambition", skip(data, user, req, path_param))]
+#[tracing::instrument(name = "Updating an ambition", skip(db, user, req, path_param))]
 #[put("/{ambition_id}")]
 pub async fn update_ambition(
-    data: Data<AppState>,
+    db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<RequestBody>,
     path_param: Path<PathParam>,
@@ -34,7 +33,7 @@ pub async fn update_ambition(
         Some(user) => {
             let user = user.into_inner();
             match AmbitionMutation::update(
-                &data.conn,
+                &db,
                 path_param.ambition_id,
                 user.id,
                 req.name.clone(),

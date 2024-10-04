@@ -1,7 +1,6 @@
 use crate::{
     entities::user as user_entity,
     services::objective::Mutation as ObjectiveMutation,
-    startup::AppState,
     types::{self, CustomDbErr, ObjectiveVisible, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
@@ -9,7 +8,7 @@ use actix_web::{
     web::{Data, Json, Path, ReqData},
     HttpResponse,
 };
-use sea_orm::DbErr;
+use sea_orm::{DbConn, DbErr};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -21,10 +20,10 @@ struct RequestBody {
     name: String,
 }
 
-#[tracing::instrument(name = "Updating an objective", skip(data, user, req, path_param))]
+#[tracing::instrument(name = "Updating an objective", skip(db, user, req, path_param))]
 #[put("/{objective_id}")]
 pub async fn update_objective(
-    data: Data<AppState>,
+    db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<RequestBody>,
     path_param: Path<PathParam>,
@@ -32,13 +31,8 @@ pub async fn update_objective(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ObjectiveMutation::update(
-                &data.conn,
-                path_param.objective_id,
-                user.id,
-                req.name.clone(),
-            )
-            .await
+            match ObjectiveMutation::update(&db, path_param.objective_id, user.id, req.name.clone())
+                .await
             {
                 Ok(objective) => HttpResponse::Ok().json(ObjectiveVisible {
                     id: objective.id,

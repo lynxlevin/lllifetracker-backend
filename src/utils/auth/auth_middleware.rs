@@ -10,10 +10,9 @@ use actix_web::{
     Error, HttpMessage,
 };
 use futures::future::LocalBoxFuture;
+use sea_orm::DbConn;
 
-use crate::{
-    services::user::Query as UserQuery, startup::AppState, utils::auth::session::get_user_id,
-};
+use crate::{services::user::Query as UserQuery, utils::auth::session::get_user_id};
 
 pub struct AuthenticateUser;
 
@@ -81,8 +80,8 @@ async fn set_user(req: &ServiceRequest) -> Result<(), String> {
         }
     };
 
-    let user = match req.app_data::<Data<AppState>>() {
-        Some(data) => match UserQuery::find_by_id(&data.conn, user_id).await {
+    let user = match req.app_data::<Data<DbConn>>() {
+        Some(data) => match UserQuery::find_by_id(data, user_id).await {
             Ok(user) => match user {
                 Some(user) => user,
                 None => {

@@ -7,21 +7,27 @@ use actix_web::{
     web::{Data, Json},
     HttpResponse,
 };
+use deadpool_redis::Pool;
+use sea_orm::DbConn;
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {
     email: String,
 }
-#[tracing::instrument(name = "Resending registration confirmation email", skip(data, req))]
+#[tracing::instrument(
+    name = "Resending registration confirmation email",
+    skip(db, redis_pool, req)
+)]
 #[post("/resend-email")]
 pub async fn resend_email(
-    data: Data<crate::startup::AppState>,
+    db: Data<DbConn>,
+    redis_pool: Data<Pool>,
     req: Json<RequestBody>,
 ) -> HttpResponse {
-    match UserQuery::find_inactive_by_email(&data.conn, req.email.clone()).await {
+    match UserQuery::find_inactive_by_email(&db, req.email.clone()).await {
         Ok(user) => match user {
             Some(user) => {
-                match data.redis_pool.get().await {
+                match redis_pool.get().await {
                     Ok(ref mut redis_con) => {
                         send_multipart_email(
                             "Let's get you verified".to_string(),

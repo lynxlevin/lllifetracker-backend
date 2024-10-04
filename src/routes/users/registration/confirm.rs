@@ -5,21 +5,24 @@ use actix_web::{
     web::{Data, Query},
     HttpResponse,
 };
+use deadpool_redis::Pool;
+use sea_orm::DbConn;
 
 #[derive(serde::Deserialize)]
 pub struct Parameters {
     token: String,
 }
 
-#[tracing::instrument(name = "Activating a new user", skip(data, parameters))]
+#[tracing::instrument(name = "Activating a new user", skip(db, redis_pool, parameters))]
 #[get("/confirm")]
 pub async fn confirm(
     parameters: Query<Parameters>,
-    data: Data<crate::startup::AppState>,
+    db: Data<DbConn>,
+    redis_pool: Data<Pool>,
 ) -> HttpResponse {
     let settings = crate::settings::get_settings();
 
-    match data.redis_pool.get().await {
+    match redis_pool.get().await {
         Ok(ref mut redis_con) => {
             match crate::utils::auth::tokens::verify_confirmation_token_pasetor(
                 parameters.token.clone(),
@@ -29,9 +32,7 @@ pub async fn confirm(
             .await
             {
                 Ok(confirmation_token) => {
-                    match UserMutation::activate_user_by_id(&data.conn, confirmation_token.user_id)
-                        .await
-                    {
+                    match UserMutation::activate_user_by_id(&db, confirmation_token.user_id).await {
                         Ok(_) => {
                             tracing::event!(target: "backend", tracing::Level::INFO, "New user was activated successfully.");
                             HttpResponse::SeeOther()

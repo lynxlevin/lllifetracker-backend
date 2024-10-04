@@ -1,7 +1,6 @@
 use crate::{
     entities::user as user_entity,
     services::action::Query as ActionQuery,
-    startup::AppState,
     types::{self, ActionVisible, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
@@ -9,17 +8,18 @@ use actix_web::{
     web::{Data, ReqData},
     HttpResponse,
 };
+use sea_orm::DbConn;
 
-#[tracing::instrument(name = "Listing a user's actions", skip(data, user))]
+#[tracing::instrument(name = "Listing a user's actions", skip(db, user))]
 #[get("")]
 pub async fn list_actions(
-    data: Data<AppState>,
+    db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
 ) -> HttpResponse {
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ActionQuery::find_all_by_user_id(&data.conn, user.id).await {
+            match ActionQuery::find_all_by_user_id(&db, user.id).await {
                 Ok(actions) => HttpResponse::Ok().json(
                     actions
                         .iter()

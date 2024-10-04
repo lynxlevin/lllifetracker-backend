@@ -4,6 +4,8 @@ use actix_web::{
     web::{Data, Json},
     HttpResponse,
 };
+use deadpool_redis::Pool;
+use sea_orm::DbConn;
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {
@@ -13,7 +15,7 @@ struct RequestBody {
     last_name: String,
 }
 #[tracing::instrument(name = "Adding a new user",
-skip(data, new_user),
+skip(db, redis_pool, new_user),
 fields(
     new_user_mail = %new_user.email,
     new_user_first_name = %new_user.first_name,
@@ -21,7 +23,8 @@ fields(
 ))]
 #[post("")]
 pub async fn register(
-    data: Data<crate::startup::AppState>,
+    db: Data<DbConn>,
+    redis_pool: Data<Pool>,
     new_user: Json<RequestBody>,
 ) -> HttpResponse {
     let settings = crate::settings::get_settings();
@@ -36,8 +39,8 @@ pub async fn register(
         is_active: settings.email.no_verify,
     };
 
-    match user::Mutation::create_user(&data.conn, new_user).await {
-        Ok(user) => match data.redis_pool.get().await {
+    match user::Mutation::create_user(&db, new_user).await {
+        Ok(user) => match redis_pool.get().await {
             Ok(ref mut redis_con) => {
                 let message: String;
                 if !settings.email.no_verify {

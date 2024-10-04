@@ -1,7 +1,6 @@
 use crate::{
     entities::user as user_entity,
     services::objective::Query as ObjectiveQuery,
-    startup::AppState,
     types::{self, CustomDbErr, ObjectiveVisible, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
@@ -9,29 +8,25 @@ use actix_web::{
     web::{Data, Path, ReqData},
     HttpResponse,
 };
-use sea_orm::DbErr;
+use sea_orm::{DbConn, DbErr};
 
 #[derive(serde::Deserialize, Debug)]
 struct PathParam {
     objective_id: uuid::Uuid,
 }
 
-#[tracing::instrument(name = "Getting an objective", skip(data, user))]
+#[tracing::instrument(name = "Getting an objective", skip(db, user))]
 #[get("/{objective_id}")]
 pub async fn get_objective(
-    data: Data<AppState>,
+    db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
     path_param: Path<PathParam>,
 ) -> HttpResponse {
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ObjectiveQuery::find_by_id_and_user_id(
-                &data.conn,
-                path_param.objective_id,
-                user.id,
-            )
-            .await
+            match ObjectiveQuery::find_by_id_and_user_id(&db, path_param.objective_id, user.id)
+                .await
             {
                 Ok(objective) => HttpResponse::Ok().json(ObjectiveVisible {
                     id: objective.id,

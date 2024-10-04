@@ -4,7 +4,6 @@ use crate::{
         action::Query as ActionQuery,
         objective::{Mutation as ObjectiveMutation, Query as ObjectiveQuery},
     },
-    startup::AppState,
     types::{self, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
@@ -22,21 +21,21 @@ struct PathParam {
 
 #[tracing::instrument(
     name = "Connecting an action to an objective",
-    skip(data, user, path_param)
+    skip(db, user, path_param)
 )]
 #[post("/{objective_id}/actions/{action_id}/connection")]
 pub async fn connect_action(
-    data: Data<AppState>,
+    db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
     path_param: Path<PathParam>,
 ) -> HttpResponse {
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match validate_ownership(&data.conn, user.id, &path_param).await {
+            match validate_ownership(&db, user.id, &path_param).await {
                 Ok(_) => {
                     match ObjectiveMutation::connect_action(
-                        &data.conn,
+                        &db,
                         path_param.objective_id,
                         path_param.action_id,
                     )
