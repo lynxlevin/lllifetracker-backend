@@ -108,6 +108,33 @@ mod mutation_tests {
 
     use super::*;
 
+    async fn init_seed_data(db: &DbConn, user_id: uuid::Uuid) -> (action::Model, tag::Model) {
+        // NOTE: This transaction is for avoiding fk_constraint violation.
+        db.transaction::<_, (action::Model, tag::Model), DbErr>(|txn| {
+            Box::pin(async move {
+                let action = action::ActiveModel {
+                    id: Set(uuid::Uuid::new_v4()),
+                    name: Set("action_before_update".to_string()),
+                    user_id: Set(user_id),
+                    ..Default::default()
+                }
+                .insert(txn)
+                .await?;
+                let tag = tag::ActiveModel {
+                    id: Set(uuid::Uuid::new_v4()),
+                    action_id: Set(Some(action.id)),
+                    user_id: Set(user_id),
+                    ..Default::default()
+                }
+                .insert(txn)
+                .await?;
+                Ok((action, tag))
+            })
+        })
+        .await
+        .unwrap()
+    }
+
     #[actix_web::test]
     async fn create_with_tag() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
@@ -149,22 +176,15 @@ mod mutation_tests {
     async fn update() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::get_or_create_user(&db).await?;
-        let action = action::ActiveModel {
-            id: Set(uuid::Uuid::new_v4()),
-            name: Set("action_before_update".to_string()),
-            user_id: Set(user.id),
-            ..Default::default()
-        }
-        .insert(&db)
-        .await?;
+        let (action, _) = init_seed_data(&db, user.id).await;
         let new_name = "action_after_update".to_string();
 
+        // MYMEMO: this sometimes fails, maybe I should execute the whole thing in 1 transaction? delete also fails with Custom("NotFound"). Even deadlock. Maybe this is the cost of using a real Postgres
         let returned_action = Mutation::update(&db, action.id, user.id, new_name.clone()).await?;
         assert_eq!(returned_action.id, action.id);
         assert_eq!(returned_action.name, new_name.clone());
         assert_eq!(returned_action.user_id, user.id);
         assert_eq!(returned_action.created_at, action.created_at);
-        assert_ne!(returned_action.updated_at, action.updated_at);
         assert!(returned_action.updated_at > action.updated_at);
 
         let updated_action = action::Entity::find_by_id(action.id)
@@ -184,22 +204,7 @@ mod mutation_tests {
     async fn delete() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::get_or_create_user(&db).await?;
-        let action = action::ActiveModel {
-            id: Set(uuid::Uuid::new_v4()),
-            name: Set("action_before_update".to_string()),
-            user_id: Set(user.id),
-            ..Default::default()
-        }
-        .insert(&db)
-        .await?;
-        let tag = tag::ActiveModel {
-            id: Set(uuid::Uuid::new_v4()),
-            action_id: Set(Some(action.id)),
-            user_id: Set(user.id),
-            ..Default::default()
-        }
-        .insert(&db)
-        .await?;
+        let (action, tag) = init_seed_data(&db, user.id).await;
 
         Mutation::delete(&db, action.id, user.id).await?;
 
