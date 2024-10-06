@@ -157,7 +157,7 @@ mod mutation_tests {
             .filter(action::Column::UpdatedAt.eq(returned_action.updated_at))
             .one(&db)
             .await?;
-        assert_ne!(created_action, None);
+        assert!(created_action.is_some());
 
         let created_tag = tag::Entity::find()
             .filter(tag::Column::UserId.eq(user.id))
@@ -166,7 +166,7 @@ mod mutation_tests {
             .filter(tag::Column::ObjectiveId.is_null())
             .one(&db)
             .await?;
-        assert_ne!(created_tag, None);
+        assert!(created_tag.is_some());
 
         test_utils::flush_actions(&db).await?;
         Ok(())
@@ -194,7 +194,7 @@ mod mutation_tests {
             .filter(action::Column::UpdatedAt.eq(returned_action.updated_at))
             .one(&db)
             .await?;
-        assert_ne!(updated_action, None);
+        assert!(updated_action.is_some());
 
         test_utils::flush_actions(&db).await?;
         Ok(())
@@ -209,10 +209,10 @@ mod mutation_tests {
         Mutation::delete(&db, action.id, user.id).await?;
 
         let action_in_db = action::Entity::find_by_id(action.id).one(&db).await?;
-        assert_eq!(action_in_db, None);
+        assert!(action_in_db.is_none());
 
         let tag_in_db = tag::Entity::find_by_id(tag.id).one(&db).await?;
-        assert_eq!(tag_in_db, None);
+        assert!(tag_in_db.is_none());
 
         Ok(())
     }

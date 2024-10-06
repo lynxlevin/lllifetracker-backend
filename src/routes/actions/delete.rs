@@ -106,10 +106,10 @@ mod tests {
         assert_eq!(resp.status(), http::StatusCode::NO_CONTENT);
 
         let action_in_db = action::Entity::find_by_id(action_id).one(&db).await?;
-        assert_eq!(action_in_db, None);
+        assert!(action_in_db.is_none());
 
         let tag_in_db = tag::Entity::find_by_id(tag_id).one(&db).await?;
-        assert_eq!(tag_in_db, None);
+        assert!(tag_in_db.is_none());
 
         test_utils::flush_actions(&db).await?;
         Ok(())

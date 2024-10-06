@@ -109,7 +109,7 @@ mod tests {
             .filter(action::Column::UpdatedAt.eq(returned_action.updated_at))
             .one(&db)
             .await?;
-        assert_ne!(created_action, None);
+        assert!(created_action.is_some());
 
         let created_tag = tag::Entity::find()
             .filter(tag::Column::UserId.eq(user.id))
@@ -118,7 +118,7 @@ mod tests {
             .filter(tag::Column::ObjectiveId.is_null())
             .one(&db)
             .await?;
-        assert_ne!(created_tag, None);
+        assert!(created_tag.is_some());
 
         test_utils::flush_actions(&db).await?;
         Ok(())
