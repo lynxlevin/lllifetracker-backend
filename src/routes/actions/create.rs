@@ -52,48 +52,101 @@ pub async fn create_action(
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use actix_web::{test, FromRequest};
-//     use migration::{Migrator, MigratorTrait};
-//     use sea_orm::{entity::prelude::*, DbConn, DbErr, EntityTrait};
+#[cfg(test)]
+mod tests {
+    use actix_web::{http, test, web::scope, App, HttpMessage};
+    use migration::{Migrator, MigratorTrait};
+    use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
+    use user_entity::Model;
 
-//     use crate::{
-//         entities::{action, tag, user},
-//         startup::get_database_connection,
-//     };
+    use crate::{
+        entities::{action, tag, user},
+        startup::get_database_connection,
+    };
 
-//     use super::*;
+    use super::*;
 
-//     #[actix_web::test]
-//     async fn main() -> Result<(), DbErr> {
-//         dotenvy::from_filename(".env.test").unwrap();
-//         let db = get_database_connection().await;
-//         Migrator::up(&db, None).await.unwrap();
+    #[actix_web::test]
+    async fn main() -> Result<(), DbErr> {
+        dotenvy::from_filename(".env.test").unwrap();
+        let db = get_database_connection().await;
+        Migrator::up(&db, None).await.unwrap();
 
-//         flush(&db).await?;
+        let user = user::Entity::find()
+            .filter(user::Column::Email.eq("test@test.com".to_string()))
+            .one(&db)
+            .await?
+            .unwrap();
 
-//         Ok(())
-//     }
+        test_happy_path(&db, user).await?;
+        test_unauthorized_request(&db).await?;
 
-//     async fn flush(db: &DbConn) -> Result<(), DbErr> {
-//         tag::Entity::delete_many().exec(db).await?;
-//         action::Entity::delete_many().exec(db).await?;
-//         Ok(())
-//     }
+        Ok(())
+    }
 
-//     async fn test_happy_path(db: &DbConn) -> Result<(), DbErr> {
-//         let user = user::Entity::find()
-//             .filter(user::Column::Email.eq("test@test.com".to_string()))
-//             .one(db)
-//             .await?
-//             .unwrap();
+    async fn test_happy_path(db: &DbConn, user: Model) -> Result<(), DbErr> {
+        let app = test::init_service(
+            App::new()
+                .service(scope("/").service(create_action))
+                .app_data(Data::new(db.clone())),
+        )
+        .await;
 
-//         let request_body = RequestBody {
-//             name: "Test action".to_string(),
-//         };
-//         let req = test::TestRequest::default().app_data(AppState { conn: db, redis_pool: })
+        let action_name = "Test create_action route".to_string();
+        let req = test::TestRequest::post()
+            .uri("/")
+            .set_json(RequestBody {
+                name: action_name.clone(),
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
 
-//         Ok(())
-//     }
-// }
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), http::StatusCode::OK);
+
+        let returned_action: ActionVisible = test::read_body_json(resp).await;
+        assert_eq!(returned_action.name, action_name.clone());
+
+        let created_action = action::Entity::find_by_id(returned_action.id)
+            .filter(action::Column::Name.eq(action_name))
+            .filter(action::Column::UserId.eq(user.id))
+            .filter(action::Column::CreatedAt.eq(returned_action.created_at))
+            .filter(action::Column::UpdatedAt.eq(returned_action.updated_at))
+            .one(db)
+            .await?;
+        assert_ne!(created_action, None);
+
+        let created_tag = tag::Entity::find()
+            .filter(tag::Column::UserId.eq(user.id))
+            .filter(tag::Column::ActionId.eq(returned_action.id))
+            .filter(tag::Column::AmbitionId.is_null())
+            .filter(tag::Column::ObjectiveId.is_null())
+            .one(db)
+            .await?;
+        assert_ne!(created_tag, None);
+
+        Ok(())
+    }
+
+    async fn test_unauthorized_request(db: &DbConn) -> Result<(), DbErr> {
+        let app = test::init_service(
+            App::new()
+                .service(scope("/").service(create_action))
+                .app_data(Data::new(db.clone())),
+        )
+        .await;
+
+        let action_name = "Test create_action route".to_string();
+        let req = test::TestRequest::post()
+            .uri("/")
+            .set_json(RequestBody {
+                name: action_name.clone(),
+            })
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), http::StatusCode::UNAUTHORIZED);
+
+        Ok(())
+    }
+}

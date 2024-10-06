@@ -120,17 +120,16 @@ mod tests {
         let db = get_database_connection().await;
         Migrator::up(&db, None).await.unwrap();
 
-        flush(&db).await?;
         test_create_with_tag(&db).await?;
 
         Ok(())
     }
 
-    async fn flush(db: &DbConn) -> Result<(), DbErr> {
-        tag::Entity::delete_many().exec(db).await?;
-        action::Entity::delete_many().exec(db).await?;
-        Ok(())
-    }
+    // async fn flush(db: &DbConn) -> Result<(), DbErr> {
+    //     tag::Entity::delete_many().exec(db).await?;
+    //     action::Entity::delete_many().exec(db).await?;
+    //     Ok(())
+    // }
 
     async fn test_create_with_tag(db: &DbConn) -> Result<(), DbErr> {
         let user = user::Entity::find()
@@ -139,28 +138,34 @@ mod tests {
             .await?
             .unwrap();
 
+        let action_name = "Test action_service::Mutation::create_with_tag".to_string();
+
         let form_data = NewAction {
-            name: "Test action".to_string(),
+            name: action_name.clone(),
             user_id: user.id,
         };
 
-        let created_action = Mutation::create_with_tag(db, form_data).await.unwrap();
-        assert_eq!(created_action.name, "Test action".to_string());
-        assert_eq!(created_action.user_id, user.id);
+        let returned_action = Mutation::create_with_tag(db, form_data).await.unwrap();
+        assert_eq!(returned_action.name, action_name.clone());
+        assert_eq!(returned_action.user_id, user.id);
 
-        let action_from_db = action::Entity::find_by_id(created_action.id)
-            .filter(action::Column::Name.eq("Test action".to_string()))
+        let created_action = action::Entity::find_by_id(returned_action.id)
+            .filter(action::Column::Name.eq(action_name))
             .filter(action::Column::UserId.eq(user.id))
+            .filter(action::Column::CreatedAt.eq(returned_action.created_at))
+            .filter(action::Column::UpdatedAt.eq(returned_action.updated_at))
             .one(db)
             .await?;
-        assert_ne!(action_from_db, None);
+        assert_ne!(created_action, None);
 
-        let tag_from_db = tag::Entity::find()
-            .filter(tag::Column::ActionId.eq(created_action.id))
+        let created_tag = tag::Entity::find()
             .filter(tag::Column::UserId.eq(user.id))
+            .filter(tag::Column::ActionId.eq(returned_action.id))
+            .filter(tag::Column::AmbitionId.is_null())
+            .filter(tag::Column::ObjectiveId.is_null())
             .one(db)
             .await?;
-        assert_ne!(tag_from_db, None);
+        assert_ne!(created_tag, None);
 
         Ok(())
     }
