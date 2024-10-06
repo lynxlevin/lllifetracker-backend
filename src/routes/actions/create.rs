@@ -61,47 +61,32 @@ mod tests {
         web::scope,
         App, HttpMessage,
     };
-    use migration::{Migrator, MigratorTrait};
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
-    use user_entity::Model;
 
     use crate::{
-        entities::{action, tag, user},
-        startup::get_database_connection,
+        entities::{action, tag},
+        test_utils,
     };
 
     use super::*;
 
-    #[actix_web::test]
-    async fn main() -> Result<(), DbErr> {
-        dotenvy::from_filename(".env.test").unwrap();
-        let db = get_database_connection().await;
-        Migrator::up(&db, None).await.unwrap();
-
-        let user = user::Entity::find()
-            .filter(user::Column::Email.eq("test@test.com".to_string()))
-            .one(&db)
-            .await?
-            .unwrap();
-
-        let app = test::init_service(
+    async fn init_app(
+        db: DbConn,
+    ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
+        test::init_service(
             App::new()
                 .service(scope("/").service(create_action))
-                .app_data(Data::new(db.clone())),
+                .app_data(Data::new(db)),
         )
-        .await;
-
-        test_happy_path(&app, &db, user).await?;
-        test_unauthorized_if_not_logged_in(&app).await?;
-
-        Ok(())
+        .await
     }
 
-    async fn test_happy_path(
-        app: &impl Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
-        db: &DbConn,
-        user: Model,
-    ) -> Result<(), DbErr> {
+    #[actix_web::test]
+    async fn test_happy_path() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::get_or_create_user(&db).await?;
+        let app = init_app(db.clone()).await;
+
         let action_name = "Test create_action route".to_string();
         let req = test::TestRequest::post()
             .uri("/")
@@ -111,7 +96,7 @@ mod tests {
             .to_request();
         req.extensions_mut().insert(user.clone());
 
-        let resp = test::call_service(app, req).await;
+        let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
         let returned_action: ActionVisible = test::read_body_json(resp).await;
@@ -122,7 +107,7 @@ mod tests {
             .filter(action::Column::UserId.eq(user.id))
             .filter(action::Column::CreatedAt.eq(returned_action.created_at))
             .filter(action::Column::UpdatedAt.eq(returned_action.updated_at))
-            .one(db)
+            .one(&db)
             .await?;
         assert_ne!(created_action, None);
 
@@ -131,16 +116,19 @@ mod tests {
             .filter(tag::Column::ActionId.eq(returned_action.id))
             .filter(tag::Column::AmbitionId.is_null())
             .filter(tag::Column::ObjectiveId.is_null())
-            .one(db)
+            .one(&db)
             .await?;
         assert_ne!(created_tag, None);
 
+        test_utils::flush_actions(&db).await?;
         Ok(())
     }
 
-    async fn test_unauthorized_if_not_logged_in(
-        app: &impl Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
-    ) -> Result<(), DbErr> {
+    #[actix_web::test]
+    async fn test_unauthorized_if_not_logged_in() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+
         let action_name = "Test create_action not logged in".to_string();
         let req = test::TestRequest::post()
             .uri("/")
@@ -149,7 +137,7 @@ mod tests {
             })
             .to_request();
 
-        let resp = test::call_service(app, req).await;
+        let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::UNAUTHORIZED);
 
         Ok(())

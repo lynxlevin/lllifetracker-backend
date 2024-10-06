@@ -100,44 +100,18 @@ impl Query {
 // MYMEMO: Would also like to try MockDatabase, but to do that, need to change the entire structure.
 // https://github.com/SeaQL/sea-orm/issues/830
 #[cfg(test)]
-mod tests {
-    use migration::{Migrator, MigratorTrait};
-    use sea_orm::{DbConn, DbErr};
+mod mutation_tests {
+    use sea_orm::DbErr;
 
-    use crate::{
-        entities::{tag, user},
-        startup::get_database_connection,
-    };
+    use crate::entities::tag;
+    use crate::test_utils;
 
     use super::*;
 
     #[actix_web::test]
-    async fn main() -> Result<(), DbErr> {
-        dotenvy::from_filename(".env.test").unwrap();
-        // NOTE: Ideally, Sqlite should be used instead of Postgres but cannot,
-        // because programmatic migration for Sqlite using Migrator is not supported
-        // nor migration from entities do not set default constraints.
-        let db = get_database_connection().await;
-        Migrator::up(&db, None).await.unwrap();
-
-        test_create_with_tag(&db).await?;
-
-        Ok(())
-    }
-
-    // async fn flush(db: &DbConn) -> Result<(), DbErr> {
-    //     tag::Entity::delete_many().exec(db).await?;
-    //     action::Entity::delete_many().exec(db).await?;
-    //     Ok(())
-    // }
-
-    async fn test_create_with_tag(db: &DbConn) -> Result<(), DbErr> {
-        let user = user::Entity::find()
-            .filter(user::Column::Email.eq("test@test.com".to_string()))
-            .one(db)
-            .await?
-            .unwrap();
-
+    async fn create_with_tag() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::get_or_create_user(&db).await?;
         let action_name = "Test action_service::Mutation::create_with_tag".to_string();
 
         let form_data = NewAction {
@@ -145,7 +119,7 @@ mod tests {
             user_id: user.id,
         };
 
-        let returned_action = Mutation::create_with_tag(db, form_data).await.unwrap();
+        let returned_action = Mutation::create_with_tag(&db, form_data).await.unwrap();
         assert_eq!(returned_action.name, action_name.clone());
         assert_eq!(returned_action.user_id, user.id);
 
@@ -154,7 +128,7 @@ mod tests {
             .filter(action::Column::UserId.eq(user.id))
             .filter(action::Column::CreatedAt.eq(returned_action.created_at))
             .filter(action::Column::UpdatedAt.eq(returned_action.updated_at))
-            .one(db)
+            .one(&db)
             .await?;
         assert_ne!(created_action, None);
 
@@ -163,9 +137,77 @@ mod tests {
             .filter(tag::Column::ActionId.eq(returned_action.id))
             .filter(tag::Column::AmbitionId.is_null())
             .filter(tag::Column::ObjectiveId.is_null())
-            .one(db)
+            .one(&db)
             .await?;
         assert_ne!(created_tag, None);
+
+        test_utils::flush_actions(&db).await?;
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn update() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::get_or_create_user(&db).await?;
+        let action = action::ActiveModel {
+            id: Set(uuid::Uuid::new_v4()),
+            name: Set("action_before_update".to_string()),
+            user_id: Set(user.id),
+            ..Default::default()
+        }
+        .insert(&db)
+        .await?;
+        let new_name = "action_after_update".to_string();
+
+        let returned_action = Mutation::update(&db, action.id, user.id, new_name.clone()).await?;
+        assert_eq!(returned_action.id, action.id);
+        assert_eq!(returned_action.name, new_name.clone());
+        assert_eq!(returned_action.user_id, user.id);
+        assert_eq!(returned_action.created_at, action.created_at);
+        assert_ne!(returned_action.updated_at, action.updated_at);
+        assert!(returned_action.updated_at > action.updated_at);
+
+        let updated_action = action::Entity::find_by_id(action.id)
+            .filter(action::Column::Name.eq(new_name))
+            .filter(action::Column::UserId.eq(user.id))
+            .filter(action::Column::CreatedAt.eq(returned_action.created_at))
+            .filter(action::Column::UpdatedAt.eq(returned_action.updated_at))
+            .one(&db)
+            .await?;
+        assert_ne!(updated_action, None);
+
+        test_utils::flush_actions(&db).await?;
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn delete() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::get_or_create_user(&db).await?;
+        let action = action::ActiveModel {
+            id: Set(uuid::Uuid::new_v4()),
+            name: Set("action_before_update".to_string()),
+            user_id: Set(user.id),
+            ..Default::default()
+        }
+        .insert(&db)
+        .await?;
+        let tag = tag::ActiveModel {
+            id: Set(uuid::Uuid::new_v4()),
+            action_id: Set(Some(action.id)),
+            user_id: Set(user.id),
+            ..Default::default()
+        }
+        .insert(&db)
+        .await?;
+
+        Mutation::delete(&db, action.id, user.id).await?;
+
+        let action_in_db = action::Entity::find_by_id(action.id).one(&db).await?;
+        assert_eq!(action_in_db, None);
+
+        let tag_in_db = tag::Entity::find_by_id(tag.id).one(&db).await?;
+        assert_eq!(tag_in_db, None);
 
         Ok(())
     }
