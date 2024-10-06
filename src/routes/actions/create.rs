@@ -54,7 +54,13 @@ pub async fn create_action(
 
 #[cfg(test)]
 mod tests {
-    use actix_web::{http, test, web::scope, App, HttpMessage};
+    use actix_http::Request;
+    use actix_web::{
+        dev::{Service, ServiceResponse},
+        http, test,
+        web::scope,
+        App, HttpMessage,
+    };
     use migration::{Migrator, MigratorTrait};
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
     use user_entity::Model;
@@ -78,13 +84,6 @@ mod tests {
             .await?
             .unwrap();
 
-        test_happy_path(&db, user).await?;
-        test_unauthorized_request(&db).await?;
-
-        Ok(())
-    }
-
-    async fn test_happy_path(db: &DbConn, user: Model) -> Result<(), DbErr> {
         let app = test::init_service(
             App::new()
                 .service(scope("/").service(create_action))
@@ -92,6 +91,17 @@ mod tests {
         )
         .await;
 
+        test_happy_path(&app, &db, user).await?;
+        test_unauthorized_if_not_logged_in(&app).await?;
+
+        Ok(())
+    }
+
+    async fn test_happy_path(
+        app: &impl Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
+        db: &DbConn,
+        user: Model,
+    ) -> Result<(), DbErr> {
         let action_name = "Test create_action route".to_string();
         let req = test::TestRequest::post()
             .uri("/")
@@ -101,7 +111,7 @@ mod tests {
             .to_request();
         req.extensions_mut().insert(user.clone());
 
-        let resp = test::call_service(&app, req).await;
+        let resp = test::call_service(app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
         let returned_action: ActionVisible = test::read_body_json(resp).await;
@@ -128,15 +138,10 @@ mod tests {
         Ok(())
     }
 
-    async fn test_unauthorized_request(db: &DbConn) -> Result<(), DbErr> {
-        let app = test::init_service(
-            App::new()
-                .service(scope("/").service(create_action))
-                .app_data(Data::new(db.clone())),
-        )
-        .await;
-
-        let action_name = "Test create_action route".to_string();
+    async fn test_unauthorized_if_not_logged_in(
+        app: &impl Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
+    ) -> Result<(), DbErr> {
+        let action_name = "Test create_action not logged in".to_string();
         let req = test::TestRequest::post()
             .uri("/")
             .set_json(RequestBody {
@@ -144,7 +149,7 @@ mod tests {
             })
             .to_request();
 
-        let resp = test::call_service(&app, req).await;
+        let resp = test::call_service(app, req).await;
         assert_eq!(resp.status(), http::StatusCode::UNAUTHORIZED);
 
         Ok(())

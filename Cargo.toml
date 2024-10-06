@@ -53,4 +53,5 @@ tracing-subscriber = { version = "0.3.18", features = [
 uuid = { version = "1.10.0", features = ["v4", "serde"] }
 
 [dev-dependencies]
+actix-http = "3.9.0"
 cargo-watch = "8.5.2"
