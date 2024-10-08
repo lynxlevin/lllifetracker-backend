@@ -34,6 +34,8 @@ pub async fn get_or_create_action_and_tag(
     action_name: String,
     user_id: uuid::Uuid,
 ) -> Result<(action::Model, tag::Model), DbErr> {
+    use sea_orm::ActiveValue::NotSet;
+
     let action = match action::Entity::find()
         .filter(action::Column::Name.eq(action_name.clone()))
         .filter(action::Column::UserId.eq(user_id))
@@ -65,8 +67,8 @@ pub async fn get_or_create_action_and_tag(
             tag::ActiveModel {
                 id: Set(uuid::Uuid::new_v4()),
                 user_id: Set(user_id),
-                ambition_id: Set(None),
-                objective_id: Set(None),
+                ambition_id: NotSet,
+                objective_id: NotSet,
                 action_id: Set(Some(action.id)),
                 created_at: Set(Utc::now().into()),
             }
