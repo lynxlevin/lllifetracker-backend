@@ -1,5 +1,4 @@
 /target
 **/target
 .env
-.env.test
 /logs

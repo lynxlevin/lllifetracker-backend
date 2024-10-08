@@ -2,6 +2,7 @@ use crate::entities::{action, tag};
 use crate::types::CustomDbErr;
 use chrono::Utc;
 use sea_orm::entity::prelude::*;
+use sea_orm::ActiveValue::NotSet;
 use sea_orm::{QueryOrder, Set, TransactionError, TransactionTrait};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize, Clone)]
@@ -24,15 +25,18 @@ impl Mutation {
                     id: Set(action_id),
                     user_id: Set(form_data.user_id),
                     name: Set(form_data.name.to_owned()),
-                    ..Default::default()
+                    created_at: Set(Utc::now().into()),
+                    updated_at: Set(Utc::now().into()),
                 }
                 .insert(txn)
                 .await?;
                 tag::ActiveModel {
                     id: Set(uuid::Uuid::new_v4()),
                     user_id: Set(form_data.user_id),
+                    ambition_id: NotSet,
+                    objective_id: NotSet,
                     action_id: Set(Some(action_id)),
-                    ..Default::default()
+                    created_at: Set(Utc::now().into()),
                 }
                 .insert(txn)
                 .await?;
@@ -108,37 +112,10 @@ mod mutation_tests {
 
     use super::*;
 
-    async fn init_seed_data(db: &DbConn, user_id: uuid::Uuid) -> (action::Model, tag::Model) {
-        // NOTE: This transaction is for avoiding fk_constraint violation.
-        db.transaction::<_, (action::Model, tag::Model), DbErr>(|txn| {
-            Box::pin(async move {
-                let action = action::ActiveModel {
-                    id: Set(uuid::Uuid::new_v4()),
-                    name: Set("action_before_update".to_string()),
-                    user_id: Set(user_id),
-                    ..Default::default()
-                }
-                .insert(txn)
-                .await?;
-                let tag = tag::ActiveModel {
-                    id: Set(uuid::Uuid::new_v4()),
-                    action_id: Set(Some(action.id)),
-                    user_id: Set(user_id),
-                    ..Default::default()
-                }
-                .insert(txn)
-                .await?;
-                Ok((action, tag))
-            })
-        })
-        .await
-        .unwrap()
-    }
-
     #[actix_web::test]
     async fn create_with_tag() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::get_or_create_user(&db).await?;
+        let user = test_utils::seed::get_or_create_user(&db).await?;
         let action_name = "Test action_service::Mutation::create_with_tag".to_string();
 
         let form_data = NewAction {
@@ -168,15 +145,19 @@ mod mutation_tests {
             .await?;
         assert!(created_tag.is_some());
 
-        test_utils::flush_actions(&db).await?;
         Ok(())
     }
 
     #[actix_web::test]
     async fn update() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::get_or_create_user(&db).await?;
-        let (action, _) = init_seed_data(&db, user.id).await;
+        let user = test_utils::seed::get_or_create_user(&db).await?;
+        let (action, _) = test_utils::seed::get_or_create_action_and_tag(
+            &db,
+            "action_before_update".to_string(),
+            user.id,
+        )
+        .await;
         let new_name = "action_after_update".to_string();
 
         // MYMEMO: this sometimes fails, maybe I should execute the whole thing in 1 transaction? delete also fails with Custom("NotFound"). Even deadlock. Maybe this is the cost of using a real Postgres
@@ -196,15 +177,19 @@ mod mutation_tests {
             .await?;
         assert!(updated_action.is_some());
 
-        test_utils::flush_actions(&db).await?;
         Ok(())
     }
 
     #[actix_web::test]
     async fn delete() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::get_or_create_user(&db).await?;
-        let (action, tag) = init_seed_data(&db, user.id).await;
+        let user = test_utils::seed::get_or_create_user(&db).await?;
+        let (action, tag) = test_utils::seed::get_or_create_action_and_tag(
+            &db,
+            "action_for_delete_service_test".to_string(),
+            user.id,
+        )
+        .await;
 
         Mutation::delete(&db, action.id, user.id).await?;
 

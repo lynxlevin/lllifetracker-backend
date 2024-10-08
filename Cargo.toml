@@ -25,7 +25,6 @@ dotenvy = "0.15.7"
 futures = "0.3.28"
 hex = "0.4.3"
 lettre = { version = "0.11.7", features = ["builder", "tokio1-native-tls"] }
-migration = { path = "migration" }
 minijinja = { version = "2.1.0", features = ["loader"] }
 once_cell = "1.19.0"
 pasetors = "0.6.8"
@@ -55,3 +54,11 @@ uuid = { version = "1.10.0", features = ["v4", "serde"] }
 [dev-dependencies]
 actix-http = "3.9.0"
 cargo-watch = "8.5.2"
+sea-orm = { version = "~1.0", features = [
+    "sqlx-sqlite",
+    "runtime-tokio-native-tls",
+    "macros",
+    "with-chrono",
+    "with-json",
+    "with-uuid",
+] }

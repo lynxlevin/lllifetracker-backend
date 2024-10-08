@@ -84,7 +84,7 @@ mod tests {
     #[actix_web::test]
     async fn test_happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::get_or_create_user(&db).await?;
+        let user = test_utils::seed::get_or_create_user(&db).await?;
         let app = init_app(db.clone()).await;
 
         let action_name = "Test create_action route".to_string();
@@ -120,7 +120,6 @@ mod tests {
             .await?;
         assert!(created_tag.is_some());
 
-        test_utils::flush_actions(&db).await?;
         Ok(())
     }
 
