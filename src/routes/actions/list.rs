@@ -42,3 +42,81 @@ pub async fn list_actions(
         None => HttpResponse::Unauthorized().json("You are not logged in."),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use actix_http::Request;
+    use actix_web::{
+        dev::{Service, ServiceResponse},
+        http, test,
+        web::scope,
+        App, HttpMessage,
+    };
+    use sea_orm::{entity::prelude::*, DbErr};
+
+    use crate::test_utils;
+
+    use super::*;
+
+    async fn init_app(
+        db: DbConn,
+    ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
+        test::init_service(
+            App::new()
+                .service(scope("/").service(list_actions))
+                .app_data(Data::new(db)),
+        )
+        .await
+    }
+
+    #[actix_web::test]
+    async fn test_happy_path() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = test_utils::seed::get_or_create_user(&db).await?;
+        let (action_1, _) = test_utils::seed::get_or_create_action_and_tag(
+            &db,
+            "action_for_get_1".to_string(),
+            user.id,
+        )
+        .await;
+        let (action_2, _) = test_utils::seed::get_or_create_action_and_tag(
+            &db,
+            "action_for_get_2".to_string(),
+            user.id,
+        )
+        .await;
+
+        let req = test::TestRequest::get().uri("/").to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), http::StatusCode::OK);
+
+        let returned_actions: Vec<ActionVisible> = test::read_body_json(resp).await;
+        assert_eq!(returned_actions[0].id, action_1.id);
+        assert_eq!(returned_actions[0].name, action_1.name);
+        assert_eq!(returned_actions[0].created_at, action_1.created_at);
+        assert_eq!(returned_actions[0].updated_at, action_1.updated_at);
+
+        assert_eq!(returned_actions[1].id, action_2.id);
+        assert_eq!(returned_actions[1].name, action_2.name);
+        assert_eq!(returned_actions[1].created_at, action_2.created_at);
+        assert_eq!(returned_actions[1].updated_at, action_2.updated_at);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn test_unauthorized_if_not_logged_in() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+
+        let req = test::TestRequest::get().uri("/").to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), http::StatusCode::UNAUTHORIZED);
+
+        Ok(())
+    }
+}

@@ -101,8 +101,6 @@ impl Query {
     }
 }
 
-// MYMEMO: Would also like to try MockDatabase, but to do that, need to change the entire structure.
-// https://github.com/SeaQL/sea-orm/issues/830
 #[cfg(test)]
 mod mutation_tests {
     use sea_orm::DbErr;
@@ -160,7 +158,6 @@ mod mutation_tests {
         .await;
         let new_name = "action_after_update".to_string();
 
-        // MYMEMO: this sometimes fails, maybe I should execute the whole thing in 1 transaction? delete also fails with Custom("NotFound"). Even deadlock. Maybe this is the cost of using a real Postgres
         let returned_action = Mutation::update(&db, action.id, user.id, new_name.clone()).await?;
         assert_eq!(returned_action.id, action.id);
         assert_eq!(returned_action.name, new_name.clone());
@@ -171,11 +168,31 @@ mod mutation_tests {
         let updated_action = action::Entity::find_by_id(action.id)
             .filter(action::Column::Name.eq(new_name))
             .filter(action::Column::UserId.eq(user.id))
-            .filter(action::Column::CreatedAt.eq(returned_action.created_at))
+            .filter(action::Column::CreatedAt.eq(action.created_at))
             .filter(action::Column::UpdatedAt.eq(returned_action.updated_at))
             .one(&db)
             .await?;
         assert!(updated_action.is_some());
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn update_unauthorized() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::seed::get_or_create_user(&db).await?;
+        let (action, _) = test_utils::seed::get_or_create_action_and_tag(
+            &db,
+            "action_before_update_unauthorized".to_string(),
+            user.id,
+        )
+        .await;
+        let new_name = "action_after_update_unauthorized".to_string();
+
+        let error = Mutation::update(&db, action.id, uuid::Uuid::new_v4(), new_name.clone())
+            .await
+            .unwrap_err();
+        assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
 
         Ok(())
     }
@@ -186,7 +203,7 @@ mod mutation_tests {
         let user = test_utils::seed::get_or_create_user(&db).await?;
         let (action, tag) = test_utils::seed::get_or_create_action_and_tag(
             &db,
-            "action_for_delete_service_test".to_string(),
+            "action_for_delete".to_string(),
             user.id,
         )
         .await;
@@ -198,6 +215,25 @@ mod mutation_tests {
 
         let tag_in_db = tag::Entity::find_by_id(tag.id).one(&db).await?;
         assert!(tag_in_db.is_none());
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn delete_unauthorized() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::seed::get_or_create_user(&db).await?;
+        let (action, _) = test_utils::seed::get_or_create_action_and_tag(
+            &db,
+            "action_for_delete_unauthorized".to_string(),
+            user.id,
+        )
+        .await;
+
+        let error = Mutation::delete(&db, action.id, uuid::Uuid::new_v4())
+            .await
+            .unwrap_err();
+        assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
 
         Ok(())
     }
