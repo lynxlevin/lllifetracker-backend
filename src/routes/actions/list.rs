@@ -79,13 +79,13 @@ mod tests {
             "action_for_get_1".to_string(),
             user.id,
         )
-        .await;
+        .await?;
         let (action_2, _) = test_utils::seed::get_or_create_action_and_tag(
             &db,
             "action_for_get_2".to_string(),
             user.id,
         )
-        .await;
+        .await?;
 
         let req = test::TestRequest::get().uri("/").to_request();
         req.extensions_mut().insert(user.clone());

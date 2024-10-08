@@ -82,7 +82,7 @@ mod tests {
             "action_for_get".to_string(),
             user.id,
         )
-        .await;
+        .await?;
 
         let req = test::TestRequest::get()
             .uri(&format!("/{}", action.id))
@@ -111,7 +111,7 @@ mod tests {
             "action_for_get".to_string(),
             user.id,
         )
-        .await;
+        .await?;
 
         let req = test::TestRequest::get()
             .uri(&format!("/{}", action.id))

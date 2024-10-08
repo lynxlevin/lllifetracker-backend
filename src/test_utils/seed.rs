@@ -1,6 +1,6 @@
 use crate::entities::{action, tag, user};
 use chrono::Utc;
-use sea_orm::{prelude::*, DbConn, DbErr, Set, TransactionTrait};
+use sea_orm::{prelude::*, DbConn, DbErr, Set};
 
 #[cfg(test)]
 pub async fn get_or_create_user(db: &DbConn) -> Result<user::Model, DbErr> {
@@ -33,52 +33,46 @@ pub async fn get_or_create_action_and_tag(
     db: &DbConn,
     action_name: String,
     user_id: uuid::Uuid,
-) -> (action::Model, tag::Model) {
-    db.transaction::<_, (action::Model, tag::Model), DbErr>(|txn| {
-        Box::pin(async move {
-            let action = match action::Entity::find()
-                .filter(action::Column::Name.eq(action_name.clone()))
-                .filter(action::Column::UserId.eq(user_id))
-                .one(txn)
-                .await?
-            {
-                Some(action) => action,
-                None => {
-                    action::ActiveModel {
-                        id: Set(uuid::Uuid::new_v4()),
-                        name: Set(action_name),
-                        user_id: Set(user_id),
-                        created_at: Set(Utc::now().into()),
-                        updated_at: Set(Utc::now().into()),
-                    }
-                    .insert(txn)
-                    .await?
-                }
-            };
+) -> Result<(action::Model, tag::Model), DbErr> {
+    let action = match action::Entity::find()
+        .filter(action::Column::Name.eq(action_name.clone()))
+        .filter(action::Column::UserId.eq(user_id))
+        .one(db)
+        .await?
+    {
+        Some(action) => action,
+        None => {
+            action::ActiveModel {
+                id: Set(uuid::Uuid::new_v4()),
+                name: Set(action_name),
+                user_id: Set(user_id),
+                created_at: Set(Utc::now().into()),
+                updated_at: Set(Utc::now().into()),
+            }
+            .insert(db)
+            .await?
+        }
+    };
 
-            let tag = match tag::Entity::find()
-                .filter(tag::Column::ActionId.eq(action.id))
-                .filter(tag::Column::UserId.eq(user_id))
-                .one(txn)
-                .await?
-            {
-                Some(tag) => tag,
-                None => {
-                    tag::ActiveModel {
-                        id: Set(uuid::Uuid::new_v4()),
-                        user_id: Set(user_id),
-                        ambition_id: Set(None),
-                        objective_id: Set(None),
-                        action_id: Set(Some(action.id)),
-                        created_at: Set(Utc::now().into()),
-                    }
-                    .insert(txn)
-                    .await?
-                }
-            };
-            Ok((action, tag))
-        })
-    })
-    .await
-    .unwrap()
+    let tag = match tag::Entity::find()
+        .filter(tag::Column::ActionId.eq(action.id))
+        .filter(tag::Column::UserId.eq(user_id))
+        .one(db)
+        .await?
+    {
+        Some(tag) => tag,
+        None => {
+            tag::ActiveModel {
+                id: Set(uuid::Uuid::new_v4()),
+                user_id: Set(user_id),
+                ambition_id: Set(None),
+                objective_id: Set(None),
+                action_id: Set(Some(action.id)),
+                created_at: Set(Utc::now().into()),
+            }
+            .insert(db)
+            .await?
+        }
+    };
+    Ok((action, tag))
 }

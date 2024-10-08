@@ -73,7 +73,7 @@ mod tests {
             "action_for_delete_route".to_string(),
             user.id,
         )
-        .await;
+        .await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!("/{}", action.id))
@@ -102,7 +102,7 @@ mod tests {
             "action_for_delete_route_unauthorized".to_string(),
             user.id,
         )
-        .await;
+        .await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!("/{}", action.id))

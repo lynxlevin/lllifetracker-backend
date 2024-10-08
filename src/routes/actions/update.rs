@@ -91,7 +91,7 @@ mod tests {
             "action_for_update_route".to_string(),
             user.id,
         )
-        .await;
+        .await?;
         let new_name = "action_after_update_route".to_string();
 
         let req = test::TestRequest::put()
@@ -133,7 +133,7 @@ mod tests {
             "action_for_update_route_unauthorized".to_string(),
             user.id,
         )
-        .await;
+        .await?;
         let new_name = "action_after_update_route".to_string();
 
         let req = test::TestRequest::put()

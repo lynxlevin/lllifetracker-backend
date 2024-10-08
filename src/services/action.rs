@@ -155,7 +155,7 @@ mod mutation_tests {
             "action_before_update".to_string(),
             user.id,
         )
-        .await;
+        .await?;
         let new_name = "action_after_update".to_string();
 
         let returned_action = Mutation::update(&db, action.id, user.id, new_name.clone()).await?;
@@ -186,7 +186,7 @@ mod mutation_tests {
             "action_before_update_unauthorized".to_string(),
             user.id,
         )
-        .await;
+        .await?;
         let new_name = "action_after_update_unauthorized".to_string();
 
         let error = Mutation::update(&db, action.id, uuid::Uuid::new_v4(), new_name.clone())
@@ -206,7 +206,7 @@ mod mutation_tests {
             "action_for_delete".to_string(),
             user.id,
         )
-        .await;
+        .await?;
 
         Mutation::delete(&db, action.id, user.id).await?;
 
@@ -228,7 +228,7 @@ mod mutation_tests {
             "action_for_delete_unauthorized".to_string(),
             user.id,
         )
-        .await;
+        .await?;
 
         let error = Mutation::delete(&db, action.id, uuid::Uuid::new_v4())
             .await
