@@ -73,19 +73,13 @@ mod tests {
     async fn test_happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::get_or_create_user(&db).await?;
-        let (action_1, _) = test_utils::seed::get_or_create_action_and_tag(
-            &db,
-            "action_for_get_1".to_string(),
-            user.id,
-        )
-        .await?;
-        let (action_2, _) = test_utils::seed::get_or_create_action_and_tag(
-            &db,
-            "action_for_get_2".to_string(),
-            user.id,
-        )
-        .await?;
+        let user = test_utils::seed::create_user(&db).await?;
+        let (action_1, _) =
+            test_utils::seed::create_action_and_tag(&db, "action_for_get_1".to_string(), user.id)
+                .await?;
+        let (action_2, _) =
+            test_utils::seed::create_action_and_tag(&db, "action_for_get_2".to_string(), user.id)
+                .await?;
 
         let req = test::TestRequest::get().uri("/").to_request();
         req.extensions_mut().insert(user.clone());

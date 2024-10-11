@@ -113,7 +113,7 @@ mod mutation_tests {
     #[actix_web::test]
     async fn create_with_tag() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::get_or_create_user(&db).await?;
+        let user = test_utils::seed::create_user(&db).await?;
         let action_name = "Test action_service::Mutation::create_with_tag".to_string();
 
         let form_data = NewAction {
@@ -136,9 +136,9 @@ mod mutation_tests {
 
         let created_tag = tag::Entity::find()
             .filter(tag::Column::UserId.eq(user.id))
-            .filter(tag::Column::ActionId.eq(returned_action.id))
             .filter(tag::Column::AmbitionId.is_null())
             .filter(tag::Column::ObjectiveId.is_null())
+            .filter(tag::Column::ActionId.eq(returned_action.id))
             .one(&db)
             .await?;
         assert!(created_tag.is_some());
@@ -149,8 +149,8 @@ mod mutation_tests {
     #[actix_web::test]
     async fn update() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::get_or_create_user(&db).await?;
-        let (action, _) = test_utils::seed::get_or_create_action_and_tag(
+        let user = test_utils::seed::create_user(&db).await?;
+        let (action, _) = test_utils::seed::create_action_and_tag(
             &db,
             "action_before_update".to_string(),
             user.id,
@@ -180,8 +180,8 @@ mod mutation_tests {
     #[actix_web::test]
     async fn update_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::get_or_create_user(&db).await?;
-        let (action, _) = test_utils::seed::get_or_create_action_and_tag(
+        let user = test_utils::seed::create_user(&db).await?;
+        let (action, _) = test_utils::seed::create_action_and_tag(
             &db,
             "action_before_update_unauthorized".to_string(),
             user.id,
@@ -200,13 +200,10 @@ mod mutation_tests {
     #[actix_web::test]
     async fn delete() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::get_or_create_user(&db).await?;
-        let (action, tag) = test_utils::seed::get_or_create_action_and_tag(
-            &db,
-            "action_for_delete".to_string(),
-            user.id,
-        )
-        .await?;
+        let user = test_utils::seed::create_user(&db).await?;
+        let (action, tag) =
+            test_utils::seed::create_action_and_tag(&db, "action_for_delete".to_string(), user.id)
+                .await?;
 
         Mutation::delete(&db, action.id, user.id).await?;
 
@@ -222,8 +219,8 @@ mod mutation_tests {
     #[actix_web::test]
     async fn delete_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::get_or_create_user(&db).await?;
-        let (action, _) = test_utils::seed::get_or_create_action_and_tag(
+        let user = test_utils::seed::create_user(&db).await?;
+        let (action, _) = test_utils::seed::create_action_and_tag(
             &db,
             "action_for_delete_unauthorized".to_string(),
             user.id,
