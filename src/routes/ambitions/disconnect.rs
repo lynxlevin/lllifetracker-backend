@@ -98,3 +98,174 @@ async fn validate_ownership(
         },
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use actix_http::Request;
+    use actix_web::{
+        dev::{Service, ServiceResponse},
+        http, test, App, HttpMessage,
+    };
+    use sea_orm::{entity::prelude::*, ActiveValue::Set, DbErr, EntityTrait};
+
+    use crate::{entities::ambitions_objectives, test_utils};
+
+    use super::*;
+
+    async fn init_app(
+        db: DbConn,
+    ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
+        test::init_service(
+            App::new()
+                .service(disconnect_objective)
+                .app_data(Data::new(db)),
+        )
+        .await
+    }
+
+    #[actix_web::test]
+    async fn happy_path() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = test_utils::seed::create_user(&db).await?;
+        let (ambition, _) = test_utils::seed::create_ambition_and_tag(
+            &db,
+            "ambition_for_connect_route".to_string(),
+            None,
+            user.id,
+        )
+        .await?;
+        let (objective, _) = test_utils::seed::create_objective_and_tag(
+            &db,
+            "objective_for_connect_route".to_string(),
+            user.id,
+        )
+        .await?;
+        let _connection = ambitions_objectives::ActiveModel {
+            ambition_id: Set(ambition.id),
+            objective_id: Set(objective.id),
+        }
+        .insert(&db)
+        .await?;
+
+        let req = test::TestRequest::delete()
+            .uri(&format!(
+                "/{}/objectives/{}/connection",
+                ambition.id, objective.id
+            ))
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::OK);
+
+        let connection_in_db = ambitions_objectives::Entity::find()
+            .filter(ambitions_objectives::Column::AmbitionId.eq(ambition.id))
+            .filter(ambitions_objectives::Column::ObjectiveId.eq(objective.id))
+            .one(&db)
+            .await?;
+        assert!(connection_in_db.is_none());
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn invalid_ambition() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = test_utils::seed::create_user(&db).await?;
+        let another_user = test_utils::seed::create_user(&db).await?;
+        let (ambition, _) = test_utils::seed::create_ambition_and_tag(
+            &db,
+            "ambition_for_connect_route".to_string(),
+            None,
+            another_user.id,
+        )
+        .await?;
+        let (objective, _) = test_utils::seed::create_objective_and_tag(
+            &db,
+            "objective_for_connect_route".to_string(),
+            user.id,
+        )
+        .await?;
+
+        let req = test::TestRequest::delete()
+            .uri(&format!(
+                "/{}/objectives/{}/connection",
+                ambition.id, objective.id
+            ))
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::NOT_FOUND);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn invalid_objective() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = test_utils::seed::create_user(&db).await?;
+        let another_user = test_utils::seed::create_user(&db).await?;
+        let (ambition, _) = test_utils::seed::create_ambition_and_tag(
+            &db,
+            "ambition_for_connect_route".to_string(),
+            None,
+            user.id,
+        )
+        .await?;
+        let (objective, _) = test_utils::seed::create_objective_and_tag(
+            &db,
+            "objective_for_connect_route".to_string(),
+            another_user.id,
+        )
+        .await?;
+
+        let req = test::TestRequest::delete()
+            .uri(&format!(
+                "/{}/objectives/{}/connection",
+                ambition.id, objective.id
+            ))
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::NOT_FOUND);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = test_utils::seed::create_user(&db).await?;
+        let (ambition, _) = test_utils::seed::create_ambition_and_tag(
+            &db,
+            "ambition_for_connect_route".to_string(),
+            None,
+            user.id,
+        )
+        .await?;
+        let (objective, _) = test_utils::seed::create_objective_and_tag(
+            &db,
+            "objective_for_connect_route".to_string(),
+            user.id,
+        )
+        .await?;
+
+        let req = test::TestRequest::delete()
+            .uri(&format!(
+                "/{}/objectives/{}/connection",
+                ambition.id, objective.id
+            ))
+            .to_request();
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::UNAUTHORIZED);
+
+        Ok(())
+    }
+}

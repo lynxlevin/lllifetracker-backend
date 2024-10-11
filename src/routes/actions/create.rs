@@ -34,7 +34,7 @@ pub async fn create_action(
             )
             .await
             {
-                Ok(action) => HttpResponse::Ok().json(ActionVisible {
+                Ok(action) => HttpResponse::Created().json(ActionVisible {
                     id: action.id,
                     name: action.name,
                     created_at: action.created_at,
@@ -82,7 +82,7 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn test_happy_path() -> Result<(), DbErr> {
+    async fn happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_user(&db).await?;
         let app = init_app(db.clone()).await;
@@ -96,10 +96,10 @@ mod tests {
             .to_request();
         req.extensions_mut().insert(user.clone());
 
-        let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status(), http::StatusCode::OK);
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::CREATED);
 
-        let returned_action: ActionVisible = test::read_body_json(resp).await;
+        let returned_action: ActionVisible = test::read_body_json(res).await;
         assert_eq!(returned_action.name, action_name.clone());
 
         let created_action = action::Entity::find_by_id(returned_action.id)
@@ -124,20 +124,19 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn test_unauthorized_if_not_logged_in() -> Result<(), DbErr> {
+    async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
 
-        let action_name = "Test create_action not logged in".to_string();
         let req = test::TestRequest::post()
             .uri("/")
             .set_json(RequestBody {
-                name: action_name.clone(),
+                name: "Test create_action not logged in".to_string(),
             })
             .to_request();
 
-        let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status(), http::StatusCode::UNAUTHORIZED);
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::UNAUTHORIZED);
 
         Ok(())
     }

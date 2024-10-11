@@ -73,7 +73,7 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn test_happy_path() -> Result<(), DbErr> {
+    async fn happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_user(&db).await?;
@@ -99,7 +99,7 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn test_unauthorized_if_not_logged_in() -> Result<(), DbErr> {
+    async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_user(&db).await?;

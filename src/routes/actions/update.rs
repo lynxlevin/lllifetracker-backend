@@ -82,7 +82,7 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn test_happy_path() -> Result<(), DbErr> {
+    async fn happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_user(&db).await?;
@@ -102,10 +102,10 @@ mod tests {
             .to_request();
         req.extensions_mut().insert(user.clone());
 
-        let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status(), http::StatusCode::OK);
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::OK);
 
-        let returned_action: ActionVisible = test::read_body_json(resp).await;
+        let returned_action: ActionVisible = test::read_body_json(res).await;
         assert_eq!(returned_action.id, action.id);
         assert_eq!(returned_action.name, new_name.clone());
         assert_eq!(returned_action.created_at, action.created_at);
@@ -114,7 +114,7 @@ mod tests {
         let updated_action = action::Entity::find_by_id(action.id)
             .filter(action::Column::Name.eq(new_name))
             .filter(action::Column::UserId.eq(user.id))
-            .filter(action::Column::CreatedAt.eq(action.created_at))
+            .filter(action::Column::CreatedAt.eq(returned_action.created_at))
             .filter(action::Column::UpdatedAt.eq(returned_action.updated_at))
             .one(&db)
             .await?;
@@ -124,7 +124,7 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn test_unauthorized_if_not_logged_in() -> Result<(), DbErr> {
+    async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_user(&db).await?;
@@ -134,17 +134,16 @@ mod tests {
             user.id,
         )
         .await?;
-        let new_name = "action_after_update_route".to_string();
 
         let req = test::TestRequest::put()
             .uri(&format!("/{}", action.id))
             .set_json(RequestBody {
-                name: new_name.clone(),
+                name: "action_after_update_route".to_string(),
             })
             .to_request();
 
-        let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status(), http::StatusCode::UNAUTHORIZED);
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::UNAUTHORIZED);
 
         Ok(())
     }

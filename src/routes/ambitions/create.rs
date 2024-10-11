@@ -36,7 +36,7 @@ pub async fn create_ambition(
             )
             .await
             {
-                Ok(ambition) => HttpResponse::Ok().json(AmbitionVisible {
+                Ok(ambition) => HttpResponse::Created().json(AmbitionVisible {
                     id: ambition.id,
                     name: ambition.name,
                     description: ambition.description,
@@ -52,5 +52,144 @@ pub async fn create_ambition(
             }
         }
         None => HttpResponse::Unauthorized().json("You are not logged in."),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        entities::{ambition, tag},
+        test_utils,
+    };
+
+    use super::*;
+    use actix_http::Request;
+    use actix_web::{
+        dev::{Service, ServiceResponse},
+        http, test,
+        web::scope,
+        App, Error, HttpMessage,
+    };
+    use sea_orm::{entity::prelude::*, ColumnTrait, DbErr, EntityTrait};
+
+    async fn init_app(
+        db: DbConn,
+    ) -> impl Service<Request, Response = ServiceResponse, Error = Error> {
+        test::init_service(
+            App::new()
+                .service(scope("/").service(create_ambition))
+                .app_data(Data::new(db)),
+        )
+        .await
+    }
+
+    #[actix_web::test]
+    async fn happy_path() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::seed::create_user(&db).await?;
+        let app = init_app(db.clone()).await;
+
+        let name = "Test create_ambition route".to_string();
+        let description = Some("Test description".to_string());
+        let req = test::TestRequest::post()
+            .uri("/")
+            .set_json(RequestBody {
+                name: name.clone(),
+                description: description.clone(),
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::CREATED);
+
+        let returned_ambition: AmbitionVisible = test::read_body_json(res).await;
+        assert_eq!(returned_ambition.name, name.clone());
+        assert_eq!(returned_ambition.description, description.clone());
+
+        let created_ambition = ambition::Entity::find_by_id(returned_ambition.id)
+            .filter(ambition::Column::Name.eq(name))
+            .filter(ambition::Column::Description.eq(description))
+            .filter(ambition::Column::UserId.eq(user.id))
+            .filter(ambition::Column::CreatedAt.eq(returned_ambition.created_at))
+            .filter(ambition::Column::UpdatedAt.eq(returned_ambition.updated_at))
+            .one(&db)
+            .await?;
+        assert!(created_ambition.is_some());
+
+        let created_tag = tag::Entity::find()
+            .filter(tag::Column::UserId.eq(user.id))
+            .filter(tag::Column::AmbitionId.eq(returned_ambition.id))
+            .filter(tag::Column::ObjectiveId.is_null())
+            .filter(tag::Column::ActionId.is_null())
+            .one(&db)
+            .await?;
+        assert!(created_tag.is_some());
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn happy_path_no_description() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::seed::create_user(&db).await?;
+        let app = init_app(db.clone()).await;
+
+        let name = "Test create_ambition route".to_string();
+        let req = test::TestRequest::post()
+            .uri("/")
+            .set_json(RequestBody {
+                name: name.clone(),
+                description: None,
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::CREATED);
+
+        let returned_ambition: AmbitionVisible = test::read_body_json(res).await;
+        assert_eq!(returned_ambition.name, name.clone());
+        assert!(returned_ambition.description.is_none());
+
+        let created_ambition = ambition::Entity::find_by_id(returned_ambition.id)
+            .filter(ambition::Column::Name.eq(name))
+            .filter(ambition::Column::Description.is_null())
+            .filter(ambition::Column::UserId.eq(user.id))
+            .filter(ambition::Column::CreatedAt.eq(returned_ambition.created_at))
+            .filter(ambition::Column::UpdatedAt.eq(returned_ambition.updated_at))
+            .one(&db)
+            .await?;
+        assert!(created_ambition.is_some());
+
+        let created_tag = tag::Entity::find()
+            .filter(tag::Column::UserId.eq(user.id))
+            .filter(tag::Column::AmbitionId.eq(returned_ambition.id))
+            .filter(tag::Column::ObjectiveId.is_null())
+            .filter(tag::Column::ActionId.is_null())
+            .one(&db)
+            .await?;
+        assert!(created_tag.is_some());
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+
+        let req = test::TestRequest::post()
+            .uri("/")
+            .set_json(RequestBody {
+                name: "Test create_ambition not logged in".to_string(),
+                description: None,
+            })
+            .to_request();
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::UNAUTHORIZED);
+
+        Ok(())
     }
 }
