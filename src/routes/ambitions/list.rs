@@ -74,7 +74,7 @@ mod tests {
     async fn happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_user(&db).await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
         let (ambition_1, _) = test_utils::seed::create_ambition_and_tag(
             &db,
             "ambition_for_get_1".to_string(),

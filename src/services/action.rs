@@ -113,7 +113,7 @@ mod mutation_tests {
     #[actix_web::test]
     async fn create_with_tag() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_user(&db).await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
         let action_name = "Test action_service::Mutation::create_with_tag".to_string();
 
         let form_data = NewAction {
@@ -149,7 +149,7 @@ mod mutation_tests {
     #[actix_web::test]
     async fn update() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_user(&db).await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
         let (action, _) = test_utils::seed::create_action_and_tag(
             &db,
             "action_before_update".to_string(),
@@ -180,7 +180,7 @@ mod mutation_tests {
     #[actix_web::test]
     async fn update_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_user(&db).await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
         let (action, _) = test_utils::seed::create_action_and_tag(
             &db,
             "action_before_update_unauthorized".to_string(),
@@ -200,7 +200,7 @@ mod mutation_tests {
     #[actix_web::test]
     async fn delete() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_user(&db).await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
         let (action, tag) =
             test_utils::seed::create_action_and_tag(&db, "action_for_delete".to_string(), user.id)
                 .await?;
@@ -219,7 +219,7 @@ mod mutation_tests {
     #[actix_web::test]
     async fn delete_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_user(&db).await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
         let (action, _) = test_utils::seed::create_action_and_tag(
             &db,
             "action_for_delete_unauthorized".to_string(),

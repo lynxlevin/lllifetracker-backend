@@ -146,7 +146,7 @@ mod mutation_tests {
     #[actix_web::test]
     async fn create_with_tag() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_user(&db).await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
         let name = "objective_service::Mutation::create_with_tag".to_string();
 
         let form_data = NewObjective {
@@ -181,7 +181,7 @@ mod mutation_tests {
     #[actix_web::test]
     async fn update() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_user(&db).await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_before_update".to_string(),
@@ -213,7 +213,7 @@ mod mutation_tests {
     #[actix_web::test]
     async fn update_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_user(&db).await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_before_update_unauthorized".to_string(),
@@ -233,7 +233,7 @@ mod mutation_tests {
     #[actix_web::test]
     async fn delete() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_user(&db).await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
         let (objective, tag) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_for_delete".to_string(),
@@ -255,7 +255,7 @@ mod mutation_tests {
     #[actix_web::test]
     async fn delete_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_user(&db).await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_for_delete_unauthorized".to_string(),
@@ -274,7 +274,7 @@ mod mutation_tests {
     #[actix_web::test]
     async fn connect_action() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_user(&db).await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "Test objective_service::Mutation::connect_action".to_string(),
@@ -303,7 +303,7 @@ mod mutation_tests {
     #[actix_web::test]
     async fn disconnect_action() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_user(&db).await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "Test objective_service::Mutation::disconnect_action".to_string(),

@@ -150,7 +150,7 @@ mod mutation_tests {
     #[actix_web::test]
     async fn create_with_tag() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_user(&db).await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
         let name = "Test ambition_service::Mutation::create_with_tag".to_string();
         let description = Some("Dummy description".to_string());
 
@@ -190,7 +190,7 @@ mod mutation_tests {
     #[actix_web::test]
     async fn update() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_user(&db).await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
         let (ambition, _) = test_utils::seed::create_ambition_and_tag(
             &db,
             "Test ambition_service::Mutation::update".to_string(),
@@ -232,7 +232,7 @@ mod mutation_tests {
     #[actix_web::test]
     async fn update_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_user(&db).await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
         let (ambition, _) = test_utils::seed::create_ambition_and_tag(
             &db,
             "Test ambition_service::Mutation::update".to_string(),
@@ -260,7 +260,7 @@ mod mutation_tests {
     #[actix_web::test]
     async fn delete() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_user(&db).await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
         let (ambition, tag) = test_utils::seed::create_ambition_and_tag(
             &db,
             "Test ambition_service::Mutation::delete".to_string(),
@@ -283,7 +283,7 @@ mod mutation_tests {
     #[actix_web::test]
     async fn delete_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_user(&db).await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
         let (ambition, _) = test_utils::seed::create_ambition_and_tag(
             &db,
             "Test ambition_service::Mutation::delete_unauthorized".to_string(),
@@ -303,7 +303,7 @@ mod mutation_tests {
     #[actix_web::test]
     async fn connect_objective() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_user(&db).await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
         let (ambition, _) = test_utils::seed::create_ambition_and_tag(
             &db,
             "Test ambition_service::Mutation::connect_objective".to_string(),
@@ -333,7 +333,7 @@ mod mutation_tests {
     #[actix_web::test]
     async fn disconnect_objective() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_user(&db).await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
         let (ambition, _) = test_utils::seed::create_ambition_and_tag(
             &db,
             "Test ambition_service::Mutation::disconnect_objective".to_string(),

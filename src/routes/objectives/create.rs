@@ -84,7 +84,7 @@ mod tests {
     async fn happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_user(&db).await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
         let name = "create_objective route happy path".to_string();
 
         let req = test::TestRequest::post()

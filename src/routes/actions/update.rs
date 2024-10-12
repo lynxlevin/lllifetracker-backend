@@ -85,7 +85,7 @@ mod tests {
     async fn happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_user(&db).await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
         let (action, _) = test_utils::seed::create_action_and_tag(
             &db,
             "action_for_update_route".to_string(),
@@ -127,7 +127,7 @@ mod tests {
     async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_user(&db).await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
         let (action, _) = test_utils::seed::create_action_and_tag(
             &db,
             "action_for_update_route_unauthorized".to_string(),
