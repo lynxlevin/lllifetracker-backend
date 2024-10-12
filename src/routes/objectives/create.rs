@@ -34,7 +34,7 @@ pub async fn create_objective(
             )
             .await
             {
-                Ok(objective) => HttpResponse::Ok().json(ObjectiveVisible {
+                Ok(objective) => HttpResponse::Created().json(ObjectiveVisible {
                     id: objective.id,
                     name: objective.name,
                     created_at: objective.created_at,
@@ -49,5 +49,74 @@ pub async fn create_objective(
             }
         }
         None => HttpResponse::Unauthorized().json("You are not logged in."),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        entities::{objective, tag},
+        test_utils,
+    };
+
+    use super::*;
+    use actix_http::Request;
+    use actix_web::{
+        dev::{Service, ServiceResponse},
+        http, test,
+        web::scope,
+        App, Error, HttpMessage,
+    };
+    use sea_orm::prelude::*;
+
+    async fn init_app(
+        db: DbConn,
+    ) -> impl Service<Request, Response = ServiceResponse, Error = Error> {
+        test::init_service(
+            App::new()
+                .service(scope("/").service(create_objective))
+                .app_data(Data::new(db)),
+        )
+        .await
+    }
+
+    #[actix_web::test]
+    async fn happy_path() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = test_utils::seed::create_user(&db).await?;
+        let name = "create_objective route happy path".to_string();
+
+        let req = test::TestRequest::post()
+            .uri("/")
+            .set_json(RequestBody { name: name.clone() })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::CREATED);
+
+        let returned_objective: ObjectiveVisible = test::read_body_json(res).await;
+        assert_eq!(returned_objective.name, name);
+
+        let created_objective = objective::Entity::find_by_id(returned_objective.id)
+            .filter(objective::Column::Name.eq(returned_objective.name))
+            .filter(objective::Column::UserId.eq(user.id))
+            .filter(objective::Column::CreatedAt.eq(returned_objective.created_at))
+            .filter(objective::Column::UpdatedAt.eq(returned_objective.updated_at))
+            .one(&db)
+            .await?;
+        assert!(created_objective.is_some());
+
+        let created_tag = tag::Entity::find()
+            .filter(tag::Column::AmbitionId.is_null())
+            .filter(tag::Column::ObjectiveId.eq(returned_objective.id))
+            .filter(tag::Column::ActionId.is_null())
+            .filter(tag::Column::UserId.eq(user.id))
+            .one(&db)
+            .await?;
+        assert!(created_tag.is_some());
+
+        Ok(())
     }
 }

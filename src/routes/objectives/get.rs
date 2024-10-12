@@ -54,3 +54,74 @@ pub async fn get_objective(
         None => HttpResponse::Unauthorized().json("You are not logged in."),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use actix_http::Request;
+    use actix_web::{
+        dev::{Service, ServiceResponse},
+        http, test, App, HttpMessage,
+    };
+    use sea_orm::{entity::prelude::*, DbErr};
+
+    use crate::test_utils;
+
+    use super::*;
+
+    async fn init_app(
+        db: DbConn,
+    ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
+        test::init_service(App::new().service(get_objective).app_data(Data::new(db))).await
+    }
+
+    #[actix_web::test]
+    async fn happy_path() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = test_utils::seed::create_user(&db).await?;
+        let (objective, _) = test_utils::seed::create_objective_and_tag(
+            &db,
+            "objective_for_get".to_string(),
+            user.id,
+        )
+        .await?;
+
+        let req = test::TestRequest::get()
+            .uri(&format!("/{}", objective.id))
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), http::StatusCode::OK);
+
+        let returned_objective: ObjectiveVisible = test::read_body_json(resp).await;
+        assert_eq!(returned_objective.id, objective.id);
+        assert_eq!(returned_objective.name, objective.name);
+        assert_eq!(returned_objective.created_at, objective.created_at);
+        assert_eq!(returned_objective.updated_at, objective.updated_at);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = test_utils::seed::create_user(&db).await?;
+        let (objective, _) = test_utils::seed::create_objective_and_tag(
+            &db,
+            "objective_for_get".to_string(),
+            user.id,
+        )
+        .await?;
+
+        let req = test::TestRequest::get()
+            .uri(&format!("/{}", objective.id))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), http::StatusCode::UNAUTHORIZED);
+
+        Ok(())
+    }
+}

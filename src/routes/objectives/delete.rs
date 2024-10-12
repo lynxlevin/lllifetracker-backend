@@ -40,3 +40,77 @@ pub async fn delete_objective(
         }),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use actix_http::Request;
+    use actix_web::{
+        dev::{Service, ServiceResponse},
+        http, test, App, HttpMessage,
+    };
+    use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
+
+    use crate::{
+        entities::{objective, tag},
+        test_utils,
+    };
+
+    use super::*;
+
+    async fn init_app(
+        db: DbConn,
+    ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
+        test::init_service(App::new().service(delete_objective).app_data(Data::new(db))).await
+    }
+
+    #[actix_web::test]
+    async fn happy_path() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = test_utils::seed::create_user(&db).await?;
+        let (objective, tag) = test_utils::seed::create_objective_and_tag(
+            &db,
+            "objective_for_delete_route".to_string(),
+            user.id,
+        )
+        .await?;
+
+        let req = test::TestRequest::delete()
+            .uri(&format!("/{}", objective.id))
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), http::StatusCode::NO_CONTENT);
+
+        let objective_in_db = objective::Entity::find_by_id(objective.id).one(&db).await?;
+        assert!(objective_in_db.is_none());
+
+        let tag_in_db = tag::Entity::find_by_id(tag.id).one(&db).await?;
+        assert!(tag_in_db.is_none());
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = test_utils::seed::create_user(&db).await?;
+        let (objective, _) = test_utils::seed::create_objective_and_tag(
+            &db,
+            "objective_for_delete_route_unauthorized".to_string(),
+            user.id,
+        )
+        .await?;
+
+        let req = test::TestRequest::delete()
+            .uri(&format!("/{}", objective.id))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), http::StatusCode::UNAUTHORIZED);
+
+        Ok(())
+    }
+}

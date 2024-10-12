@@ -62,3 +62,90 @@ pub async fn update_objective(
         }),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use actix_http::Request;
+    use actix_web::{
+        dev::{Service, ServiceResponse},
+        http, test, App, HttpMessage,
+    };
+    use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
+
+    use crate::{entities::objective, test_utils};
+
+    use super::*;
+
+    async fn init_app(
+        db: DbConn,
+    ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
+        test::init_service(App::new().service(update_objective).app_data(Data::new(db))).await
+    }
+
+    #[actix_web::test]
+    async fn happy_path() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = test_utils::seed::create_user(&db).await?;
+        let (objective, _) = test_utils::seed::create_objective_and_tag(
+            &db,
+            "objective_for_update_route".to_string(),
+            user.id,
+        )
+        .await?;
+        let new_name = "objective_after_update_route".to_string();
+
+        let req = test::TestRequest::put()
+            .uri(&format!("/{}", objective.id))
+            .set_json(RequestBody {
+                name: new_name.clone(),
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::OK);
+
+        let returned_objective: ObjectiveVisible = test::read_body_json(res).await;
+        assert_eq!(returned_objective.id, objective.id);
+        assert_eq!(returned_objective.name, new_name.clone());
+        assert_eq!(returned_objective.created_at, objective.created_at);
+        assert!(returned_objective.updated_at > objective.updated_at);
+
+        let updated_objective = objective::Entity::find_by_id(objective.id)
+            .filter(objective::Column::Name.eq(new_name))
+            .filter(objective::Column::UserId.eq(user.id))
+            .filter(objective::Column::CreatedAt.eq(returned_objective.created_at))
+            .filter(objective::Column::UpdatedAt.eq(returned_objective.updated_at))
+            .one(&db)
+            .await?;
+        assert!(updated_objective.is_some());
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = test_utils::seed::create_user(&db).await?;
+        let (objective, _) = test_utils::seed::create_objective_and_tag(
+            &db,
+            "objective_for_update_route_unauthorized".to_string(),
+            user.id,
+        )
+        .await?;
+
+        let req = test::TestRequest::put()
+            .uri(&format!("/{}", objective.id))
+            .set_json(RequestBody {
+                name: "objective_after_update_route".to_string(),
+            })
+            .to_request();
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::UNAUTHORIZED);
+
+        Ok(())
+    }
+}
