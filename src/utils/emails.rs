@@ -168,3 +168,17 @@ pub async fn send_multipart_email(
     ));
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    #[actix_web::test]
+    #[ignore]
+    async fn send_email() -> Result<(), String> {
+        todo!();
+    }
+    #[actix_web::test]
+    #[ignore]
+    async fn send_multipart_email() -> Result<(), String> {
+        todo!();
+    }
+}

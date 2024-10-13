@@ -58,3 +58,12 @@ pub async fn request_password_change(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[actix_web::test]
+    #[ignore]
+    async fn request_password_change() -> Result<(), String> {
+        todo!();
+    }
+}

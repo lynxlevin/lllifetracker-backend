@@ -100,3 +100,12 @@ async fn set_user(req: &ServiceRequest) -> Result<(), String> {
     req.extensions_mut().insert(user);
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    #[actix_web::test]
+    #[ignore]
+    async fn set_user() -> Result<(), String> {
+        todo!();
+    }
+}

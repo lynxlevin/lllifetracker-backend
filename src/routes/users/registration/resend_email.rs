@@ -66,3 +66,12 @@ pub async fn resend_email(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[actix_web::test]
+    #[ignore]
+    async fn resend_email() -> Result<(), String> {
+        todo!();
+    }
+}

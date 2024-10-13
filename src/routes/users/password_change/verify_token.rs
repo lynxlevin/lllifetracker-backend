@@ -77,3 +77,12 @@ pub async fn verify_password_change_token(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[actix_web::test]
+    #[ignore]
+    async fn verify_password_change_token() -> Result<(), String> {
+        todo!();
+    }
+}

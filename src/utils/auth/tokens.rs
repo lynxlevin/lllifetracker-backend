@@ -155,3 +155,17 @@ pub async fn verify_confirmation_token_pasetor(
         Err(e) => Err(format!("{}", e)),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[actix_web::test]
+    #[ignore]
+    async fn issue_confirmation_token_pasetors() -> Result<(), String> {
+        todo!();
+    }
+    #[actix_web::test]
+    #[ignore]
+    async fn verify_confirmation_token_pasetor() -> Result<(), String> {
+        todo!();
+    }
+}

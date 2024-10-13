@@ -18,3 +18,12 @@ pub async fn get_user(user: Option<ReqData<user_entity::Model>>) -> HttpResponse
         None => HttpResponse::Ok().json("You are not logged in."),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[actix_web::test]
+    #[ignore]
+    async fn get_user() -> Result<(), String> {
+        todo!();
+    }
+}

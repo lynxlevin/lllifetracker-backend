@@ -165,3 +165,27 @@ async fn increment_login_request_count(
         tracing::event!(target: "redis", tracing::Level::WARN, "Error adding login_request_count_key to Redis: {:#?}", e)
     };
 }
+
+#[cfg(test)]
+mod tests {
+    #[actix_web::test]
+    #[ignore]
+    async fn login_user() -> Result<(), String> {
+        todo!();
+    }
+    #[actix_web::test]
+    #[ignore]
+    async fn validate_request_count() -> Result<(), String> {
+        todo!();
+    }
+    #[actix_web::test]
+    #[ignore]
+    async fn renew_session() -> Result<(), String> {
+        todo!();
+    }
+    #[actix_web::test]
+    #[ignore]
+    async fn increment_login_request_count() -> Result<(), String> {
+        todo!();
+    }
+}

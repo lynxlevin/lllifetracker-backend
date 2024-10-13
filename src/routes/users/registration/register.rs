@@ -79,3 +79,12 @@ pub async fn register(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[actix_web::test]
+    #[ignore]
+    async fn register() -> Result<(), String> {
+        todo!();
+    }
+}

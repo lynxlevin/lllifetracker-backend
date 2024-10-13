@@ -82,3 +82,12 @@ pub async fn confirm(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[actix_web::test]
+    #[ignore]
+    async fn confirm() -> Result<(), String> {
+        todo!();
+    }
+}
