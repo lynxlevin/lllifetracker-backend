@@ -94,6 +94,7 @@ async fn run(
                     .cookie_name("sessionId".to_string())
                     .build()
             })
+            .service(crate::routes::health_check)
             .configure(auth_routes)
             .configure(ambition_routes)
             .configure(objective_routes)
