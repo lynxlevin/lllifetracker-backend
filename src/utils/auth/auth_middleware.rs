@@ -103,9 +103,37 @@ async fn set_user(req: &ServiceRequest) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use actix_session::SessionExt;
+    use actix_web::test;
+
+    use crate::{
+        entities::user,
+        test_utils,
+        types::{USER_EMAIL_KEY, USER_ID_KEY},
+    };
+
     #[actix_web::test]
-    #[ignore]
-    async fn set_user() -> Result<(), String> {
-        todo!();
+    async fn test_set_user() -> Result<(), String> {
+        let db = test_utils::init_db().await.unwrap();
+        let user = test_utils::seed::create_active_user(&db).await.unwrap();
+        let srv_req = test::TestRequest::default()
+            .app_data(Data::new(db.clone()))
+            .to_srv_request();
+        srv_req.get_session().insert(USER_ID_KEY, user.id).unwrap();
+        srv_req
+            .get_session()
+            .insert(USER_EMAIL_KEY, user.email.clone())
+            .unwrap();
+        set_user(&srv_req).await?;
+
+        let user2 = srv_req
+            .extensions()
+            .get::<user::Model>()
+            .unwrap()
+            .to_owned();
+        assert_eq!(user2, user);
+
+        Ok(())
     }
 }
