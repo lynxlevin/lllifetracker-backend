@@ -15,7 +15,9 @@ pub async fn get_user(user: Option<ReqData<user_entity::Model>>) -> HttpResponse
                 is_active: user.is_active,
             })
         }
-        None => HttpResponse::Ok().json("You are not logged in."),
+        None => HttpResponse::Unauthorized().json(crate::types::ErrorResponse {
+            error: "You are not logged in.".to_string(),
+        }),
     }
 }
 
