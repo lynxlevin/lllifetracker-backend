@@ -35,9 +35,9 @@ impl AmbitionQuery {
             .join(LeftJoin, ambitions_objectives::Relation::Objective.def())
             .join_rev(LeftJoin, objectives_actions::Relation::Objective.def())
             .join(LeftJoin, objectives_actions::Relation::Action.def())
-            .order_by_asc(ambition::Column::Id)
-            .order_by_asc(objective::Column::Id)
-            .order_by_asc(action::Column::Id)
+            .order_by_asc(ambition::Column::CreatedAt)
+            .order_by_asc(objective::Column::CreatedAt)
+            .order_by_asc(action::Column::CreatedAt)
             .into_model::<AmbitionVisibleWithLinks>()
             .all(db)
             .await
@@ -56,49 +56,53 @@ impl AmbitionQuery {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use crate::test_utils;
+#[cfg(test)]
+mod tests {
+    use sea_orm::Set;
 
-//     use super::*;
+    use crate::test_utils;
 
-//     #[actix_web::test]
-//     async fn create_with_tag() -> Result<(), DbErr> {
-//         let db = test_utils::init_db().await?;
-//         let user = test_utils::seed::create_active_user(&db).await?;
-//         let name = "Test ambition_service::Mutation::create_with_tag".to_string();
-//         let description = Some("Dummy description".to_string());
+    use super::*;
 
-//         let form_data = NewAmbition {
-//             name: name.clone(),
-//             description: description.clone(),
-//             user_id: user.id,
-//         };
+    #[actix_web::test]
+    async fn find_all_with_linked_by_user_id() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
+        let (ambition_1, objective_1, action_1) =
+            test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, true, true)
+                .await?;
+        let (ambition_2, objective_2, action_2) =
+            test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, false, false)
+                .await?;
+        let _ = objectives_actions::ActiveModel {
+            objective_id: Set(objective_1.id),
+            action_id: Set(action_2.id),
+        }
+        .insert(&db)
+        .await?;
+        let _ = ambitions_objectives::ActiveModel {
+            ambition_id: Set(ambition_1.id),
+            objective_id: Set(objective_2.id),
+        }
+        .insert(&db)
+        .await?;
 
-//         let returned_ambition = Mutation::create_with_tag(&db, form_data).await.unwrap();
-//         assert_eq!(returned_ambition.name, name);
-//         assert_eq!(returned_ambition.description, description);
-//         assert_eq!(returned_ambition.user_id, user.id);
+        let res = AmbitionQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
 
-//         let created_ambition = ambition::Entity::find_by_id(returned_ambition.id)
-//             .filter(ambition::Column::Name.eq(name))
-//             .filter(ambition::Column::Description.eq(description))
-//             .filter(ambition::Column::UserId.eq(user.id))
-//             .filter(ambition::Column::CreatedAt.eq(returned_ambition.created_at))
-//             .filter(ambition::Column::UpdatedAt.eq(returned_ambition.updated_at))
-//             .one(&db)
-//             .await?;
-//         assert!(created_ambition.is_some());
+        assert_eq!(res.len(), 4);
+        assert_eq!(res[0].id, ambition_1.id);
+        assert_eq!(res[0].objective_id, Some(objective_1.id));
+        assert_eq!(res[0].action_id, Some(action_1.id));
+        assert_eq!(res[1].id, ambition_1.id);
+        assert_eq!(res[1].objective_id, Some(objective_1.id));
+        assert_eq!(res[1].action_id, Some(action_2.id));
+        assert_eq!(res[2].id, ambition_1.id);
+        assert_eq!(res[2].objective_id, Some(objective_2.id));
+        assert_eq!(res[2].action_id, None);
+        assert_eq!(res[3].id, ambition_2.id);
+        assert_eq!(res[3].objective_id, None);
+        assert_eq!(res[3].action_id, None);
 
-//         let created_tag = tag::Entity::find()
-//             .filter(tag::Column::UserId.eq(user.id))
-//             .filter(tag::Column::AmbitionId.eq(Some(returned_ambition.id)))
-//             .filter(tag::Column::ObjectiveId.is_null())
-//             .filter(tag::Column::ActionId.is_null())
-//             .one(&db)
-//             .await?;
-//         assert!(created_tag.is_some());
-
-//         Ok(())
-//     }
-// }
+        Ok(())
+    }
+}
