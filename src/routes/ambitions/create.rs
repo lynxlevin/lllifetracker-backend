@@ -1,6 +1,6 @@
 use crate::{
     entities::user as user_entity,
-    services::ambition::{Mutation as AmbitionMutation, NewAmbition},
+    services::ambition_mutation::{AmbitionMutation, NewAmbition},
     types::{self, AmbitionVisible, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{

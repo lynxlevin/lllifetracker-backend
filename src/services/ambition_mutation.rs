@@ -13,9 +13,9 @@ pub struct NewAmbition {
     pub user_id: uuid::Uuid,
 }
 
-pub struct Mutation;
+pub struct AmbitionMutation;
 
-impl Mutation {
+impl AmbitionMutation {
     pub async fn create_with_tag(
         db: &DbConn,
         form_data: NewAmbition,
@@ -125,7 +125,7 @@ mod tests {
     async fn create_with_tag() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let name = "Test ambition_service::Mutation::create_with_tag".to_string();
+        let name = "Test AmbitionMutation::create_with_tag".to_string();
         let description = Some("Dummy description".to_string());
 
         let form_data = NewAmbition {
@@ -134,7 +134,7 @@ mod tests {
             user_id: user.id,
         };
 
-        let returned_ambition = Mutation::create_with_tag(&db, form_data).await.unwrap();
+        let returned_ambition = AmbitionMutation::create_with_tag(&db, form_data).await.unwrap();
         assert_eq!(returned_ambition.name, name);
         assert_eq!(returned_ambition.description, description);
         assert_eq!(returned_ambition.user_id, user.id);
@@ -167,15 +167,15 @@ mod tests {
         let user = test_utils::seed::create_active_user(&db).await?;
         let (ambition, _) = test_utils::seed::create_ambition_and_tag(
             &db,
-            "Test ambition_service::Mutation::update".to_string(),
+            "Test AmbitionMutation::update".to_string(),
             None,
             user.id,
         )
         .await?;
-        let new_name = "Test ambition_service::Mutation::update_after".to_string();
+        let new_name = "Test AmbitionMutation::update_after".to_string();
         let new_description = Some("After update.".to_string());
 
-        let returned_ambition = Mutation::update(
+        let returned_ambition = AmbitionMutation::update(
             &db,
             ambition.id,
             user.id,
@@ -209,15 +209,15 @@ mod tests {
         let user = test_utils::seed::create_active_user(&db).await?;
         let (ambition, _) = test_utils::seed::create_ambition_and_tag(
             &db,
-            "Test ambition_service::Mutation::update".to_string(),
+            "Test AmbitionMutation::update".to_string(),
             None,
             user.id,
         )
         .await?;
-        let new_name = "Test ambition_service::Mutation::update_after".to_string();
+        let new_name = "Test AmbitionMutation::update_after".to_string();
         let new_description = Some("After update.".to_string());
 
-        let error = Mutation::update(
+        let error = AmbitionMutation::update(
             &db,
             ambition.id,
             uuid::Uuid::new_v4(),
@@ -237,13 +237,13 @@ mod tests {
         let user = test_utils::seed::create_active_user(&db).await?;
         let (ambition, tag) = test_utils::seed::create_ambition_and_tag(
             &db,
-            "Test ambition_service::Mutation::delete".to_string(),
+            "Test AmbitionMutation::delete".to_string(),
             None,
             user.id,
         )
         .await?;
 
-        Mutation::delete(&db, ambition.id, user.id).await?;
+        AmbitionMutation::delete(&db, ambition.id, user.id).await?;
 
         let ambition_in_db = ambition::Entity::find_by_id(ambition.id).one(&db).await?;
         assert!(ambition_in_db.is_none());
@@ -260,13 +260,13 @@ mod tests {
         let user = test_utils::seed::create_active_user(&db).await?;
         let (ambition, _) = test_utils::seed::create_ambition_and_tag(
             &db,
-            "Test ambition_service::Mutation::delete_unauthorized".to_string(),
+            "Test AmbitionMutation::delete_unauthorized".to_string(),
             None,
             user.id,
         )
         .await?;
 
-        let error = Mutation::delete(&db, ambition.id, uuid::Uuid::new_v4())
+        let error = AmbitionMutation::delete(&db, ambition.id, uuid::Uuid::new_v4())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
@@ -280,19 +280,19 @@ mod tests {
         let user = test_utils::seed::create_active_user(&db).await?;
         let (ambition, _) = test_utils::seed::create_ambition_and_tag(
             &db,
-            "Test ambition_service::Mutation::connect_objective".to_string(),
+            "Test AmbitionMutation::connect_objective".to_string(),
             None,
             user.id,
         )
         .await?;
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
-            "Test ambition_service::Mutation::connect_objective".to_string(),
+            "Test AmbitionMutation::connect_objective".to_string(),
             user.id,
         )
         .await?;
 
-        Mutation::connect_objective(&db, ambition.id, objective.id).await?;
+        AmbitionMutation::connect_objective(&db, ambition.id, objective.id).await?;
 
         let created_connection = ambitions_objectives::Entity::find()
             .filter(ambitions_objectives::Column::AmbitionId.eq(ambition.id))
@@ -310,14 +310,14 @@ mod tests {
         let user = test_utils::seed::create_active_user(&db).await?;
         let (ambition, _) = test_utils::seed::create_ambition_and_tag(
             &db,
-            "Test ambition_service::Mutation::disconnect_objective".to_string(),
+            "Test AmbitionMutation::disconnect_objective".to_string(),
             None,
             user.id,
         )
         .await?;
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
-            "Test ambition_service::Mutation::disconnect_objective".to_string(),
+            "Test AmbitionMutation::disconnect_objective".to_string(),
             user.id,
         )
         .await?;
@@ -328,7 +328,7 @@ mod tests {
         .insert(&db)
         .await?;
 
-        Mutation::disconnect_objective(&db, ambition.id, objective.id).await?;
+        AmbitionMutation::disconnect_objective(&db, ambition.id, objective.id).await?;
 
         let connection_in_db = ambitions_objectives::Entity::find()
             .filter(ambitions_objectives::Column::AmbitionId.eq(ambition.id))
