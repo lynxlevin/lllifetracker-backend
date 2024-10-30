@@ -1,6 +1,6 @@
 use crate::{
     entities::user as user_entity,
-    services::ambition::Query as AmbitionQuery,
+    services::ambition_query::AmbitionQuery,
     types::{self, AmbitionVisible, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{

@@ -1,7 +1,7 @@
 use crate::{
     entities::user as user_entity,
     services::{
-        ambition::{Mutation as AmbitionMutation, Query as AmbitionQuery},
+        ambition::Mutation as AmbitionMutation, ambition_query::AmbitionQuery,
         objective::Query as ObjectiveQuery,
     },
     types::{self, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE},

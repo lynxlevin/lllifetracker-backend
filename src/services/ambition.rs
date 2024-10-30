@@ -1,9 +1,10 @@
-use crate::entities::{action, ambition, ambitions_objectives, objective, objectives_actions, tag};
-use crate::types::{AmbitionVisibleWithLinks, CustomDbErr};
+use crate::entities::{ambition, ambitions_objectives, tag};
 use chrono::Utc;
 use sea_orm::entity::prelude::*;
 use sea_orm::ActiveValue::NotSet;
-use sea_orm::{QueryOrder, QuerySelect, Set, TransactionError, TransactionTrait, JoinType::LeftJoin};
+use sea_orm::{Set, TransactionError, TransactionTrait};
+
+use super::ambition_query::AmbitionQuery;
 
 #[derive(serde::Deserialize, Debug, serde::Serialize, Clone)]
 pub struct NewAmbition {
@@ -57,7 +58,7 @@ impl Mutation {
         description: Option<String>,
     ) -> Result<ambition::Model, DbErr> {
         let mut ambition: ambition::ActiveModel =
-            Query::find_by_id_and_user_id(db, ambition_id, user_id)
+            AmbitionQuery::find_by_id_and_user_id(db, ambition_id, user_id)
                 .await?
                 .into();
         ambition.name = Set(name);
@@ -71,7 +72,7 @@ impl Mutation {
         ambition_id: uuid::Uuid,
         user_id: uuid::Uuid,
     ) -> Result<(), DbErr> {
-        Query::find_by_id_and_user_id(db, ambition_id, user_id)
+        AmbitionQuery::find_by_id_and_user_id(db, ambition_id, user_id)
             .await?
             .delete(db)
             .await?;
@@ -114,62 +115,9 @@ impl Mutation {
     }
 }
 
-pub struct Query;
-
-impl Query {
-    pub async fn find_all_by_user_id(
-        db: &DbConn,
-        user_id: uuid::Uuid,
-    ) -> Result<Vec<ambition::Model>, DbErr> {
-        ambition::Entity::find()
-            .filter(ambition::Column::UserId.eq(user_id))
-            .order_by_asc(ambition::Column::CreatedAt)
-            .all(db)
-            .await
-    }
-
-    pub async fn find_all_with_linked_by_user_id(
-        db: &DbConn,
-        user_id: uuid::Uuid,
-    ) -> Result<Vec<AmbitionVisibleWithLinks>, DbErr>  {
-        ambition::Entity::find()
-            .filter(ambition::Column::UserId.eq(user_id))
-            .column_as(objective::Column::Id, "objective_id")
-            .column_as(objective::Column::Name, "objective_name")
-            .column_as(objective::Column::CreatedAt, "objective_created_at")
-            .column_as(objective::Column::UpdatedAt, "objective_updated_at")
-            .column_as(action::Column::Id, "action_id")
-            .column_as(action::Column::Name, "action_name")
-            .column_as(action::Column::CreatedAt, "action_created_at")
-            .column_as(action::Column::UpdatedAt, "action_updated_at")
-            .join_rev(LeftJoin, ambitions_objectives::Relation::Ambition.def())
-            .join(LeftJoin, ambitions_objectives::Relation::Objective.def())
-            .join_rev(LeftJoin, objectives_actions::Relation::Objective.def())
-            .join(LeftJoin, objectives_actions::Relation::Action.def())
-            .order_by_asc(ambition::Column::Id)
-            .order_by_asc(objective::Column::Id)
-            .order_by_asc(action::Column::Id)
-            .into_model::<AmbitionVisibleWithLinks>()
-            .all(db)
-            .await
-    }
-
-    pub async fn find_by_id_and_user_id(
-        db: &DbConn,
-        ambition_id: uuid::Uuid,
-        user_id: uuid::Uuid,
-    ) -> Result<ambition::Model, DbErr> {
-        ambition::Entity::find_by_id(ambition_id)
-            .filter(ambition::Column::UserId.eq(user_id))
-            .one(db)
-            .await?
-            .ok_or(DbErr::Custom(CustomDbErr::NotFound.to_string()))
-    }
-}
-
 #[cfg(test)]
-mod mutation_tests {
-    use crate::test_utils;
+mod tests {
+    use crate::{test_utils, types::CustomDbErr};
 
     use super::*;
 
