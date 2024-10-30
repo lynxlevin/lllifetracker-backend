@@ -15,8 +15,8 @@ Content-Type: application/json
 GET {{endpoint}}/ambitions
 
 ###
-# @name list_with_connections
-GET {{endpoint}}/ambitions?connections=true
+# @name list_with_links
+GET {{endpoint}}/ambitions?links=true
 
 @ambition_id=fda888f1-7ec7-4d62-8521-bdc7d0952b5d
 
