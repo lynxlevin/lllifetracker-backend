@@ -14,7 +14,11 @@ Content-Type: application/json
 # @name list
 GET {{endpoint}}/ambitions
 
-@ambition_id=2a42258f-37c3-4751-9a7b-b8a183f49eb4
+###
+# @name list_with_connections
+GET {{endpoint}}/ambitions?connections=true
+
+@ambition_id=fda888f1-7ec7-4d62-8521-bdc7d0952b5d
 
 ###
 # @name get

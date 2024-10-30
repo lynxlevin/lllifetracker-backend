@@ -1,9 +1,9 @@
-use crate::entities::{ambition, ambitions_objectives, tag};
-use crate::types::CustomDbErr;
+use crate::entities::{action, ambition, ambitions_objectives, objective, objectives_actions, tag};
+use crate::types::{AmbitionVisibleWithLinks, CustomDbErr};
 use chrono::Utc;
 use sea_orm::entity::prelude::*;
 use sea_orm::ActiveValue::NotSet;
-use sea_orm::{QueryOrder, Set, TransactionError, TransactionTrait};
+use sea_orm::{QueryOrder, QuerySelect, Set, TransactionError, TransactionTrait, JoinType::LeftJoin};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize, Clone)]
 pub struct NewAmbition {
@@ -124,6 +124,32 @@ impl Query {
         ambition::Entity::find()
             .filter(ambition::Column::UserId.eq(user_id))
             .order_by_asc(ambition::Column::CreatedAt)
+            .all(db)
+            .await
+    }
+
+    pub async fn find_all_with_linked_by_user_id(
+        db: &DbConn,
+        user_id: uuid::Uuid,
+    ) -> Result<Vec<AmbitionVisibleWithLinks>, DbErr>  {
+        ambition::Entity::find()
+            .filter(ambition::Column::UserId.eq(user_id))
+            .column_as(objective::Column::Id, "objective_id")
+            .column_as(objective::Column::Name, "objective_name")
+            .column_as(objective::Column::CreatedAt, "objective_created_at")
+            .column_as(objective::Column::UpdatedAt, "objective_updated_at")
+            .column_as(action::Column::Id, "action_id")
+            .column_as(action::Column::Name, "action_name")
+            .column_as(action::Column::CreatedAt, "action_created_at")
+            .column_as(action::Column::UpdatedAt, "action_updated_at")
+            .join_rev(LeftJoin, ambitions_objectives::Relation::Ambition.def())
+            .join(LeftJoin, ambitions_objectives::Relation::Objective.def())
+            .join_rev(LeftJoin, objectives_actions::Relation::Objective.def())
+            .join(LeftJoin, objectives_actions::Relation::Action.def())
+            .order_by_asc(ambition::Column::Id)
+            .order_by_asc(objective::Column::Id)
+            .order_by_asc(action::Column::Id)
+            .into_model::<AmbitionVisibleWithLinks>()
             .all(db)
             .await
     }
