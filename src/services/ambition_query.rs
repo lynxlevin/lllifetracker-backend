@@ -1,7 +1,6 @@
 use crate::entities::{action, ambition, ambitions_objectives, objective, objectives_actions};
 use crate::types::{AmbitionVisible, AmbitionWithLinksQueryResult, CustomDbErr};
-use sea_orm::entity::prelude::*;
-use sea_orm::{JoinType::LeftJoin, QueryOrder, QuerySelect};
+use sea_orm::{entity::prelude::*, JoinType::LeftJoin, QueryOrder, QuerySelect};
 
 pub struct AmbitionQuery;
 
@@ -59,6 +58,8 @@ impl AmbitionQuery {
 
 #[cfg(test)]
 mod tests {
+    use std::vec;
+
     use sea_orm::Set;
 
     use crate::test_utils;
@@ -132,18 +133,24 @@ mod tests {
         let res = AmbitionQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
 
         assert_eq!(res.len(), 4);
-        assert_eq!(res[0].id, ambition_1.id);
-        assert_eq!(res[0].objective_id, Some(objective_1.id));
-        assert_eq!(res[0].action_id, Some(action_1.id));
-        assert_eq!(res[1].id, ambition_1.id);
-        assert_eq!(res[1].objective_id, Some(objective_1.id));
-        assert_eq!(res[1].action_id, Some(action_2.id));
-        assert_eq!(res[2].id, ambition_1.id);
-        assert_eq!(res[2].objective_id, Some(objective_2.id));
-        assert_eq!(res[2].action_id, None);
-        assert_eq!(res[3].id, ambition_2.id);
-        assert_eq!(res[3].objective_id, None);
-        assert_eq!(res[3].action_id, None);
+
+        // NOTE: Check only ids for convenience.
+        let res_organized = vec![
+            (res[0].id, res[0].objective_id, res[0].action_id),
+            (res[1].id, res[1].objective_id, res[1].action_id),
+            (res[2].id, res[2].objective_id, res[2].action_id),
+            (res[3].id, res[3].objective_id, res[3].action_id),
+        ];
+        let expected = vec![
+            (ambition_1.id, Some(objective_1.id), Some(action_1.id)),
+            (ambition_1.id, Some(objective_1.id), Some(action_2.id)),
+            (ambition_1.id, Some(objective_2.id), None),
+            (ambition_2.id, None, None),
+        ];
+        assert_eq!(res_organized[0], expected[0]);
+        assert_eq!(res_organized[1], expected[1]);
+        assert_eq!(res_organized[2], expected[2]);
+        assert_eq!(res_organized[3], expected[3]);
 
         Ok(())
     }
