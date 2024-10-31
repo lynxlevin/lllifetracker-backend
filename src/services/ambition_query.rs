@@ -66,6 +66,47 @@ mod tests {
     use super::*;
 
     #[actix_web::test]
+    async fn find_all_by_user_id() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
+        let (ambition_1, _) = test_utils::seed::create_ambition_and_tag(
+            &db,
+            "ambition_1".to_string(),
+            Some("desc_1".to_string()),
+            user.id,
+        )
+        .await?;
+        let (ambition_2, _) =
+            test_utils::seed::create_ambition_and_tag(&db, "ambition_2".to_string(), None, user.id)
+                .await?;
+
+        let res = AmbitionQuery::find_all_by_user_id(&db, user.id).await?;
+
+        let expected = vec![
+            AmbitionVisible {
+                id: ambition_1.id,
+                name: ambition_1.name,
+                description: ambition_1.description,
+                created_at: ambition_1.created_at,
+                updated_at: ambition_1.updated_at,
+            },
+            AmbitionVisible {
+                id: ambition_2.id,
+                name: ambition_2.name,
+                description: ambition_2.description,
+                created_at: ambition_2.created_at,
+                updated_at: ambition_2.updated_at,
+            },
+        ];
+
+        assert_eq!(res.len(), expected.len());
+        assert_eq!(res[0], expected[0]);
+        assert_eq!(res[1], expected[1]);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
     async fn find_all_with_linked_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;

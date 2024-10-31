@@ -3,7 +3,7 @@ use crate::entities::prelude::Ambition;
 
 use super::{objectives::ObjectiveVisibleWithActions, ActionVisible};
 
-#[derive(serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult)]
+#[derive(serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug)]
 #[sea_orm(entity = "Ambition")]
 pub struct AmbitionVisible {
     pub id: uuid::Uuid,
