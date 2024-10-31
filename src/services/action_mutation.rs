@@ -1,9 +1,8 @@
 use crate::entities::{action, tag};
-use crate::types::{ActionVisible, CustomDbErr};
 use chrono::Utc;
-use sea_orm::entity::prelude::*;
-use sea_orm::ActiveValue::NotSet;
-use sea_orm::{QueryOrder, Set, TransactionError, TransactionTrait};
+use sea_orm::{entity::prelude::*, ActiveValue::NotSet, Set, TransactionError, TransactionTrait};
+
+use super::action_query::ActionQuery;
 
 #[derive(serde::Deserialize, Debug, serde::Serialize, Clone)]
 pub struct NewAction {
@@ -11,9 +10,9 @@ pub struct NewAction {
     pub user_id: uuid::Uuid,
 }
 
-pub struct Mutation;
+pub struct ActionMutation;
 
-impl Mutation {
+impl ActionMutation {
     pub async fn create_with_tag(
         db: &DbConn,
         form_data: NewAction,
@@ -53,9 +52,10 @@ impl Mutation {
         user_id: uuid::Uuid,
         name: String,
     ) -> Result<action::Model, DbErr> {
-        let mut action: action::ActiveModel = Query::find_by_id_and_user_id(db, action_id, user_id)
-            .await?
-            .into();
+        let mut action: action::ActiveModel =
+            ActionQuery::find_by_id_and_user_id(db, action_id, user_id)
+                .await?
+                .into();
         action.name = Set(name);
         action.updated_at = Set(Utc::now().into());
         action.update(db).await
@@ -66,7 +66,7 @@ impl Mutation {
         action_id: uuid::Uuid,
         user_id: uuid::Uuid,
     ) -> Result<(), DbErr> {
-        Query::find_by_id_and_user_id(db, action_id, user_id)
+        ActionQuery::find_by_id_and_user_id(db, action_id, user_id)
             .await?
             .delete(db)
             .await?;
@@ -74,40 +74,13 @@ impl Mutation {
     }
 }
 
-pub struct Query;
-
-impl Query {
-    pub async fn find_all_by_user_id(
-        db: &DbConn,
-        user_id: uuid::Uuid,
-    ) -> Result<Vec<ActionVisible>, DbErr> {
-        action::Entity::find()
-            .filter(action::Column::UserId.eq(user_id))
-            .order_by_asc(action::Column::CreatedAt)
-            .into_partial_model::<ActionVisible>()
-            .all(db)
-            .await
-    }
-
-    pub async fn find_by_id_and_user_id(
-        db: &DbConn,
-        action_id: uuid::Uuid,
-        user_id: uuid::Uuid,
-    ) -> Result<action::Model, DbErr> {
-        action::Entity::find_by_id(action_id)
-            .filter(action::Column::UserId.eq(user_id))
-            .one(db)
-            .await?
-            .ok_or(DbErr::Custom(CustomDbErr::NotFound.to_string()))
-    }
-}
-
 #[cfg(test)]
-mod mutation_tests {
+mod tests {
     use sea_orm::DbErr;
 
     use crate::entities::tag;
     use crate::test_utils;
+    use crate::types::CustomDbErr;
 
     use super::*;
 
@@ -115,14 +88,16 @@ mod mutation_tests {
     async fn create_with_tag() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let action_name = "Test action_service::Mutation::create_with_tag".to_string();
+        let action_name = "Test action_service::ActionMutation::create_with_tag".to_string();
 
         let form_data = NewAction {
             name: action_name.clone(),
             user_id: user.id,
         };
 
-        let returned_action = Mutation::create_with_tag(&db, form_data).await.unwrap();
+        let returned_action = ActionMutation::create_with_tag(&db, form_data)
+            .await
+            .unwrap();
         assert_eq!(returned_action.name, action_name.clone());
         assert_eq!(returned_action.user_id, user.id);
 
@@ -159,7 +134,8 @@ mod mutation_tests {
         .await?;
         let new_name = "action_after_update".to_string();
 
-        let returned_action = Mutation::update(&db, action.id, user.id, new_name.clone()).await?;
+        let returned_action =
+            ActionMutation::update(&db, action.id, user.id, new_name.clone()).await?;
         assert_eq!(returned_action.id, action.id);
         assert_eq!(returned_action.name, new_name.clone());
         assert_eq!(returned_action.user_id, user.id);
@@ -190,7 +166,7 @@ mod mutation_tests {
         .await?;
         let new_name = "action_after_update_unauthorized".to_string();
 
-        let error = Mutation::update(&db, action.id, uuid::Uuid::new_v4(), new_name.clone())
+        let error = ActionMutation::update(&db, action.id, uuid::Uuid::new_v4(), new_name.clone())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
@@ -206,7 +182,7 @@ mod mutation_tests {
             test_utils::seed::create_action_and_tag(&db, "action_for_delete".to_string(), user.id)
                 .await?;
 
-        Mutation::delete(&db, action.id, user.id).await?;
+        ActionMutation::delete(&db, action.id, user.id).await?;
 
         let action_in_db = action::Entity::find_by_id(action.id).one(&db).await?;
         assert!(action_in_db.is_none());
@@ -228,7 +204,7 @@ mod mutation_tests {
         )
         .await?;
 
-        let error = Mutation::delete(&db, action.id, uuid::Uuid::new_v4())
+        let error = ActionMutation::delete(&db, action.id, uuid::Uuid::new_v4())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));

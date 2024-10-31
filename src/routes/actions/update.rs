@@ -1,6 +1,6 @@
 use crate::{
     entities::user as user_entity,
-    services::action::Mutation as ActionMutation,
+    services::action_mutation::ActionMutation,
     types::{self, ActionVisible, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{

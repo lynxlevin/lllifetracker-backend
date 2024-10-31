@@ -1,8 +1,8 @@
 use crate::{
     entities::user as user_entity,
     services::{
-        action::Query as ActionQuery,
-        objective::{Mutation as ObjectiveMutation, Query as ObjectiveQuery},
+        action_query::ActionQuery,
+        objective_mutation::ObjectiveMutation, objective_query::ObjectiveQuery,
     },
     types::{self, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE},
 };

@@ -1,9 +1,10 @@
 use crate::entities::{objective, objectives_actions, tag};
-use crate::types::{CustomDbErr, ObjectiveVisible};
 use chrono::Utc;
 use sea_orm::entity::prelude::*;
 use sea_orm::ActiveValue::NotSet;
-use sea_orm::{QueryOrder, Set, TransactionError, TransactionTrait};
+use sea_orm::{Set, TransactionError, TransactionTrait};
+
+use super::objective_query::ObjectiveQuery;
 
 #[derive(serde::Deserialize, Debug, serde::Serialize, Clone)]
 pub struct NewObjective {
@@ -11,9 +12,9 @@ pub struct NewObjective {
     pub user_id: uuid::Uuid,
 }
 
-pub struct Mutation;
+pub struct ObjectiveMutation;
 
-impl Mutation {
+impl ObjectiveMutation {
     pub async fn create_with_tag(
         db: &DbConn,
         form_data: NewObjective,
@@ -54,7 +55,7 @@ impl Mutation {
         name: String,
     ) -> Result<objective::Model, DbErr> {
         let mut objective: objective::ActiveModel =
-            Query::find_by_id_and_user_id(db, objective_id, user_id)
+            ObjectiveQuery::find_by_id_and_user_id(db, objective_id, user_id)
                 .await?
                 .into();
         objective.name = Set(name);
@@ -67,7 +68,7 @@ impl Mutation {
         objective_id: uuid::Uuid,
         user_id: uuid::Uuid,
     ) -> Result<(), DbErr> {
-        Query::find_by_id_and_user_id(db, objective_id, user_id)
+        ObjectiveQuery::find_by_id_and_user_id(db, objective_id, user_id)
             .await?
             .delete(db)
             .await?;
@@ -110,37 +111,9 @@ impl Mutation {
     }
 }
 
-pub struct Query;
-
-impl Query {
-    pub async fn find_all_by_user_id(
-        db: &DbConn,
-        user_id: uuid::Uuid,
-    ) -> Result<Vec<ObjectiveVisible>, DbErr> {
-        objective::Entity::find()
-            .filter(objective::Column::UserId.eq(user_id))
-            .order_by_asc(objective::Column::CreatedAt)
-            .into_partial_model::<ObjectiveVisible>()
-            .all(db)
-            .await
-    }
-
-    pub async fn find_by_id_and_user_id(
-        db: &DbConn,
-        objective_id: uuid::Uuid,
-        user_id: uuid::Uuid,
-    ) -> Result<objective::Model, DbErr> {
-        objective::Entity::find_by_id(objective_id)
-            .filter(objective::Column::UserId.eq(user_id))
-            .one(db)
-            .await?
-            .ok_or(DbErr::Custom(CustomDbErr::NotFound.to_string()))
-    }
-}
-
 #[cfg(test)]
-mod mutation_tests {
-    use crate::test_utils;
+mod tests {
+    use crate::{test_utils, types::CustomDbErr};
 
     use super::*;
 
@@ -148,13 +121,13 @@ mod mutation_tests {
     async fn create_with_tag() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let name = "objective_service::Mutation::create_with_tag".to_string();
+        let name = "objective_service::ObjectiveMutation::create_with_tag".to_string();
 
         let form_data = NewObjective {
             name: name.clone(),
             user_id: user.id,
         };
-        let returned_objective = Mutation::create_with_tag(&db, form_data).await.unwrap();
+        let returned_objective = ObjectiveMutation::create_with_tag(&db, form_data).await.unwrap();
         assert_eq!(returned_objective.name, name);
         assert_eq!(returned_objective.user_id, user.id);
 
@@ -192,7 +165,7 @@ mod mutation_tests {
         let new_name = "objective_after_update".to_string();
 
         let returned_objective =
-            Mutation::update(&db, objective.id, user.id, new_name.clone()).await?;
+            ObjectiveMutation::update(&db, objective.id, user.id, new_name.clone()).await?;
         assert_eq!(returned_objective.id, objective.id);
         assert_eq!(returned_objective.name, new_name.clone());
         assert_eq!(returned_objective.user_id, user.id);
@@ -223,7 +196,7 @@ mod mutation_tests {
         .await?;
         let new_name = "objective_after_update_unauthorized".to_string();
 
-        let error = Mutation::update(&db, objective.id, uuid::Uuid::new_v4(), new_name.clone())
+        let error = ObjectiveMutation::update(&db, objective.id, uuid::Uuid::new_v4(), new_name.clone())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
@@ -242,7 +215,7 @@ mod mutation_tests {
         )
         .await?;
 
-        Mutation::delete(&db, objective.id, user.id).await?;
+        ObjectiveMutation::delete(&db, objective.id, user.id).await?;
 
         let objective_in_db = objective::Entity::find_by_id(objective.id).one(&db).await?;
         assert!(objective_in_db.is_none());
@@ -264,7 +237,7 @@ mod mutation_tests {
         )
         .await?;
 
-        let error = Mutation::delete(&db, objective.id, uuid::Uuid::new_v4())
+        let error = ObjectiveMutation::delete(&db, objective.id, uuid::Uuid::new_v4())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
@@ -278,18 +251,18 @@ mod mutation_tests {
         let user = test_utils::seed::create_active_user(&db).await?;
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
-            "Test objective_service::Mutation::connect_action".to_string(),
+            "Test objective_service::ObjectiveMutation::connect_action".to_string(),
             user.id,
         )
         .await?;
         let (action, _) = test_utils::seed::create_action_and_tag(
             &db,
-            "Test objective_service::Mutation::connect_action".to_string(),
+            "Test objective_service::ObjectiveMutation::connect_action".to_string(),
             user.id,
         )
         .await?;
 
-        Mutation::connect_action(&db, objective.id, action.id).await?;
+        ObjectiveMutation::connect_action(&db, objective.id, action.id).await?;
 
         let created_connection = objectives_actions::Entity::find()
             .filter(objectives_actions::Column::ObjectiveId.eq(objective.id))
@@ -307,13 +280,13 @@ mod mutation_tests {
         let user = test_utils::seed::create_active_user(&db).await?;
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
-            "Test objective_service::Mutation::disconnect_action".to_string(),
+            "Test objective_service::ObjectiveMutation::disconnect_action".to_string(),
             user.id,
         )
         .await?;
         let (action, _) = test_utils::seed::create_action_and_tag(
             &db,
-            "Test objective_service::Mutation::disconnect_action".to_string(),
+            "Test objective_service::ObjectiveMutation::disconnect_action".to_string(),
             user.id,
         )
         .await?;
@@ -324,7 +297,7 @@ mod mutation_tests {
         .insert(&db)
         .await?;
 
-        Mutation::disconnect_action(&db, objective.id, action.id).await?;
+        ObjectiveMutation::disconnect_action(&db, objective.id, action.id).await?;
 
         let connection_in_db = objectives_actions::Entity::find()
             .filter(objectives_actions::Column::ObjectiveId.eq(objective.id))

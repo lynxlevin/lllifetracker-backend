@@ -1,6 +1,6 @@
 use crate::{
     entities::user as user_entity,
-    services::objective::Query as ObjectiveQuery,
+    services::objective_query::ObjectiveQuery,
     types::{self, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
