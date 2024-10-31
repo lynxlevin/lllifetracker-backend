@@ -1,7 +1,7 @@
 use crate::{
     entities::user as user_entity,
     services::objective::Query as ObjectiveQuery,
-    types::{self, ObjectiveVisible, INTERNAL_SERVER_ERROR_MESSAGE},
+    types::{self, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
     get,
@@ -20,17 +20,7 @@ pub async fn list_objectives(
         Some(user) => {
             let user = user.into_inner();
             match ObjectiveQuery::find_all_by_user_id(&db, user.id).await {
-                Ok(objectives) => HttpResponse::Ok().json(
-                    objectives
-                        .iter()
-                        .map(|objective| ObjectiveVisible {
-                            id: objective.id,
-                            name: objective.name.clone(),
-                            created_at: objective.created_at,
-                            updated_at: objective.updated_at,
-                        })
-                        .collect::<Vec<ObjectiveVisible>>(),
-                ),
+                Ok(objectives) => HttpResponse::Ok().json(objectives),
                 Err(e) => {
                     tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
                     HttpResponse::InternalServerError().json(types::ErrorResponse {
@@ -53,6 +43,7 @@ mod tests {
         App, HttpMessage,
     };
     use sea_orm::{entity::prelude::*, DbErr};
+    use types::ObjectiveVisible;
 
     use crate::test_utils;
 

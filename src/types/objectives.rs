@@ -1,6 +1,10 @@
-use super::ActionVisible;
+use sea_orm::{DerivePartialModel, FromQueryResult};
 
-#[derive(serde::Serialize, serde::Deserialize)]
+use super::ActionVisible;
+use crate::entities::prelude::Objective;
+
+#[derive(serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult)]
+#[sea_orm(entity = "Objective")]
 pub struct ObjectiveVisible {
     pub id: uuid::Uuid,
     pub name: String,

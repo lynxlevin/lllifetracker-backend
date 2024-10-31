@@ -1,8 +1,10 @@
-use sea_orm::FromQueryResult;
+use sea_orm::{DerivePartialModel, FromQueryResult};
+use crate::entities::prelude::Ambition;
 
 use super::{objectives::ObjectiveVisibleWithActions, ActionVisible};
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult)]
+#[sea_orm(entity = "Ambition")]
 pub struct AmbitionVisible {
     pub id: uuid::Uuid,
     pub name: String,

@@ -1,5 +1,5 @@
 use crate::entities::{action, tag};
-use crate::types::CustomDbErr;
+use crate::types::{ActionVisible, CustomDbErr};
 use chrono::Utc;
 use sea_orm::entity::prelude::*;
 use sea_orm::ActiveValue::NotSet;
@@ -80,10 +80,11 @@ impl Query {
     pub async fn find_all_by_user_id(
         db: &DbConn,
         user_id: uuid::Uuid,
-    ) -> Result<Vec<action::Model>, DbErr> {
+    ) -> Result<Vec<ActionVisible>, DbErr> {
         action::Entity::find()
             .filter(action::Column::UserId.eq(user_id))
             .order_by_asc(action::Column::CreatedAt)
+            .into_partial_model::<ActionVisible>()
             .all(db)
             .await
     }

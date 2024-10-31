@@ -1,5 +1,5 @@
 use crate::entities::{action, ambition, ambitions_objectives, objective, objectives_actions};
-use crate::types::{AmbitionWithLinksQueryResult, CustomDbErr};
+use crate::types::{AmbitionVisible, AmbitionWithLinksQueryResult, CustomDbErr};
 use sea_orm::entity::prelude::*;
 use sea_orm::{JoinType::LeftJoin, QueryOrder, QuerySelect};
 
@@ -9,10 +9,11 @@ impl AmbitionQuery {
     pub async fn find_all_by_user_id(
         db: &DbConn,
         user_id: uuid::Uuid,
-    ) -> Result<Vec<ambition::Model>, DbErr> {
+    ) -> Result<Vec<AmbitionVisible>, DbErr> {
         ambition::Entity::find()
             .filter(ambition::Column::UserId.eq(user_id))
             .order_by_asc(ambition::Column::CreatedAt)
+            .into_partial_model::<AmbitionVisible>()
             .all(db)
             .await
     }

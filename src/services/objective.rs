@@ -1,5 +1,5 @@
 use crate::entities::{objective, objectives_actions, tag};
-use crate::types::CustomDbErr;
+use crate::types::{CustomDbErr, ObjectiveVisible};
 use chrono::Utc;
 use sea_orm::entity::prelude::*;
 use sea_orm::ActiveValue::NotSet;
@@ -116,10 +116,11 @@ impl Query {
     pub async fn find_all_by_user_id(
         db: &DbConn,
         user_id: uuid::Uuid,
-    ) -> Result<Vec<objective::Model>, DbErr> {
+    ) -> Result<Vec<ObjectiveVisible>, DbErr> {
         objective::Entity::find()
             .filter(objective::Column::UserId.eq(user_id))
             .order_by_asc(objective::Column::CreatedAt)
+            .into_partial_model::<ObjectiveVisible>()
             .all(db)
             .await
     }

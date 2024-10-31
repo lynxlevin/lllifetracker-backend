@@ -4,7 +4,7 @@ use crate::{
     entities::user as user_entity,
     services::ambition_query::AmbitionQuery,
     types::{
-        self, ActionVisible, AmbitionVisible, AmbitionVisibleWithLinks,
+        self, ActionVisible, AmbitionVisibleWithLinks,
         AmbitionWithLinksQueryResult, ObjectiveVisibleWithActions, INTERNAL_SERVER_ERROR_MESSAGE,
     },
 };
@@ -78,20 +78,7 @@ pub async fn list_ambitions(
                 }
             } else {
                 match AmbitionQuery::find_all_by_user_id(&db, user.id).await {
-                    // MYMEMO: use PartialModel
-                    // https://www.sea-ql.org/SeaORM/docs/advanced-query/custom-select/#select-partial-model
-                    Ok(ambitions) => HttpResponse::Ok().json(
-                        ambitions
-                            .iter()
-                            .map(|ambition| AmbitionVisible {
-                                id: ambition.id,
-                                name: ambition.name.clone(),
-                                description: ambition.description.clone(),
-                                created_at: ambition.created_at,
-                                updated_at: ambition.updated_at,
-                            })
-                            .collect::<Vec<AmbitionVisible>>(),
-                    ),
+                    Ok(ambitions) => HttpResponse::Ok().json(ambitions),
                     Err(e) => {
                         tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
                         HttpResponse::InternalServerError().json(types::ErrorResponse {
@@ -134,7 +121,7 @@ mod tests {
         App, HttpMessage,
     };
     use sea_orm::{entity::prelude::*, DbErr, Set};
-    use types::AmbitionVisibleWithLinks;
+    use types::{AmbitionVisible, AmbitionVisibleWithLinks};
 
     use crate::{
         entities::{ambitions_objectives, objectives_actions},

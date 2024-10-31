@@ -1,4 +1,8 @@
-#[derive(serde::Serialize, serde::Deserialize)]
+use sea_orm::{DerivePartialModel, FromQueryResult};
+use crate::entities::prelude::Action;
+
+#[derive(serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult)]
+#[sea_orm(entity = "Action")]
 pub struct ActionVisible {
     pub id: uuid::Uuid,
     pub name: String,
