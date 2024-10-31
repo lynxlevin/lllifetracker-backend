@@ -2,6 +2,8 @@ use sea_orm::{EnumIter, Iterable};
 use sea_orm_migration::prelude::extension::postgres::Type;
 use sea_orm_migration::{prelude::*, schema::*};
 
+const INDEX_NAME: &str = "users_id_email_is_active_index";
+
 #[derive(DeriveMigrationName)]
 pub struct Migration;
 
@@ -26,11 +28,14 @@ impl MigrationTrait for Migration {
                     .col(string(User::Password))
                     .col(string(User::FirstName))
                     .col(string(User::LastName))
-                    .col(enumeration(
-                        User::Timezone,
-                        Alias::new("timezone_enum"),
-                        TimezoneVariants::iter(),
-                    ))
+                    .col(
+                        enumeration(
+                            User::Timezone,
+                            Alias::new(TimezoneEnum.to_string()),
+                            TimezoneVariants::iter(),
+                        )
+                        .default(TimezoneVariants::AsiaTokyo.to_string()),
+                    )
                     .col(boolean(User::IsActive).default(false))
                     .col(
                         timestamp_with_time_zone(User::CreatedAt)
@@ -45,36 +50,34 @@ impl MigrationTrait for Migration {
             .await?;
         manager
             .create_index(
-                sea_query::Index::create()
-                    .name("users_id_email_is_active_index")
+                Index::create()
+                    .name(INDEX_NAME)
                     .table(User::Table)
                     .col(User::Id)
                     .col(User::Email)
                     .col(User::IsActive)
                     .to_owned(),
             )
-            .await
+            .await?;
+        Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_index(
-                sea_query::Index::drop()
-                    .name("users_id_email_is_active_index")
-                    .to_owned(),
-            )
+            .drop_index(Index::drop().name(INDEX_NAME).to_owned())
             .await?;
         manager
             .drop_table(Table::drop().table(User::Table).to_owned())
             .await?;
         manager
             .drop_type(Type::drop().if_exists().name(TimezoneEnum).to_owned())
-            .await
+            .await?;
+        Ok(())
     }
 }
 
 #[derive(DeriveIden)]
-enum User {
+pub enum User {
     Table,
     Id,
     Email,
@@ -91,7 +94,7 @@ enum User {
 struct TimezoneEnum;
 
 #[derive(DeriveIden, EnumIter)]
-pub enum TimezoneVariants {
+enum TimezoneVariants {
     #[sea_orm(iden = "Asia/Tokyo")]
     AsiaTokyo,
     #[sea_orm(iden = "UTC")]

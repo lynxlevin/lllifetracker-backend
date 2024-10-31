@@ -52,4 +52,13 @@ tracing-subscriber = { version = "0.3.18", features = [
 uuid = { version = "1.10.0", features = ["v4", "serde"] }
 
 [dev-dependencies]
+actix-http = "3.9.0"
 cargo-watch = "8.5.2"
+sea-orm = { version = "~1.0", features = [
+    "sqlx-sqlite",
+    "runtime-tokio-native-tls",
+    "macros",
+    "with-chrono",
+    "with-json",
+    "with-uuid",
+] }

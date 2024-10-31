@@ -1,19 +1,15 @@
 use actix_session::{config::PersistentSession, storage, SessionMiddleware};
 use actix_web::{cookie, dev::Server, web::Data, App, HttpServer};
-use deadpool_redis::Pool;
 use sea_orm::*;
 use std::env;
 
-use crate::utils::auth::auth_middleware::AuthenticateUser;
+use crate::{
+    routes::{action_routes, ambition_routes, auth_routes, objective_routes},
+    utils::auth::auth_middleware::AuthenticateUser,
+};
 pub struct Application {
     port: u16,
     server: Server,
-}
-
-#[derive(Debug, Clone)]
-pub struct AppState {
-    pub conn: DatabaseConnection,
-    pub redis_pool: Pool,
 }
 
 impl Application {
@@ -73,10 +69,6 @@ async fn run(
     let redis_pool = cfg
         .create_pool(Some(deadpool_redis::Runtime::Tokio1))
         .expect("Cannot create deadpool redis.");
-    let state = AppState {
-        conn: db,
-        redis_pool,
-    };
 
     let secret_key = cookie::Key::from(settings.secret.hmac_secret.as_bytes());
     let redis_store = storage::RedisSessionStore::new(redis_url)
@@ -103,8 +95,12 @@ async fn run(
                     .build()
             })
             .service(crate::routes::health_check)
-            .configure(crate::routes::auth_routes_config)
-            .app_data(Data::new(state.clone()))
+            .configure(auth_routes)
+            .configure(ambition_routes)
+            .configure(objective_routes)
+            .configure(action_routes)
+            .app_data(Data::new(db.clone()))
+            .app_data(Data::new(redis_pool.clone()))
     })
     .listen(listener)?
     .run();

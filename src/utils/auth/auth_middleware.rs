@@ -10,11 +10,9 @@ use actix_web::{
     Error, HttpMessage,
 };
 use futures::future::LocalBoxFuture;
+use sea_orm::DbConn;
 
-use crate::{
-    entities::user, services::user::Query as UserQuery, startup::AppState,
-    utils::auth::session::get_user_id,
-};
+use crate::{services::user::Query as UserQuery, utils::auth::session::get_user_id};
 
 pub struct AuthenticateUser;
 
@@ -82,10 +80,10 @@ async fn set_user(req: &ServiceRequest) -> Result<(), String> {
         }
     };
 
-    let user: user::ActiveModel = match req.app_data::<Data<AppState>>() {
-        Some(data) => match UserQuery::find_by_id(&data.conn, user_id).await {
+    let user = match req.app_data::<Data<DbConn>>() {
+        Some(data) => match UserQuery::find_by_id(data, user_id).await {
             Ok(user) => match user {
-                Some(user) => user.into(),
+                Some(user) => user,
                 None => {
                     return Err("No user found for the user_id".to_string());
                 }
@@ -101,4 +99,41 @@ async fn set_user(req: &ServiceRequest) -> Result<(), String> {
 
     req.extensions_mut().insert(user);
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_session::SessionExt;
+    use actix_web::test;
+
+    use crate::{
+        entities::user,
+        test_utils,
+        types::{USER_EMAIL_KEY, USER_ID_KEY},
+    };
+
+    #[actix_web::test]
+    async fn test_set_user() -> Result<(), String> {
+        let db = test_utils::init_db().await.unwrap();
+        let user = test_utils::seed::create_active_user(&db).await.unwrap();
+        let srv_req = test::TestRequest::default()
+            .app_data(Data::new(db.clone()))
+            .to_srv_request();
+        srv_req.get_session().insert(USER_ID_KEY, user.id).unwrap();
+        srv_req
+            .get_session()
+            .insert(USER_EMAIL_KEY, user.email.clone())
+            .unwrap();
+        set_user(&srv_req).await?;
+
+        let user2 = srv_req
+            .extensions()
+            .get::<user::Model>()
+            .unwrap()
+            .to_owned();
+        assert_eq!(user2, user);
+
+        Ok(())
+    }
 }

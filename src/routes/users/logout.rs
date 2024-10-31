@@ -22,3 +22,12 @@ pub async fn log_out(session: actix_session::Session) -> HttpResponse {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[actix_web::test]
+    #[ignore]
+    async fn log_out() -> Result<(), String> {
+        todo!();
+    }
+}

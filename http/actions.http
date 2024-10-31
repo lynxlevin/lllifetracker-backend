@@ -1,0 +1,44 @@
+# Actions
+
+###
+# @name login
+POST {{endpoint}}/users/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "password"
+}
+
+###
+# @name list
+GET {{endpoint}}/actions
+
+@action_id=95233de1-88e2-432b-a1f8-23da045c6b93
+
+###
+# @name get
+GET {{endpoint}}/actions/{{action_id}}
+
+###
+# @name create
+POST {{endpoint}}/actions
+Content-Type: application/json
+
+{
+  "name": "Second action"
+}
+
+###
+# @name update
+PUT {{endpoint}}/actions/{{action_id}}
+Content-Type: application/json
+
+{
+  "name": "My action edited"
+}
+
+###
+# @name delete
+DELETE {{endpoint}}/actions/{{action_id}}
+

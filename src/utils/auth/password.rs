@@ -17,3 +17,17 @@ pub fn verify_password(hash: &str, password: &[u8]) -> Result<(), argon2::passwo
     let parsed_hash = PasswordHash::new(hash)?;
     Argon2::default().verify_password(password, &parsed_hash)
 }
+
+#[cfg(test)]
+mod tests {
+    #[actix_web::test]
+    #[ignore]
+    async fn hash() -> Result<(), String> {
+        todo!();
+    }
+    #[actix_web::test]
+    #[ignore]
+    async fn verify_password() -> Result<(), String> {
+        todo!();
+    }
+}

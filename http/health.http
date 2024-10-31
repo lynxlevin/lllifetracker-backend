@@ -1,0 +1,5 @@
+# Health
+
+###
+# @name health_check
+GET {{endpoint}}/health-check

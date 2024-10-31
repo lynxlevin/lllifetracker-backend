@@ -8,3 +8,12 @@ pub async fn get_user_id(session: &actix_session::Session) -> Result<uuid::Uuid,
         Err(e) => Err(e.to_string()),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[actix_web::test]
+    #[ignore]
+    async fn get_user_id() -> Result<(), String> {
+        todo!();
+    }
+}

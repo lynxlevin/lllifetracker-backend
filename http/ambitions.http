@@ -1,0 +1,59 @@
+# Actions
+
+###
+# @name login
+POST {{endpoint}}/users/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "password"
+}
+
+###
+# @name list
+GET {{endpoint}}/ambitions
+
+###
+# @name list_with_links
+GET {{endpoint}}/ambitions?links=true
+
+@ambition_id=a17c0c88-05d5-4457-86f7-d69d35d6a840
+
+###
+# @name get
+GET {{endpoint}}/ambitions/{{ambition_id}}
+
+###
+# @name create
+POST {{endpoint}}/ambitions
+Content-Type: application/json
+
+{
+  "name": "Second ambition"
+}
+
+###
+# @name update
+PUT {{endpoint}}/ambitions/{{ambition_id}}
+Content-Type: application/json
+
+{
+  "name": "My ambition edited",
+  "description": "I want to be a Super Man."
+}
+
+###
+# @name delete
+DELETE {{endpoint}}/ambitions/{{ambition_id}}
+
+@objective_id=3bea9c2e-0db8-4e77-9d91-529972f9786c
+
+###
+# @name connect
+POST {{endpoint}}/ambitions/{{ambition_id}}/objectives/{{objective_id}}/connection
+Content-Type: application/json
+
+###
+# @name disconnect
+DELETE {{endpoint}}/ambitions/{{ambition_id}}/objectives/{{objective_id}}/connection
