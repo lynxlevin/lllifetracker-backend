@@ -228,67 +228,51 @@ mod tests {
         assert_eq!(body.len(), 2);
 
         // MYMEMO: If this is final, change all indices in this repo to start from 0
-        let mut body_0 = serde_json::to_value(&body[0]).unwrap();
-        let mut body_0_objectives = body_0["objectives"].take();
-        let body_0_objectives_0 = body_0_objectives[0].take();
-        let body_0_objectives_1 = body_0_objectives[1].take();
-        assert_eq!(
-            body_0,
-            serde_json::json!({
-                        "id": ambition_0.id,
-                        "name": ambition_0.name,
-                        "description": ambition_0.description,
-                        "created_at": ambition_0.created_at,
-                        "updated_at": ambition_0.updated_at,
-                        "objectives": serde_json::value::Value::Null,
-            }),
-        );
-        assert_eq!(
-            body_0_objectives_0,
-            serde_json::json!({
-                "id": objective_0.id,
-                "name": objective_0.name,
-                "created_at": objective_0.created_at,
-                "updated_at": objective_1.updated_at,
-                "actions": [
-                    {
-                        "id": action_0.id,
-                        "name": action_0.name,
-                        "created_at": action_0.created_at,
-                        "updated_at": action_0.updated_at,
-                    },
-                    {
-                        "id": action_1.id,
-                        "name": action_1.name,
-                        "created_at": action_1.created_at,
-                        "updated_at": action_1.updated_at,
-                    },
-                ],
-            })
-        );
-        assert_eq!(
-            body_0_objectives_1,
-            serde_json::json!({
-                "id": objective_1.id,
-                "name": objective_1.name,
-                "created_at": objective_1.created_at,
-                "updated_at": objective_1.updated_at,
-                "actions": [],
-            })
-        );
+        let mut expected_0 = serde_json::json!({
+            "id": ambition_0.id,
+            "name": ambition_0.name,
+            "description": ambition_0.description,
+            "created_at": ambition_0.created_at,
+            "updated_at": ambition_0.updated_at,
+            "objectives": [
+                {
+                    "id": objective_0.id,
+                    "name": objective_0.name,
+                    "created_at": objective_0.created_at,
+                    "updated_at": objective_0.updated_at,
+                    "actions": [
+                        {
+                            "id": action_0.id,
+                            "name": action_0.name,
+                            "created_at": action_0.created_at,
+                            "updated_at": action_0.updated_at,
+                        },
+                        {
+                            "id": action_1.id,
+                            "name": action_1.name,
+                            "created_at": action_1.created_at,
+                            "updated_at": action_1.updated_at,
+                        },
+                    ],
+                },
+                {
+                    "id": objective_1.id,
+                    "name": objective_1.name,
+                    "created_at": objective_1.created_at,
+                    "updated_at": objective_1.updated_at,
+                    "actions": [],
+                }
+            ],
+        });
+        let expected_0_objectives_0 = expected_0["objectives"][0].take();
+        let expected_0_objectives_1 = expected_0["objectives"][1].take();
 
-        let body_1 = serde_json::to_value(&body[1]).unwrap();
-        assert_eq!(
-            body_1,
-            serde_json::json!({
-                        "id": ambition_1.id,
-                        "name": ambition_1.name,
-                        "description": ambition_1.description,
-                        "created_at": ambition_1.created_at,
-                        "updated_at": ambition_1.updated_at,
-                        "objectives": vec![] as Vec<ObjectiveVisibleWithActions>,
-            }),
-        );
+        let mut body_0 = serde_json::to_value(&body[0]).unwrap();
+        let body_0_objectives_0 = body_0["objectives"][0].take();
+        let body_0_objectives_1 = body_0["objectives"][1].take();
+        assert_eq!(expected_0, body_0,);
+        assert_eq!(expected_0_objectives_0, body_0_objectives_0);
+        assert_eq!(expected_0_objectives_1, body_0_objectives_1);
 
         Ok(())
     }
