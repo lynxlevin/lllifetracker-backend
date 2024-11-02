@@ -21,13 +21,14 @@ impl ObjectiveMutation {
     ) -> Result<objective::Model, TransactionError<DbErr>> {
         db.transaction::<_, objective::Model, DbErr>(|txn| {
             Box::pin(async move {
+                let now = Utc::now();
                 let objective_id = uuid::Uuid::new_v4();
                 let created_objective = objective::ActiveModel {
                     id: Set(objective_id),
                     user_id: Set(form_data.user_id),
                     name: Set(form_data.name.to_owned()),
-                    created_at: Set(Utc::now().into()),
-                    updated_at: Set(Utc::now().into()),
+                    created_at: Set(now.into()),
+                    updated_at: Set(now.into()),
                 }
                 .insert(txn)
                 .await?;
@@ -37,7 +38,7 @@ impl ObjectiveMutation {
                     ambition_id: NotSet,
                     objective_id: Set(Some(objective_id)),
                     action_id: NotSet,
-                    created_at: Set(Utc::now().into()),
+                    created_at: Set(now.into()),
                 }
                 .insert(txn)
                 .await?;
@@ -127,7 +128,9 @@ mod tests {
             name: name.clone(),
             user_id: user.id,
         };
-        let returned_objective = ObjectiveMutation::create_with_tag(&db, form_data).await.unwrap();
+        let returned_objective = ObjectiveMutation::create_with_tag(&db, form_data)
+            .await
+            .unwrap();
         assert_eq!(returned_objective.name, name);
         assert_eq!(returned_objective.user_id, user.id);
 
@@ -196,9 +199,10 @@ mod tests {
         .await?;
         let new_name = "objective_after_update_unauthorized".to_string();
 
-        let error = ObjectiveMutation::update(&db, objective.id, uuid::Uuid::new_v4(), new_name.clone())
-            .await
-            .unwrap_err();
+        let error =
+            ObjectiveMutation::update(&db, objective.id, uuid::Uuid::new_v4(), new_name.clone())
+                .await
+                .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
 
         Ok(())

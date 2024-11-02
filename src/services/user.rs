@@ -17,6 +17,7 @@ pub struct Mutation;
 
 impl Mutation {
     pub async fn create_user(db: &DbConn, form_data: NewUser) -> Result<user::Model, DbErr> {
+        let now = Utc::now();
         user::ActiveModel {
             id: Set(uuid::Uuid::new_v4()),
             email: Set(form_data.email),
@@ -25,8 +26,8 @@ impl Mutation {
             last_name: Set(form_data.last_name),
             is_active: Set(form_data.is_active),
             timezone: Set(TimezoneEnum::AsiaTokyo),
-            created_at: Set(Utc::now().into()),
-            updated_at: Set(Utc::now().into()),
+            created_at: Set(now.into()),
+            updated_at: Set(now.into()),
         }
         .insert(db)
         .await
