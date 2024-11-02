@@ -274,6 +274,17 @@ mod tests {
         assert_eq!(expected_0_objectives_0, body_0_objectives_0);
         assert_eq!(expected_0_objectives_1, body_0_objectives_1);
 
+        let expected_1 = serde_json::json!({
+            "id": ambition_1.id,
+            "name": ambition_1.name,
+            "description": ambition_1.description,
+            "created_at": ambition_1.created_at,
+            "updated_at": ambition_1.updated_at,
+            "objectives": [],
+        });
+        let body_1 = serde_json::to_value(&body[1]).unwrap();
+        assert_eq!(expected_1, body_1,);
+
         Ok(())
     }
 
