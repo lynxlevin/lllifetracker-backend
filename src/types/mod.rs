@@ -6,7 +6,7 @@ mod objectives;
 mod tokens;
 mod users;
 
-pub use actions::ActionVisible;
+pub use actions::{ActionVisible, ActionWithLinksQueryResult};
 pub use ambitions::{AmbitionVisible, AmbitionVisibleWithLinks, AmbitionWithLinksQueryResult};
 pub use db::CustomDbErr;
 pub use general::{
