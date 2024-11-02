@@ -4,8 +4,8 @@ use crate::{
     entities::user as user_entity,
     services::ambition_query::AmbitionQuery,
     types::{
-        self, ActionVisible, AmbitionVisibleWithLinks,
-        AmbitionWithLinksQueryResult, ObjectiveVisibleWithActions, INTERNAL_SERVER_ERROR_MESSAGE,
+        self, ActionVisible, AmbitionVisibleWithLinks, AmbitionWithLinksQueryResult,
+        ObjectiveVisibleWithActions, INTERNAL_SERVER_ERROR_MESSAGE,
     },
 };
 use actix_web::{
@@ -42,7 +42,9 @@ pub async fn list_ambitions(
                                 && ambition.objective_id.is_some()
                             {
                                 let mut last_ambition = res.pop().unwrap();
-                                if last_ambition.objectives.last().unwrap().id != ambition.objective_id.unwrap() {
+                                if last_ambition.objectives.last().unwrap().id
+                                    != ambition.objective_id.unwrap()
+                                {
                                     last_ambition.push_objective(get_objective(&ambition));
                                 }
                                 if ambition.action_id.is_some() {
@@ -146,14 +148,14 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (ambition_1, _) = test_utils::seed::create_ambition_and_tag(
+        let (ambition_0, _) = test_utils::seed::create_ambition_and_tag(
             &db,
             "ambition_for_get_1".to_string(),
             None,
             user.id,
         )
         .await?;
-        let (ambition_2, _) = test_utils::seed::create_ambition_and_tag(
+        let (ambition_1, _) = test_utils::seed::create_ambition_and_tag(
             &db,
             "ambition_for_get_2".to_string(),
             Some("ambition_for_get_2".to_string()),
@@ -171,21 +173,21 @@ mod tests {
         assert_eq!(
             serde_json::to_value(&returned_ambitions[0]).unwrap(),
             serde_json::json!({
-                "id": ambition_1.id,
-                "name": ambition_1.name,
-                "description": ambition_1.description,
-                "created_at": ambition_1.created_at,
-                "updated_at": ambition_1.updated_at,
+                "id": ambition_0.id,
+                "name": ambition_0.name,
+                "description": ambition_0.description,
+                "created_at": ambition_0.created_at,
+                "updated_at": ambition_0.updated_at,
             })
         );
         assert_eq!(
             serde_json::to_value(&returned_ambitions[1]).unwrap(),
             serde_json::json!({
-                "id": ambition_2.id,
-                "name": ambition_2.name,
-                "description": ambition_2.description,
-                "created_at": ambition_2.created_at,
-                "updated_at": ambition_2.updated_at,
+                "id": ambition_1.id,
+                "name": ambition_1.name,
+                "description": ambition_1.description,
+                "created_at": ambition_1.created_at,
+                "updated_at": ambition_1.updated_at,
             })
         );
 
@@ -197,21 +199,21 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (ambition_1, objective_1, action_1) =
+        let (ambition_0, objective_0, action_0) =
             test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, true, true)
                 .await?;
-        let (ambition_2, objective_2, action_2) =
+        let (ambition_1, objective_1, action_1) =
             test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, false, false)
                 .await?;
         let _ = objectives_actions::ActiveModel {
-            objective_id: Set(objective_1.id),
-            action_id: Set(action_2.id),
+            objective_id: Set(objective_0.id),
+            action_id: Set(action_1.id),
         }
         .insert(&db)
         .await?;
         let _ = ambitions_objectives::ActiveModel {
-            ambition_id: Set(ambition_1.id),
-            objective_id: Set(objective_2.id),
+            ambition_id: Set(ambition_0.id),
+            objective_id: Set(objective_1.id),
         }
         .insert(&db)
         .await?;
@@ -223,85 +225,70 @@ mod tests {
         assert_eq!(resp.status(), http::StatusCode::OK);
 
         let body: Vec<AmbitionVisibleWithLinks> = test::read_body_json(resp).await;
-        // Ambition_1
-        assert_eq!(body[0].id, ambition_1.id);
-        assert_eq!(body[0].name, ambition_1.name);
-        assert_eq!(body[0].description, ambition_1.description);
-        assert_eq!(body[0].created_at, ambition_1.created_at);
-        assert_eq!(body[0].updated_at, ambition_1.updated_at);
-        // Ambition_1-Objective_1
-        assert_eq!(body[0].objectives.len(), 2);
+        assert_eq!(body.len(), 2);
+
+        // MYMEMO: If this is final, change all indices in this repo to start from 0
+        let mut body_0 = serde_json::to_value(&body[0]).unwrap();
+        let mut body_0_objectives = body_0["objectives"].take();
+        let body_0_objectives_0 = body_0_objectives[0].take();
+        let body_0_objectives_1 = body_0_objectives[1].take();
         assert_eq!(
-            serde_json::to_value(&body[0].objectives[0]).unwrap(),
+            body_0,
             serde_json::json!({
-                "id": objective_1.id,
-                "name": objective_1.name,
-                "created_at": objective_1.created_at,
+                        "id": ambition_0.id,
+                        "name": ambition_0.name,
+                        "description": ambition_0.description,
+                        "created_at": ambition_0.created_at,
+                        "updated_at": ambition_0.updated_at,
+                        "objectives": serde_json::value::Value::Null,
+            }),
+        );
+        assert_eq!(
+            body_0_objectives_0,
+            serde_json::json!({
+                "id": objective_0.id,
+                "name": objective_0.name,
+                "created_at": objective_0.created_at,
                 "updated_at": objective_1.updated_at,
                 "actions": [
+                    {
+                        "id": action_0.id,
+                        "name": action_0.name,
+                        "created_at": action_0.created_at,
+                        "updated_at": action_0.updated_at,
+                    },
                     {
                         "id": action_1.id,
                         "name": action_1.name,
                         "created_at": action_1.created_at,
                         "updated_at": action_1.updated_at,
                     },
-                    {
-                        "id": action_2.id,
-                        "name": action_2.name,
-                        "created_at": action_2.created_at,
-                        "updated_at": action_2.updated_at,
-                    },
                 ],
             })
         );
-        assert_eq!(body[0].objectives[0].id, objective_1.id);
-        assert_eq!(body[0].objectives[0].name, objective_1.name);
-        assert_eq!(body[0].objectives[0].created_at, objective_1.created_at);
-        assert_eq!(body[0].objectives[0].updated_at, objective_1.updated_at);
-        assert_eq!(body[0].objectives[0].actions.len(), 2);
-        assert_eq!(body[0].objectives[0].actions[0].id, action_1.id);
-        assert_eq!(body[0].objectives[0].actions[0].name, action_1.name);
         assert_eq!(
-            body[0].objectives[0].actions[0].created_at,
-            action_1.created_at
-        );
-        assert_eq!(
-            body[0].objectives[0].actions[0].updated_at,
-            action_1.updated_at
-        );
-        assert_eq!(body[0].objectives[0].actions[1].id, action_2.id);
-        assert_eq!(body[0].objectives[0].actions[1].name, action_2.name);
-        assert_eq!(
-            body[0].objectives[0].actions[1].created_at,
-            action_2.created_at
-        );
-        assert_eq!(
-            body[0].objectives[0].actions[1].updated_at,
-            action_2.updated_at
-        );
-        // Ambition_1-Objective_2
-        assert_eq!(
-            serde_json::to_value(&body[0].objectives[1]).unwrap(),
+            body_0_objectives_1,
             serde_json::json!({
-                "id": objective_2.id,
-                "name": objective_2.name,
-                "created_at": objective_2.created_at,
-                "updated_at": objective_2.updated_at,
+                "id": objective_1.id,
+                "name": objective_1.name,
+                "created_at": objective_1.created_at,
+                "updated_at": objective_1.updated_at,
                 "actions": [],
             })
         );
-        assert_eq!(body[0].objectives[1].actions.len(), 0);
-        assert_eq!(body[0].objectives[1].id, objective_2.id);
-        assert_eq!(body[0].objectives[1].name, objective_2.name);
-        assert_eq!(body[0].objectives[1].created_at, objective_2.created_at);
-        assert_eq!(body[0].objectives[1].updated_at, objective_2.updated_at);
 
-        // Ambition_2
-        assert_eq!(body[1].id, ambition_2.id);
-        assert_eq!(body[1].name, ambition_2.name);
-        assert_eq!(body[1].description, ambition_2.description);
-        assert_eq!(body[1].created_at, ambition_2.created_at);
-        assert_eq!(body[1].updated_at, ambition_2.updated_at);
+        let body_1 = serde_json::to_value(&body[1]).unwrap();
+        assert_eq!(
+            body_1,
+            serde_json::json!({
+                        "id": ambition_1.id,
+                        "name": ambition_1.name,
+                        "description": ambition_1.description,
+                        "created_at": ambition_1.created_at,
+                        "updated_at": ambition_1.updated_at,
+                        "objectives": vec![] as Vec<ObjectiveVisibleWithActions>,
+            }),
+        );
 
         Ok(())
     }
