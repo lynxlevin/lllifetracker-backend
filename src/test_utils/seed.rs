@@ -8,6 +8,7 @@ use sea_orm::{prelude::*, DbConn, DbErr, Set};
 pub async fn create_user(db: &DbConn, is_active: bool) -> Result<user::Model, DbErr> {
     use crate::entities::sea_orm_active_enums::TimezoneEnum;
 
+    let now = Utc::now();
     user::ActiveModel {
         id: Set(uuid::Uuid::new_v4()),
         email: Set(format!("{}@test.com", uuid::Uuid::new_v4().to_string())),
@@ -16,8 +17,8 @@ pub async fn create_user(db: &DbConn, is_active: bool) -> Result<user::Model, Db
         last_name: Set("Levin".to_string()),
         timezone: Set(TimezoneEnum::AsiaTokyo),
         is_active: Set(is_active),
-        created_at: Set(Utc::now().into()),
-        updated_at: Set(Utc::now().into()),
+        created_at: Set(now.into()),
+        updated_at: Set(now.into()),
     }
     .insert(db)
     .await
@@ -60,13 +61,14 @@ pub async fn create_ambition_and_tag(
     description: Option<String>,
     user_id: uuid::Uuid,
 ) -> Result<(ambition::Model, tag::Model), DbErr> {
+    let now = Utc::now();
     let ambition = ambition::ActiveModel {
         id: Set(uuid::Uuid::new_v4()),
         name: Set(name),
         description: Set(description),
         user_id: Set(user_id),
-        created_at: Set(Utc::now().into()),
-        updated_at: Set(Utc::now().into()),
+        created_at: Set(now.into()),
+        updated_at: Set(now.into()),
     }
     .insert(db)
     .await?;
@@ -82,12 +84,13 @@ pub async fn create_objective_and_tag(
     name: String,
     user_id: uuid::Uuid,
 ) -> Result<(objective::Model, tag::Model), DbErr> {
+    let now = Utc::now();
     let objective = objective::ActiveModel {
         id: Set(uuid::Uuid::new_v4()),
         name: Set(name),
         user_id: Set(user_id),
-        created_at: Set(Utc::now().into()),
-        updated_at: Set(Utc::now().into()),
+        created_at: Set(now.into()),
+        updated_at: Set(now.into()),
     }
     .insert(db)
     .await?;
@@ -103,12 +106,13 @@ pub async fn create_action_and_tag(
     action_name: String,
     user_id: uuid::Uuid,
 ) -> Result<(action::Model, tag::Model), DbErr> {
+    let now = Utc::now();
     let action = action::ActiveModel {
         id: Set(uuid::Uuid::new_v4()),
         name: Set(action_name),
         user_id: Set(user_id),
-        created_at: Set(Utc::now().into()),
-        updated_at: Set(Utc::now().into()),
+        created_at: Set(now.into()),
+        updated_at: Set(now.into()),
     }
     .insert(db)
     .await?;

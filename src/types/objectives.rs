@@ -1,6 +1,6 @@
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
-use super::ActionVisible;
+use super::{ActionVisible, AmbitionVisible};
 use crate::entities::prelude::Objective;
 
 #[derive(
@@ -26,5 +26,20 @@ pub struct ObjectiveVisibleWithActions {
 impl ObjectiveVisibleWithActions {
     pub fn push_action(&mut self, action: ActionVisible) {
         self.actions.push(action);
+    }
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct ObjectiveVisibleWithAmbitions {
+    pub id: uuid::Uuid,
+    pub name: String,
+    pub created_at: chrono::DateTime<chrono::FixedOffset>,
+    pub updated_at: chrono::DateTime<chrono::FixedOffset>,
+    pub ambitions: Vec<AmbitionVisible>,
+}
+
+impl ObjectiveVisibleWithAmbitions {
+    pub fn push_ambition(&mut self, ambition: AmbitionVisible) {
+        self.ambitions.push(ambition);
     }
 }

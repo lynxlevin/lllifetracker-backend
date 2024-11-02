@@ -62,9 +62,9 @@ pub async fn list_ambitions(
                                 };
                                 if ambition.objective_id.is_some() {
                                     res_ambition.push_objective(get_objective(&ambition));
-                                }
-                                if ambition.action_id.is_some() {
-                                    res_ambition.push_action(get_action(&ambition));
+                                    if ambition.action_id.is_some() {
+                                        res_ambition.push_action(get_action(&ambition));
+                                    }
                                 }
                                 res.push(res_ambition);
                             }
