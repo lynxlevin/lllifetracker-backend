@@ -14,6 +14,23 @@ pub struct ObjectiveVisible {
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
 }
 
+#[derive(FromQueryResult, Debug, serde::Serialize, serde::Deserialize)]
+pub struct ObjectiveWithLinksQueryResult {
+    pub id: uuid::Uuid,
+    pub name: String,
+    pub created_at: chrono::DateTime<chrono::FixedOffset>,
+    pub updated_at: chrono::DateTime<chrono::FixedOffset>,
+    pub ambition_id: Option<uuid::Uuid>,
+    pub ambition_name: Option<String>,
+    pub ambition_description: Option<String>,
+    pub ambition_created_at: Option<chrono::DateTime<chrono::FixedOffset>>,
+    pub ambition_updated_at: Option<chrono::DateTime<chrono::FixedOffset>>,
+    pub action_id: Option<uuid::Uuid>,
+    pub action_name: Option<String>,
+    pub action_created_at: Option<chrono::DateTime<chrono::FixedOffset>>,
+    pub action_updated_at: Option<chrono::DateTime<chrono::FixedOffset>>,
+}
+
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct ObjectiveVisibleWithActions {
     pub id: uuid::Uuid,
