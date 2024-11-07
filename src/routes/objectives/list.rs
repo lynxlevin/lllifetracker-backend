@@ -33,31 +33,8 @@ pub async fn list_objectives(
                 match ObjectiveQuery::find_all_with_linked_by_user_id(&db, user.id).await {
                     Ok(objectives) => {
                         let mut res: Vec<ObjectiveVisibleWithLinks> = vec![];
-                        let mut ambition_ids_cache: Vec<uuid::Uuid> = vec![];
-                        let mut action_ids_cache: Vec<uuid::Uuid> = vec![];
-
                         for objective in objectives {
-                            if res.len() > 0 && res.last().unwrap().id == objective.id {
-                                if objective.ambition_id.is_some()
-                                    && !ambition_ids_cache.contains(&objective.ambition_id.unwrap())
-                                {
-                                    let mut last_objective = res.pop().unwrap();
-                                    last_objective.push_ambition(get_ambition(&objective));
-                                    ambition_ids_cache.push(objective.ambition_id.unwrap());
-                                    res.push(last_objective);
-                                }
-                                if objective.action_id.is_some()
-                                    && !action_ids_cache.contains(&objective.action_id.unwrap())
-                                {
-                                    let mut last_objective = res.pop().unwrap();
-                                    last_objective.push_action(get_action(&objective));
-                                    action_ids_cache.push(objective.action_id.unwrap());
-                                    res.push(last_objective);
-                                }
-                            } else {
-                                ambition_ids_cache.clear();
-                                action_ids_cache.clear();
-
+                            if res.is_empty() || res.last().unwrap().id != objective.id {
                                 let mut res_objective = ObjectiveVisibleWithLinks {
                                     id: objective.id,
                                     name: objective.name.clone(),
@@ -66,15 +43,26 @@ pub async fn list_objectives(
                                     ambitions: vec![],
                                     actions: vec![],
                                 };
-                                if let Some(ambition_id) = objective.ambition_id {
-                                    res_objective.push_ambition(get_ambition(&objective));
-                                    ambition_ids_cache.push(ambition_id);
+                                if let Some(ambition) = get_ambition(&objective) {
+                                    res_objective.push_ambition(ambition);
                                 }
-                                if let Some(action_id) = objective.action_id {
-                                    res_objective.push_action(get_action(&objective));
-                                    action_ids_cache.push(action_id);
+                                if let Some(action) = get_action(&objective) {
+                                    res_objective.push_action(action);
                                 }
                                 res.push(res_objective);
+                            } else {
+                                let mut last_objective = res.pop().unwrap();
+                                if let Some(ambition) = get_ambition(&objective) {
+                                    if !last_objective.ambitions.contains(&ambition) {
+                                        last_objective.push_ambition(ambition);
+                                    }
+                                }
+                                if let Some(action) = get_action(&objective) {
+                                    if !last_objective.actions.contains(&action) {
+                                        last_objective.push_action(action);
+                                    }
+                                }
+                                res.push(last_objective);
                             }
                         }
                         HttpResponse::Ok().json(res)
@@ -102,23 +90,29 @@ pub async fn list_objectives(
     }
 }
 
-fn get_ambition(objective: &ObjectiveWithLinksQueryResult) -> AmbitionVisible {
-    AmbitionVisible {
+fn get_ambition(objective: &ObjectiveWithLinksQueryResult) -> Option<AmbitionVisible> {
+    if objective.ambition_id.is_none() {
+        return None;
+    }
+    Some(AmbitionVisible {
         id: objective.ambition_id.unwrap(),
         name: objective.ambition_name.clone().unwrap(),
         description: objective.ambition_description.clone(),
         created_at: objective.ambition_created_at.unwrap(),
         updated_at: objective.ambition_updated_at.unwrap(),
-    }
+    })
 }
 
-fn get_action(objective: &ObjectiveWithLinksQueryResult) -> ActionVisible {
-    ActionVisible {
+fn get_action(objective: &ObjectiveWithLinksQueryResult) -> Option<ActionVisible> {
+    if objective.action_id.is_none() {
+        return None;
+    }
+    Some(ActionVisible {
         id: objective.action_id.unwrap(),
         name: objective.action_name.clone().unwrap(),
         created_at: objective.action_created_at.unwrap(),
         updated_at: objective.action_updated_at.unwrap(),
-    }
+    })
 }
 
 #[cfg(test)]

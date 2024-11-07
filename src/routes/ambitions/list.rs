@@ -37,21 +37,7 @@ pub async fn list_ambitions(
                     Ok(ambitions) => {
                         let mut res: Vec<AmbitionVisibleWithLinks> = vec![];
                         for ambition in ambitions {
-                            if res.len() > 0
-                                && res.last().unwrap().id == ambition.id
-                                && ambition.objective_id.is_some()
-                            {
-                                let mut last_ambition = res.pop().unwrap();
-                                if last_ambition.objectives.last().unwrap().id
-                                    != ambition.objective_id.unwrap()
-                                {
-                                    last_ambition.push_objective(get_objective(&ambition));
-                                }
-                                if ambition.action_id.is_some() {
-                                    last_ambition.push_action(get_action(&ambition));
-                                }
-                                res.push(last_ambition);
-                            } else {
+                            if res.is_empty() || res.last().unwrap().id != ambition.id {
                                 let mut res_ambition = AmbitionVisibleWithLinks {
                                     id: ambition.id,
                                     name: ambition.name.clone(),
@@ -60,13 +46,24 @@ pub async fn list_ambitions(
                                     updated_at: ambition.updated_at,
                                     objectives: vec![],
                                 };
-                                if ambition.objective_id.is_some() {
-                                    res_ambition.push_objective(get_objective(&ambition));
-                                    if ambition.action_id.is_some() {
-                                        res_ambition.push_action(get_action(&ambition));
+                                if let Some(objective) = get_objective(&ambition) {
+                                    res_ambition.push_objective(objective);
+                                    if let Some(action) = get_action(&ambition) {
+                                        res_ambition.push_action(action);
                                     }
                                 }
                                 res.push(res_ambition);
+                            } else {
+                                if let Some(objective) = get_objective(&ambition) {
+                                    let mut last_ambition = res.pop().unwrap();
+                                    if objective.id != last_ambition.objectives.last().unwrap().id {
+                                        last_ambition.push_objective(objective);
+                                    }
+                                    if let Some(action) = get_action(&ambition) {
+                                        last_ambition.push_action(action);
+                                    }
+                                    res.push(last_ambition);
+                                }
                             }
                         }
                         HttpResponse::Ok().json(res)
@@ -94,23 +91,29 @@ pub async fn list_ambitions(
     }
 }
 
-fn get_objective(ambition: &AmbitionWithLinksQueryResult) -> ObjectiveVisibleWithActions {
-    ObjectiveVisibleWithActions {
+fn get_objective(ambition: &AmbitionWithLinksQueryResult) -> Option<ObjectiveVisibleWithActions> {
+    if ambition.objective_id.is_none() {
+        return None;
+    }
+    Some(ObjectiveVisibleWithActions {
         id: ambition.objective_id.unwrap(),
         name: ambition.objective_name.clone().unwrap(),
         created_at: ambition.objective_created_at.unwrap(),
         updated_at: ambition.objective_updated_at.unwrap(),
         actions: vec![],
-    }
+    })
 }
 
-fn get_action(ambition: &AmbitionWithLinksQueryResult) -> ActionVisible {
-    ActionVisible {
+fn get_action(ambition: &AmbitionWithLinksQueryResult) -> Option<ActionVisible> {
+    if ambition.action_id.is_none() {
+        return None;
+    }
+    Some(ActionVisible {
         id: ambition.action_id.unwrap(),
         name: ambition.action_name.clone().unwrap(),
         created_at: ambition.action_created_at.unwrap(),
         updated_at: ambition.action_updated_at.unwrap(),
-    }
+    })
 }
 
 #[cfg(test)]

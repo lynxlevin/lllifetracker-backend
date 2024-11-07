@@ -29,26 +29,13 @@ pub async fn list_actions(
     match user {
         Some(user) => {
             let user = user.into_inner();
+            // MYMEMO: Should return same type in both conditions
             if query.links.unwrap_or(false) {
                 match ActionQuery::find_all_with_linked_by_user_id(&db, user.id).await {
                     Ok(actions) => {
                         let mut res: Vec<ActionVisibleWithLinks> = vec![];
                         for action in actions {
-                            if res.len() > 0
-                                && res.last().unwrap().id == action.id
-                                && action.objective_id.is_some()
-                            {
-                                let mut last_action = res.pop().unwrap();
-                                if last_action.objectives.last().unwrap().id
-                                    != action.objective_id.unwrap()
-                                {
-                                    last_action.push_objective(get_objective(&action));
-                                }
-                                if action.ambition_id.is_some() {
-                                    last_action.push_ambition(get_ambition(&action));
-                                }
-                                res.push(last_action);
-                            } else {
+                            if res.is_empty() || res.last().unwrap().id != action.id {
                                 let mut res_action = ActionVisibleWithLinks {
                                     id: action.id,
                                     name: action.name.clone(),
@@ -56,13 +43,24 @@ pub async fn list_actions(
                                     updated_at: action.created_at,
                                     objectives: vec![],
                                 };
-                                if action.objective_id.is_some() {
-                                    res_action.push_objective(get_objective(&action));
-                                    if action.ambition_id.is_some() {
-                                        res_action.push_ambition(get_ambition(&action));
+                                if let Some(objective) = get_objective(&action) {
+                                    res_action.push_objective(objective);
+                                    if let Some(ambition) = get_ambition(&action) {
+                                        res_action.push_ambition(ambition);
                                     }
                                 }
                                 res.push(res_action);
+                            } else {
+                                if let Some(objective) = get_objective(&action) {
+                                    let mut last_action = res.pop().unwrap();
+                                    if objective.id != last_action.objectives.last().unwrap().id {
+                                        last_action.push_objective(objective);
+                                    }
+                                    if let Some(ambition) = get_ambition(&action) {
+                                        last_action.push_ambition(ambition);
+                                    }
+                                    res.push(last_action);
+                                }
                             }
                         }
                         HttpResponse::Ok().json(res)
@@ -90,24 +88,30 @@ pub async fn list_actions(
     }
 }
 
-fn get_objective(action: &ActionWithLinksQueryResult) -> ObjectiveVisibleWithAmbitions {
-    ObjectiveVisibleWithAmbitions {
+fn get_objective(action: &ActionWithLinksQueryResult) -> Option<ObjectiveVisibleWithAmbitions> {
+    if action.objective_id.is_none() {
+        return None;
+    }
+    Some(ObjectiveVisibleWithAmbitions {
         id: action.objective_id.unwrap(),
         name: action.objective_name.clone().unwrap(),
         created_at: action.objective_created_at.unwrap(),
         updated_at: action.objective_updated_at.unwrap(),
         ambitions: vec![],
-    }
+    })
 }
 
-fn get_ambition(action: &ActionWithLinksQueryResult) -> AmbitionVisible {
-    AmbitionVisible {
+fn get_ambition(action: &ActionWithLinksQueryResult) -> Option<AmbitionVisible> {
+    if action.ambition_id.is_none() {
+        return None;
+    }
+    Some(AmbitionVisible {
         id: action.ambition_id.unwrap(),
         name: action.ambition_name.clone().unwrap(),
         description: action.ambition_description.clone(),
         created_at: action.ambition_created_at.unwrap(),
         updated_at: action.ambition_updated_at.unwrap(),
-    }
+    })
 }
 
 #[cfg(test)]
