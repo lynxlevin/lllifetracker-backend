@@ -1,35 +1,123 @@
 use crate::{
     entities::user as user_entity,
     services::objective_query::ObjectiveQuery,
-    types::{self, INTERNAL_SERVER_ERROR_MESSAGE},
+    types::{
+        self, ActionVisible, AmbitionVisible, ObjectiveVisibleWithLinks,
+        ObjectiveWithLinksQueryResult, INTERNAL_SERVER_ERROR_MESSAGE,
+    },
 };
 use actix_web::{
     get,
-    web::{Data, ReqData},
+    web::{Data, Query, ReqData},
     HttpResponse,
 };
 use sea_orm::DbConn;
+use serde::Deserialize;
+
+#[derive(Deserialize, Debug)]
+struct QueryParam {
+    links: Option<bool>,
+}
 
 #[tracing::instrument(name = "Listing a user's objectives", skip(db, user))]
 #[get("")]
 pub async fn list_objectives(
     db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
+    query: Query<QueryParam>,
 ) -> HttpResponse {
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ObjectiveQuery::find_all_by_user_id(&db, user.id).await {
-                Ok(objectives) => HttpResponse::Ok().json(objectives),
-                Err(e) => {
-                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                    HttpResponse::InternalServerError().json(types::ErrorResponse {
-                        error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                    })
+            if query.links.unwrap_or(false) {
+                match ObjectiveQuery::find_all_with_linked_by_user_id(&db, user.id).await {
+                    Ok(objectives) => {
+                        let mut res: Vec<ObjectiveVisibleWithLinks> = vec![];
+                        let mut ambition_ids_cache: Vec<uuid::Uuid> = vec![];
+                        let mut action_ids_cache: Vec<uuid::Uuid> = vec![];
+
+                        for objective in objectives {
+                            if res.len() > 0 && res.last().unwrap().id == objective.id {
+                                if objective.ambition_id.is_some()
+                                    && !ambition_ids_cache.contains(&objective.ambition_id.unwrap())
+                                {
+                                    let mut last_objective = res.pop().unwrap();
+                                    last_objective.push_ambition(get_ambition(&objective));
+                                    ambition_ids_cache.push(objective.ambition_id.unwrap());
+                                    res.push(last_objective);
+                                }
+                                if objective.action_id.is_some()
+                                    && !action_ids_cache.contains(&objective.action_id.unwrap())
+                                {
+                                    let mut last_objective = res.pop().unwrap();
+                                    last_objective.push_action(get_action(&objective));
+                                    action_ids_cache.push(objective.action_id.unwrap());
+                                    res.push(last_objective);
+                                }
+                            } else {
+                                ambition_ids_cache.clear();
+                                action_ids_cache.clear();
+
+                                let mut res_objective = ObjectiveVisibleWithLinks {
+                                    id: objective.id,
+                                    name: objective.name.clone(),
+                                    created_at: objective.created_at,
+                                    updated_at: objective.created_at,
+                                    ambitions: vec![],
+                                    actions: vec![],
+                                };
+                                if let Some(ambition_id) = objective.ambition_id {
+                                    res_objective.push_ambition(get_ambition(&objective));
+                                    ambition_ids_cache.push(ambition_id);
+                                }
+                                if let Some(action_id) = objective.action_id {
+                                    res_objective.push_action(get_action(&objective));
+                                    action_ids_cache.push(action_id);
+                                }
+                                res.push(res_objective);
+                            }
+                        }
+                        HttpResponse::Ok().json(res)
+                    }
+                    Err(e) => {
+                        tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
+                        HttpResponse::InternalServerError().json(types::ErrorResponse {
+                            error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
+                        })
+                    }
+                }
+            } else {
+                match ObjectiveQuery::find_all_by_user_id(&db, user.id).await {
+                    Ok(objectives) => HttpResponse::Ok().json(objectives),
+                    Err(e) => {
+                        tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
+                        HttpResponse::InternalServerError().json(types::ErrorResponse {
+                            error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
+                        })
+                    }
                 }
             }
         }
         None => HttpResponse::Unauthorized().json("You are not logged in."),
+    }
+}
+
+fn get_ambition(objective: &ObjectiveWithLinksQueryResult) -> AmbitionVisible {
+    AmbitionVisible {
+        id: objective.ambition_id.unwrap(),
+        name: objective.ambition_name.clone().unwrap(),
+        description: objective.ambition_description.clone(),
+        created_at: objective.ambition_created_at.unwrap(),
+        updated_at: objective.ambition_updated_at.unwrap(),
+    }
+}
+
+fn get_action(objective: &ObjectiveWithLinksQueryResult) -> ActionVisible {
+    ActionVisible {
+        id: objective.action_id.unwrap(),
+        name: objective.action_name.clone().unwrap(),
+        created_at: objective.action_created_at.unwrap(),
+        updated_at: objective.action_updated_at.unwrap(),
     }
 }
 
@@ -42,10 +130,13 @@ mod tests {
         web::scope,
         App, HttpMessage,
     };
-    use sea_orm::{entity::prelude::*, DbErr};
+    use sea_orm::{entity::prelude::*, DbErr, Set};
     use types::ObjectiveVisible;
 
-    use crate::test_utils;
+    use crate::{
+        entities::{ambitions_objectives, objectives_actions},
+        test_utils,
+    };
 
     use super::*;
 
@@ -94,6 +185,113 @@ mod tests {
         assert_eq!(returned_objectives[1].name, objective_2.name);
         assert_eq!(returned_objectives[1].created_at, objective_2.created_at);
         assert_eq!(returned_objectives[1].updated_at, objective_2.updated_at);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn happy_path_with_links() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = test_utils::seed::create_active_user(&db).await?;
+        let (ambition_0, objective_0, action_0) =
+            test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, true, true)
+                .await?;
+        let (ambition_1, objective_1, action_1) =
+            test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, false, false)
+                .await?;
+        let _ = objectives_actions::ActiveModel {
+            objective_id: Set(objective_0.id),
+            action_id: Set(action_1.id),
+        }
+        .insert(&db)
+        .await?;
+        let _ = objectives_actions::ActiveModel {
+            objective_id: Set(objective_1.id),
+            action_id: Set(action_1.id),
+        }
+        .insert(&db)
+        .await?;
+        let _ = ambitions_objectives::ActiveModel {
+            ambition_id: Set(ambition_1.id),
+            objective_id: Set(objective_0.id),
+        }
+        .insert(&db)
+        .await?;
+
+        let req = test::TestRequest::get().uri("/?links=true").to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), http::StatusCode::OK);
+
+        let body: Vec<ObjectiveVisibleWithLinks> = test::read_body_json(resp).await;
+        assert_eq!(body.len(), 2);
+
+        // MYMEMO: If this is final, change all indices in this repo to start from 0
+        let mut expected_0 = serde_json::json!({
+            "id": objective_0.id,
+            "name": objective_0.name,
+            "created_at": objective_0.created_at,
+            "updated_at": objective_0.updated_at,
+            "ambitions": [
+                {
+                    "id": ambition_0.id,
+                    "name": ambition_0.name,
+                    "description": ambition_0.description,
+                    "created_at": ambition_0.created_at,
+                    "updated_at": ambition_0.updated_at,
+                },
+                {
+                    "id": ambition_1.id,
+                    "name": ambition_1.name,
+                    "description": ambition_1.description,
+                    "created_at": ambition_1.created_at,
+                    "updated_at": ambition_1.updated_at,
+                },
+            ],
+            "actions": [
+                {
+                    "id": action_0.id,
+                    "name": action_0.name,
+                    "created_at": action_0.created_at,
+                    "updated_at": action_0.updated_at,
+                },
+                {
+                    "id": action_1.id,
+                    "name": action_1.name,
+                    "created_at": action_1.created_at,
+                    "updated_at": action_1.updated_at,
+                },
+            ],
+        });
+        let expected_0_ambitions = expected_0["ambitions"].take();
+        let expected_0_actions = expected_0["actions"].take();
+
+        let mut body_0 = serde_json::to_value(&body[0]).unwrap();
+        let body_0_ambitions = body_0["ambitions"].take();
+        let body_0_actions = body_0["actions"].take();
+        assert_eq!(expected_0, body_0);
+        assert_eq!(expected_0_ambitions, body_0_ambitions);
+        assert_eq!(expected_0_actions, body_0_actions);
+
+        let expected_1 = serde_json::json!({
+            "id": objective_1.id,
+            "name": objective_1.name,
+            "created_at": objective_1.created_at,
+            "updated_at": objective_1.updated_at,
+            "ambitions": [],
+            "actions": [
+                {
+                    "id": action_1.id,
+                    "name": action_1.name,
+                    "created_at": action_1.created_at,
+                    "updated_at": action_1.updated_at,
+                }
+            ],
+        });
+        let body_1 = serde_json::to_value(&body[1]).unwrap();
+        assert_eq!(expected_1, body_1,);
 
         Ok(())
     }

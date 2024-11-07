@@ -14,7 +14,7 @@ pub use general::{
 };
 pub use objectives::{
     ObjectiveVisible, ObjectiveVisibleWithActions, ObjectiveVisibleWithAmbitions,
-    ObjectiveWithLinksQueryResult,
+    ObjectiveVisibleWithLinks, ObjectiveWithLinksQueryResult,
 };
 pub use tokens::ConfirmationToken;
 pub use users::UserVisible;

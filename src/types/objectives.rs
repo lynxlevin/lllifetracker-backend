@@ -32,6 +32,26 @@ pub struct ObjectiveWithLinksQueryResult {
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
+pub struct ObjectiveVisibleWithLinks {
+    pub id: uuid::Uuid,
+    pub name: String,
+    pub created_at: chrono::DateTime<chrono::FixedOffset>,
+    pub updated_at: chrono::DateTime<chrono::FixedOffset>,
+    // MYMEMO: Maybe change to Set?
+    pub ambitions: Vec<AmbitionVisible>,
+    pub actions: Vec<ActionVisible>,
+}
+
+impl ObjectiveVisibleWithLinks {
+    pub fn push_ambition(&mut self, ambition: AmbitionVisible) {
+        self.ambitions.push(ambition);
+    }
+    pub fn push_action(&mut self, action: ActionVisible) {
+        self.actions.push(action);
+    }
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct ObjectiveVisibleWithActions {
     pub id: uuid::Uuid,
     pub name: String,
