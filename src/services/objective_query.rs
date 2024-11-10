@@ -75,27 +75,27 @@ mod tests {
     async fn find_all_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
+        let (objective_0, _) =
+            test_utils::seed::create_objective_and_tag(&db, "objective_0".to_string(), user.id)
+                .await?;
         let (objective_1, _) =
             test_utils::seed::create_objective_and_tag(&db, "objective_1".to_string(), user.id)
-                .await?;
-        let (objective_2, _) =
-            test_utils::seed::create_objective_and_tag(&db, "objective_2".to_string(), user.id)
                 .await?;
 
         let res = ObjectiveQuery::find_all_by_user_id(&db, user.id).await?;
 
         let expected = vec![
             ObjectiveVisible {
+                id: objective_0.id,
+                name: objective_0.name,
+                created_at: objective_0.created_at,
+                updated_at: objective_0.updated_at,
+            },
+            ObjectiveVisible {
                 id: objective_1.id,
                 name: objective_1.name,
                 created_at: objective_1.created_at,
                 updated_at: objective_1.updated_at,
-            },
-            ObjectiveVisible {
-                id: objective_2.id,
-                name: objective_2.name,
-                created_at: objective_2.created_at,
-                updated_at: objective_2.updated_at,
             },
         ];
 
@@ -110,27 +110,27 @@ mod tests {
     async fn find_all_with_linked_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (ambition_1, objective_1, action_1) =
+        let (ambition_0, objective_0, action_0) =
             test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, true, true)
                 .await?;
-        let (ambition_2, objective_2, action_2) =
+        let (ambition_1, objective_1, action_1) =
             test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, false, false)
                 .await?;
         let _ = objectives_actions::ActiveModel {
-            objective_id: Set(objective_1.id),
-            action_id: Set(action_2.id),
+            objective_id: Set(objective_0.id),
+            action_id: Set(action_1.id),
         }
         .insert(&db)
         .await?;
         let _ = objectives_actions::ActiveModel {
-            objective_id: Set(objective_2.id),
-            action_id: Set(action_2.id),
+            objective_id: Set(objective_1.id),
+            action_id: Set(action_1.id),
         }
         .insert(&db)
         .await?;
         let _ = ambitions_objectives::ActiveModel {
-            ambition_id: Set(ambition_2.id),
-            objective_id: Set(objective_1.id),
+            ambition_id: Set(ambition_1.id),
+            objective_id: Set(objective_0.id),
         }
         .insert(&db)
         .await?;
@@ -149,11 +149,11 @@ mod tests {
             (res[4].id, res[4].ambition_id, res[4].action_id),
         ];
         let expected = vec![
-            (objective_1.id, Some(ambition_1.id), Some(action_1.id)),
-            (objective_1.id, Some(ambition_1.id), Some(action_2.id)),
-            (objective_1.id, Some(ambition_2.id), Some(action_1.id)),
-            (objective_1.id, Some(ambition_2.id), Some(action_2.id)),
-            (objective_2.id, None, Some(action_2.id)),
+            (objective_0.id, Some(ambition_0.id), Some(action_0.id)),
+            (objective_0.id, Some(ambition_0.id), Some(action_1.id)),
+            (objective_0.id, Some(ambition_1.id), Some(action_0.id)),
+            (objective_0.id, Some(ambition_1.id), Some(action_1.id)),
+            (objective_1.id, None, Some(action_1.id)),
         ];
         assert_eq!(res_organized[0], expected[0]);
         assert_eq!(res_organized[1], expected[1]);

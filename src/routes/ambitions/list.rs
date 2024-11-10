@@ -230,7 +230,6 @@ mod tests {
         let body: Vec<AmbitionVisibleWithLinks> = test::read_body_json(resp).await;
         assert_eq!(body.len(), 2);
 
-        // MYMEMO: If this is final, change all indices in this repo to start from 0
         let mut expected_0 = serde_json::json!({
             "id": ambition_0.id,
             "name": ambition_0.name,

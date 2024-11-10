@@ -150,15 +150,15 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (objective_1, _) = test_utils::seed::create_objective_and_tag(
+        let (objective_0, _) = test_utils::seed::create_objective_and_tag(
             &db,
-            "objective_for_get_1".to_string(),
+            "objective_for_get_0".to_string(),
             user.id,
         )
         .await?;
-        let (objective_2, _) = test_utils::seed::create_objective_and_tag(
+        let (objective_1, _) = test_utils::seed::create_objective_and_tag(
             &db,
-            "objective_for_get_2".to_string(),
+            "objective_for_get_1".to_string(),
             user.id,
         )
         .await?;
@@ -170,15 +170,15 @@ mod tests {
         assert_eq!(resp.status(), http::StatusCode::OK);
 
         let returned_objectives: Vec<ObjectiveVisible> = test::read_body_json(resp).await;
-        assert_eq!(returned_objectives[0].id, objective_1.id);
-        assert_eq!(returned_objectives[0].name, objective_1.name);
-        assert_eq!(returned_objectives[0].created_at, objective_1.created_at);
-        assert_eq!(returned_objectives[0].updated_at, objective_1.updated_at);
+        assert_eq!(returned_objectives[0].id, objective_0.id);
+        assert_eq!(returned_objectives[0].name, objective_0.name);
+        assert_eq!(returned_objectives[0].created_at, objective_0.created_at);
+        assert_eq!(returned_objectives[0].updated_at, objective_0.updated_at);
 
-        assert_eq!(returned_objectives[1].id, objective_2.id);
-        assert_eq!(returned_objectives[1].name, objective_2.name);
-        assert_eq!(returned_objectives[1].created_at, objective_2.created_at);
-        assert_eq!(returned_objectives[1].updated_at, objective_2.updated_at);
+        assert_eq!(returned_objectives[1].id, objective_1.id);
+        assert_eq!(returned_objectives[1].name, objective_1.name);
+        assert_eq!(returned_objectives[1].created_at, objective_1.created_at);
+        assert_eq!(returned_objectives[1].updated_at, objective_1.updated_at);
 
         Ok(())
     }
@@ -222,7 +222,6 @@ mod tests {
         let body: Vec<ObjectiveVisibleWithLinks> = test::read_body_json(resp).await;
         assert_eq!(body.len(), 2);
 
-        // MYMEMO: If this is final, change all indices in this repo to start from 0
         let mut expected_0 = serde_json::json!({
             "id": objective_0.id,
             "name": objective_0.name,
