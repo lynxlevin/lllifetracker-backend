@@ -1,6 +1,6 @@
-use crate::entities::action;
-use crate::types::{ActionVisible, CustomDbErr};
-use sea_orm::{entity::prelude::*, QueryOrder};
+use crate::entities::{action, ambition, ambitions_objectives, objective, objectives_actions};
+use crate::types::{ActionVisible, ActionWithLinksQueryResult, CustomDbErr};
+use sea_orm::{entity::prelude::*, JoinType::LeftJoin, QueryOrder, QuerySelect};
 
 pub struct ActionQuery;
 
@@ -13,6 +13,33 @@ impl ActionQuery {
             .filter(action::Column::UserId.eq(user_id))
             .order_by_asc(action::Column::CreatedAt)
             .into_partial_model::<ActionVisible>()
+            .all(db)
+            .await
+    }
+
+    pub async fn find_all_with_linked_by_user_id(
+        db: &DbConn,
+        user_id: uuid::Uuid,
+    ) -> Result<Vec<ActionWithLinksQueryResult>, DbErr> {
+        action::Entity::find()
+            .filter(action::Column::UserId.eq(user_id))
+            .column_as(objective::Column::Id, "objective_id")
+            .column_as(objective::Column::Name, "objective_name")
+            .column_as(objective::Column::CreatedAt, "objective_created_at")
+            .column_as(objective::Column::UpdatedAt, "objective_updated_at")
+            .column_as(ambition::Column::Id, "ambition_id")
+            .column_as(ambition::Column::Name, "ambition_name")
+            .column_as(ambition::Column::Description, "ambition_description")
+            .column_as(ambition::Column::CreatedAt, "ambition_created_at")
+            .column_as(ambition::Column::UpdatedAt, "ambition_updated_at")
+            .join_rev(LeftJoin, objectives_actions::Relation::Action.def())
+            .join(LeftJoin, objectives_actions::Relation::Objective.def())
+            .join_rev(LeftJoin, ambitions_objectives::Relation::Objective.def())
+            .join(LeftJoin, ambitions_objectives::Relation::Ambition.def())
+            .order_by_asc(action::Column::CreatedAt)
+            .order_by_asc(objective::Column::CreatedAt)
+            .order_by_asc(ambition::Column::CreatedAt)
+            .into_model::<ActionWithLinksQueryResult>()
             .all(db)
             .await
     }
@@ -32,6 +59,8 @@ impl ActionQuery {
 
 #[cfg(test)]
 mod tests {
+    use sea_orm::Set;
+
     use crate::test_utils;
 
     use super::*;
@@ -65,6 +94,54 @@ mod tests {
         assert_eq!(res.len(), expected.len());
         assert_eq!(res[0], expected[0]);
         assert_eq!(res[1], expected[1]);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn find_all_with_linked_by_user_id() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
+        let (ambition_1, objective_1, action_1) =
+            test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, true, true)
+                .await?;
+        let (ambition_2, objective_2, action_2) =
+            test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, false, false)
+                .await?;
+        let _ = objectives_actions::ActiveModel {
+            objective_id: Set(objective_2.id),
+            action_id: Set(action_1.id),
+        }
+        .insert(&db)
+        .await?;
+        let _ = ambitions_objectives::ActiveModel {
+            ambition_id: Set(ambition_2.id),
+            objective_id: Set(objective_1.id),
+        }
+        .insert(&db)
+        .await?;
+
+        let res = ActionQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
+
+        assert_eq!(res.len(), 4);
+
+        // NOTE: Check only ids for convenience.
+        let res_organized = vec![
+            (res[0].id, res[0].objective_id, res[0].ambition_id),
+            (res[1].id, res[1].objective_id, res[1].ambition_id),
+            (res[2].id, res[2].objective_id, res[2].ambition_id),
+            (res[3].id, res[3].objective_id, res[3].ambition_id),
+        ];
+        let expected = vec![
+            (action_1.id, Some(objective_1.id), Some(ambition_1.id)),
+            (action_1.id, Some(objective_1.id), Some(ambition_2.id)),
+            (action_1.id, Some(objective_2.id), None),
+            (action_2.id, None, None),
+        ];
+        assert_eq!(res_organized[0], expected[0]);
+        assert_eq!(res_organized[1], expected[1]);
+        assert_eq!(res_organized[2], expected[2]);
+        assert_eq!(res_organized[3], expected[3]);
 
         Ok(())
     }

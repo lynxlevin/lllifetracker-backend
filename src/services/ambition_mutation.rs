@@ -22,14 +22,15 @@ impl AmbitionMutation {
     ) -> Result<ambition::Model, TransactionError<DbErr>> {
         db.transaction::<_, ambition::Model, DbErr>(|txn| {
             Box::pin(async move {
+                let now = Utc::now();
                 let ambition_id = uuid::Uuid::new_v4();
                 let created_ambition = ambition::ActiveModel {
                     id: Set(ambition_id),
                     user_id: Set(form_data.user_id),
                     name: Set(form_data.name.to_owned()),
                     description: Set(form_data.description),
-                    created_at: Set(Utc::now().into()),
-                    updated_at: Set(Utc::now().into()),
+                    created_at: Set(now.into()),
+                    updated_at: Set(now.into()),
                 }
                 .insert(txn)
                 .await?;
@@ -39,7 +40,7 @@ impl AmbitionMutation {
                     ambition_id: Set(Some(ambition_id)),
                     objective_id: NotSet,
                     action_id: NotSet,
-                    created_at: Set(Utc::now().into()),
+                    created_at: Set(now.into()),
                 }
                 .insert(txn)
                 .await?;
@@ -134,7 +135,9 @@ mod tests {
             user_id: user.id,
         };
 
-        let returned_ambition = AmbitionMutation::create_with_tag(&db, form_data).await.unwrap();
+        let returned_ambition = AmbitionMutation::create_with_tag(&db, form_data)
+            .await
+            .unwrap();
         assert_eq!(returned_ambition.name, name);
         assert_eq!(returned_ambition.description, description);
         assert_eq!(returned_ambition.user_id, user.id);

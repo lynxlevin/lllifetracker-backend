@@ -19,13 +19,14 @@ impl ActionMutation {
     ) -> Result<action::Model, TransactionError<DbErr>> {
         db.transaction::<_, action::Model, DbErr>(|txn| {
             Box::pin(async move {
+                let now = Utc::now();
                 let action_id = uuid::Uuid::new_v4();
                 let created_action = action::ActiveModel {
                     id: Set(action_id),
                     user_id: Set(form_data.user_id),
                     name: Set(form_data.name.to_owned()),
-                    created_at: Set(Utc::now().into()),
-                    updated_at: Set(Utc::now().into()),
+                    created_at: Set(now.into()),
+                    updated_at: Set(now.into()),
                 }
                 .insert(txn)
                 .await?;
@@ -35,7 +36,7 @@ impl ActionMutation {
                     ambition_id: NotSet,
                     objective_id: NotSet,
                     action_id: Set(Some(action_id)),
-                    created_at: Set(Utc::now().into()),
+                    created_at: Set(now.into()),
                 }
                 .insert(txn)
                 .await?;
