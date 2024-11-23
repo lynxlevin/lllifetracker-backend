@@ -3,6 +3,7 @@ use actix_web::{cookie, dev::Server, web::Data, App, HttpServer};
 use sea_orm::*;
 use std::env;
 
+use migration::{Migrator, MigratorTrait};
 use crate::{
     routes::{action_routes, ambition_routes, auth_routes, objective_routes},
     utils::auth::auth_middleware::AuthenticateUser,
@@ -15,6 +16,7 @@ pub struct Application {
 impl Application {
     pub async fn build(settings: crate::settings::Settings) -> Result<Self, std::io::Error> {
         let db = get_database_connection().await;
+        Migrator::up(&db, None).await.unwrap();
         let address = format!(
             "{}:{}",
             settings.application.host, settings.application.port
