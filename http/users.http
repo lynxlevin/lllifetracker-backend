@@ -1,5 +1,5 @@
 # Users
-
+# Turn off debug to use these.
 ###
 # @name register
 POST {{endpoint}}/users/register
