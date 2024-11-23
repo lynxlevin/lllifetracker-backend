@@ -151,6 +151,10 @@ impl MigrationTrait for Migration {
 
         Ok(())
     }
+
+    async fn down(&self, _: &SchemaManager) -> Result<(), DbErr> {
+        Ok(())
+    }
 }
 
 async fn hash(password: &[u8]) -> String {

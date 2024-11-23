@@ -1,8 +1,9 @@
 use actix_session::{config::PersistentSession, storage, SessionMiddleware};
-use actix_web::{cookie, dev::Server, web::Data, App, HttpServer};
+use actix_web::{cookie, dev::Server, web::{Data, scope}, App, HttpServer};
 use sea_orm::*;
 use std::env;
 
+use migration::{Migrator, MigratorTrait};
 use crate::{
     routes::{action_routes, ambition_routes, auth_routes, objective_routes},
     utils::auth::auth_middleware::AuthenticateUser,
@@ -15,6 +16,7 @@ pub struct Application {
 impl Application {
     pub async fn build(settings: crate::settings::Settings) -> Result<Self, std::io::Error> {
         let db = get_database_connection().await;
+        Migrator::up(&db, None).await.unwrap();
         let address = format!(
             "{}:{}",
             settings.application.host, settings.application.port
@@ -94,11 +96,13 @@ async fn run(
                     .cookie_name("sessionId".to_string())
                     .build()
             })
-            .service(crate::routes::health_check)
-            .configure(auth_routes)
-            .configure(ambition_routes)
-            .configure(objective_routes)
-            .configure(action_routes)
+            .service(scope("/api")
+                .service(crate::routes::health_check)
+                .configure(auth_routes)
+                .configure(ambition_routes)
+                .configure(objective_routes)
+                .configure(action_routes)
+            )
             .app_data(Data::new(db.clone()))
             .app_data(Data::new(redis_pool.clone()))
     })

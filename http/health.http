@@ -2,4 +2,4 @@
 
 ###
 # @name health_check
-GET {{endpoint}}/health-check
+GET {{endpoint}}/api/health-check

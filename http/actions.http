@@ -1,8 +1,8 @@
 # Actions
-
+# Turn off debug to use these.
 ###
 # @name login
-POST {{endpoint}}/users/login
+POST {{endpoint}}/api/users/login
 Content-Type: application/json
 
 {
@@ -12,21 +12,21 @@ Content-Type: application/json
 
 ###
 # @name list
-GET {{endpoint}}/actions
+GET {{endpoint}}/api/actions
 
 ###
 # @name list_with_links
-GET {{endpoint}}/actions?links=true
+GET {{endpoint}}/api/actions?links=true
 
 @action_id=95233de1-88e2-432b-a1f8-23da045c6b93
 
 ###
 # @name get
-GET {{endpoint}}/actions/{{action_id}}
+GET {{endpoint}}/api/actions/{{action_id}}
 
 ###
 # @name create
-POST {{endpoint}}/actions
+POST {{endpoint}}/api/actions
 Content-Type: application/json
 
 {
@@ -35,7 +35,7 @@ Content-Type: application/json
 
 ###
 # @name update
-PUT {{endpoint}}/actions/{{action_id}}
+PUT {{endpoint}}/api/actions/{{action_id}}
 Content-Type: application/json
 
 {
@@ -44,5 +44,5 @@ Content-Type: application/json
 
 ###
 # @name delete
-DELETE {{endpoint}}/actions/{{action_id}}
+DELETE {{endpoint}}/api/actions/{{action_id}}
 
