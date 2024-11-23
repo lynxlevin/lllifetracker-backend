@@ -3,6 +3,8 @@
 pub use super::action::Entity as Action;
 pub use super::ambition::Entity as Ambition;
 pub use super::ambitions_objectives::Entity as AmbitionsObjectives;
+pub use super::memo::Entity as Memo;
+pub use super::memos_tags::Entity as MemosTags;
 pub use super::objective::Entity as Objective;
 pub use super::objectives_actions::Entity as ObjectivesActions;
 pub use super::record::Entity as Record;
