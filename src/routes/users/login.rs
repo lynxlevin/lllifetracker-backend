@@ -6,7 +6,6 @@ use crate::{
 use actix_session::SessionInsertError;
 use actix_web::{
     post,
-    rt::task,
     web::{Data, Json},
     HttpResponse,
 };
@@ -37,13 +36,10 @@ async fn login_user(
                 match UserQuery::find_active_by_email(&db, req_user.email.clone()).await {
                     Ok(user) => match user {
                         Some(user) => {
-                            match task::spawn_blocking(move || {
-                                verify_password(
+                            match verify_password(
                                     &user.password,
                                     req_user.password.clone().as_bytes(),
                                 )
-                            })
-                            .await
                             {
                                 Ok(_) => {
                                     tracing::event!(target: "backend", tracing::Level::INFO, "User logged in successfully.");
