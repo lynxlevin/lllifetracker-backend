@@ -1,5 +1,5 @@
 use actix_session::{config::PersistentSession, storage, SessionMiddleware};
-use actix_web::{cookie, dev::Server, web::Data, App, HttpServer};
+use actix_web::{cookie, dev::Server, web::{Data, scope}, App, HttpServer};
 use sea_orm::*;
 use std::env;
 
@@ -96,10 +96,12 @@ async fn run(
                     .cookie_name("sessionId".to_string())
                     .build()
             })
-            .service(crate::routes::health_check)
-            .configure(auth_routes)
-            .configure(ambition_routes)
-            .configure(objective_routes)
+            .service(scope("/api")
+                .service(crate::routes::health_check)
+                .configure(auth_routes)
+                .configure(ambition_routes)
+                .configure(objective_routes)
+            )
             .configure(action_routes)
             .app_data(Data::new(db.clone()))
             .app_data(Data::new(redis_pool.clone()))

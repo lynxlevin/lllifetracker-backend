@@ -2,7 +2,7 @@
 # Turn off debug to use these.
 ###
 # @name login
-POST {{endpoint}}/users/login
+POST {{endpoint}}/api/users/login
 Content-Type: application/json
 
 {
@@ -12,17 +12,17 @@ Content-Type: application/json
 
 ###
 # @name list
-GET {{endpoint}}/objectives
+GET {{endpoint}}/api/objectives
 
 @objective_id=3bea9c2e-0db8-4e77-9d91-529972f9786c
 
 ###
 # @name get
-GET {{endpoint}}/objectives/{{objective_id}}
+GET {{endpoint}}/api/objectives/{{objective_id}}
 
 ###
 # @name create
-POST {{endpoint}}/objectives
+POST {{endpoint}}/api/objectives
 Content-Type: application/json
 
 {
@@ -31,7 +31,7 @@ Content-Type: application/json
 
 ###
 # @name update
-PUT {{endpoint}}/objectives/{{objective_id}}
+PUT {{endpoint}}/api/objectives/{{objective_id}}
 Content-Type: application/json
 
 {
@@ -40,16 +40,16 @@ Content-Type: application/json
 
 ###
 # @name delete
-DELETE {{endpoint}}/objectives/{{objective_id}}
+DELETE {{endpoint}}/api/objectives/{{objective_id}}
 
 @action_id=f28ac87e-abb2-403a-a451-b973e79e636c
 
 ###
 # @name connect
-POST {{endpoint}}/objectives/{{objective_id}}/actions/{{action_id}}/connection
+POST {{endpoint}}/api/objectives/{{objective_id}}/actions/{{action_id}}/connection
 Content-Type: application/json
 
 ###
 # @name disconnect
-DELETE {{endpoint}}/objectives/{{objective_id}}/actions/{{action_id}}/connection
+DELETE {{endpoint}}/api/objectives/{{objective_id}}/actions/{{action_id}}/connection
 

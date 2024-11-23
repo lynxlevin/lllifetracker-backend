@@ -2,7 +2,7 @@
 # Turn off debug to use these.
 ###
 # @name register
-POST {{endpoint}}/users/register
+POST {{endpoint}}/api/users/register
 Content-Type: application/json
 
 {
@@ -14,11 +14,11 @@ Content-Type: application/json
 
 ###
 # @name confirm
-GET {{endpoint}}/users/register/confirm?token=
+GET {{endpoint}}/api/users/register/confirm?token=
 
 ###
 # @name resend_email
-POST {{endpoint}}/users/register/resend-email
+POST {{endpoint}}/api/users/register/resend-email
 Content-Type: application/json
 
 {
@@ -27,7 +27,7 @@ Content-Type: application/json
 
 ###
 # @name login
-POST {{endpoint}}/users/login
+POST {{endpoint}}/api/users/login
 Content-Type: application/json
 
 {
@@ -37,17 +37,17 @@ Content-Type: application/json
 
 ###
 # @name get_me
-GET {{endpoint}}/users/me
+GET {{endpoint}}/api/users/me
 
 
 ###
 # @name logout
-POST {{endpoint}}/users/logout
+POST {{endpoint}}/api/users/logout
 Content-Type: application/json
 
 ###
 # @name request_password_change
-POST {{endpoint}}/users/password-change/email-verification
+POST {{endpoint}}/api/users/password-change/email-verification
 Content-Type: application/json
 
 {
@@ -56,11 +56,11 @@ Content-Type: application/json
 
 ###
 # @name verify_password_change_token
-GET {{endpoint}}/users/password-change/email-verification?token=
+GET {{endpoint}}/api/users/password-change/email-verification?token=
 
 ###
 # @name submit_password_change
-POST {{endpoint}}/users/password-change
+POST {{endpoint}}/api/users/password-change
 Content-Type: application/json
 
 {
