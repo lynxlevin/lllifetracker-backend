@@ -31,7 +31,7 @@ impl MemoQuery {
 
 #[cfg(test)]
 mod tests {
-    use crate::{entities::memos_tags, test_utils};
+    use crate::test_utils;
     use sea_orm::ActiveValue::Set;
 
     use super::*;

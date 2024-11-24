@@ -15,6 +15,8 @@ Content-Type: application/json
 GET {{endpoint}}/api/memos
 
 @memo_id=95233de1-88e2-432b-a1f8-23da045c6b93
+@tag_0_id="8ae47c10-d248-46e2-9986-b17b1944ec70"
+@tag_1_id="73d61c99-3ab9-44b7-a732-f773c845b27d"
 
 ###
 # @name create
@@ -23,7 +25,9 @@ Content-Type: application/json
 
 {
   "title": "Second memo",
-  "text": "This is my second memo."
+  "text": "This is my second memo.",
+  "date": "2024-11-24",
+  "tag_ids": [{{tag_0_id}}, {{tag_1_id}}]
 }
 
 ###
