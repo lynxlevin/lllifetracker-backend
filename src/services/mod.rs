@@ -6,3 +6,4 @@ pub mod objective_mutation;
 pub mod objective_query;
 pub mod user;
 pub mod memo_query;
+pub mod memo_mutation;
