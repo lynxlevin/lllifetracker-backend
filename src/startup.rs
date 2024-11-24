@@ -5,7 +5,7 @@ use std::env;
 
 use migration::{Migrator, MigratorTrait};
 use crate::{
-    routes::{action_routes, ambition_routes, auth_routes, objective_routes},
+    routes::{action_routes, ambition_routes, auth_routes, memo_routes, objective_routes},
     utils::auth::auth_middleware::AuthenticateUser,
 };
 pub struct Application {
@@ -102,6 +102,7 @@ async fn run(
                 .configure(ambition_routes)
                 .configure(objective_routes)
                 .configure(action_routes)
+                .configure(memo_routes)
             )
             .app_data(Data::new(db.clone()))
             .app_data(Data::new(redis_pool.clone()))

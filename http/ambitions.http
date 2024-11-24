@@ -1,5 +1,5 @@
 # Actions
-# Turn off debug to use these.
+# Turn on debug to use these.
 ###
 # @name login
 POST {{endpoint}}/api/users/login
