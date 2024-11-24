@@ -160,6 +160,7 @@ pub async fn create_memo(db: &DbConn, title: String, user_id: uuid::Uuid) -> Res
         title: Set(title),
         text: Set("text".to_string()),
         date: Set(now.date_naive()),
+        archived: Set(false),
         user_id: Set(user_id),
         created_at: Set(now.into()),
         updated_at: Set(now.into()),

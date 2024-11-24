@@ -30,6 +30,7 @@ impl MemoMutation {
                     title: Set(form_data.title.to_owned()),
                     text: Set(form_data.text.to_owned()),
                     date: Set(form_data.date),
+                    archived: Set(false),
                     created_at: Set(now.into()),
                     updated_at: Set(now.into()),
                 }

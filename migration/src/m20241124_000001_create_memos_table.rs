@@ -20,6 +20,7 @@ impl MigrationTrait for Migration {
                     .col(string_len(Memo::Title, 64))
                     .col(text(Memo::Text))
                     .col(date(Memo::Date))
+                    .col(boolean(Memo::Archived).default(false))
                     .col(
                         timestamp_with_time_zone(Memo::CreatedAt)
                             .default(Expr::current_timestamp()),
@@ -69,6 +70,7 @@ pub enum Memo {
     Title,
     Text,
     Date,
+    Archived,
     CreatedAt,
     UpdatedAt,
 }
