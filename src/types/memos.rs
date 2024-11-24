@@ -16,7 +16,7 @@ pub struct MemoVisible {
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
 }
 
-#[derive(FromQueryResult, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(FromQueryResult, Debug, serde::Serialize, serde::Deserialize, PartialEq)]
 pub struct MemoWithTagQueryResult {
     pub id: uuid::Uuid,
     pub title: String,
@@ -25,11 +25,8 @@ pub struct MemoWithTagQueryResult {
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
     pub tag_id: Option<uuid::Uuid>,
-    pub tag_ambition_id: Option<uuid::Uuid>,
     pub tag_ambition_name: Option<String>,
-    pub tag_objective_id: Option<uuid::Uuid>,
     pub tag_objective_name: Option<String>,
-    pub tag_action_id: Option<uuid::Uuid>,
     pub tag_action_name: Option<String>,
 }
 
