@@ -5,3 +5,4 @@ pub mod ambition_query;
 pub mod objective_mutation;
 pub mod objective_query;
 pub mod user;
+pub mod memo_query;

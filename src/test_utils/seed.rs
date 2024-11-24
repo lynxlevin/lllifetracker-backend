@@ -1,5 +1,5 @@
 use crate::entities::{
-    action, ambition, ambitions_objectives, objective, objectives_actions, tag, user,
+    action, ambition, ambitions_objectives, objective, objectives_actions, tag, user, memo,
 };
 use chrono::Utc;
 use sea_orm::{prelude::*, DbConn, DbErr, Set};
@@ -150,4 +150,20 @@ pub async fn create_set_of_ambition_objective_action(
     }
 
     Ok((ambition, objective, action))
+}
+
+#[cfg(test)]
+pub async fn create_memo(db: &DbConn, title: String, user_id: uuid::Uuid) -> Result<memo::Model, DbErr> {
+    let now = Utc::now();
+    memo::ActiveModel {
+        id: Set(uuid::Uuid::new_v4()),
+        title: Set(title),
+        text: Set("text".to_string()),
+        date: Set(now.date_naive()),
+        user_id: Set(user_id),
+        created_at: Set(now.into()),
+        updated_at: Set(now.into()),
+    }
+    .insert(db)
+    .await
 }

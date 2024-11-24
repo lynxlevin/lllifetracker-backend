@@ -5,6 +5,8 @@ mod general;
 mod objectives;
 mod tokens;
 mod users;
+mod tags;
+mod memos;
 
 pub use actions::{ActionVisible, ActionVisibleWithLinks, ActionWithLinksQueryResult};
 pub use ambitions::{AmbitionVisible, AmbitionVisibleWithLinks, AmbitionWithLinksQueryResult};
@@ -18,3 +20,5 @@ pub use objectives::{
 };
 pub use tokens::ConfirmationToken;
 pub use users::UserVisible;
+pub use tags::{TagType, TagVisible};
+pub use memos::{MemoVisible, MemoVisibleWithTags, MemoWithTagQueryResult};
