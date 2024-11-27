@@ -1,5 +1,5 @@
 use crate::entities::{action, ambition, memo, memos_tags, objective, tag};
-use crate::types::MemoWithTagQueryResult;
+use crate::types::{CustomDbErr, MemoWithTagQueryResult};
 use sea_orm::entity::prelude::*;
 use sea_orm::{QueryOrder, QuerySelect, JoinType::LeftJoin};
 
@@ -26,6 +26,18 @@ impl MemoQuery {
             .into_model::<MemoWithTagQueryResult>()
             .all(db)
             .await
+    }
+
+    pub async fn find_by_id_and_user_id(
+        db: &DbConn,
+        memo_id: uuid::Uuid,
+        user_id: uuid::Uuid,
+    ) -> Result<memo::Model, DbErr> {
+        memo::Entity::find_by_id(memo_id)
+            .filter(memo::Column::UserId.eq(user_id))
+            .one(db)
+            .await?
+            .ok_or(DbErr::Custom(CustomDbErr::NotFound.to_string()))
     }
 }
 
