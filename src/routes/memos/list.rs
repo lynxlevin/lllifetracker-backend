@@ -30,7 +30,7 @@ pub async fn list_memos(
                                 text: memo.text.clone(),
                                 date: memo.date,
                                 created_at: memo.created_at,
-                                updated_at: memo.created_at,
+                                updated_at: memo.updated_at,
                                 tags: vec![],
                             };
                             if let Some(tag) = get_tag(&memo) {

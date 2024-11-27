@@ -1,5 +1,6 @@
 mod list;
 mod create;
+mod update;
 
 use actix_web::web::{scope, ServiceConfig};
 
@@ -8,7 +9,7 @@ pub fn memo_routes(cfg: &mut ServiceConfig) {
         scope("/memos")
             .service(list::list_memos)
             .service(create::create_memo)
-            // .service(update::update_memo)
+            .service(update::update_memo)
             // .service(delete::delete_memo),
         // MYMEMO: Can restrict AuthenticateUser this way.
         // .service(

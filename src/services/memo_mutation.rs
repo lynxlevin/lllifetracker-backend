@@ -1,4 +1,4 @@
-use crate::entities::{memo, memos_tags, tag};
+use crate::entities::{memo, memos_tags};
 use chrono::Utc;
 use sea_orm::{
     entity::prelude::*, ActiveValue::NotSet, Condition, DeriveColumn, EnumIter, QuerySelect, Set,
@@ -102,7 +102,8 @@ impl MemoMutation {
                         .map(|tag_id| memos_tags::ActiveModel {
                             memo_id: Set(form.id),
                             tag_id: Set(tag_id),
-                        }).collect();
+                        })
+                        .collect();
                     memos_tags::Entity::insert_many(tag_links_to_create)
                         .on_empty_do_nothing()
                         .exec(txn)
@@ -454,7 +455,8 @@ mod tests {
         let error = MemoMutation::partial_update(&db, form).await.unwrap_err();
         assert_eq!(
             error.to_string(),
-            DbErr::Custom(CustomDbErr::NotFound.to_string()).to_string()
+            TransactionError::Transaction(DbErr::Custom(CustomDbErr::NotFound.to_string()))
+                .to_string(),
         );
 
         Ok(())

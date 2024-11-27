@@ -1,7 +1,7 @@
 use crate::{
     entities::user as user_entity,
     services::memo_mutation::{MemoMutation, NewMemo},
-    types::{self, MemoVisible, MemoVisibleWithTags, INTERNAL_SERVER_ERROR_MESSAGE},
+    types::{self, MemoVisible, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
     post,
@@ -69,7 +69,7 @@ mod tests {
         web::scope,
         App, HttpMessage,
     };
-    use sea_orm::{entity::prelude::*, DbErr, EntityTrait, EnumIter, QuerySelect};
+    use sea_orm::{entity::prelude::*, DbErr, EntityTrait, QuerySelect};
 
     use crate::{
         entities::{memo, memos_tags},
@@ -80,7 +80,7 @@ mod tests {
 
     #[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
     enum QueryAs {
-        MemoId,
+        TagId,
     }
 
     async fn init_app(
@@ -138,7 +138,7 @@ mod tests {
         assert!(created_memo.is_some());
 
         let linked_tag_ids: Vec<uuid::Uuid> = memos_tags::Entity::find()
-            .column_as(memos_tags::Column::TagId, QueryAs::MemoId)
+            .column_as(memos_tags::Column::TagId, QueryAs::TagId)
             .filter(memos_tags::Column::MemoId.eq(returned_memo.id))
             .into_values::<_, QueryAs>()
             .all(&db)
