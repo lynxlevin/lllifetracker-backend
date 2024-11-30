@@ -86,7 +86,7 @@ fn get_tag(memo: &MemoWithTagQueryResult) -> Option<TagVisible> {
             created_at: memo.tag_created_at.unwrap(),
         })
     } else {
-        None
+        unimplemented!("Tag without link to Ambition/Objective/Action is not implemented yet.");
     }
 }
 
