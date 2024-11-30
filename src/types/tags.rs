@@ -10,4 +10,5 @@ pub struct TagVisible {
     pub id: uuid::Uuid,
     pub name: String,
     pub tag_type: TagType,
+    pub created_at: chrono::DateTime<chrono::FixedOffset>,
 }

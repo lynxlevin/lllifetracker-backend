@@ -69,18 +69,21 @@ fn get_tag(memo: &MemoWithTagQueryResult) -> Option<TagVisible> {
             id: memo.tag_id.unwrap(),
             name,
             tag_type: TagType::Ambition,
+            created_at: memo.tag_created_at.unwrap(),
         })
     } else if let Some(name) = memo.tag_objective_name.clone() {
         Some(TagVisible {
             id: memo.tag_id.unwrap(),
             name,
             tag_type: TagType::Objective,
+            created_at: memo.tag_created_at.unwrap(),
         })
     } else if let Some(name) = memo.tag_action_name.clone() {
         Some(TagVisible {
             id: memo.tag_id.unwrap(),
             name,
             tag_type: TagType::Action,
+            created_at: memo.tag_created_at.unwrap(),
         })
     } else {
         None
@@ -158,11 +161,13 @@ mod tests {
                     "id": action_tag.id,
                     "name": action.name,
                     "tag_type": TagType::Action,
+                    "created_at": action_tag.created_at,
                 },
                 {
                     "id": objective_tag.id,
                     "name": objective.name,
                     "tag_type": TagType::Objective,
+                    "created_at": objective_tag.created_at,
                 },
             ],
         });
@@ -182,6 +187,7 @@ mod tests {
                     "id": ambition_tag.id,
                     "name": ambition.name,
                     "tag_type": TagType::Ambition,
+                    "created_at": ambition_tag.created_at,
                 },
             ],
         });

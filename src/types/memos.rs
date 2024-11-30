@@ -28,6 +28,7 @@ pub struct MemoWithTagQueryResult {
     pub tag_ambition_name: Option<String>,
     pub tag_objective_name: Option<String>,
     pub tag_action_name: Option<String>,
+    pub tag_created_at: Option<chrono::DateTime<chrono::FixedOffset>>
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]

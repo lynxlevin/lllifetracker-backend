@@ -13,6 +13,7 @@ impl MemoQuery {
         memo::Entity::find()
             .filter(memo::Column::UserId.eq(user_id))
             .column_as(tag::Column::Id, "tag_id")
+            .column_as(tag::Column::CreatedAt, "tag_created_at")
             .column_as(ambition::Column::Name, "tag_ambition_name")
             .column_as(objective::Column::Name, "tag_objective_name")
             .column_as(action::Column::Name, "tag_action_name")
@@ -84,6 +85,7 @@ mod tests {
                 tag_ambition_name: None,
                 tag_objective_name: None,
                 tag_action_name: Some(action.name),
+                tag_created_at: Some(action_tag.created_at),
             },
             MemoWithTagQueryResult {
                 id: memo_1.id,
@@ -96,6 +98,7 @@ mod tests {
                 tag_ambition_name: None,
                 tag_objective_name: Some(objective.name),
                 tag_action_name: None,
+                tag_created_at: Some(objective_tag.created_at),
             },
             MemoWithTagQueryResult {
                 id: memo_0.id,
@@ -108,6 +111,7 @@ mod tests {
                 tag_ambition_name: Some(ambition.name),
                 tag_objective_name: None,
                 tag_action_name: None,
+                tag_created_at: Some(ambition_tag.created_at),
             },
         ];
 
