@@ -20,5 +20,5 @@ pub use objectives::{
 };
 pub use tokens::ConfirmationToken;
 pub use users::UserVisible;
-pub use tags::{TagType, TagVisible};
+pub use tags::{TagType, TagVisible, TagQueryResult};
 pub use memos::{MemoVisible, MemoVisibleWithTags, MemoWithTagQueryResult};
