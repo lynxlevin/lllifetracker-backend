@@ -1,8 +1,8 @@
 use crate::entities::{memo, memos_tags};
 use chrono::Utc;
 use sea_orm::{
-    entity::prelude::*, ActiveValue::NotSet, Condition, DeriveColumn, EnumIter, QuerySelect, Set,
-    TransactionError, TransactionTrait,
+    entity::prelude::*, DeriveColumn, EnumIter, QuerySelect, Set, TransactionError,
+    TransactionTrait,
 };
 
 use super::memo_query::MemoQuery;
@@ -128,26 +128,24 @@ impl MemoMutation {
         .await
     }
 
-    // pub async fn delete(
-    //     db: &DbConn,
-    //     action_id: uuid::Uuid,
-    //     user_id: uuid::Uuid,
-    // ) -> Result<(), DbErr> {
-    //     MemoQuery::find_by_id_and_user_id(db, action_id, user_id)
-    //         .await?
-    //         .delete(db)
-    //         .await?;
-    //     Ok(())
-    // }
+    pub async fn delete(
+        db: &DbConn,
+        memo_id: uuid::Uuid,
+        user_id: uuid::Uuid,
+    ) -> Result<(), DbErr> {
+        MemoQuery::find_by_id_and_user_id(db, memo_id, user_id)
+            .await?
+            .delete(db)
+            .await?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
 mod tests {
-
     use chrono::Datelike;
-    use sea_orm::{DbErr, EntityOrSelect};
+    use sea_orm::DbErr;
 
-    use crate::entities::memos_tags;
     use crate::test_utils;
     use crate::types::CustomDbErr;
 
@@ -462,41 +460,49 @@ mod tests {
         Ok(())
     }
 
-    // #[actix_web::test]
-    // async fn delete() -> Result<(), DbErr> {
-    //     let db = test_utils::init_db().await?;
-    //     let user = test_utils::seed::create_active_user(&db).await?;
-    //     let (action, tag) =
-    //         test_utils::seed::create_action_and_tag(&db, "action_for_delete".to_string(), user.id)
-    //             .await?;
+    #[actix_web::test]
+    async fn delete() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
+        let memo =
+            test_utils::seed::create_memo(&db, "Memo to delete.".to_string(), user.id).await?;
+        let (_, ambition_tag) =
+            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
+                .await?;
+        memos_tags::ActiveModel {
+            memo_id: Set(memo.id),
+            tag_id: Set(ambition_tag.id),
+        }
+        .insert(&db)
+        .await?;
 
-    //     MemoMutation::delete(&db, action.id, user.id).await?;
+        MemoMutation::delete(&db, memo.id, user.id).await?;
 
-    //     let action_in_db = action::Entity::find_by_id(action.id).one(&db).await?;
-    //     assert!(action_in_db.is_none());
+        let memo_in_db = memo::Entity::find_by_id(memo.id).one(&db).await?;
+        assert!(memo_in_db.is_none());
 
-    //     let tag_in_db = tag::Entity::find_by_id(tag.id).one(&db).await?;
-    //     assert!(tag_in_db.is_none());
+        let memos_tags_in_db = memos_tags::Entity::find()
+            .filter(memos_tags::Column::MemoId.eq(memo.id))
+            .filter(memos_tags::Column::TagId.eq(ambition_tag.id))
+            .one(&db)
+            .await?;
+        assert!(memos_tags_in_db.is_none());
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 
-    // #[actix_web::test]
-    // async fn delete_unauthorized() -> Result<(), DbErr> {
-    //     let db = test_utils::init_db().await?;
-    //     let user = test_utils::seed::create_active_user(&db).await?;
-    //     let (action, _) = test_utils::seed::create_action_and_tag(
-    //         &db,
-    //         "action_for_delete_unauthorized".to_string(),
-    //         user.id,
-    //     )
-    //     .await?;
+    #[actix_web::test]
+    async fn delete_unauthorized() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
+        let memo =
+            test_utils::seed::create_memo(&db, "Memo to delete.".to_string(), user.id).await?;
 
-    //     let error = MemoMutation::delete(&db, action.id, uuid::Uuid::new_v4())
-    //         .await
-    //         .unwrap_err();
-    //     assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
+        let error = MemoMutation::delete(&db, memo.id, uuid::Uuid::new_v4())
+            .await
+            .unwrap_err();
+        assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 }
