@@ -14,7 +14,7 @@ Content-Type: application/json
 # @name list
 GET {{endpoint}}/api/memos
 
-@memo_id=6ca381de-588b-4bd7-b416-9935fbc54dab
+@memo_id=1b4fb4b2-5e13-4ede-a4e9-8e14beb66a37
 @tag_0_id="8ae47c10-d248-46e2-9986-b17b1944ec70"
 @tag_1_id="73d61c99-3ab9-44b7-a732-f773c845b27d"
 
