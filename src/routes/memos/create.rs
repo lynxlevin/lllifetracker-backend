@@ -18,7 +18,7 @@ struct RequestBody {
     tag_ids: Vec<uuid::Uuid>,
 }
 
-#[tracing::instrument(name = "Creating an memo", skip(db, user))]
+#[tracing::instrument(name = "Creating a memo", skip(db, user))]
 #[post("")]
 pub async fn create_memo(
     db: Data<DbConn>,

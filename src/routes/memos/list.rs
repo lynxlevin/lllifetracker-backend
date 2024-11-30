@@ -10,7 +10,7 @@ use actix_web::{
 };
 use sea_orm::DbConn;
 
-#[tracing::instrument(name = "Listing a user's memos.", skip(db, user))]
+#[tracing::instrument(name = "Listing user's memos.", skip(db, user))]
 #[get("")]
 pub async fn list_memos(
     db: Data<DbConn>,

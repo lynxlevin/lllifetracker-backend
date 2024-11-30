@@ -15,7 +15,7 @@ struct PathParam {
     memo_id: uuid::Uuid,
 }
 
-#[tracing::instrument(name = "Deleting an memo", skip(db, user, path_param))]
+#[tracing::instrument(name = "Deleting a memo", skip(db, user, path_param))]
 #[delete("/{memo_id}")]
 pub async fn delete_memo(
     db: Data<DbConn>,

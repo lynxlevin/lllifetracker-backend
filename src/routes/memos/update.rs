@@ -23,7 +23,7 @@ struct RequestBody {
     tag_ids: Option<Vec<uuid::Uuid>>,
 }
 
-#[tracing::instrument(name = "Updating an memo", skip(db, user, req, path_param))]
+#[tracing::instrument(name = "Updating a memo", skip(db, user, req, path_param))]
 #[put("/{memo_id}")]
 pub async fn update_memo(
     db: Data<DbConn>,
