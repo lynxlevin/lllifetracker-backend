@@ -137,15 +137,15 @@ mod tests {
         assert!(returned_memo.updated_at > memo.updated_at);
 
         let updated_memo = memo::Entity::find_by_id(returned_memo.id)
-            .filter(memo::Column::Title.eq(form.title.unwrap()))
-            .filter(memo::Column::Text.eq(form.text.unwrap()))
-            .filter(memo::Column::Date.eq(form.date.unwrap()))
-            .filter(memo::Column::UserId.eq(user.id))
-            .filter(memo::Column::CreatedAt.eq(returned_memo.created_at))
-            .filter(memo::Column::UpdatedAt.eq(returned_memo.updated_at))
             .one(&db)
-            .await?;
-        assert!(updated_memo.is_some());
+            .await?
+            .unwrap();
+        assert_eq!(updated_memo.title, form.title.unwrap());
+        assert_eq!(updated_memo.text, form.text.unwrap());
+        assert_eq!(updated_memo.date, form.date.unwrap());
+        assert_eq!(updated_memo.user_id, user.id);
+        assert_eq!(updated_memo.created_at, returned_memo.created_at);
+        assert_eq!(updated_memo.updated_at, returned_memo.updated_at);
 
         let linked_tag_ids: Vec<uuid::Uuid> = memos_tags::Entity::find()
             .column_as(memos_tags::Column::TagId, QueryAs::TagId)

@@ -127,15 +127,15 @@ mod tests {
         assert_eq!(returned_memo.date, today);
 
         let created_memo = memo::Entity::find_by_id(returned_memo.id)
-            .filter(memo::Column::Title.eq(memo_title.clone()))
-            .filter(memo::Column::Text.eq(memo_text.clone()))
-            .filter(memo::Column::Date.eq(today))
-            .filter(memo::Column::UserId.eq(user.id))
-            .filter(memo::Column::CreatedAt.eq(returned_memo.created_at))
-            .filter(memo::Column::UpdatedAt.eq(returned_memo.updated_at))
             .one(&db)
-            .await?;
-        assert!(created_memo.is_some());
+            .await?
+            .unwrap();
+        assert_eq!(created_memo.title, memo_title.clone());
+        assert_eq!(created_memo.text, memo_text.clone());
+        assert_eq!(created_memo.date, today);
+        assert_eq!(created_memo.user_id, user.id);
+        assert_eq!(created_memo.created_at, returned_memo.created_at);
+        assert_eq!(created_memo.updated_at, returned_memo.updated_at);
 
         let linked_tag_ids: Vec<uuid::Uuid> = memos_tags::Entity::find()
             .column_as(memos_tags::Column::TagId, QueryAs::TagId)

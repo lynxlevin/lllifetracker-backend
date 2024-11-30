@@ -178,15 +178,14 @@ mod tests {
         assert_eq!(returned_memo.user_id, user.id);
 
         let created_memo = memo::Entity::find_by_id(returned_memo.id)
-            .filter(memo::Column::Title.eq(memo_title.clone()))
-            .filter(memo::Column::Text.eq(memo_text.clone()))
-            .filter(memo::Column::Date.eq(today))
-            .filter(memo::Column::UserId.eq(user.id))
-            .filter(memo::Column::CreatedAt.eq(returned_memo.created_at))
-            .filter(memo::Column::UpdatedAt.eq(returned_memo.updated_at))
             .one(&db)
-            .await?;
-        assert!(created_memo.is_some());
+            .await?.unwrap();
+        assert_eq!(created_memo.title, memo_title.clone());
+        assert_eq!(created_memo.text, memo_text.clone());
+        assert_eq!(created_memo.date, today);
+        assert_eq!(created_memo.user_id, user.id);
+        assert_eq!(created_memo.created_at, returned_memo.created_at);
+        assert_eq!(created_memo.updated_at, returned_memo.updated_at);
 
         let linked_tag_ids: Vec<uuid::Uuid> = memos_tags::Entity::find()
             .column_as(memos_tags::Column::TagId, QueryAs::TagId)
@@ -229,15 +228,14 @@ mod tests {
         assert!(returned_memo.updated_at > memo.updated_at);
 
         let updated_memo = memo::Entity::find_by_id(memo.id)
-            .filter(memo::Column::Title.eq(form.title.clone().unwrap()))
-            .filter(memo::Column::Text.eq(memo.text))
-            .filter(memo::Column::Date.eq(memo.date))
-            .filter(memo::Column::UserId.eq(user.id))
-            .filter(memo::Column::CreatedAt.eq(memo.created_at))
-            .filter(memo::Column::UpdatedAt.eq(returned_memo.updated_at))
             .one(&db)
-            .await?;
-        assert!(updated_memo.is_some());
+            .await?.unwrap();
+        assert_eq!(updated_memo.title, form.title.clone().unwrap());
+        assert_eq!(updated_memo.text, memo.text);
+        assert_eq!(updated_memo.date, memo.date);
+        assert_eq!(updated_memo.user_id, user.id);
+        assert_eq!(updated_memo.created_at, memo.created_at);
+        assert_eq!(updated_memo.updated_at, returned_memo.updated_at);
 
         Ok(())
     }
@@ -270,15 +268,14 @@ mod tests {
         assert!(returned_memo.updated_at > memo.updated_at);
 
         let updated_memo = memo::Entity::find_by_id(memo.id)
-            .filter(memo::Column::Title.eq(memo.title))
-            .filter(memo::Column::Text.eq(form.text.clone().unwrap()))
-            .filter(memo::Column::Date.eq(memo.date))
-            .filter(memo::Column::UserId.eq(user.id))
-            .filter(memo::Column::CreatedAt.eq(memo.created_at))
-            .filter(memo::Column::UpdatedAt.eq(returned_memo.updated_at))
             .one(&db)
-            .await?;
-        assert!(updated_memo.is_some());
+            .await?.unwrap();
+        assert_eq!(updated_memo.title, memo.title);
+        assert_eq!(updated_memo.text, form.text.clone().unwrap());
+        assert_eq!(updated_memo.date, memo.date);
+        assert_eq!(updated_memo.user_id, user.id);
+        assert_eq!(updated_memo.created_at, memo.created_at);
+        assert_eq!(updated_memo.updated_at, returned_memo.updated_at);
 
         Ok(())
     }
@@ -311,15 +308,14 @@ mod tests {
         assert!(returned_memo.updated_at > memo.updated_at);
 
         let updated_memo = memo::Entity::find_by_id(memo.id)
-            .filter(memo::Column::Title.eq(memo.title))
-            .filter(memo::Column::Text.eq(memo.text))
-            .filter(memo::Column::Date.eq(form.date.unwrap()))
-            .filter(memo::Column::UserId.eq(user.id))
-            .filter(memo::Column::CreatedAt.eq(memo.created_at))
-            .filter(memo::Column::UpdatedAt.eq(returned_memo.updated_at))
             .one(&db)
-            .await?;
-        assert!(updated_memo.is_some());
+            .await?.unwrap();
+        assert_eq!(updated_memo.title, memo.title);
+        assert_eq!(updated_memo.text, memo.text);
+        assert_eq!(updated_memo.date, form.date.clone().unwrap());
+        assert_eq!(updated_memo.user_id, user.id);
+        assert_eq!(updated_memo.created_at, memo.created_at);
+        assert_eq!(updated_memo.updated_at, returned_memo.updated_at);
 
         Ok(())
     }
@@ -355,15 +351,14 @@ mod tests {
         assert!(returned_memo.updated_at > memo.updated_at);
 
         let updated_memo = memo::Entity::find_by_id(memo.id)
-            .filter(memo::Column::Title.eq(memo.title))
-            .filter(memo::Column::Text.eq(memo.text))
-            .filter(memo::Column::Date.eq(memo.date))
-            .filter(memo::Column::UserId.eq(user.id))
-            .filter(memo::Column::CreatedAt.eq(memo.created_at))
-            .filter(memo::Column::UpdatedAt.eq(returned_memo.updated_at))
             .one(&db)
-            .await?;
-        assert!(updated_memo.is_some());
+            .await?.unwrap();
+        assert_eq!(updated_memo.title, memo.title);
+        assert_eq!(updated_memo.text, memo.text);
+        assert_eq!(updated_memo.date, memo.date);
+        assert_eq!(updated_memo.user_id, user.id);
+        assert_eq!(updated_memo.created_at, memo.created_at);
+        assert_eq!(updated_memo.updated_at, returned_memo.updated_at);
 
         let linked_tag_ids: Vec<uuid::Uuid> = memos_tags::Entity::find()
             .column_as(memos_tags::Column::TagId, QueryAs::TagId)
@@ -414,15 +409,14 @@ mod tests {
         assert!(returned_memo.updated_at > memo.updated_at);
 
         let updated_memo = memo::Entity::find_by_id(memo.id)
-            .filter(memo::Column::Title.eq(memo.title))
-            .filter(memo::Column::Text.eq(memo.text))
-            .filter(memo::Column::Date.eq(memo.date))
-            .filter(memo::Column::UserId.eq(user.id))
-            .filter(memo::Column::CreatedAt.eq(memo.created_at))
-            .filter(memo::Column::UpdatedAt.eq(returned_memo.updated_at))
             .one(&db)
-            .await?;
-        assert!(updated_memo.is_some());
+            .await?.unwrap();
+        assert_eq!(updated_memo.title, memo.title);
+        assert_eq!(updated_memo.text, memo.text);
+        assert_eq!(updated_memo.date, memo.date);
+        assert_eq!(updated_memo.user_id, user.id);
+        assert_eq!(updated_memo.created_at, memo.created_at);
+        assert_eq!(updated_memo.updated_at, returned_memo.updated_at);
 
         let linked_tag_ids: Vec<uuid::Uuid> = memos_tags::Entity::find()
             .column_as(memos_tags::Column::TagId, QueryAs::TagId)
