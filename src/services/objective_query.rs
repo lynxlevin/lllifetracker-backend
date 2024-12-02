@@ -36,6 +36,7 @@ impl ObjectiveQuery {
             .column_as(ambition::Column::UpdatedAt, "ambition_updated_at")
             .column_as(action::Column::Id, "action_id")
             .column_as(action::Column::Name, "action_name")
+            .column_as(action::Column::Description, "action_description")
             .column_as(action::Column::CreatedAt, "action_created_at")
             .column_as(action::Column::UpdatedAt, "action_updated_at")
             .join_rev(LeftJoin, objectives_actions::Relation::Objective.def())
@@ -76,10 +77,10 @@ mod tests {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
         let (objective_0, _) =
-            test_utils::seed::create_objective_and_tag(&db, "objective_0".to_string(), user.id)
+            test_utils::seed::create_objective_and_tag(&db, "objective_0".to_string(), None, user.id)
                 .await?;
         let (objective_1, _) =
-            test_utils::seed::create_objective_and_tag(&db, "objective_1".to_string(), user.id)
+            test_utils::seed::create_objective_and_tag(&db, "objective_1".to_string(), Some("objective_1".to_string()), user.id)
                 .await?;
 
         let res = ObjectiveQuery::find_all_by_user_id(&db, user.id).await?;
@@ -88,12 +89,14 @@ mod tests {
             ObjectiveVisible {
                 id: objective_0.id,
                 name: objective_0.name,
+                description: objective_0.description,
                 created_at: objective_0.created_at,
                 updated_at: objective_0.updated_at,
             },
             ObjectiveVisible {
                 id: objective_1.id,
                 name: objective_1.name,
+                description: objective_1.description,
                 created_at: objective_1.created_at,
                 updated_at: objective_1.updated_at,
             },

@@ -9,6 +9,7 @@ use super::objective_query::ObjectiveQuery;
 #[derive(serde::Deserialize, Debug, serde::Serialize, Clone)]
 pub struct NewObjective {
     pub name: String,
+    pub description: Option<String>,
     pub user_id: uuid::Uuid,
 }
 
@@ -27,6 +28,7 @@ impl ObjectiveMutation {
                     id: Set(objective_id),
                     user_id: Set(form_data.user_id),
                     name: Set(form_data.name.to_owned()),
+                    description: Set(form_data.description.to_owned()),
                     created_at: Set(now.into()),
                     updated_at: Set(now.into()),
                 }
@@ -54,12 +56,14 @@ impl ObjectiveMutation {
         objective_id: uuid::Uuid,
         user_id: uuid::Uuid,
         name: String,
+        description: Option<String>,
     ) -> Result<objective::Model, DbErr> {
         let mut objective: objective::ActiveModel =
             ObjectiveQuery::find_by_id_and_user_id(db, objective_id, user_id)
                 .await?
                 .into();
         objective.name = Set(name);
+        objective.description = Set(description);
         objective.updated_at = Set(Utc::now().into());
         objective.update(db).await
     }
@@ -122,26 +126,33 @@ mod tests {
     async fn create_with_tag() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let name = "objective_service::ObjectiveMutation::create_with_tag".to_string();
+        let name = "create_with_tag".to_string();
+        let description = "Create with tag.".to_string();
 
         let form_data = NewObjective {
             name: name.clone(),
+            description: Some(description.clone()),
             user_id: user.id,
         };
         let returned_objective = ObjectiveMutation::create_with_tag(&db, form_data)
             .await
             .unwrap();
-        assert_eq!(returned_objective.name, name);
+        assert_eq!(returned_objective.name, name.clone());
+        assert_eq!(returned_objective.description, Some(description.clone()));
         assert_eq!(returned_objective.user_id, user.id);
 
         let created_objective = objective::Entity::find_by_id(returned_objective.id)
-            .filter(objective::Column::Name.eq(returned_objective.name))
-            .filter(objective::Column::UserId.eq(returned_objective.user_id))
-            .filter(objective::Column::CreatedAt.eq(returned_objective.created_at))
-            .filter(objective::Column::UpdatedAt.eq(returned_objective.updated_at))
             .one(&db)
-            .await?;
-        assert!(created_objective.is_some());
+            .await?
+            .unwrap();
+        assert_eq!(created_objective.name, returned_objective.name);
+        assert_eq!(
+            created_objective.description,
+            returned_objective.description
+        );
+        assert_eq!(created_objective.user_id, returned_objective.user_id);
+        assert_eq!(created_objective.created_at, returned_objective.created_at);
+        assert_eq!(created_objective.updated_at, returned_objective.updated_at);
 
         let created_tag = tag::Entity::find()
             .filter(tag::Column::AmbitionId.is_null())
@@ -162,27 +173,30 @@ mod tests {
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_before_update".to_string(),
+            None,
             user.id,
         )
         .await?;
         let new_name = "objective_after_update".to_string();
+        let new_description = "Objective after update.".to_string();
 
         let returned_objective =
-            ObjectiveMutation::update(&db, objective.id, user.id, new_name.clone()).await?;
+            ObjectiveMutation::update(&db, objective.id, user.id, new_name.clone(), Some(new_description.clone())).await?;
         assert_eq!(returned_objective.id, objective.id);
         assert_eq!(returned_objective.name, new_name.clone());
+        assert_eq!(returned_objective.description, Some(new_description.clone()));
         assert_eq!(returned_objective.user_id, user.id);
         assert_eq!(returned_objective.created_at, objective.created_at);
         assert!(returned_objective.updated_at > objective.updated_at);
 
         let updated_objective = objective::Entity::find_by_id(objective.id)
-            .filter(objective::Column::Name.eq(new_name))
-            .filter(objective::Column::UserId.eq(user.id))
-            .filter(objective::Column::CreatedAt.eq(objective.created_at))
-            .filter(objective::Column::UpdatedAt.eq(returned_objective.updated_at))
             .one(&db)
-            .await?;
-        assert!(updated_objective.is_some());
+            .await?.unwrap();
+        assert_eq!(updated_objective.name, new_name.clone());
+        assert_eq!(updated_objective.description, Some(new_description.clone()));
+        assert_eq!(updated_objective.user_id, user.id);
+        assert_eq!(updated_objective.created_at, objective.created_at);
+        assert_eq!(updated_objective.updated_at, returned_objective.updated_at);
 
         Ok(())
     }
@@ -194,13 +208,14 @@ mod tests {
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_before_update_unauthorized".to_string(),
+            None,
             user.id,
         )
         .await?;
         let new_name = "objective_after_update_unauthorized".to_string();
 
         let error =
-            ObjectiveMutation::update(&db, objective.id, uuid::Uuid::new_v4(), new_name.clone())
+            ObjectiveMutation::update(&db, objective.id, uuid::Uuid::new_v4(), new_name.clone(), None)
                 .await
                 .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
@@ -215,6 +230,7 @@ mod tests {
         let (objective, tag) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_for_delete".to_string(),
+            None,
             user.id,
         )
         .await?;
@@ -237,6 +253,7 @@ mod tests {
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_for_delete_unauthorized".to_string(),
+            None,
             user.id,
         )
         .await?;
@@ -256,12 +273,14 @@ mod tests {
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "Test objective_service::ObjectiveMutation::connect_action".to_string(),
+            None,
             user.id,
         )
         .await?;
         let (action, _) = test_utils::seed::create_action_and_tag(
             &db,
             "Test objective_service::ObjectiveMutation::connect_action".to_string(),
+            None,
             user.id,
         )
         .await?;
@@ -285,12 +304,14 @@ mod tests {
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "Test objective_service::ObjectiveMutation::disconnect_action".to_string(),
+            None,
             user.id,
         )
         .await?;
         let (action, _) = test_utils::seed::create_action_and_tag(
             &db,
             "Test objective_service::ObjectiveMutation::disconnect_action".to_string(),
+            None,
             user.id,
         )
         .await?;

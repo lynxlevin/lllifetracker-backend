@@ -18,6 +18,7 @@ struct PathParam {
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {
     name: String,
+    description: Option<String>,
 }
 
 #[tracing::instrument(name = "Updating an action", skip(db, user, req, path_param))]
@@ -31,11 +32,12 @@ pub async fn update_action(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ActionMutation::update(&db, path_param.action_id, user.id, req.name.clone()).await
+            match ActionMutation::update(&db, path_param.action_id, user.id, req.name.clone(), req.description.clone()).await
             {
                 Ok(action) => HttpResponse::Ok().json(ActionVisible {
                     id: action.id,
                     name: action.name,
+                    description: action.description,
                     created_at: action.created_at,
                     updated_at: action.updated_at,
                 }),
@@ -89,15 +91,18 @@ mod tests {
         let (action, _) = test_utils::seed::create_action_and_tag(
             &db,
             "action_for_update_route".to_string(),
+            None,
             user.id,
         )
         .await?;
-        let new_name = "action_after_update_route".to_string();
+        let new_name = "action_after_update".to_string();
+        let new_description = "Action after update.".to_string();
 
         let req = test::TestRequest::put()
             .uri(&format!("/{}", action.id))
             .set_json(RequestBody {
                 name: new_name.clone(),
+                description: Some(new_description.clone()),
             })
             .to_request();
         req.extensions_mut().insert(user.clone());
@@ -108,17 +113,18 @@ mod tests {
         let returned_action: ActionVisible = test::read_body_json(res).await;
         assert_eq!(returned_action.id, action.id);
         assert_eq!(returned_action.name, new_name.clone());
+        assert_eq!(returned_action.description, Some(new_description.clone()));
         assert_eq!(returned_action.created_at, action.created_at);
         assert!(returned_action.updated_at > action.updated_at);
 
         let updated_action = action::Entity::find_by_id(action.id)
-            .filter(action::Column::Name.eq(new_name))
-            .filter(action::Column::UserId.eq(user.id))
-            .filter(action::Column::CreatedAt.eq(returned_action.created_at))
-            .filter(action::Column::UpdatedAt.eq(returned_action.updated_at))
             .one(&db)
-            .await?;
-        assert!(updated_action.is_some());
+            .await?.unwrap();
+        assert_eq!(updated_action.name, new_name.clone());
+        assert_eq!(updated_action.description, Some(new_description.clone()));
+        assert_eq!(updated_action.user_id, user.id);
+        assert_eq!(updated_action.created_at, returned_action.created_at);
+        assert_eq!(updated_action.updated_at, returned_action.updated_at);
 
         Ok(())
     }
@@ -131,6 +137,7 @@ mod tests {
         let (action, _) = test_utils::seed::create_action_and_tag(
             &db,
             "action_for_update_route_unauthorized".to_string(),
+            None,
             user.id,
         )
         .await?;
@@ -139,6 +146,7 @@ mod tests {
             .uri(&format!("/{}", action.id))
             .set_json(RequestBody {
                 name: "action_after_update_route".to_string(),
+                description: None,
             })
             .to_request();
 

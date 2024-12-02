@@ -98,6 +98,7 @@ fn get_objective(ambition: &AmbitionWithLinksQueryResult) -> Option<ObjectiveVis
     Some(ObjectiveVisibleWithActions {
         id: ambition.objective_id.unwrap(),
         name: ambition.objective_name.clone().unwrap(),
+        description: ambition.objective_description.clone(),
         created_at: ambition.objective_created_at.unwrap(),
         updated_at: ambition.objective_updated_at.unwrap(),
         actions: vec![],
@@ -111,6 +112,7 @@ fn get_action(ambition: &AmbitionWithLinksQueryResult) -> Option<ActionVisible> 
     Some(ActionVisible {
         id: ambition.action_id.unwrap(),
         name: ambition.action_name.clone().unwrap(),
+        description: ambition.action_description.clone(),
         created_at: ambition.action_created_at.unwrap(),
         updated_at: ambition.action_updated_at.unwrap(),
     })
@@ -240,18 +242,21 @@ mod tests {
                 {
                     "id": objective_0.id,
                     "name": objective_0.name,
+                    "description": objective_0.description,
                     "created_at": objective_0.created_at,
                     "updated_at": objective_0.updated_at,
                     "actions": [
                         {
                             "id": action_0.id,
                             "name": action_0.name,
+                            "description": action_0.description,
                             "created_at": action_0.created_at,
                             "updated_at": action_0.updated_at,
                         },
                         {
                             "id": action_1.id,
                             "name": action_1.name,
+                            "description": action_1.description,
                             "created_at": action_1.created_at,
                             "updated_at": action_1.updated_at,
                         },
@@ -260,6 +265,7 @@ mod tests {
                 {
                     "id": objective_1.id,
                     "name": objective_1.name,
+                    "description": objective_1.description,
                     "created_at": objective_1.created_at,
                     "updated_at": objective_1.updated_at,
                     "actions": [],

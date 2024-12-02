@@ -13,6 +13,7 @@ use sea_orm::DbConn;
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {
     name: String,
+    description: Option<String>,
 }
 
 #[tracing::instrument(name = "Creating an action", skip(db, user))]
@@ -29,6 +30,7 @@ pub async fn create_action(
                 &db,
                 NewAction {
                     name: req.name.clone(),
+                    description: req.description.clone(),
                     user_id: user.id,
                 },
             )
@@ -37,6 +39,7 @@ pub async fn create_action(
                 Ok(action) => HttpResponse::Created().json(ActionVisible {
                     id: action.id,
                     name: action.name,
+                    description: action.description,
                     created_at: action.created_at,
                     updated_at: action.updated_at,
                 }),
@@ -87,11 +90,13 @@ mod tests {
         let user = test_utils::seed::create_active_user(&db).await?;
         let app = init_app(db.clone()).await;
 
-        let action_name = "Test create_action route".to_string();
+        let name = "create_action".to_string();
+        let description = "Create action.".to_string();
         let req = test::TestRequest::post()
             .uri("/")
             .set_json(RequestBody {
-                name: action_name.clone(),
+                name: name.clone(),
+                description: Some(description.clone()),
             })
             .to_request();
         req.extensions_mut().insert(user.clone());
@@ -100,16 +105,17 @@ mod tests {
         assert_eq!(res.status(), http::StatusCode::CREATED);
 
         let returned_action: ActionVisible = test::read_body_json(res).await;
-        assert_eq!(returned_action.name, action_name.clone());
+        assert_eq!(returned_action.name, name.clone());
 
         let created_action = action::Entity::find_by_id(returned_action.id)
-            .filter(action::Column::Name.eq(action_name))
-            .filter(action::Column::UserId.eq(user.id))
-            .filter(action::Column::CreatedAt.eq(returned_action.created_at))
-            .filter(action::Column::UpdatedAt.eq(returned_action.updated_at))
             .one(&db)
-            .await?;
-        assert!(created_action.is_some());
+            .await?
+            .unwrap();
+        assert_eq!(created_action.name, name);
+        assert_eq!(created_action.description, Some(description));
+        assert_eq!(created_action.user_id, user.id);
+        assert_eq!(created_action.created_at, returned_action.created_at);
+        assert_eq!(created_action.updated_at, returned_action.updated_at);
 
         let created_tag = tag::Entity::find()
             .filter(tag::Column::UserId.eq(user.id))
@@ -132,6 +138,7 @@ mod tests {
             .uri("/")
             .set_json(RequestBody {
                 name: "Test create_action not logged in".to_string(),
+                description: None,
             })
             .to_request();
 

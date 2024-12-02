@@ -71,6 +71,7 @@ mod tests {
         let (objective, tag) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_for_delete_route".to_string(),
+            None,
             user.id,
         )
         .await?;
@@ -100,6 +101,7 @@ mod tests {
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_for_delete_route_unauthorized".to_string(),
+            None,
             user.id,
         )
         .await?;

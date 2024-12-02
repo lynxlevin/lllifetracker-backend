@@ -125,8 +125,8 @@ mod tests {
         let memo_0 = test_utils::seed::create_memo(&db, "memo_0".to_string(), user.id).await?;
         let memo_1 = test_utils::seed::create_memo(&db, "memo_1".to_string(), user.id).await?;
         let (ambition, ambition_tag) = test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id).await?;
-        let (objective, objective_tag) = test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), user.id).await?;
-        let (action, action_tag) = test_utils::seed::create_action_and_tag(&db, "action".to_string(), user.id).await?;
+        let (objective, objective_tag) = test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id).await?;
+        let (action, action_tag) = test_utils::seed::create_action_and_tag(&db, "action".to_string(), None, user.id).await?;
         memos_tags::ActiveModel {
             memo_id: Set(memo_0.id),
             tag_id: Set(ambition_tag.id),

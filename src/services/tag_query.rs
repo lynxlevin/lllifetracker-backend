@@ -37,13 +37,13 @@ mod tests {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
         let (_, objective_tag) =
-            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), user.id)
+            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
                 .await?;
         let (_, ambition_tag) =
             test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
                 .await?;
         let (_, action_tag) =
-            test_utils::seed::create_action_and_tag(&db, "action".to_string(), user.id).await?;
+            test_utils::seed::create_action_and_tag(&db, "action".to_string(), None, user.id).await?;
 
         let res = TagQuery::find_all_by_user_id(&db, user.id).await?;
 

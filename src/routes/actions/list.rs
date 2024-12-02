@@ -39,6 +39,7 @@ pub async fn list_actions(
                                 let mut res_action = ActionVisibleWithLinks {
                                     id: action.id,
                                     name: action.name.clone(),
+                                    description: action.description.clone(),
                                     created_at: action.created_at,
                                     updated_at: action.created_at,
                                     objectives: vec![],
@@ -95,6 +96,7 @@ fn get_objective(action: &ActionWithLinksQueryResult) -> Option<ObjectiveVisible
     Some(ObjectiveVisibleWithAmbitions {
         id: action.objective_id.unwrap(),
         name: action.objective_name.clone().unwrap(),
+        description: action.objective_description.clone(),
         created_at: action.objective_created_at.unwrap(),
         updated_at: action.objective_updated_at.unwrap(),
         ambitions: vec![],
@@ -149,12 +151,20 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (action_0, _) =
-            test_utils::seed::create_action_and_tag(&db, "action_for_get_0".to_string(), user.id)
-                .await?;
-        let (action_1, _) =
-            test_utils::seed::create_action_and_tag(&db, "action_for_get_1".to_string(), user.id)
-                .await?;
+        let (action_0, _) = test_utils::seed::create_action_and_tag(
+            &db,
+            "action_for_get_0".to_string(),
+            None,
+            user.id,
+        )
+        .await?;
+        let (action_1, _) = test_utils::seed::create_action_and_tag(
+            &db,
+            "action_for_get_1".to_string(),
+            None,
+            user.id,
+        )
+        .await?;
 
         let req = test::TestRequest::get().uri("/").to_request();
         req.extensions_mut().insert(user.clone());
@@ -165,6 +175,7 @@ mod tests {
         let returned_actions: Vec<ActionVisible> = test::read_body_json(resp).await;
         assert_eq!(returned_actions[0].id, action_0.id);
         assert_eq!(returned_actions[0].name, action_0.name);
+        assert_eq!(returned_actions[0].description, action_0.description);
         assert_eq!(returned_actions[0].created_at, action_0.created_at);
         assert_eq!(returned_actions[0].updated_at, action_0.updated_at);
 
@@ -212,12 +223,14 @@ mod tests {
         let mut expected_0 = serde_json::json!({
             "id": action_0.id,
             "name": action_0.name,
+            "description": action_0.description,
             "created_at": action_0.created_at,
             "updated_at": action_0.updated_at,
             "objectives": [
                 {
                     "id": objective_0.id,
                     "name": objective_0.name,
+                    "description": objective_0.description,
                     "created_at": objective_0.created_at,
                     "updated_at": objective_0.updated_at,
                     "ambitions": [
@@ -240,6 +253,7 @@ mod tests {
                 {
                     "id": objective_1.id,
                     "name": objective_1.name,
+                    "description": objective_1.description,
                     "created_at": objective_1.created_at,
                     "updated_at": objective_1.updated_at,
                     "ambitions": [],
@@ -259,6 +273,7 @@ mod tests {
         let expected_1 = serde_json::json!({
             "id": action_1.id,
             "name": action_1.name,
+            "description": action_1.description,
             "created_at": action_1.created_at,
             "updated_at": action_1.updated_at,
             "objectives": [],

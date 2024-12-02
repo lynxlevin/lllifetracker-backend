@@ -71,6 +71,7 @@ mod tests {
         let (action, tag) = test_utils::seed::create_action_and_tag(
             &db,
             "action_for_delete_route".to_string(),
+            None,
             user.id,
         )
         .await?;
@@ -100,6 +101,7 @@ mod tests {
         let (action, _) = test_utils::seed::create_action_and_tag(
             &db,
             "action_for_delete_route_unauthorized".to_string(),
+            None,
             user.id,
         )
         .await?;

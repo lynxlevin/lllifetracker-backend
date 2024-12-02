@@ -291,6 +291,7 @@ mod tests {
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "Test AmbitionMutation::connect_objective".to_string(),
+            None,
             user.id,
         )
         .await?;
@@ -321,6 +322,7 @@ mod tests {
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "Test AmbitionMutation::disconnect_objective".to_string(),
+            None,
             user.id,
         )
         .await?;

@@ -25,6 +25,7 @@ impl ActionQuery {
             .filter(action::Column::UserId.eq(user_id))
             .column_as(objective::Column::Id, "objective_id")
             .column_as(objective::Column::Name, "objective_name")
+            .column_as(objective::Column::Description, "objective_description")
             .column_as(objective::Column::CreatedAt, "objective_created_at")
             .column_as(objective::Column::UpdatedAt, "objective_updated_at")
             .column_as(ambition::Column::Id, "ambition_id")
@@ -69,25 +70,27 @@ mod tests {
     async fn find_all_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
+        let (action_0, _) =
+            test_utils::seed::create_action_and_tag(&db, "action_0".to_string(), None, user.id).await?;
         let (action_1, _) =
-            test_utils::seed::create_action_and_tag(&db, "action_1".to_string(), user.id).await?;
-        let (action_2, _) =
-            test_utils::seed::create_action_and_tag(&db, "action_2".to_string(), user.id).await?;
+            test_utils::seed::create_action_and_tag(&db, "action_1".to_string(), Some("Action_1".to_string()), user.id).await?;
 
         let res = ActionQuery::find_all_by_user_id(&db, user.id).await?;
 
         let expected = vec![
             ActionVisible {
-                id: action_1.id,
-                name: action_1.name,
-                created_at: action_1.created_at,
-                updated_at: action_1.updated_at,
+                id: action_0.id,
+                name: action_0.name,
+                description: action_0.description,
+                created_at: action_0.created_at,
+                updated_at: action_0.updated_at,
             },
             ActionVisible {
-                id: action_2.id,
-                name: action_2.name,
-                created_at: action_2.created_at,
-                updated_at: action_2.updated_at,
+                id: action_1.id,
+                name: action_1.name,
+                description: action_1.description,
+                created_at: action_1.created_at,
+                updated_at: action_1.updated_at,
             },
         ];
 
@@ -102,21 +105,21 @@ mod tests {
     async fn find_all_with_linked_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (ambition_1, objective_1, action_1) =
+        let (ambition_0, objective_0, action_0) =
             test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, true, true)
                 .await?;
-        let (ambition_2, objective_2, action_2) =
+        let (ambition_1, objective_1, action_1) =
             test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, false, false)
                 .await?;
         let _ = objectives_actions::ActiveModel {
-            objective_id: Set(objective_2.id),
-            action_id: Set(action_1.id),
+            objective_id: Set(objective_1.id),
+            action_id: Set(action_0.id),
         }
         .insert(&db)
         .await?;
         let _ = ambitions_objectives::ActiveModel {
-            ambition_id: Set(ambition_2.id),
-            objective_id: Set(objective_1.id),
+            ambition_id: Set(ambition_1.id),
+            objective_id: Set(objective_0.id),
         }
         .insert(&db)
         .await?;
@@ -133,10 +136,10 @@ mod tests {
             (res[3].id, res[3].objective_id, res[3].ambition_id),
         ];
         let expected = vec![
-            (action_1.id, Some(objective_1.id), Some(ambition_1.id)),
-            (action_1.id, Some(objective_1.id), Some(ambition_2.id)),
-            (action_1.id, Some(objective_2.id), None),
-            (action_2.id, None, None),
+            (action_0.id, Some(objective_0.id), Some(ambition_0.id)),
+            (action_0.id, Some(objective_0.id), Some(ambition_1.id)),
+            (action_0.id, Some(objective_1.id), None),
+            (action_1.id, None, None),
         ];
         assert_eq!(res_organized[0], expected[0]);
         assert_eq!(res_organized[1], expected[1]);

@@ -138,6 +138,7 @@ mod tests {
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_for_connect_route".to_string(),
+            None,
             user.id,
         )
         .await?;
@@ -185,6 +186,7 @@ mod tests {
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_for_connect_route".to_string(),
+            None,
             user.id,
         )
         .await?;
@@ -219,6 +221,7 @@ mod tests {
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_for_connect_route".to_string(),
+            None,
             another_user.id,
         )
         .await?;
@@ -252,6 +255,7 @@ mod tests {
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_for_connect_route".to_string(),
+            None,
             user.id,
         )
         .await?;
