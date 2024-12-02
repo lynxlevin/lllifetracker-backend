@@ -9,7 +9,7 @@ pub fn get_subscriber(
     max_log_files: usize,
 ) -> (impl tracing::Subscriber + Send + Sync, WorkerGuard) {
     let env_filter = if debug {
-        "trace".to_string()
+        "debug".to_string()
     } else {
         "info".to_string()
     };

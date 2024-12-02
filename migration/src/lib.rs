@@ -9,6 +9,9 @@ mod m20240927_000005_create_objectives_actions_table;
 mod m20240927_000006_create_tags_table;
 mod m20240927_000007_create_records_table;
 mod m_seed_data;
+mod m20241124_000001_create_memos_table;
+mod m20241124_000002_create_memos_tags_table;
+
 
 pub struct Migrator;
 
@@ -25,6 +28,8 @@ impl MigratorTrait for Migrator {
             Box::new(m20240927_000006_create_tags_table::Migration),
             Box::new(m20240927_000007_create_records_table::Migration),
             Box::new(m_seed_data::Migration),
+            Box::new(m20241124_000001_create_memos_table::Migration),
+            Box::new(m20241124_000002_create_memos_tags_table::Migration),
         ]
     }
 }
