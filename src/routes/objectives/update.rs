@@ -18,6 +18,7 @@ struct PathParam {
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {
     name: String,
+    description: Option<String>,
 }
 
 #[tracing::instrument(name = "Updating an objective", skip(db, user, req, path_param))]
@@ -31,12 +32,13 @@ pub async fn update_objective(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ObjectiveMutation::update(&db, path_param.objective_id, user.id, req.name.clone())
+            match ObjectiveMutation::update(&db, path_param.objective_id, user.id, req.name.clone(), req.description.clone())
                 .await
             {
                 Ok(objective) => HttpResponse::Ok().json(ObjectiveVisible {
                     id: objective.id,
                     name: objective.name,
+                    description: objective.description,
                     created_at: objective.created_at,
                     updated_at: objective.updated_at,
                 }),
@@ -90,15 +92,18 @@ mod tests {
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_for_update_route".to_string(),
+            None,
             user.id,
         )
         .await?;
-        let new_name = "objective_after_update_route".to_string();
+        let new_name = "objective_after_update".to_string();
+        let new_description = "Objective after update.".to_string();
 
         let req = test::TestRequest::put()
             .uri(&format!("/{}", objective.id))
             .set_json(RequestBody {
                 name: new_name.clone(),
+                description: Some(new_description.clone()),
             })
             .to_request();
         req.extensions_mut().insert(user.clone());
@@ -132,6 +137,7 @@ mod tests {
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_for_update_route_unauthorized".to_string(),
+            None,
             user.id,
         )
         .await?;
@@ -140,6 +146,7 @@ mod tests {
             .uri(&format!("/{}", objective.id))
             .set_json(RequestBody {
                 name: "objective_after_update_route".to_string(),
+                description: None,
             })
             .to_request();
 

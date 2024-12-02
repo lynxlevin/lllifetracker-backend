@@ -18,7 +18,7 @@ GET {{endpoint}}/api/actions
 # @name list_with_links
 GET {{endpoint}}/api/actions?links=true
 
-@action_id=95233de1-88e2-432b-a1f8-23da045c6b93
+@action_id=4ea4010c-05bd-4607-9199-8d07f8ba7d03
 
 ###
 # @name get
@@ -30,7 +30,8 @@ POST {{endpoint}}/api/actions
 Content-Type: application/json
 
 {
-  "name": "Second action"
+  "name": "Second action",
+  "description": "Second action description"
 }
 
 ###
@@ -39,7 +40,8 @@ PUT {{endpoint}}/api/actions/{{action_id}}
 Content-Type: application/json
 
 {
-  "name": "My action edited"
+  "name": "My action edited",
+  "description": "Description added"
 }
 
 ###

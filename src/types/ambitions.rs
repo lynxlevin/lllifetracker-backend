@@ -22,10 +22,12 @@ pub struct AmbitionWithLinksQueryResult {
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
     pub objective_id: Option<uuid::Uuid>,
     pub objective_name: Option<String>,
+    pub objective_description: Option<String>,
     pub objective_created_at: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub objective_updated_at: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub action_id: Option<uuid::Uuid>,
     pub action_name: Option<String>,
+    pub action_description: Option<String>,
     pub action_created_at: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub action_updated_at: Option<chrono::DateTime<chrono::FixedOffset>>,
 }

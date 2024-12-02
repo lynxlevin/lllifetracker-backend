@@ -1,6 +1,6 @@
 use crate::{
     entities::user as user_entity,
-    services::objective_mutation::{ObjectiveMutation, NewObjective},
+    services::objective_mutation::{NewObjective, ObjectiveMutation},
     types::{self, ObjectiveVisible, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
@@ -13,6 +13,7 @@ use sea_orm::DbConn;
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {
     name: String,
+    description: Option<String>,
 }
 
 #[tracing::instrument(name = "Creating an objective", skip(db, user))]
@@ -29,6 +30,7 @@ pub async fn create_objective(
                 &db,
                 NewObjective {
                     name: req.name.clone(),
+                    description: req.description.clone(),
                     user_id: user.id,
                 },
             )
@@ -37,6 +39,7 @@ pub async fn create_objective(
                 Ok(objective) => HttpResponse::Created().json(ObjectiveVisible {
                     id: objective.id,
                     name: objective.name,
+                    description: objective.description,
                     created_at: objective.created_at,
                     updated_at: objective.updated_at,
                 }),
@@ -86,10 +89,14 @@ mod tests {
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
         let name = "create_objective route happy path".to_string();
+        let description = "Create objective route happy path.".to_string();
 
         let req = test::TestRequest::post()
             .uri("/")
-            .set_json(RequestBody { name: name.clone() })
+            .set_json(RequestBody {
+                name: name.clone(),
+                description: Some(description.clone()),
+            })
             .to_request();
         req.extensions_mut().insert(user.clone());
 
@@ -100,13 +107,17 @@ mod tests {
         assert_eq!(returned_objective.name, name);
 
         let created_objective = objective::Entity::find_by_id(returned_objective.id)
-            .filter(objective::Column::Name.eq(returned_objective.name))
-            .filter(objective::Column::UserId.eq(user.id))
-            .filter(objective::Column::CreatedAt.eq(returned_objective.created_at))
-            .filter(objective::Column::UpdatedAt.eq(returned_objective.updated_at))
             .one(&db)
-            .await?;
-        assert!(created_objective.is_some());
+            .await?
+            .unwrap();
+        assert_eq!(created_objective.name, returned_objective.name);
+        assert_eq!(
+            created_objective.description,
+            returned_objective.description
+        );
+        assert_eq!(created_objective.user_id, user.id);
+        assert_eq!(created_objective.created_at, returned_objective.created_at);
+        assert_eq!(created_objective.updated_at, returned_objective.updated_at);
 
         let created_tag = tag::Entity::find()
             .filter(tag::Column::AmbitionId.is_null())

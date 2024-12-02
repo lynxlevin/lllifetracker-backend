@@ -10,6 +10,7 @@ use super::{objectives::ObjectiveVisibleWithAmbitions, AmbitionVisible};
 pub struct ActionVisible {
     pub id: uuid::Uuid,
     pub name: String,
+    pub description: Option<String>,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
 }
@@ -18,10 +19,12 @@ pub struct ActionVisible {
 pub struct ActionWithLinksQueryResult {
     pub id: uuid::Uuid,
     pub name: String,
+    pub description: Option<String>,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
     pub objective_id: Option<uuid::Uuid>,
     pub objective_name: Option<String>,
+    pub objective_description: Option<String>,
     pub objective_created_at: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub objective_updated_at: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub ambition_id: Option<uuid::Uuid>,
@@ -35,6 +38,7 @@ pub struct ActionWithLinksQueryResult {
 pub struct ActionVisibleWithLinks {
     pub id: uuid::Uuid,
     pub name: String,
+    pub description: Option<String>,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
     pub objectives: Vec<ObjectiveVisibleWithAmbitions>,

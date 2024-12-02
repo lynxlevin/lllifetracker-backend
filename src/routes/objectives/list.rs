@@ -38,6 +38,7 @@ pub async fn list_objectives(
                                 let mut res_objective = ObjectiveVisibleWithLinks {
                                     id: objective.id,
                                     name: objective.name.clone(),
+                                    description: objective.description.clone(),
                                     created_at: objective.created_at,
                                     updated_at: objective.created_at,
                                     ambitions: vec![],
@@ -110,6 +111,7 @@ fn get_action(objective: &ObjectiveWithLinksQueryResult) -> Option<ActionVisible
     Some(ActionVisible {
         id: objective.action_id.unwrap(),
         name: objective.action_name.clone().unwrap(),
+        description: objective.action_description.clone(),
         created_at: objective.action_created_at.unwrap(),
         updated_at: objective.action_updated_at.unwrap(),
     })
@@ -153,12 +155,14 @@ mod tests {
         let (objective_0, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_for_get_0".to_string(),
+            None,
             user.id,
         )
         .await?;
         let (objective_1, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_for_get_1".to_string(),
+            None,
             user.id,
         )
         .await?;
@@ -225,6 +229,7 @@ mod tests {
         let mut expected_0 = serde_json::json!({
             "id": objective_0.id,
             "name": objective_0.name,
+            "description": objective_0.description,
             "created_at": objective_0.created_at,
             "updated_at": objective_0.updated_at,
             "ambitions": [
@@ -247,12 +252,14 @@ mod tests {
                 {
                     "id": action_0.id,
                     "name": action_0.name,
+                    "description": action_0.description,
                     "created_at": action_0.created_at,
                     "updated_at": action_0.updated_at,
                 },
                 {
                     "id": action_1.id,
                     "name": action_1.name,
+                    "description": action_1.description,
                     "created_at": action_1.created_at,
                     "updated_at": action_1.updated_at,
                 },
@@ -271,6 +278,7 @@ mod tests {
         let expected_1 = serde_json::json!({
             "id": objective_1.id,
             "name": objective_1.name,
+            "description": objective_1.description,
             "created_at": objective_1.created_at,
             "updated_at": objective_1.updated_at,
             "ambitions": [],
@@ -278,6 +286,7 @@ mod tests {
                 {
                     "id": action_1.id,
                     "name": action_1.name,
+                    "description": action_1.description,
                     "created_at": action_1.created_at,
                     "updated_at": action_1.updated_at,
                 }

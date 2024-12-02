@@ -14,7 +14,13 @@ Content-Type: application/json
 # @name list
 GET {{endpoint}}/api/objectives
 
-@objective_id=3bea9c2e-0db8-4e77-9d91-529972f9786c
+@objective_id=4c7215d1-4f13-4c2c-8122-e3b523da2fe0
+
+###
+# @name list_with_links
+GET {{endpoint}}/api/objectives?links=true
+
+@objective_id=4c7215d1-4f13-4c2c-8122-e3b523da2fe0
 
 ###
 # @name get
@@ -26,7 +32,8 @@ POST {{endpoint}}/api/objectives
 Content-Type: application/json
 
 {
-  "name": "Second objective"
+  "name": "Second objective",
+  "description": "Second objective description"
 }
 
 ###
@@ -35,7 +42,8 @@ PUT {{endpoint}}/api/objectives/{{objective_id}}
 Content-Type: application/json
 
 {
-  "name": "My objective edited"
+  "name": "My objective edited",
+  "description": "description added"
 }
 
 ###

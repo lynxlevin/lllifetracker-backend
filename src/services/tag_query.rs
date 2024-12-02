@@ -1,6 +1,7 @@
 use crate::entities::{action, ambition, objective, tag};
 use crate::types::TagQueryResult;
-use sea_orm::{entity::prelude::*, JoinType::LeftJoin, QueryOrder, QuerySelect};
+use migration::NullOrdering::Last;
+use sea_orm::{entity::prelude::*, JoinType::LeftJoin, QueryOrder, QuerySelect, Order::Asc};
 
 pub struct TagQuery;
 
@@ -17,9 +18,9 @@ impl TagQuery {
             .join(LeftJoin, tag::Relation::Ambition.def())
             .join(LeftJoin, tag::Relation::Objective.def())
             .join(LeftJoin, tag::Relation::Action.def())
-            .order_by_asc(action::Column::CreatedAt)
-            .order_by_asc(objective::Column::CreatedAt)
-            .order_by_asc(ambition::Column::CreatedAt)
+            .order_by_with_nulls(ambition::Column::CreatedAt, Asc, Last)
+            .order_by_with_nulls(objective::Column::CreatedAt, Asc, Last)
+            .order_by_with_nulls(action::Column::CreatedAt, Asc, Last)
             .into_model::<TagQueryResult>()
             .all(db)
             .await
@@ -37,13 +38,13 @@ mod tests {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
         let (_, objective_tag) =
-            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), user.id)
+            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
                 .await?;
         let (_, ambition_tag) =
             test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
                 .await?;
         let (_, action_tag) =
-            test_utils::seed::create_action_and_tag(&db, "action".to_string(), user.id).await?;
+            test_utils::seed::create_action_and_tag(&db, "action".to_string(), None, user.id).await?;
 
         let res = TagQuery::find_all_by_user_id(&db, user.id).await?;
 

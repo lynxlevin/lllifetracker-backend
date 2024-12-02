@@ -7,6 +7,7 @@ use super::action_query::ActionQuery;
 #[derive(serde::Deserialize, Debug, serde::Serialize, Clone)]
 pub struct NewAction {
     pub name: String,
+    pub description: Option<String>,
     pub user_id: uuid::Uuid,
 }
 
@@ -25,6 +26,7 @@ impl ActionMutation {
                     id: Set(action_id),
                     user_id: Set(form_data.user_id),
                     name: Set(form_data.name.to_owned()),
+                    description: Set(form_data.description.to_owned()),
                     created_at: Set(now.into()),
                     updated_at: Set(now.into()),
                 }
@@ -52,12 +54,14 @@ impl ActionMutation {
         action_id: uuid::Uuid,
         user_id: uuid::Uuid,
         name: String,
+        description: Option<String>,
     ) -> Result<action::Model, DbErr> {
         let mut action: action::ActiveModel =
             ActionQuery::find_by_id_and_user_id(db, action_id, user_id)
                 .await?
                 .into();
         action.name = Set(name);
+        action.description = Set(description);
         action.updated_at = Set(Utc::now().into());
         action.update(db).await
     }
@@ -89,10 +93,12 @@ mod tests {
     async fn create_with_tag() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let action_name = "Test action_service::ActionMutation::create_with_tag".to_string();
+        let action_name = "create_with_tag".to_string();
+        let action_description = "Create with Tag.".to_string();
 
         let form_data = NewAction {
             name: action_name.clone(),
+            description: Some(action_description.clone()),
             user_id: user.id,
         };
 
@@ -100,16 +106,21 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(returned_action.name, action_name.clone());
+        assert_eq!(
+            returned_action.description,
+            Some(action_description.clone())
+        );
         assert_eq!(returned_action.user_id, user.id);
 
         let created_action = action::Entity::find_by_id(returned_action.id)
-            .filter(action::Column::Name.eq(action_name))
-            .filter(action::Column::UserId.eq(user.id))
-            .filter(action::Column::CreatedAt.eq(returned_action.created_at))
-            .filter(action::Column::UpdatedAt.eq(returned_action.updated_at))
             .one(&db)
-            .await?;
-        assert!(created_action.is_some());
+            .await?
+            .unwrap();
+        assert_eq!(created_action.name, action_name.clone());
+        assert_eq!(created_action.description, Some(action_description.clone()));
+        assert_eq!(created_action.user_id, user.id);
+        assert_eq!(created_action.created_at, returned_action.created_at);
+        assert_eq!(created_action.updated_at, returned_action.updated_at);
 
         let created_tag = tag::Entity::find()
             .filter(tag::Column::UserId.eq(user.id))
@@ -130,27 +141,38 @@ mod tests {
         let (action, _) = test_utils::seed::create_action_and_tag(
             &db,
             "action_before_update".to_string(),
+            None,
             user.id,
         )
         .await?;
         let new_name = "action_after_update".to_string();
+        let new_description = "Action after update.".to_string();
 
-        let returned_action =
-            ActionMutation::update(&db, action.id, user.id, new_name.clone()).await?;
+        let returned_action = ActionMutation::update(
+            &db,
+            action.id,
+            user.id,
+            new_name.clone(),
+            Some(new_description.clone()),
+        )
+        .await?;
         assert_eq!(returned_action.id, action.id);
         assert_eq!(returned_action.name, new_name.clone());
+        assert_eq!(returned_action.description, Some(new_description.clone()));
         assert_eq!(returned_action.user_id, user.id);
         assert_eq!(returned_action.created_at, action.created_at);
         assert!(returned_action.updated_at > action.updated_at);
 
         let updated_action = action::Entity::find_by_id(action.id)
-            .filter(action::Column::Name.eq(new_name))
-            .filter(action::Column::UserId.eq(user.id))
-            .filter(action::Column::CreatedAt.eq(action.created_at))
-            .filter(action::Column::UpdatedAt.eq(returned_action.updated_at))
             .one(&db)
-            .await?;
-        assert!(updated_action.is_some());
+            .await?
+            .unwrap();
+        assert_eq!(updated_action.id, action.id);
+        assert_eq!(updated_action.name, new_name.clone());
+        assert_eq!(updated_action.description, Some(new_description.clone()));
+        assert_eq!(updated_action.user_id, user.id);
+        assert_eq!(updated_action.created_at, action.created_at);
+        assert_eq!(updated_action.updated_at, returned_action.updated_at);
 
         Ok(())
     }
@@ -162,12 +184,13 @@ mod tests {
         let (action, _) = test_utils::seed::create_action_and_tag(
             &db,
             "action_before_update_unauthorized".to_string(),
+            None,
             user.id,
         )
         .await?;
         let new_name = "action_after_update_unauthorized".to_string();
 
-        let error = ActionMutation::update(&db, action.id, uuid::Uuid::new_v4(), new_name.clone())
+        let error = ActionMutation::update(&db, action.id, uuid::Uuid::new_v4(), new_name.clone(), None)
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
@@ -180,7 +203,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
         let (action, tag) =
-            test_utils::seed::create_action_and_tag(&db, "action_for_delete".to_string(), user.id)
+            test_utils::seed::create_action_and_tag(&db, "action_for_delete".to_string(), None, user.id)
                 .await?;
 
         ActionMutation::delete(&db, action.id, user.id).await?;
@@ -201,6 +224,7 @@ mod tests {
         let (action, _) = test_utils::seed::create_action_and_tag(
             &db,
             "action_for_delete_unauthorized".to_string(),
+            None,
             user.id,
         )
         .await?;

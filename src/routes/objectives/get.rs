@@ -31,6 +31,7 @@ pub async fn get_objective(
                 Ok(objective) => HttpResponse::Ok().json(ObjectiveVisible {
                     id: objective.id,
                     name: objective.name,
+                    description: objective.description,
                     created_at: objective.created_at,
                     updated_at: objective.updated_at,
                 }),
@@ -82,6 +83,7 @@ mod tests {
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_for_get".to_string(),
+            Some("Objective for get.".to_string()),
             user.id,
         )
         .await?;
@@ -97,6 +99,7 @@ mod tests {
         let returned_objective: ObjectiveVisible = test::read_body_json(resp).await;
         assert_eq!(returned_objective.id, objective.id);
         assert_eq!(returned_objective.name, objective.name);
+        assert_eq!(returned_objective.description, objective.description);
         assert_eq!(returned_objective.created_at, objective.created_at);
         assert_eq!(returned_objective.updated_at, objective.updated_at);
 
@@ -111,6 +114,7 @@ mod tests {
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_for_get".to_string(),
+            None,
             user.id,
         )
         .await?;

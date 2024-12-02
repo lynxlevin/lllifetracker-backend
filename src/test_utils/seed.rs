@@ -82,12 +82,14 @@ pub async fn create_ambition_and_tag(
 pub async fn create_objective_and_tag(
     db: &DbConn,
     name: String,
+    description: Option<String>,
     user_id: uuid::Uuid,
 ) -> Result<(objective::Model, tag::Model), DbErr> {
     let now = Utc::now();
     let objective = objective::ActiveModel {
         id: Set(uuid::Uuid::new_v4()),
         name: Set(name),
+        description: Set(description),
         user_id: Set(user_id),
         created_at: Set(now.into()),
         updated_at: Set(now.into()),
@@ -103,13 +105,15 @@ pub async fn create_objective_and_tag(
 #[cfg(test)]
 pub async fn create_action_and_tag(
     db: &DbConn,
-    action_name: String,
+    name: String,
+    description: Option<String>,
     user_id: uuid::Uuid,
 ) -> Result<(action::Model, tag::Model), DbErr> {
     let now = Utc::now();
     let action = action::ActiveModel {
         id: Set(uuid::Uuid::new_v4()),
-        name: Set(action_name),
+        name: Set(name),
+        description: Set(description),
         user_id: Set(user_id),
         created_at: Set(now.into()),
         updated_at: Set(now.into()),
@@ -129,9 +133,9 @@ pub async fn create_set_of_ambition_objective_action(
     connect_ambition_objective: bool,
     connect_objective_action: bool,
 ) -> Result<(ambition::Model, objective::Model, action::Model), DbErr> {
-    let (ambition, _) = create_ambition_and_tag(db, "ambition".to_string(), None, user_id).await?;
-    let (objective, _) = create_objective_and_tag(db, "objective".to_string(), user_id).await?;
-    let (action, _) = create_action_and_tag(db, "action".to_string(), user_id).await?;
+    let (ambition, _) = create_ambition_and_tag(db, "ambition".to_string(), Some("Ambition".to_string()), user_id).await?;
+    let (objective, _) = create_objective_and_tag(db, "objective".to_string(), Some("Objective".to_string()), user_id).await?;
+    let (action, _) = create_action_and_tag(db, "action".to_string(), Some("Action".to_string()), user_id).await?;
     if connect_ambition_objective {
         let _ = ambitions_objectives::ActiveModel {
             ambition_id: Set(ambition.id),
