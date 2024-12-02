@@ -1,7 +1,8 @@
 use crate::entities::{action, ambition, memo, memos_tags, objective, tag};
 use crate::types::{CustomDbErr, MemoWithTagQueryResult};
 use sea_orm::entity::prelude::*;
-use sea_orm::{QueryOrder, QuerySelect, JoinType::LeftJoin};
+use migration::NullOrdering::Last;
+use sea_orm::{QueryOrder, QuerySelect, JoinType::LeftJoin, Order::Asc};
 
 pub struct MemoQuery;
 
@@ -23,7 +24,9 @@ impl MemoQuery {
             .join(LeftJoin, tag::Relation::Objective.def())
             .join(LeftJoin, tag::Relation::Action.def())
             .order_by_desc(memo::Column::CreatedAt)
-            .order_by_desc(tag::Column::CreatedAt)
+            .order_by_with_nulls(ambition::Column::CreatedAt, Asc, Last)
+            .order_by_with_nulls(objective::Column::CreatedAt, Asc, Last)
+            .order_by_with_nulls(action::Column::CreatedAt, Asc, Last)
             .into_model::<MemoWithTagQueryResult>()
             .all(db)
             .await
@@ -55,9 +58,9 @@ mod tests {
         let user = test_utils::seed::create_active_user(&db).await?;
         let memo_0 = test_utils::seed::create_memo(&db, "memo_0".to_string(), user.id).await?;
         let memo_1 = test_utils::seed::create_memo(&db, "memo_1".to_string(), user.id).await?;
+        let (action, action_tag) = test_utils::seed::create_action_and_tag(&db, "action".to_string(), None, user.id).await?;
         let (ambition, ambition_tag) = test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id).await?;
         let (objective, objective_tag) = test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id).await?;
-        let (action, action_tag) = test_utils::seed::create_action_and_tag(&db, "action".to_string(), None, user.id).await?;
         memos_tags::ActiveModel {
             memo_id: Set(memo_0.id),
             tag_id: Set(ambition_tag.id),
@@ -81,11 +84,11 @@ mod tests {
                 date: memo_1.date,
                 created_at: memo_1.created_at,
                 updated_at: memo_1.updated_at,
-                tag_id: Some(action_tag.id),
+                tag_id: Some(objective_tag.id),
                 tag_ambition_name: None,
-                tag_objective_name: None,
-                tag_action_name: Some(action.name),
-                tag_created_at: Some(action_tag.created_at),
+                tag_objective_name: Some(objective.name),
+                tag_action_name: None,
+                tag_created_at: Some(objective_tag.created_at),
             },
             MemoWithTagQueryResult {
                 id: memo_1.id,
@@ -94,11 +97,11 @@ mod tests {
                 date: memo_1.date,
                 created_at: memo_1.created_at,
                 updated_at: memo_1.updated_at,
-                tag_id: Some(objective_tag.id),
+                tag_id: Some(action_tag.id),
                 tag_ambition_name: None,
-                tag_objective_name: Some(objective.name),
-                tag_action_name: None,
-                tag_created_at: Some(objective_tag.created_at),
+                tag_objective_name: None,
+                tag_action_name: Some(action.name),
+                tag_created_at: Some(action_tag.created_at),
             },
             MemoWithTagQueryResult {
                 id: memo_0.id,

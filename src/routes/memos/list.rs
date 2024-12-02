@@ -124,9 +124,9 @@ mod tests {
         let user = test_utils::seed::create_active_user(&db).await?;
         let memo_0 = test_utils::seed::create_memo(&db, "memo_0".to_string(), user.id).await?;
         let memo_1 = test_utils::seed::create_memo(&db, "memo_1".to_string(), user.id).await?;
+        let (action, action_tag) = test_utils::seed::create_action_and_tag(&db, "action".to_string(), None, user.id).await?;
         let (ambition, ambition_tag) = test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id).await?;
         let (objective, objective_tag) = test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id).await?;
-        let (action, action_tag) = test_utils::seed::create_action_and_tag(&db, "action".to_string(), None, user.id).await?;
         memos_tags::ActiveModel {
             memo_id: Set(memo_0.id),
             tag_id: Set(ambition_tag.id),
@@ -158,16 +158,16 @@ mod tests {
             "updated_at": memo_1.updated_at,
             "tags": [
                 {
-                    "id": action_tag.id,
-                    "name": action.name,
-                    "tag_type": TagType::Action,
-                    "created_at": action_tag.created_at,
-                },
-                {
                     "id": objective_tag.id,
                     "name": objective.name,
                     "tag_type": TagType::Objective,
                     "created_at": objective_tag.created_at,
+                },
+                {
+                    "id": action_tag.id,
+                    "name": action.name,
+                    "tag_type": TagType::Action,
+                    "created_at": action_tag.created_at,
                 },
             ],
         });
