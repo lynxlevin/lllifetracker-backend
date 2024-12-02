@@ -17,7 +17,9 @@ impl TagQuery {
             .join(LeftJoin, tag::Relation::Ambition.def())
             .join(LeftJoin, tag::Relation::Objective.def())
             .join(LeftJoin, tag::Relation::Action.def())
-            .order_by_asc(tag::Column::CreatedAt)
+            .order_by_asc(action::Column::CreatedAt)
+            .order_by_asc(objective::Column::CreatedAt)
+            .order_by_asc(ambition::Column::CreatedAt)
             .into_model::<TagQueryResult>()
             .all(db)
             .await
@@ -34,11 +36,11 @@ mod tests {
     async fn find_all_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (_, ambition_tag) =
-            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
-                .await?;
         let (_, objective_tag) =
             test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), user.id)
+                .await?;
+        let (_, ambition_tag) =
+            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
                 .await?;
         let (_, action_tag) =
             test_utils::seed::create_action_and_tag(&db, "action".to_string(), user.id).await?;

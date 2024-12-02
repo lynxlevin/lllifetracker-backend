@@ -97,14 +97,14 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
+        let (action, action_tag) =
+            test_utils::seed::create_action_and_tag(&db, "action".to_string(), user.id).await?;
         let (ambition, ambition_tag) =
             test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
                 .await?;
         let (objective, objective_tag) =
             test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), user.id)
                 .await?;
-        let (action, action_tag) =
-            test_utils::seed::create_action_and_tag(&db, "action".to_string(), user.id).await?;
 
         let req = test::TestRequest::get().uri("/").to_request();
         req.extensions_mut().insert(user.clone());
