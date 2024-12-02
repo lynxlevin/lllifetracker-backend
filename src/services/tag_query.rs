@@ -1,6 +1,7 @@
 use crate::entities::{action, ambition, objective, tag};
 use crate::types::TagQueryResult;
-use sea_orm::{entity::prelude::*, JoinType::LeftJoin, QueryOrder, QuerySelect};
+use migration::NullOrdering::Last;
+use sea_orm::{entity::prelude::*, JoinType::LeftJoin, QueryOrder, QuerySelect, Order::Asc};
 
 pub struct TagQuery;
 
@@ -17,9 +18,9 @@ impl TagQuery {
             .join(LeftJoin, tag::Relation::Ambition.def())
             .join(LeftJoin, tag::Relation::Objective.def())
             .join(LeftJoin, tag::Relation::Action.def())
-            .order_by_asc(action::Column::CreatedAt)
-            .order_by_asc(objective::Column::CreatedAt)
-            .order_by_asc(ambition::Column::CreatedAt)
+            .order_by_with_nulls(ambition::Column::CreatedAt, Asc, Last)
+            .order_by_with_nulls(objective::Column::CreatedAt, Asc, Last)
+            .order_by_with_nulls(action::Column::CreatedAt, Asc, Last)
             .into_model::<TagQueryResult>()
             .all(db)
             .await
