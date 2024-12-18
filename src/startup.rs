@@ -1,13 +1,21 @@
 use actix_session::{config::PersistentSession, storage, SessionMiddleware};
-use actix_web::{cookie, dev::Server, web::{Data, scope}, App, HttpServer};
+use actix_web::{
+    cookie,
+    dev::Server,
+    web::{scope, Data},
+    App, HttpServer,
+};
 use sea_orm::*;
 use std::env;
 
-use migration::{Migrator, MigratorTrait};
 use crate::{
-    routes::{action_routes, ambition_routes, auth_routes, memo_routes, objective_routes, tag_routes},
+    routes::{
+        action_routes, ambition_routes, auth_routes, memo_routes, mission_memo_routes,
+        objective_routes, tag_routes,
+    },
     utils::auth::auth_middleware::AuthenticateUser,
 };
+use migration::{Migrator, MigratorTrait};
 pub struct Application {
     port: u16,
     server: Server,
@@ -96,14 +104,16 @@ async fn run(
                     .cookie_name("sessionId".to_string())
                     .build()
             })
-            .service(scope("/api")
-                .service(crate::routes::health_check)
-                .configure(auth_routes)
-                .configure(ambition_routes)
-                .configure(objective_routes)
-                .configure(action_routes)
-                .configure(memo_routes)
-                .configure(tag_routes)
+            .service(
+                scope("/api")
+                    .service(crate::routes::health_check)
+                    .configure(auth_routes)
+                    .configure(ambition_routes)
+                    .configure(objective_routes)
+                    .configure(action_routes)
+                    .configure(memo_routes)
+                    .configure(mission_memo_routes)
+                    .configure(tag_routes),
             )
             .app_data(Data::new(db.clone()))
             .app_data(Data::new(redis_pool.clone()))

@@ -1,0 +1,48 @@
+# MissionMemos
+# Turn on debug to use these.
+###
+# @name login
+POST {{endpoint}}/api/users/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "password"
+}
+
+###
+# @name list
+GET {{endpoint}}/api/mission_memos
+
+@mission_memo_id=b0110f48-4fde-46b5-97d3-fa6cde85876d
+@tag_0_id="8ae47c10-d248-46e2-9986-b17b1944ec70"
+@tag_1_id="73d61c99-3ab9-44b7-a732-f773c845b27d"
+
+###
+# @name create
+POST {{endpoint}}/api/mission_memos
+Content-Type: application/json
+
+{
+  "title": "Second mission memo",
+  "text": "This is my second mission memo.",
+  "date": "2024-11-24",
+  "tag_ids": [{{tag_0_id}}, {{tag_1_id}}]
+}
+
+###
+# @name update
+PUT {{endpoint}}/api/mission_memos/{{mission_memo_id}}
+Content-Type: application/json
+
+{
+  "title": "Second memo edited",
+  "text": "This is my second memo edited.",
+  "date": null,
+  "tag_ids": null
+}
+
+###
+# @name delete
+DELETE {{endpoint}}/api/mission_memos/{{mission_memo_id}}
+
