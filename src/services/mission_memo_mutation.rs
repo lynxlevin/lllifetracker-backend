@@ -179,6 +179,8 @@ mod tests {
         assert_eq!(returned_mission_memo.title, mission_memo_title.clone());
         assert_eq!(returned_mission_memo.text, mission_memo_text.clone());
         assert_eq!(returned_mission_memo.date, today);
+        assert_eq!(returned_mission_memo.archived, false);
+        assert_eq!(returned_mission_memo.accomplished_at, None);
         assert_eq!(returned_mission_memo.user_id, user.id);
 
         let created_mission_memo = mission_memo::Entity::find_by_id(returned_mission_memo.id)
@@ -188,6 +190,8 @@ mod tests {
         assert_eq!(created_mission_memo.title, mission_memo_title.clone());
         assert_eq!(created_mission_memo.text, mission_memo_text.clone());
         assert_eq!(created_mission_memo.date, today);
+        assert_eq!(created_mission_memo.archived, false);
+        assert_eq!(created_mission_memo.accomplished_at, None);
         assert_eq!(created_mission_memo.user_id, user.id);
         assert_eq!(
             created_mission_memo.created_at,
@@ -238,6 +242,8 @@ mod tests {
         assert_eq!(returned_mission_memo.title, form.title.clone().unwrap());
         assert_eq!(returned_mission_memo.text, mission_memo.text);
         assert_eq!(returned_mission_memo.date, mission_memo.date);
+        assert_eq!(returned_mission_memo.archived, mission_memo.archived);
+        assert_eq!(returned_mission_memo.accomplished_at, mission_memo.accomplished_at);
         assert_eq!(returned_mission_memo.user_id, user.id);
         assert_eq!(returned_mission_memo.created_at, mission_memo.created_at);
         assert!(returned_mission_memo.updated_at > mission_memo.updated_at);
@@ -249,6 +255,8 @@ mod tests {
         assert_eq!(updated_mission_memo.title, form.title.clone().unwrap());
         assert_eq!(updated_mission_memo.text, mission_memo.text);
         assert_eq!(updated_mission_memo.date, mission_memo.date);
+        assert_eq!(updated_mission_memo.archived, mission_memo.archived);
+        assert_eq!(updated_mission_memo.accomplished_at, mission_memo.accomplished_at);
         assert_eq!(updated_mission_memo.user_id, user.id);
         assert_eq!(updated_mission_memo.created_at, mission_memo.created_at);
         assert_eq!(
@@ -286,6 +294,8 @@ mod tests {
         assert_eq!(returned_mission_memo.title, mission_memo.title);
         assert_eq!(returned_mission_memo.text, form.text.clone().unwrap());
         assert_eq!(returned_mission_memo.date, mission_memo.date);
+        assert_eq!(returned_mission_memo.archived, mission_memo.archived);
+        assert_eq!(returned_mission_memo.accomplished_at, mission_memo.accomplished_at);
         assert_eq!(returned_mission_memo.user_id, user.id);
         assert_eq!(returned_mission_memo.created_at, mission_memo.created_at);
         assert!(returned_mission_memo.updated_at > mission_memo.updated_at);
@@ -297,6 +307,8 @@ mod tests {
         assert_eq!(updated_mission_memo.title, mission_memo.title);
         assert_eq!(updated_mission_memo.text, form.text.clone().unwrap());
         assert_eq!(updated_mission_memo.date, mission_memo.date);
+        assert_eq!(updated_mission_memo.archived, mission_memo.archived);
+        assert_eq!(updated_mission_memo.accomplished_at, mission_memo.accomplished_at);
         assert_eq!(updated_mission_memo.user_id, user.id);
         assert_eq!(updated_mission_memo.created_at, mission_memo.created_at);
         assert_eq!(
@@ -334,6 +346,8 @@ mod tests {
         assert_eq!(returned_mission_memo.title, mission_memo.title);
         assert_eq!(returned_mission_memo.text, mission_memo.text);
         assert_eq!(returned_mission_memo.date, form.date.unwrap());
+        assert_eq!(returned_mission_memo.archived, mission_memo.archived);
+        assert_eq!(returned_mission_memo.accomplished_at, mission_memo.accomplished_at);
         assert_eq!(returned_mission_memo.user_id, user.id);
         assert_eq!(returned_mission_memo.created_at, mission_memo.created_at);
         assert!(returned_mission_memo.updated_at > mission_memo.updated_at);
@@ -345,6 +359,8 @@ mod tests {
         assert_eq!(updated_mission_memo.title, mission_memo.title);
         assert_eq!(updated_mission_memo.text, mission_memo.text);
         assert_eq!(updated_mission_memo.date, form.date.clone().unwrap());
+        assert_eq!(updated_mission_memo.archived, mission_memo.archived);
+        assert_eq!(updated_mission_memo.accomplished_at, mission_memo.accomplished_at);
         assert_eq!(updated_mission_memo.user_id, user.id);
         assert_eq!(updated_mission_memo.created_at, mission_memo.created_at);
         assert_eq!(
@@ -385,6 +401,8 @@ mod tests {
         assert_eq!(returned_mission_memo.title, mission_memo.title);
         assert_eq!(returned_mission_memo.text, mission_memo.text);
         assert_eq!(returned_mission_memo.date, mission_memo.date);
+        assert_eq!(returned_mission_memo.archived, mission_memo.archived);
+        assert_eq!(returned_mission_memo.accomplished_at, mission_memo.accomplished_at);
         assert_eq!(returned_mission_memo.user_id, user.id);
         assert_eq!(returned_mission_memo.created_at, mission_memo.created_at);
         assert!(returned_mission_memo.updated_at > mission_memo.updated_at);
@@ -396,6 +414,8 @@ mod tests {
         assert_eq!(updated_mission_memo.title, mission_memo.title);
         assert_eq!(updated_mission_memo.text, mission_memo.text);
         assert_eq!(updated_mission_memo.date, mission_memo.date);
+        assert_eq!(updated_mission_memo.archived, mission_memo.archived);
+        assert_eq!(updated_mission_memo.accomplished_at, mission_memo.accomplished_at);
         assert_eq!(updated_mission_memo.user_id, user.id);
         assert_eq!(updated_mission_memo.created_at, mission_memo.created_at);
         assert_eq!(
@@ -451,6 +471,8 @@ mod tests {
         assert_eq!(returned_mission_memo.title, mission_memo.title);
         assert_eq!(returned_mission_memo.text, mission_memo.text);
         assert_eq!(returned_mission_memo.date, mission_memo.date);
+        assert_eq!(returned_mission_memo.archived, mission_memo.archived);
+        assert_eq!(returned_mission_memo.accomplished_at, mission_memo.accomplished_at);
         assert_eq!(returned_mission_memo.user_id, user.id);
         assert_eq!(returned_mission_memo.created_at, mission_memo.created_at);
         assert!(returned_mission_memo.updated_at > mission_memo.updated_at);
@@ -462,6 +484,8 @@ mod tests {
         assert_eq!(updated_mission_memo.title, mission_memo.title);
         assert_eq!(updated_mission_memo.text, mission_memo.text);
         assert_eq!(updated_mission_memo.date, mission_memo.date);
+        assert_eq!(updated_mission_memo.archived, mission_memo.archived);
+        assert_eq!(updated_mission_memo.accomplished_at, mission_memo.accomplished_at);
         assert_eq!(updated_mission_memo.user_id, user.id);
         assert_eq!(updated_mission_memo.created_at, mission_memo.created_at);
         assert_eq!(

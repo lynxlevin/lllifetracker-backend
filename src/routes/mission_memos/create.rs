@@ -129,6 +129,8 @@ mod tests {
         assert_eq!(returned_mission_memo.title, mission_memo_title.clone());
         assert_eq!(returned_mission_memo.text, mission_memo_text.clone());
         assert_eq!(returned_mission_memo.date, today);
+        assert_eq!(returned_mission_memo.archived, false);
+        assert_eq!(returned_mission_memo.accomplished_at, None);
 
         let created_mission_memo = mission_memo::Entity::find_by_id(returned_mission_memo.id)
             .one(&db)
@@ -137,6 +139,8 @@ mod tests {
         assert_eq!(created_mission_memo.title, mission_memo_title.clone());
         assert_eq!(created_mission_memo.text, mission_memo_text.clone());
         assert_eq!(created_mission_memo.date, today);
+        assert_eq!(created_mission_memo.archived, false);
+        assert_eq!(created_mission_memo.accomplished_at, None);
         assert_eq!(created_mission_memo.user_id, user.id);
         assert_eq!(
             created_mission_memo.created_at,

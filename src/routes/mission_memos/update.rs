@@ -144,6 +144,8 @@ mod tests {
         assert_eq!(returned_mission_memo.title, form.title.clone().unwrap());
         assert_eq!(returned_mission_memo.text, form.text.clone().unwrap());
         assert_eq!(returned_mission_memo.date, form.date.unwrap());
+        assert_eq!(returned_mission_memo.archived, mission_memo.archived);
+        assert_eq!(returned_mission_memo.accomplished_at, mission_memo.accomplished_at);
         assert_eq!(returned_mission_memo.created_at, mission_memo.created_at);
         assert!(returned_mission_memo.updated_at > mission_memo.updated_at);
 
@@ -154,6 +156,8 @@ mod tests {
         assert_eq!(updated_mission_memo.title, form.title.unwrap());
         assert_eq!(updated_mission_memo.text, form.text.unwrap());
         assert_eq!(updated_mission_memo.date, form.date.unwrap());
+        assert_eq!(updated_mission_memo.archived, mission_memo.archived);
+        assert_eq!(updated_mission_memo.accomplished_at, mission_memo.accomplished_at);
         assert_eq!(updated_mission_memo.user_id, user.id);
         assert_eq!(
             updated_mission_memo.created_at,
