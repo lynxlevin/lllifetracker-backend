@@ -14,7 +14,7 @@ Content-Type: application/json
 # @name list
 GET {{endpoint}}/api/mission_memos
 
-@mission_memo_id=b0110f48-4fde-46b5-97d3-fa6cde85876d
+@mission_memo_id=3f467525-6017-4ffe-89e0-0ddd76ca5ed8
 @tag_0_id="8ae47c10-d248-46e2-9986-b17b1944ec70"
 @tag_1_id="73d61c99-3ab9-44b7-a732-f773c845b27d"
 
@@ -46,3 +46,12 @@ Content-Type: application/json
 # @name delete
 DELETE {{endpoint}}/api/mission_memos/{{mission_memo_id}}
 
+###
+# @name archive
+PUT {{endpoint}}/api/mission_memos/{{mission_memo_id}}/archive
+Content-Type: application/json
+
+###
+# @name mark_accomplished
+PUT {{endpoint}}/api/mission_memos/{{mission_memo_id}}/accomplish
+Content-Type: application/json
