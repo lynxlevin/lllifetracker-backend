@@ -167,6 +167,34 @@ mod tests {
 
     use super::*;
 
+    /// Asserts equality of the following fields.
+    /// ```
+    /// id
+    /// title
+    /// text
+    /// date
+    /// archived
+    /// accomplished_at.is_some()
+    /// accomplished_at: actual > expected if both are Some.
+    /// user_id
+    /// created_at
+    /// updated_at: actual > expected
+    /// ```
+    fn assert_updated(actual: &mission_memo::Model, expected: &mission_memo::Model) {
+        assert_eq!(actual.id, expected.id);
+        assert_eq!(actual.title, expected.title);
+        assert_eq!(actual.text, expected.text);
+        assert_eq!(actual.date, expected.date);
+        assert_eq!(actual.archived, expected.archived);
+        assert_eq!(actual.accomplished_at.is_some(), expected.accomplished_at.is_some());
+        if actual.accomplished_at.is_some() {
+            assert!(actual.accomplished_at.unwrap() > expected.accomplished_at.unwrap());
+        }
+        assert_eq!(actual.user_id, expected.user_id);
+        assert_eq!(actual.created_at, expected.created_at);
+        assert!(actual.updated_at > expected.updated_at);
+    }
+
     #[actix_web::test]
     async fn create() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
@@ -248,41 +276,19 @@ mod tests {
             tag_ids: None,
             user_id: user.id,
         };
+        let mut expected = mission_memo.clone();
+        expected.title = form.title.clone().unwrap();
 
         let returned_mission_memo = MissionMemoMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_eq!(returned_mission_memo.id, mission_memo.id);
-        assert_eq!(returned_mission_memo.title, form.title.clone().unwrap());
-        assert_eq!(returned_mission_memo.text, mission_memo.text);
-        assert_eq!(returned_mission_memo.date, mission_memo.date);
-        assert_eq!(returned_mission_memo.archived, mission_memo.archived);
-        assert_eq!(
-            returned_mission_memo.accomplished_at,
-            mission_memo.accomplished_at
-        );
-        assert_eq!(returned_mission_memo.user_id, user.id);
-        assert_eq!(returned_mission_memo.created_at, mission_memo.created_at);
-        assert!(returned_mission_memo.updated_at > mission_memo.updated_at);
+        assert_updated(&returned_mission_memo, &expected);
 
         let updated_mission_memo = mission_memo::Entity::find_by_id(mission_memo.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(updated_mission_memo.title, form.title.clone().unwrap());
-        assert_eq!(updated_mission_memo.text, mission_memo.text);
-        assert_eq!(updated_mission_memo.date, mission_memo.date);
-        assert_eq!(updated_mission_memo.archived, mission_memo.archived);
-        assert_eq!(
-            updated_mission_memo.accomplished_at,
-            mission_memo.accomplished_at
-        );
-        assert_eq!(updated_mission_memo.user_id, user.id);
-        assert_eq!(updated_mission_memo.created_at, mission_memo.created_at);
-        assert_eq!(
-            updated_mission_memo.updated_at,
-            returned_mission_memo.updated_at
-        );
+        assert_updated(&updated_mission_memo, &expected);
 
         Ok(())
     }
@@ -307,40 +313,19 @@ mod tests {
             user_id: user.id,
         };
 
+        let mut expected = mission_memo.clone();
+        expected.text = form.text.clone().unwrap();
+
         let returned_mission_memo = MissionMemoMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_eq!(returned_mission_memo.id, mission_memo.id);
-        assert_eq!(returned_mission_memo.title, mission_memo.title);
-        assert_eq!(returned_mission_memo.text, form.text.clone().unwrap());
-        assert_eq!(returned_mission_memo.date, mission_memo.date);
-        assert_eq!(returned_mission_memo.archived, mission_memo.archived);
-        assert_eq!(
-            returned_mission_memo.accomplished_at,
-            mission_memo.accomplished_at
-        );
-        assert_eq!(returned_mission_memo.user_id, user.id);
-        assert_eq!(returned_mission_memo.created_at, mission_memo.created_at);
-        assert!(returned_mission_memo.updated_at > mission_memo.updated_at);
+        assert_updated(&returned_mission_memo, &expected);
 
         let updated_mission_memo = mission_memo::Entity::find_by_id(mission_memo.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(updated_mission_memo.title, mission_memo.title);
-        assert_eq!(updated_mission_memo.text, form.text.clone().unwrap());
-        assert_eq!(updated_mission_memo.date, mission_memo.date);
-        assert_eq!(updated_mission_memo.archived, mission_memo.archived);
-        assert_eq!(
-            updated_mission_memo.accomplished_at,
-            mission_memo.accomplished_at
-        );
-        assert_eq!(updated_mission_memo.user_id, user.id);
-        assert_eq!(updated_mission_memo.created_at, mission_memo.created_at);
-        assert_eq!(
-            updated_mission_memo.updated_at,
-            returned_mission_memo.updated_at
-        );
+        assert_updated(&updated_mission_memo, &expected);
 
         Ok(())
     }
@@ -365,40 +350,19 @@ mod tests {
             user_id: user.id,
         };
 
+        let mut expected = mission_memo.clone();
+        expected.date = form.date.unwrap();
+
         let returned_mission_memo = MissionMemoMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_eq!(returned_mission_memo.id, mission_memo.id);
-        assert_eq!(returned_mission_memo.title, mission_memo.title);
-        assert_eq!(returned_mission_memo.text, mission_memo.text);
-        assert_eq!(returned_mission_memo.date, form.date.unwrap());
-        assert_eq!(returned_mission_memo.archived, mission_memo.archived);
-        assert_eq!(
-            returned_mission_memo.accomplished_at,
-            mission_memo.accomplished_at
-        );
-        assert_eq!(returned_mission_memo.user_id, user.id);
-        assert_eq!(returned_mission_memo.created_at, mission_memo.created_at);
-        assert!(returned_mission_memo.updated_at > mission_memo.updated_at);
+        assert_updated(&returned_mission_memo, &expected);
 
         let updated_mission_memo = mission_memo::Entity::find_by_id(mission_memo.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(updated_mission_memo.title, mission_memo.title);
-        assert_eq!(updated_mission_memo.text, mission_memo.text);
-        assert_eq!(updated_mission_memo.date, form.date.clone().unwrap());
-        assert_eq!(updated_mission_memo.archived, mission_memo.archived);
-        assert_eq!(
-            updated_mission_memo.accomplished_at,
-            mission_memo.accomplished_at
-        );
-        assert_eq!(updated_mission_memo.user_id, user.id);
-        assert_eq!(updated_mission_memo.created_at, mission_memo.created_at);
-        assert_eq!(
-            updated_mission_memo.updated_at,
-            returned_mission_memo.updated_at
-        );
+        assert_updated(&updated_mission_memo, &expected);
 
         Ok(())
     }
@@ -426,40 +390,18 @@ mod tests {
             user_id: user.id,
         };
 
+        let expected = mission_memo.clone();
+
         let returned_mission_memo = MissionMemoMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_eq!(returned_mission_memo.id, mission_memo.id);
-        assert_eq!(returned_mission_memo.title, mission_memo.title);
-        assert_eq!(returned_mission_memo.text, mission_memo.text);
-        assert_eq!(returned_mission_memo.date, mission_memo.date);
-        assert_eq!(returned_mission_memo.archived, mission_memo.archived);
-        assert_eq!(
-            returned_mission_memo.accomplished_at,
-            mission_memo.accomplished_at
-        );
-        assert_eq!(returned_mission_memo.user_id, user.id);
-        assert_eq!(returned_mission_memo.created_at, mission_memo.created_at);
-        assert!(returned_mission_memo.updated_at > mission_memo.updated_at);
+        assert_updated(&returned_mission_memo, &expected);
 
         let updated_mission_memo = mission_memo::Entity::find_by_id(mission_memo.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(updated_mission_memo.title, mission_memo.title);
-        assert_eq!(updated_mission_memo.text, mission_memo.text);
-        assert_eq!(updated_mission_memo.date, mission_memo.date);
-        assert_eq!(updated_mission_memo.archived, mission_memo.archived);
-        assert_eq!(
-            updated_mission_memo.accomplished_at,
-            mission_memo.accomplished_at
-        );
-        assert_eq!(updated_mission_memo.user_id, user.id);
-        assert_eq!(updated_mission_memo.created_at, mission_memo.created_at);
-        assert_eq!(
-            updated_mission_memo.updated_at,
-            returned_mission_memo.updated_at
-        );
+        assert_updated(&updated_mission_memo, &expected);
 
         let linked_tag_ids: Vec<uuid::Uuid> = mission_memos_tags::Entity::find()
             .column_as(mission_memos_tags::Column::TagId, QueryAs::TagId)
@@ -502,40 +444,18 @@ mod tests {
             user_id: user.id,
         };
 
+        let expected = mission_memo.clone();
+
         let returned_mission_memo = MissionMemoMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_eq!(returned_mission_memo.id, mission_memo.id);
-        assert_eq!(returned_mission_memo.title, mission_memo.title);
-        assert_eq!(returned_mission_memo.text, mission_memo.text);
-        assert_eq!(returned_mission_memo.date, mission_memo.date);
-        assert_eq!(returned_mission_memo.archived, mission_memo.archived);
-        assert_eq!(
-            returned_mission_memo.accomplished_at,
-            mission_memo.accomplished_at
-        );
-        assert_eq!(returned_mission_memo.user_id, user.id);
-        assert_eq!(returned_mission_memo.created_at, mission_memo.created_at);
-        assert!(returned_mission_memo.updated_at > mission_memo.updated_at);
+        assert_updated(&returned_mission_memo, &expected);
 
         let updated_mission_memo = mission_memo::Entity::find_by_id(mission_memo.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(updated_mission_memo.title, mission_memo.title);
-        assert_eq!(updated_mission_memo.text, mission_memo.text);
-        assert_eq!(updated_mission_memo.date, mission_memo.date);
-        assert_eq!(updated_mission_memo.archived, mission_memo.archived);
-        assert_eq!(
-            updated_mission_memo.accomplished_at,
-            mission_memo.accomplished_at
-        );
-        assert_eq!(updated_mission_memo.user_id, user.id);
-        assert_eq!(updated_mission_memo.created_at, mission_memo.created_at);
-        assert_eq!(
-            updated_mission_memo.updated_at,
-            returned_mission_memo.updated_at
-        );
+        assert_updated(&updated_mission_memo, &expected);
 
         let linked_tag_ids: Vec<uuid::Uuid> = mission_memos_tags::Entity::find()
             .column_as(mission_memos_tags::Column::TagId, QueryAs::TagId)
@@ -642,48 +562,19 @@ mod tests {
         let mission_memo =
             test_utils::seed::create_mission_memo(&db, "Mission memo".to_string(), user.id).await?;
 
+        let mut expected = mission_memo.clone();
+        expected.archived = true;
+
         let returned_mission_memo = MissionMemoMutation::archive(&db, mission_memo.id, user.id)
             .await
             .unwrap();
-        assert_eq!(returned_mission_memo.id, mission_memo.id);
-        assert_eq!(returned_mission_memo.title, mission_memo.title);
-        assert_eq!(returned_mission_memo.text, mission_memo.text);
-        assert_eq!(returned_mission_memo.date, mission_memo.date);
-        assert_eq!(returned_mission_memo.archived, true);
-        assert_eq!(
-            returned_mission_memo.accomplished_at,
-            mission_memo.accomplished_at
-        );
-        assert_eq!(returned_mission_memo.user_id, user.id);
-        assert_eq!(returned_mission_memo.created_at, mission_memo.created_at);
-        assert!(returned_mission_memo.updated_at > mission_memo.updated_at);
+        assert_updated(&returned_mission_memo, &expected);
 
         let updated_mission_memo = mission_memo::Entity::find_by_id(mission_memo.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(updated_mission_memo.title, mission_memo.title);
-        assert_eq!(updated_mission_memo.text, mission_memo.text);
-        assert_eq!(updated_mission_memo.date, mission_memo.date);
-        assert_eq!(updated_mission_memo.archived, true);
-        assert_eq!(
-            updated_mission_memo.accomplished_at,
-            mission_memo.accomplished_at
-        );
-        assert_eq!(updated_mission_memo.user_id, user.id);
-        assert_eq!(updated_mission_memo.created_at, mission_memo.created_at);
-        assert_eq!(
-            updated_mission_memo.updated_at,
-            returned_mission_memo.updated_at
-        );
-
-        let linked_tag_ids: Vec<uuid::Uuid> = mission_memos_tags::Entity::find()
-            .column_as(mission_memos_tags::Column::TagId, QueryAs::TagId)
-            .filter(mission_memos_tags::Column::MissionMemoId.eq(returned_mission_memo.id))
-            .into_values::<_, QueryAs>()
-            .all(&db)
-            .await?;
-        assert_eq!(linked_tag_ids.len(), 0);
+        assert_updated(&updated_mission_memo, &expected);
 
         Ok(())
     }
