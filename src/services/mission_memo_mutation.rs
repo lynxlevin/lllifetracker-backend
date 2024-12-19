@@ -155,6 +155,20 @@ impl MissionMemoMutation {
         mission_memo.updated_at = Set(Utc::now().into());
         mission_memo.update(db).await
     }
+
+    pub async fn mark_accomplished(
+        db: &DbConn,
+        mission_memo_id: uuid::Uuid,
+        user_id: uuid::Uuid,
+    ) -> Result<mission_memo::Model, DbErr> {
+        let mut mission_memo: mission_memo::ActiveModel =
+            MissionMemoQuery::find_by_id_and_user_id(db, mission_memo_id, user_id)
+                .await?
+                .into();
+        mission_memo.accomplished_at = Set(Some(Utc::now().into()));
+        mission_memo.updated_at = Set(Utc::now().into());
+        mission_memo.update(db).await
+    }
 }
 
 #[cfg(test)]
@@ -589,6 +603,47 @@ mod tests {
         let error = MissionMemoMutation::archive(&db, mission_memo.id, uuid::Uuid::new_v4())
             .await
             .unwrap_err();
+        assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn mark_accomplished() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
+        let mission_memo =
+            test_utils::seed::create_mission_memo(&db, "Mission memo".to_string(), user.id).await?;
+
+        let mut expected = mission_memo.clone();
+        expected.accomplished_at = Some(Utc::now().into());
+
+        let returned_mission_memo =
+            MissionMemoMutation::mark_accomplished(&db, mission_memo.id, user.id)
+                .await
+                .unwrap();
+        assert_updated(&returned_mission_memo, &expected);
+
+        let updated_mission_memo = mission_memo::Entity::find_by_id(mission_memo.id)
+            .one(&db)
+            .await?
+            .unwrap();
+        assert_updated(&updated_mission_memo, &expected);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn mark_accomplished_unauthorized() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
+        let mission_memo =
+            test_utils::seed::create_mission_memo(&db, "Mission memo".to_string(), user.id).await?;
+
+        let error =
+            MissionMemoMutation::mark_accomplished(&db, mission_memo.id, uuid::Uuid::new_v4())
+                .await
+                .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
 
         Ok(())
