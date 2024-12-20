@@ -1,8 +1,12 @@
 use crate::entities::{action, ambition, mission_memo, mission_memos_tags, objective, tag};
 use crate::types::{CustomDbErr, MissionMemoWithTagQueryResult};
-use migration::NullOrdering::Last;
+use migration::NullOrdering::{First, Last};
 use sea_orm::entity::prelude::*;
-use sea_orm::{JoinType::LeftJoin, Order::Asc, QueryOrder, QuerySelect};
+use sea_orm::{
+    JoinType::LeftJoin,
+    Order::{Asc, Desc},
+    QueryOrder, QuerySelect,
+};
 
 pub struct MissionMemoQuery;
 
@@ -23,6 +27,8 @@ impl MissionMemoQuery {
             .join(LeftJoin, tag::Relation::Ambition.def())
             .join(LeftJoin, tag::Relation::Objective.def())
             .join(LeftJoin, tag::Relation::Action.def())
+            .order_by_asc(mission_memo::Column::Archived)
+            .order_by_with_nulls(mission_memo::Column::AccomplishedAt, Desc, First)
             .order_by_desc(mission_memo::Column::CreatedAt)
             .order_by_with_nulls(ambition::Column::CreatedAt, Asc, Last)
             .order_by_with_nulls(objective::Column::CreatedAt, Asc, Last)
@@ -48,6 +54,7 @@ impl MissionMemoQuery {
 #[cfg(test)]
 mod tests {
     use crate::test_utils;
+    use chrono::Utc;
     use sea_orm::ActiveValue::Set;
 
     use super::*;
@@ -62,6 +69,26 @@ mod tests {
         let mission_memo_1 =
             test_utils::seed::create_mission_memo(&db, "mission_memo_1".to_string(), user.id)
                 .await?;
+        let mut archived_mission_memo: mission_memo::ActiveModel =
+            test_utils::seed::create_mission_memo(
+                &db,
+                "archived_mission_memo".to_string(),
+                user.id,
+            )
+            .await?
+            .into();
+        archived_mission_memo.archived = Set(true);
+        let archived_mission_memo = archived_mission_memo.update(&db).await?;
+        let mut accomplished_mission_memo: mission_memo::ActiveModel =
+            test_utils::seed::create_mission_memo(
+                &db,
+                "accomplished_mission_memo".to_string(),
+                user.id,
+            )
+            .await?
+            .into();
+        accomplished_mission_memo.accomplished_at = Set(Some(Utc::now().into()));
+        let accomplished_mission_memo = accomplished_mission_memo.update(&db).await?;
         let (action, action_tag) =
             test_utils::seed::create_action_and_tag(&db, "action".to_string(), None, user.id)
                 .await?;
@@ -139,12 +166,44 @@ mod tests {
                 tag_action_name: None,
                 tag_created_at: Some(ambition_tag.created_at),
             },
+            MissionMemoWithTagQueryResult {
+                id: accomplished_mission_memo.id,
+                title: accomplished_mission_memo.title.clone(),
+                text: accomplished_mission_memo.text.clone(),
+                date: accomplished_mission_memo.date,
+                archived: accomplished_mission_memo.archived,
+                accomplished_at: accomplished_mission_memo.accomplished_at,
+                created_at: accomplished_mission_memo.created_at,
+                updated_at: accomplished_mission_memo.updated_at,
+                tag_id: None,
+                tag_ambition_name: None,
+                tag_objective_name: None,
+                tag_action_name: None,
+                tag_created_at: None,
+            },
+            MissionMemoWithTagQueryResult {
+                id: archived_mission_memo.id,
+                title: archived_mission_memo.title.clone(),
+                text: archived_mission_memo.text.clone(),
+                date: archived_mission_memo.date,
+                archived: archived_mission_memo.archived,
+                accomplished_at: archived_mission_memo.accomplished_at,
+                created_at: archived_mission_memo.created_at,
+                updated_at: archived_mission_memo.updated_at,
+                tag_id: None,
+                tag_ambition_name: None,
+                tag_objective_name: None,
+                tag_action_name: None,
+                tag_created_at: None,
+            },
         ];
 
         assert_eq!(res.len(), expected.len());
         assert_eq!(res[0], expected[0]);
         assert_eq!(res[1], expected[1]);
         assert_eq!(res[2], expected[2]);
+        assert_eq!(res[3], expected[3]);
+        assert_eq!(res[4], expected[4]);
 
         Ok(())
     }
