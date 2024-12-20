@@ -4,6 +4,8 @@ pub mod ambition_mutation;
 pub mod ambition_query;
 pub mod memo_mutation;
 pub mod memo_query;
+pub mod mission_memo_mutation;
+pub mod mission_memo_query;
 pub mod objective_mutation;
 pub mod objective_query;
 pub mod tag_query;

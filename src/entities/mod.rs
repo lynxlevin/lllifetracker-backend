@@ -7,6 +7,8 @@ pub mod ambition;
 pub mod ambitions_objectives;
 pub mod memo;
 pub mod memos_tags;
+pub mod mission_memo;
+pub mod mission_memos_tags;
 pub mod objective;
 pub mod objectives_actions;
 pub mod record;

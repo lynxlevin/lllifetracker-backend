@@ -37,6 +37,8 @@ pub enum Relation {
     Ambition,
     #[sea_orm(has_many = "super::memos_tags::Entity")]
     MemosTags,
+    #[sea_orm(has_many = "super::mission_memos_tags::Entity")]
+    MissionMemosTags,
     #[sea_orm(
         belongs_to = "super::objective::Entity",
         from = "Column::ObjectiveId",
@@ -75,6 +77,12 @@ impl Related<super::memos_tags::Entity> for Entity {
     }
 }
 
+impl Related<super::mission_memos_tags::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::MissionMemosTags.def()
+    }
+}
+
 impl Related<super::objective::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Objective.def()
@@ -99,6 +107,15 @@ impl Related<super::memo::Entity> for Entity {
     }
     fn via() -> Option<RelationDef> {
         Some(super::memos_tags::Relation::Tag.def().rev())
+    }
+}
+
+impl Related<super::mission_memo::Entity> for Entity {
+    fn to() -> RelationDef {
+        super::mission_memos_tags::Relation::MissionMemo.def()
+    }
+    fn via() -> Option<RelationDef> {
+        Some(super::mission_memos_tags::Relation::Tag.def().rev())
     }
 }
 

@@ -12,6 +12,8 @@ mod m_seed_data;
 mod m20241124_000001_create_memos_table;
 mod m20241124_000002_create_memos_tags_table;
 mod m20241201_000001_add_description_to_objective_action_tables;
+mod m20241218_000001_create_mission_memos_table;
+mod m20241218_000002_create_mission_memos_tags_table;
 
 
 pub struct Migrator;
@@ -32,6 +34,8 @@ impl MigratorTrait for Migrator {
             Box::new(m20241124_000001_create_memos_table::Migration),
             Box::new(m20241124_000002_create_memos_tags_table::Migration),
             Box::new(m20241201_000001_add_description_to_objective_action_tables::Migration),
+            Box::new(m20241218_000001_create_mission_memos_table::Migration),
+            Box::new(m20241218_000002_create_mission_memos_tags_table::Migration),
         ]
     }
 }
