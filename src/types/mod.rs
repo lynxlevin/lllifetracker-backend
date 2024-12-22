@@ -1,5 +1,6 @@
 mod actions;
 mod ambitions;
+mod book_excerpts;
 mod db;
 mod general;
 mod memos;
@@ -11,6 +12,9 @@ mod users;
 
 pub use actions::{ActionVisible, ActionVisibleWithLinks, ActionWithLinksQueryResult};
 pub use ambitions::{AmbitionVisible, AmbitionVisibleWithLinks, AmbitionWithLinksQueryResult};
+pub use book_excerpts::{
+    BookExcerptVisible, BookExcerptVisibleWithTags, BookExcerptWithTagQueryResult,
+};
 pub use db::CustomDbErr;
 pub use general::{
     ErrorResponse, SuccessResponse, INTERNAL_SERVER_ERROR_MESSAGE, USER_EMAIL_KEY, USER_ID_KEY,
