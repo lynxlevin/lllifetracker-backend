@@ -10,8 +10,8 @@ use std::env;
 
 use crate::{
     routes::{
-        action_routes, ambition_routes, auth_routes, memo_routes, mission_memo_routes,
-        objective_routes, tag_routes,
+        action_routes, ambition_routes, auth_routes, book_excerpt_routes, memo_routes,
+        mission_memo_routes, objective_routes, tag_routes,
     },
     utils::auth::auth_middleware::AuthenticateUser,
 };
@@ -113,6 +113,7 @@ async fn run(
                     .configure(action_routes)
                     .configure(memo_routes)
                     .configure(mission_memo_routes)
+                    .configure(book_excerpt_routes)
                     .configure(tag_routes),
             )
             .app_data(Data::new(db.clone()))

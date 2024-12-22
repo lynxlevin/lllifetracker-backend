@@ -1,5 +1,6 @@
 mod actions;
 mod ambitions;
+mod book_excerpts;
 mod health;
 mod memos;
 mod mission_memos;
@@ -9,6 +10,7 @@ mod users;
 
 pub use actions::action_routes;
 pub use ambitions::ambition_routes;
+pub use book_excerpts::book_excerpt_routes;
 pub use health::health_check;
 pub use memos::memo_routes;
 pub use mission_memos::mission_memo_routes;
