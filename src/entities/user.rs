@@ -25,6 +25,8 @@ pub enum Relation {
     Action,
     #[sea_orm(has_many = "super::ambition::Entity")]
     Ambition,
+    #[sea_orm(has_many = "super::book_excerpt::Entity")]
+    BookExcerpt,
     #[sea_orm(has_many = "super::memo::Entity")]
     Memo,
     #[sea_orm(has_many = "super::mission_memo::Entity")]
@@ -46,6 +48,12 @@ impl Related<super::action::Entity> for Entity {
 impl Related<super::ambition::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Ambition.def()
+    }
+}
+
+impl Related<super::book_excerpt::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::BookExcerpt.def()
     }
 }
 

@@ -5,6 +5,8 @@ pub mod prelude;
 pub mod action;
 pub mod ambition;
 pub mod ambitions_objectives;
+pub mod book_excerpt;
+pub mod book_excerpts_tags;
 pub mod memo;
 pub mod memos_tags;
 pub mod mission_memo;
