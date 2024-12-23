@@ -2,6 +2,8 @@ pub mod action_mutation;
 pub mod action_query;
 pub mod ambition_mutation;
 pub mod ambition_query;
+pub mod book_excerpt_mutation;
+pub mod book_excerpt_query;
 pub mod memo_mutation;
 pub mod memo_query;
 pub mod mission_memo_mutation;

@@ -35,6 +35,8 @@ pub enum Relation {
         on_delete = "Cascade"
     )]
     Ambition,
+    #[sea_orm(has_many = "super::book_excerpts_tags::Entity")]
+    BookExcerptsTags,
     #[sea_orm(has_many = "super::memos_tags::Entity")]
     MemosTags,
     #[sea_orm(has_many = "super::mission_memos_tags::Entity")]
@@ -71,6 +73,12 @@ impl Related<super::ambition::Entity> for Entity {
     }
 }
 
+impl Related<super::book_excerpts_tags::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::BookExcerptsTags.def()
+    }
+}
+
 impl Related<super::memos_tags::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::MemosTags.def()
@@ -98,6 +106,15 @@ impl Related<super::record::Entity> for Entity {
 impl Related<super::user::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::User.def()
+    }
+}
+
+impl Related<super::book_excerpt::Entity> for Entity {
+    fn to() -> RelationDef {
+        super::book_excerpts_tags::Relation::BookExcerpt.def()
+    }
+    fn via() -> Option<RelationDef> {
+        Some(super::book_excerpts_tags::Relation::Tag.def().rev())
     }
 }
 
