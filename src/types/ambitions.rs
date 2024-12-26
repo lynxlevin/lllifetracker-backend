@@ -9,6 +9,7 @@ pub struct AmbitionVisible {
     pub id: uuid::Uuid,
     pub name: String,
     pub description: Option<String>,
+    pub archived: bool,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
 }
@@ -18,6 +19,7 @@ pub struct AmbitionWithLinksQueryResult {
     pub id: uuid::Uuid,
     pub name: String,
     pub description: Option<String>,
+    pub archived: bool,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
     pub objective_id: Option<uuid::Uuid>,
@@ -37,6 +39,7 @@ pub struct AmbitionVisibleWithLinks {
     pub id: uuid::Uuid,
     pub name: String,
     pub description: Option<String>,
+    pub archived: bool,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
     pub objectives: Vec<ObjectiveVisibleWithActions>,

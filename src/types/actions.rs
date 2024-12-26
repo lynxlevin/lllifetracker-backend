@@ -11,6 +11,7 @@ pub struct ActionVisible {
     pub id: uuid::Uuid,
     pub name: String,
     pub description: Option<String>,
+    pub archived: bool,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
 }
@@ -20,6 +21,7 @@ pub struct ActionWithLinksQueryResult {
     pub id: uuid::Uuid,
     pub name: String,
     pub description: Option<String>,
+    pub archived: bool,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
     pub objective_id: Option<uuid::Uuid>,
@@ -39,6 +41,7 @@ pub struct ActionVisibleWithLinks {
     pub id: uuid::Uuid,
     pub name: String,
     pub description: Option<String>,
+    pub archived: bool,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
     pub objectives: Vec<ObjectiveVisibleWithAmbitions>,

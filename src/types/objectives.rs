@@ -11,6 +11,7 @@ pub struct ObjectiveVisible {
     pub id: uuid::Uuid,
     pub name: String,
     pub description: Option<String>,
+    pub archived: bool,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
 }
@@ -20,6 +21,7 @@ pub struct ObjectiveWithLinksQueryResult {
     pub id: uuid::Uuid,
     pub name: String,
     pub description: Option<String>,
+    pub archived: bool,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
     pub ambition_id: Option<uuid::Uuid>,
@@ -39,9 +41,9 @@ pub struct ObjectiveVisibleWithLinks {
     pub id: uuid::Uuid,
     pub name: String,
     pub description: Option<String>,
+    pub archived: bool,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
-    // MYMEMO: Maybe change to Set?
     pub ambitions: Vec<AmbitionVisible>,
     pub actions: Vec<ActionVisible>,
 }
@@ -60,6 +62,7 @@ pub struct ObjectiveVisibleWithActions {
     pub id: uuid::Uuid,
     pub name: String,
     pub description: Option<String>,
+    pub archived: bool,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
     pub actions: Vec<ActionVisible>,
@@ -76,6 +79,7 @@ pub struct ObjectiveVisibleWithAmbitions {
     pub id: uuid::Uuid,
     pub name: String,
     pub description: Option<String>,
+    pub archived: bool,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
     pub ambitions: Vec<AmbitionVisible>,
