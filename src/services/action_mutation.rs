@@ -27,6 +27,7 @@ impl ActionMutation {
                     user_id: Set(form_data.user_id),
                     name: Set(form_data.name.to_owned()),
                     description: Set(form_data.description.to_owned()),
+                    archived: Set(false),
                     created_at: Set(now.into()),
                     updated_at: Set(now.into()),
                 }
@@ -110,6 +111,7 @@ mod tests {
             returned_action.description,
             Some(action_description.clone())
         );
+        assert_eq!(returned_action.archived, false);
         assert_eq!(returned_action.user_id, user.id);
 
         let created_action = action::Entity::find_by_id(returned_action.id)
@@ -118,6 +120,7 @@ mod tests {
             .unwrap();
         assert_eq!(created_action.name, action_name.clone());
         assert_eq!(created_action.description, Some(action_description.clone()));
+        assert_eq!(created_action.archived, false);
         assert_eq!(created_action.user_id, user.id);
         assert_eq!(created_action.created_at, returned_action.created_at);
         assert_eq!(created_action.updated_at, returned_action.updated_at);
@@ -159,6 +162,7 @@ mod tests {
         assert_eq!(returned_action.id, action.id);
         assert_eq!(returned_action.name, new_name.clone());
         assert_eq!(returned_action.description, Some(new_description.clone()));
+        assert_eq!(returned_action.archived, action.archived);
         assert_eq!(returned_action.user_id, user.id);
         assert_eq!(returned_action.created_at, action.created_at);
         assert!(returned_action.updated_at > action.updated_at);
@@ -170,6 +174,7 @@ mod tests {
         assert_eq!(updated_action.id, action.id);
         assert_eq!(updated_action.name, new_name.clone());
         assert_eq!(updated_action.description, Some(new_description.clone()));
+        assert_eq!(updated_action.archived, action.archived);
         assert_eq!(updated_action.user_id, user.id);
         assert_eq!(updated_action.created_at, action.created_at);
         assert_eq!(updated_action.updated_at, returned_action.updated_at);
@@ -190,9 +195,10 @@ mod tests {
         .await?;
         let new_name = "action_after_update_unauthorized".to_string();
 
-        let error = ActionMutation::update(&db, action.id, uuid::Uuid::new_v4(), new_name.clone(), None)
-            .await
-            .unwrap_err();
+        let error =
+            ActionMutation::update(&db, action.id, uuid::Uuid::new_v4(), new_name.clone(), None)
+                .await
+                .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
 
         Ok(())
@@ -202,9 +208,13 @@ mod tests {
     async fn delete() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (action, tag) =
-            test_utils::seed::create_action_and_tag(&db, "action_for_delete".to_string(), None, user.id)
-                .await?;
+        let (action, tag) = test_utils::seed::create_action_and_tag(
+            &db,
+            "action_for_delete".to_string(),
+            None,
+            user.id,
+        )
+        .await?;
 
         ActionMutation::delete(&db, action.id, user.id).await?;
 

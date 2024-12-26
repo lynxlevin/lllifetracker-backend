@@ -106,6 +106,7 @@ mod tests {
 
         let returned_action: ActionVisible = test::read_body_json(res).await;
         assert_eq!(returned_action.name, name.clone());
+        assert_eq!(returned_action.description, Some(description.clone()));
 
         let created_action = action::Entity::find_by_id(returned_action.id)
             .one(&db)
@@ -113,6 +114,7 @@ mod tests {
             .unwrap();
         assert_eq!(created_action.name, name);
         assert_eq!(created_action.description, Some(description));
+        assert_eq!(created_action.archived, false);
         assert_eq!(created_action.user_id, user.id);
         assert_eq!(created_action.created_at, returned_action.created_at);
         assert_eq!(created_action.updated_at, returned_action.updated_at);

@@ -28,6 +28,7 @@ impl AmbitionMutation {
                     id: Set(ambition_id),
                     user_id: Set(form_data.user_id),
                     name: Set(form_data.name.to_owned()),
+                    archived: Set(false),
                     description: Set(form_data.description),
                     created_at: Set(now.into()),
                     updated_at: Set(now.into()),
@@ -140,17 +141,19 @@ mod tests {
             .unwrap();
         assert_eq!(returned_ambition.name, name);
         assert_eq!(returned_ambition.description, description);
+        assert_eq!(returned_ambition.archived, false);
         assert_eq!(returned_ambition.user_id, user.id);
 
         let created_ambition = ambition::Entity::find_by_id(returned_ambition.id)
-            .filter(ambition::Column::Name.eq(name))
-            .filter(ambition::Column::Description.eq(description))
-            .filter(ambition::Column::UserId.eq(user.id))
-            .filter(ambition::Column::CreatedAt.eq(returned_ambition.created_at))
-            .filter(ambition::Column::UpdatedAt.eq(returned_ambition.updated_at))
             .one(&db)
-            .await?;
-        assert!(created_ambition.is_some());
+            .await?
+            .unwrap();
+        assert_eq!(created_ambition.name, returned_ambition.name);
+        assert_eq!(created_ambition.description, returned_ambition.description);
+        assert_eq!(created_ambition.archived, false);
+        assert_eq!(created_ambition.user_id, returned_ambition.user_id);
+        assert_eq!(created_ambition.created_at, returned_ambition.created_at);
+        assert_eq!(created_ambition.updated_at, returned_ambition.updated_at);
 
         let created_tag = tag::Entity::find()
             .filter(tag::Column::UserId.eq(user.id))
@@ -189,19 +192,21 @@ mod tests {
         assert_eq!(returned_ambition.id, ambition.id);
         assert_eq!(returned_ambition.name, new_name);
         assert_eq!(returned_ambition.description, new_description);
+        assert_eq!(returned_ambition.archived, ambition.archived);
         assert_eq!(returned_ambition.user_id, user.id);
         assert_eq!(returned_ambition.created_at, ambition.created_at);
         assert!(returned_ambition.updated_at > ambition.updated_at);
 
         let updated_ambition = ambition::Entity::find_by_id(returned_ambition.id)
-            .filter(ambition::Column::Name.eq(new_name))
-            .filter(ambition::Column::Description.eq(new_description))
-            .filter(ambition::Column::UserId.eq(user.id))
-            .filter(ambition::Column::CreatedAt.eq(returned_ambition.created_at))
-            .filter(ambition::Column::UpdatedAt.eq(returned_ambition.updated_at))
             .one(&db)
-            .await?;
-        assert!(updated_ambition.is_some());
+            .await?
+            .unwrap();
+        assert_eq!(updated_ambition.name, returned_ambition.name);
+        assert_eq!(updated_ambition.description, returned_ambition.description);
+        assert_eq!(updated_ambition.archived, returned_ambition.archived);
+        assert_eq!(updated_ambition.user_id, returned_ambition.user_id);
+        assert_eq!(updated_ambition.created_at, returned_ambition.created_at);
+        assert_eq!(updated_ambition.updated_at, returned_ambition.updated_at);
 
         Ok(())
     }
