@@ -1,7 +1,9 @@
 use crate::entities::{action, ambition, objective, tag};
 use crate::types::TagQueryResult;
 use migration::NullOrdering::Last;
-use sea_orm::{entity::prelude::*, JoinType::LeftJoin, QueryOrder, QuerySelect, Order::Asc};
+use sea_orm::{
+    entity::prelude::*, Condition, JoinType::LeftJoin, Order::Asc, QueryOrder, QuerySelect,
+};
 
 pub struct TagQuery;
 
@@ -12,6 +14,21 @@ impl TagQuery {
     ) -> Result<Vec<TagQueryResult>, DbErr> {
         tag::Entity::find()
             .filter(tag::Column::UserId.eq(user_id))
+            .filter(
+                Condition::any()
+                    .add(ambition::Column::Archived.eq(false))
+                    .add(ambition::Column::Archived.is_null()),
+            )
+            .filter(
+                Condition::any()
+                    .add(objective::Column::Archived.eq(false))
+                    .add(objective::Column::Archived.is_null()),
+            )
+            .filter(
+                Condition::any()
+                    .add(action::Column::Archived.eq(false))
+                    .add(action::Column::Archived.is_null()),
+            )
             .column_as(ambition::Column::Name, "ambition_name")
             .column_as(objective::Column::Name, "objective_name")
             .column_as(action::Column::Name, "action_name")
@@ -44,7 +61,26 @@ mod tests {
             test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
                 .await?;
         let (_, action_tag) =
-            test_utils::seed::create_action_and_tag(&db, "action".to_string(), None, user.id).await?;
+            test_utils::seed::create_action_and_tag(&db, "action".to_string(), None, user.id)
+                .await?;
+        let _archived_action =
+            test_utils::seed::create_action_and_tag(&db, "action".to_string(), None, user.id)
+                .await?
+                .0
+                .archive(&db)
+                .await?;
+        let _archived_ambition =
+            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
+                .await?
+                .0
+                .archive(&db)
+                .await?;
+        let _archived_objective =
+            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
+                .await?
+                .0
+                .archive(&db)
+                .await?;
 
         let res = TagQuery::find_all_by_user_id(&db, user.id).await?;
 

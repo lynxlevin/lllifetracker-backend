@@ -1,9 +1,7 @@
 use crate::{
     entities::user as user_entity,
     services::tag_query::TagQuery,
-    types::{
-        self, TagQueryResult, TagType, TagVisible, INTERNAL_SERVER_ERROR_MESSAGE
-    },
+    types::{self, TagQueryResult, TagType, TagVisible, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
     get,
@@ -23,7 +21,8 @@ pub async fn list_tags(
             let user = user.into_inner();
             match TagQuery::find_all_by_user_id(&db, user.id).await {
                 Ok(tags) => {
-                    let res: Vec<TagVisible> = tags.into_iter().map(|tag| get_tag_visible(tag)).collect();
+                    let res: Vec<TagVisible> =
+                        tags.into_iter().map(|tag| get_tag_visible(tag)).collect();
                     HttpResponse::Ok().json(res)
                 }
                 Err(e) => {
@@ -98,12 +97,31 @@ mod tests {
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
         let (action, action_tag) =
-            test_utils::seed::create_action_and_tag(&db, "action".to_string(), None, user.id).await?;
+            test_utils::seed::create_action_and_tag(&db, "action".to_string(), None, user.id)
+                .await?;
         let (ambition, ambition_tag) =
             test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
                 .await?;
         let (objective, objective_tag) =
             test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
+                .await?;
+        let _archived_action =
+            test_utils::seed::create_action_and_tag(&db, "action".to_string(), None, user.id)
+                .await?
+                .0
+                .archive(&db)
+                .await?;
+        let _archived_ambition =
+            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
+                .await?
+                .0
+                .archive(&db)
+                .await?;
+        let _archived_objective =
+            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
+                .await?
+                .0
+                .archive(&db)
                 .await?;
 
         let req = test::TestRequest::get().uri("/").to_request();
