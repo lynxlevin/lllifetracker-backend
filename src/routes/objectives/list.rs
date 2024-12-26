@@ -126,13 +126,10 @@ mod tests {
         web::scope,
         App, HttpMessage,
     };
-    use sea_orm::{entity::prelude::*, DbErr, Set};
+    use sea_orm::{entity::prelude::*, DbErr};
     use types::ObjectiveVisible;
 
-    use crate::{
-        entities::{ambitions_objectives, objectives_actions},
-        test_utils,
-    };
+    use crate::test_utils;
 
     use super::*;
 
@@ -166,6 +163,12 @@ mod tests {
             user.id,
         )
         .await?;
+        let _archived_objective =
+            test_utils::seed::create_objective_and_tag(&db, "archived".to_string(), None, user.id)
+                .await?
+                .0
+                .archive(&db)
+                .await?;
 
         let req = test::TestRequest::get().uri("/").to_request();
         req.extensions_mut().insert(user.clone());
@@ -198,24 +201,9 @@ mod tests {
         let (ambition_1, objective_1, action_1) =
             test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, false, false)
                 .await?;
-        let _ = objectives_actions::ActiveModel {
-            objective_id: Set(objective_0.id),
-            action_id: Set(action_1.id),
-        }
-        .insert(&db)
-        .await?;
-        let _ = objectives_actions::ActiveModel {
-            objective_id: Set(objective_1.id),
-            action_id: Set(action_1.id),
-        }
-        .insert(&db)
-        .await?;
-        let _ = ambitions_objectives::ActiveModel {
-            ambition_id: Set(ambition_1.id),
-            objective_id: Set(objective_0.id),
-        }
-        .insert(&db)
-        .await?;
+        let objective_0 = objective_0.connect_action(&db, action_1.id).await?;
+        let objective_1 = objective_1.connect_action(&db, action_1.id).await?;
+        let ambition_1 = ambition_1.connect_objective(&db, objective_0.id).await?;
 
         let req = test::TestRequest::get().uri("/?links=true").to_request();
         req.extensions_mut().insert(user.clone());
@@ -294,6 +282,77 @@ mod tests {
         });
         let body_1 = serde_json::to_value(&body[1]).unwrap();
         assert_eq!(expected_1, body_1,);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn happy_path_with_links_archived_items_should_not_be_returned() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = test_utils::seed::create_active_user(&db).await?;
+        let (ambition_0, objective_0, action_0) =
+            test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, true, true)
+                .await?;
+        let _archived_objective =
+            test_utils::seed::create_objective_and_tag(&db, "archived".to_string(), None, user.id)
+                .await?
+                .0
+                .archive(&db)
+                .await?;
+        let _archived_ambition =
+            test_utils::seed::create_ambition_and_tag(&db, "archived".to_string(), None, user.id)
+                .await?
+                .0
+                .archive(&db)
+                .await?
+                .connect_objective(&db, objective_0.id)
+                .await?;
+        let archived_action =
+            test_utils::seed::create_action_and_tag(&db, "archived".to_string(), None, user.id)
+                .await?
+                .0
+                .archive(&db)
+                .await?;
+        let objective_0 = objective_0.connect_action(&db, archived_action.id).await?;
+
+        let req = test::TestRequest::get().uri("/?links=true").to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), http::StatusCode::OK);
+
+        let body: Vec<ObjectiveVisibleWithLinks> = test::read_body_json(resp).await;
+        assert_eq!(body.len(), 1);
+
+        let expected = serde_json::json!([{
+            "id": objective_0.id,
+            "name": objective_0.name,
+            "description": objective_0.description,
+            "created_at": objective_0.created_at,
+            "updated_at": objective_0.updated_at,
+            "ambitions": [
+                {
+                    "id": ambition_0.id,
+                    "name": ambition_0.name,
+                    "description": ambition_0.description,
+                    "created_at": ambition_0.created_at,
+                    "updated_at": ambition_0.updated_at,
+                },
+            ],
+            "actions": [
+                {
+                    "id": action_0.id,
+                    "name": action_0.name,
+                    "description": action_0.description,
+                    "created_at": action_0.created_at,
+                    "updated_at": action_0.updated_at,
+                },
+            ],
+        }]);
+
+        let body = serde_json::to_value(&body).unwrap();
+        assert_eq!(expected, body);
 
         Ok(())
     }

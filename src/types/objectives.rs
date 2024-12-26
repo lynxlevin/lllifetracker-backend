@@ -34,7 +34,7 @@ pub struct ObjectiveWithLinksQueryResult {
     pub action_updated_at: Option<chrono::DateTime<chrono::FixedOffset>>,
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
 pub struct ObjectiveVisibleWithLinks {
     pub id: uuid::Uuid,
     pub name: String,

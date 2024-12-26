@@ -1,5 +1,5 @@
 use crate::entities::{
-    action, ambition, ambitions_objectives, objective, objectives_actions, tag, user, memo, mission_memo, book_excerpt
+    action, ambition, objective, tag, user, memo, mission_memo, book_excerpt
 };
 use chrono::Utc;
 use sea_orm::{prelude::*, DbConn, DbErr, Set};
@@ -140,20 +140,10 @@ pub async fn create_set_of_ambition_objective_action(
     let (objective, _) = create_objective_and_tag(db, "objective".to_string(), Some("Objective".to_string()), user_id).await?;
     let (action, _) = create_action_and_tag(db, "action".to_string(), Some("Action".to_string()), user_id).await?;
     if connect_ambition_objective {
-        let _ = ambitions_objectives::ActiveModel {
-            ambition_id: Set(ambition.id),
-            objective_id: Set(objective.id),
-        }
-        .insert(db)
-        .await?;
+        ambition.clone().connect_objective(db, objective.id).await?;
     }
     if connect_objective_action {
-        let _ = objectives_actions::ActiveModel {
-            objective_id: Set(objective.id),
-            action_id: Set(action.id),
-        }
-        .insert(db)
-        .await?;
+        objective.clone().connect_action(db, action.id).await?;
     }
 
     Ok((ambition, objective, action))
