@@ -1,5 +1,5 @@
 use argon2::password_hash::rand_core::{OsRng, RngCore};
-use deadpool_redis::redis::AsyncCommands;
+use deadpool_redis::redis::{AsyncCommands, SetExpiry, SetOptions};
 use pasetors::claims::{Claims, ClaimsValidationRules};
 use pasetors::keys::SymmetricKey;
 use pasetors::token::UntrustedToken;
@@ -32,14 +32,6 @@ pub async fn issue_confirmation_token_pasetors(
         }
     };
 
-    redis_connection
-        .set(redis_key.clone(), String::new())
-        .await
-        .map_err(|e| {
-            tracing::event!(target: "backend", tracing::Level::ERROR, "RedisError (set): {}", e);
-            e
-        })?;
-
     let settings = crate::settings::get_settings();
     let current_date_time = chrono::Local::now();
     let dt = {
@@ -49,7 +41,6 @@ pub async fn issue_confirmation_token_pasetors(
             current_date_time + chrono::Duration::minutes(settings.secret.token_expiration)
         }
     };
-
     let time_to_live = {
         if is_for_password_change.is_some() {
             chrono::Duration::hours(1)
@@ -59,13 +50,16 @@ pub async fn issue_confirmation_token_pasetors(
     };
 
     redis_connection
-        .expire(
+        .set_options::<String, String, String>(
             redis_key.clone(),
-            time_to_live.num_seconds().try_into().unwrap(),
+            String::new(),
+            SetOptions::default().with_expiration(SetExpiry::EX(
+                time_to_live.num_seconds().try_into().unwrap(),
+            )),
         )
         .await
         .map_err(|e| {
-            tracing::event!(target: "backend", tracing::Level::ERROR, "RedisError (expiry): {}", e);
+            tracing::event!(target: "backend", tracing::Level::ERROR, "RedisError (set): {}", e);
             e
         })?;
 
@@ -144,10 +138,7 @@ pub async fn verify_confirmation_token_pasetor(
                 {
                     return Err("Token has been used or expired.".to_string());
                 }
-                redis_connection
-                    .del(redis_key.clone())
-                    .await
-                    .map_err(|e| format!("{}", e))?;
+
                 Ok(crate::types::ConfirmationToken { user_id: user_uuid })
             }
             Err(e) => Err(format!("{}", e)),
