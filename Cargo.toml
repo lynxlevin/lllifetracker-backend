@@ -12,27 +12,27 @@ path = "src/main.rs"
 name = "lllifetracker-backend"
 
 [dependencies]
-actix-session = { version = "0.10.0", features = ["redis-session"] }
-actix-web = "4.8.0"
-argon2 = { version = "0.5.3", default-features = false }
-chrono = "0.4.38"
-config = { version = "0.14.0", features = ["yaml"] }
-deadpool-redis = "0.15.1"
-dotenvy = "0.15.7"
-futures = { version = "0.3.28", default-features = false }
-hex = { version = "0.4.3", default-features = false }
-lettre = { version = "0.11.10", default-features = false, features = [
+actix-session = { version = "^0.10.0", features = ["redis-session"] }
+actix-web = "^4.8.0"
+argon2 = { version = "^0.5.3", default-features = false }
+chrono = "^0.4.38"
+config = { version = "^0.14.0", features = ["yaml"] }
+deadpool-redis = "^0.18.0"
+dotenvy = "^0.15.7"
+futures = { version = "^0.3.28", default-features = false }
+hex = { version = "^0.4.3", default-features = false }
+lettre = { version = "^0.11.10", default-features = false, features = [
     "builder",
     "pool",
     "rustls-tls",
     "smtp-transport",
 ] }
 migration = { path = "migration" }
-minijinja = { version = "2.1.0", features = [
+minijinja = { version = "^2.1.0", features = [
     "loader",
 ], default-features = false }
-once_cell = { version = "1.19.0", default-features = false }
-pasetors = { version = "0.6.8", features = [
+once_cell = { version = "^1.19.0", default-features = false }
+pasetors = { version = "^0.6.8", features = [
     "std",
     "v4",
 ], default-features = false }
@@ -45,11 +45,11 @@ sea-orm = { version = "~1.0", features = [
     "with-json",
     "with-uuid",
 ] }
-serde = "1.0.204"
-serde_json = "1.0.120"
-tracing = "0.1.40"
-tracing-appender = "0.2.3"
-tracing-subscriber = { version = "0.3.18", features = [
+serde = "^1.0.204"
+serde_json = "^1.0.120"
+tracing = "^0.1.40"
+tracing-appender = "^0.2.3"
+tracing-subscriber = { version = "^0.3.18", features = [
     "fmt",
     "std",
     "env-filter",
@@ -57,11 +57,11 @@ tracing-subscriber = { version = "0.3.18", features = [
     "json",
     "tracing-log",
 ] }
-uuid = { version = "1.10.0", features = ["v4", "serde"] }
+uuid = { version = "^1.10.0", features = ["v4", "serde"] }
 
 [dev-dependencies]
-actix-http = "3.9.0"
-cargo-watch = "8.5.2"
+actix-http = "3.*"
+cargo-watch = "8.*"
 sea-orm = { version = "~1.0", features = [
     "sqlx-sqlite",
     "runtime-tokio-rustls",
