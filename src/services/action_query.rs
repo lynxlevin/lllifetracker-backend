@@ -1,6 +1,6 @@
 use crate::entities::{action, ambition, ambitions_objectives, objective, objectives_actions};
 use crate::types::{ActionVisible, ActionWithLinksQueryResult, CustomDbErr};
-use sea_orm::{entity::prelude::*, JoinType::LeftJoin, QueryOrder, QuerySelect};
+use sea_orm::{entity::prelude::*, Condition, JoinType::LeftJoin, QueryOrder, QuerySelect};
 
 pub struct ActionQuery;
 
@@ -11,6 +11,7 @@ impl ActionQuery {
     ) -> Result<Vec<ActionVisible>, DbErr> {
         action::Entity::find()
             .filter(action::Column::UserId.eq(user_id))
+            .filter(action::Column::Archived.eq(false))
             .order_by_asc(action::Column::CreatedAt)
             .into_partial_model::<ActionVisible>()
             .all(db)
@@ -23,6 +24,17 @@ impl ActionQuery {
     ) -> Result<Vec<ActionWithLinksQueryResult>, DbErr> {
         action::Entity::find()
             .filter(action::Column::UserId.eq(user_id))
+            .filter(action::Column::Archived.eq(false))
+            .filter(
+                Condition::any()
+                    .add(objective::Column::Archived.eq(false))
+                    .add(objective::Column::Archived.is_null()),
+            )
+            .filter(
+                Condition::any()
+                    .add(ambition::Column::Archived.eq(false))
+                    .add(ambition::Column::Archived.is_null()),
+            )
             .column_as(objective::Column::Id, "objective_id")
             .column_as(objective::Column::Name, "objective_name")
             .column_as(objective::Column::Description, "objective_description")
@@ -60,8 +72,6 @@ impl ActionQuery {
 
 #[cfg(test)]
 mod tests {
-    use sea_orm::Set;
-
     use crate::test_utils;
 
     use super::*;
@@ -71,9 +81,25 @@ mod tests {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
         let (action_0, _) =
-            test_utils::seed::create_action_and_tag(&db, "action_0".to_string(), None, user.id).await?;
-        let (action_1, _) =
-            test_utils::seed::create_action_and_tag(&db, "action_1".to_string(), Some("Action_1".to_string()), user.id).await?;
+            test_utils::seed::create_action_and_tag(&db, "action_0".to_string(), None, user.id)
+                .await?;
+        let (action_1, _) = test_utils::seed::create_action_and_tag(
+            &db,
+            "action_1".to_string(),
+            Some("Action_1".to_string()),
+            user.id,
+        )
+        .await?;
+        let _archived_action = test_utils::seed::create_action_and_tag(
+            &db,
+            "archived_action".to_string(),
+            None,
+            user.id,
+        )
+        .await?
+        .0
+        .archive(&db)
+        .await?;
 
         let res = ActionQuery::find_all_by_user_id(&db, user.id).await?;
 
@@ -111,18 +137,8 @@ mod tests {
         let (ambition_1, objective_1, action_1) =
             test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, false, false)
                 .await?;
-        let _ = objectives_actions::ActiveModel {
-            objective_id: Set(objective_1.id),
-            action_id: Set(action_0.id),
-        }
-        .insert(&db)
-        .await?;
-        let _ = ambitions_objectives::ActiveModel {
-            ambition_id: Set(ambition_1.id),
-            objective_id: Set(objective_0.id),
-        }
-        .insert(&db)
-        .await?;
+        let objective_1 = objective_1.connect_action(&db, action_0.id).await?;
+        let ambition_1 = ambition_1.connect_objective(&db, objective_0.id).await?;
 
         let res = ActionQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
 
@@ -145,6 +161,49 @@ mod tests {
         assert_eq!(res_organized[1], expected[1]);
         assert_eq!(res_organized[2], expected[2]);
         assert_eq!(res_organized[3], expected[3]);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn find_all_with_linked_by_user_id_archived_items_should_not_be_returned(
+    ) -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
+        let (ambition_0, objective_0, action_0) =
+            test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, true, true)
+                .await?;
+        let _archived_action =
+            test_utils::seed::create_action_and_tag(&db, "archived".to_string(), None, user.id)
+                .await?
+                .0
+                .archive(&db)
+                .await?;
+        let _archived_objective =
+            test_utils::seed::create_objective_and_tag(&db, "archived".to_string(), None, user.id)
+                .await?
+                .0
+                .archive(&db)
+                .await?
+                .connect_action(&db, action_0.id)
+                .await?;
+        let _archived_ambition =
+            test_utils::seed::create_ambition_and_tag(&db, "archived".to_string(), None, user.id)
+                .await?
+                .0
+                .archive(&db)
+                .await?
+                .connect_objective(&db, objective_0.id)
+                .await?;
+
+        let res = ActionQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
+
+        assert_eq!(res.len(), 1);
+
+        // NOTE: Check only ids for convenience.
+        let res_organized = vec![(res[0].id, res[0].objective_id, res[0].ambition_id)];
+        let expected = vec![(action_0.id, Some(objective_0.id), Some(ambition_0.id))];
+        assert_eq!(res_organized[0], expected[0]);
 
         Ok(())
     }
