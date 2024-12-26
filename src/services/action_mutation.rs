@@ -78,6 +78,20 @@ impl ActionMutation {
             .await?;
         Ok(())
     }
+
+    pub async fn archive(
+        db: &DbConn,
+        action_id: uuid::Uuid,
+        user_id: uuid::Uuid,
+    ) -> Result<action::Model, DbErr> {
+        let mut action: action::ActiveModel =
+            ActionQuery::find_by_id_and_user_id(db, action_id, user_id)
+                .await?
+                .into();
+        action.archived = Set(true);
+        action.updated_at = Set(Utc::now().into());
+        action.update(db).await
+    }
 }
 
 #[cfg(test)]
@@ -243,6 +257,25 @@ mod tests {
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn archive() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
+        let (action, _) =
+            test_utils::seed::create_action_and_tag(&db, "action".to_string(), None, user.id)
+                .await?;
+
+        ActionMutation::archive(&db, action.id, user.id).await?;
+
+        let action_in_db = action::Entity::find_by_id(action.id)
+            .one(&db)
+            .await?
+            .unwrap();
+        assert!(action_in_db.archived);
 
         Ok(())
     }
