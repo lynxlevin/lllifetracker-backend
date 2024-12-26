@@ -312,7 +312,7 @@ mod tests {
         let body: Vec<ActionVisibleWithLinks> = test::read_body_json(resp).await;
         assert_eq!(body.len(), 1);
 
-        let mut expected_0 = serde_json::json!({
+        let expected = serde_json::json!([{
             "id": action_0.id,
             "name": action_0.name,
             "description": action_0.description,
@@ -336,13 +336,10 @@ mod tests {
                     ],
                 },
             ],
-        });
-        let expected_0_objectives_0 = expected_0["objectives"][0].take();
+        }]);
 
-        let mut body_0 = serde_json::to_value(&body[0]).unwrap();
-        let body_0_objectives_0 = body_0["objectives"][0].take();
-        assert_eq!(expected_0, body_0);
-        assert_eq!(expected_0_objectives_0, body_0_objectives_0);
+        let body = serde_json::to_value(&body).unwrap();
+        assert_eq!(expected, body);
 
         Ok(())
     }
