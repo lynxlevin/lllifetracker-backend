@@ -12,7 +12,10 @@
     "lllifetracker",
     "minijinja",
     "pasetor",
-    "pasetors"
+    "pasetors",
+    "rustls",
+    "serde",
+    "sqlx"
   ],
   "rest-client.followredirect": false
 }
