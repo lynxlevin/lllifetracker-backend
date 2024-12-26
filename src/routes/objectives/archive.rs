@@ -5,7 +5,7 @@ use crate::{
 };
 use actix_web::{
     put,
-    web::{Data, Json, Path, ReqData},
+    web::{Data, Path, ReqData},
     HttpResponse,
 };
 use sea_orm::{DbConn, DbErr};
@@ -15,32 +15,17 @@ struct PathParam {
     objective_id: uuid::Uuid,
 }
 
-#[derive(serde::Deserialize, Debug, serde::Serialize)]
-struct RequestBody {
-    name: String,
-    description: Option<String>,
-}
-
-#[tracing::instrument(name = "Updating an objective", skip(db, user, req, path_param))]
-#[put("/{objective_id}")]
-pub async fn update_objective(
+#[tracing::instrument(name = "Archiving an objective", skip(db, user, path_param))]
+#[put("/{objective_id}/archive")]
+pub async fn archive_objective(
     db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
-    req: Json<RequestBody>,
     path_param: Path<PathParam>,
 ) -> HttpResponse {
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ObjectiveMutation::update(
-                &db,
-                path_param.objective_id,
-                user.id,
-                req.name.clone(),
-                req.description.clone(),
-            )
-            .await
-            {
+            match ObjectiveMutation::archive(&db, path_param.objective_id, user.id).await {
                 Ok(objective) => HttpResponse::Ok().json(ObjectiveVisible {
                     id: objective.id,
                     name: objective.name,
@@ -87,7 +72,12 @@ mod tests {
     async fn init_app(
         db: DbConn,
     ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
-        test::init_service(App::new().service(update_objective).app_data(Data::new(db))).await
+        test::init_service(
+            App::new()
+                .service(archive_objective)
+                .app_data(Data::new(db)),
+        )
+        .await
     }
 
     #[actix_web::test]
@@ -98,15 +88,9 @@ mod tests {
         let (objective, _) =
             test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
                 .await?;
-        let new_name = "objective_after_update".to_string();
-        let new_description = "Objective after update.".to_string();
 
         let req = test::TestRequest::put()
-            .uri(&format!("/{}", objective.id))
-            .set_json(RequestBody {
-                name: new_name.clone(),
-                description: Some(new_description.clone()),
-            })
+            .uri(&format!("/{}/archive", objective.id))
             .to_request();
         req.extensions_mut().insert(user.clone());
 
@@ -115,18 +99,21 @@ mod tests {
 
         let returned_objective: ObjectiveVisible = test::read_body_json(res).await;
         assert_eq!(returned_objective.id, objective.id);
-        assert_eq!(returned_objective.name, new_name.clone());
-        assert_eq!(returned_objective.description, Some(new_description.clone()));
+        assert_eq!(returned_objective.name, objective.name.clone());
+        assert_eq!(
+            returned_objective.description,
+            objective.description.clone()
+        );
         assert_eq!(returned_objective.created_at, objective.created_at);
         assert!(returned_objective.updated_at > objective.updated_at);
 
-        let updated_objective = objective::Entity::find_by_id(objective.id).one(&db).await?.unwrap();
-        assert_eq!(updated_objective.id, objective.id);
-        assert_eq!(updated_objective.name, new_name.clone());
-        assert_eq!(updated_objective.description, Some(new_description.clone()));
-        assert_eq!(updated_objective.archived, objective.archived);
-        assert_eq!(updated_objective.created_at, objective.created_at);
-        assert_eq!(updated_objective.updated_at, returned_objective.updated_at);
+        let archived_objective = objective::Entity::find_by_id(objective.id).one(&db).await?.unwrap();
+        assert_eq!(archived_objective.id, objective.id);
+        assert_eq!(archived_objective.name, objective.name.clone());
+        assert_eq!(archived_objective.description, objective.description.clone());
+        assert_eq!(archived_objective.archived, true);
+        assert_eq!(archived_objective.created_at, objective.created_at);
+        assert_eq!(archived_objective.updated_at, returned_objective.updated_at);
 
         Ok(())
     }
@@ -141,11 +128,7 @@ mod tests {
                 .await?;
 
         let req = test::TestRequest::put()
-            .uri(&format!("/{}", objective.id))
-            .set_json(RequestBody {
-                name: "objective".to_string(),
-                description: None,
-            })
+            .uri(&format!("/{}/archive", objective.id))
             .to_request();
 
         let res = test::call_service(&app, req).await;

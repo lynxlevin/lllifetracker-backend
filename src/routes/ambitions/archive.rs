@@ -99,16 +99,16 @@ mod tests {
         assert_eq!(returned_ambition.created_at, ambition.created_at);
         assert!(returned_ambition.updated_at > ambition.updated_at);
 
-        let updated_ambition = ambition::Entity::find_by_id(ambition.id)
+        let archived_ambition = ambition::Entity::find_by_id(ambition.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(updated_ambition.id, ambition.id);
-        assert_eq!(updated_ambition.name, ambition.name.clone());
-        assert_eq!(updated_ambition.description, ambition.description.clone());
-        assert_eq!(updated_ambition.archived, true);
-        assert_eq!(updated_ambition.created_at, ambition.created_at);
-        assert_eq!(updated_ambition.updated_at, returned_ambition.updated_at);
+        assert_eq!(archived_ambition.id, ambition.id);
+        assert_eq!(archived_ambition.name, ambition.name.clone());
+        assert_eq!(archived_ambition.description, ambition.description.clone());
+        assert_eq!(archived_ambition.archived, true);
+        assert_eq!(archived_ambition.created_at, ambition.created_at);
+        assert_eq!(archived_ambition.updated_at, returned_ambition.updated_at);
 
         Ok(())
     }
