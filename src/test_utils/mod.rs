@@ -5,8 +5,8 @@ use sea_orm::{
     sea_query::TableCreateStatement, ConnectionTrait, Database, DbBackend, DbConn, DbErr, Schema,
 };
 
-pub mod seed;
 pub mod entities;
+pub mod seed;
 
 #[cfg(test)]
 pub async fn init_db() -> Result<DbConn, DbErr> {
