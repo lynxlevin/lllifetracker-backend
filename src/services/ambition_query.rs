@@ -1,6 +1,6 @@
 use crate::entities::{action, ambition, ambitions_objectives, objective, objectives_actions};
 use crate::types::{AmbitionVisible, AmbitionWithLinksQueryResult, CustomDbErr};
-use sea_orm::{entity::prelude::*, JoinType::LeftJoin, QueryOrder, QuerySelect, Condition};
+use sea_orm::{entity::prelude::*, Condition, JoinType::LeftJoin, QueryOrder, QuerySelect};
 
 pub struct AmbitionQuery;
 
@@ -82,20 +82,18 @@ mod tests {
     async fn find_all_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (ambition_0, _) = test_utils::seed::create_ambition_and_tag(
+        let ambition_0 = test_utils::seed::create_ambition(
             &db,
             "ambition_0".to_string(),
             Some("desc_0".to_string()),
             user.id,
         )
         .await?;
-        let (ambition_1, _) =
-            test_utils::seed::create_ambition_and_tag(&db, "ambition_1".to_string(), None, user.id)
-                .await?;
+        let ambition_1 =
+            test_utils::seed::create_ambition(&db, "ambition_1".to_string(), None, user.id).await?;
         let _archived_ambition =
-            test_utils::seed::create_ambition_and_tag(&db, "archived".to_string(), None, user.id)
+            test_utils::seed::create_ambition(&db, "archived".to_string(), None, user.id)
                 .await?
-                .0
                 .archive(&db)
                 .await?;
 
@@ -164,28 +162,26 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn find_all_with_linked_by_user_id_archived_items_should_not_be_returned() -> Result<(), DbErr> {
+    async fn find_all_with_linked_by_user_id_archived_items_should_not_be_returned(
+    ) -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
         let (ambition_0, objective_0, action_0) =
             test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, true, true)
                 .await?;
         let _archived_ambition =
-            test_utils::seed::create_ambition_and_tag(&db, "archived".to_string(), None, user.id)
+            test_utils::seed::create_ambition(&db, "archived".to_string(), None, user.id)
                 .await?
-                .0
                 .archive(&db)
                 .await?;
         let archived_objective =
-            test_utils::seed::create_objective_and_tag(&db, "archived".to_string(), None, user.id)
+            test_utils::seed::create_objective(&db, "archived".to_string(), None, user.id)
                 .await?
-                .0
                 .archive(&db)
                 .await?;
         let archived_action =
-            test_utils::seed::create_action_and_tag(&db, "archived".to_string(), None, user.id)
+            test_utils::seed::create_action(&db, "archived".to_string(), None, user.id)
                 .await?
-                .0
                 .archive(&db)
                 .await?;
         let ambition_0 = ambition_0
@@ -198,12 +194,8 @@ mod tests {
         assert_eq!(res.len(), 1);
 
         // NOTE: Check only ids for convenience.
-        let res_organized = vec![
-            (res[0].id, res[0].objective_id, res[0].action_id),
-        ];
-        let expected = vec![
-            (ambition_0.id, Some(objective_0.id), Some(action_0.id)),
-        ];
+        let res_organized = vec![(res[0].id, res[0].objective_id, res[0].action_id)];
+        let expected = vec![(ambition_0.id, Some(objective_0.id), Some(action_0.id))];
         assert_eq!(res_organized, expected);
 
         Ok(())

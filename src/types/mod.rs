@@ -1,3 +1,4 @@
+mod action_tracks;
 mod actions;
 mod ambitions;
 mod book_excerpts;
@@ -10,6 +11,7 @@ mod tags;
 mod tokens;
 mod users;
 
+pub use action_tracks::{ActionTrackVisible, ActionTrackWithActionName};
 pub use actions::{ActionVisible, ActionVisibleWithLinks, ActionWithLinksQueryResult};
 pub use ambitions::{AmbitionVisible, AmbitionVisibleWithLinks, AmbitionWithLinksQueryResult};
 pub use book_excerpts::{

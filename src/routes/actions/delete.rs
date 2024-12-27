@@ -98,13 +98,8 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (action, _) = test_utils::seed::create_action_and_tag(
-            &db,
-            "action_for_delete_route_unauthorized".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let action =
+            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!("/{}", action.id))

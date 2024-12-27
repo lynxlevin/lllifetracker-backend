@@ -17,6 +17,8 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
+    #[sea_orm(has_many = "super::action_track::Entity")]
+    ActionTrack,
     #[sea_orm(has_many = "super::objectives_actions::Entity")]
     ObjectivesActions,
     #[sea_orm(has_one = "super::tag::Entity")]
@@ -29,6 +31,12 @@ pub enum Relation {
         on_delete = "Cascade"
     )]
     User,
+}
+
+impl Related<super::action_track::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::ActionTrack.def()
+    }
 }
 
 impl Related<super::objectives_actions::Entity> for Entity {

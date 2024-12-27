@@ -1,7 +1,7 @@
 use crate::{
     entities::user as user_entity,
-    services::action_mutation::ActionMutation,
-    types::{self, ActionVisible, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE},
+    services::action_track_mutation::{ActionTrackMutation, UpdateActionTrack},
+    types::{self, ActionTrackVisible, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
     put,
@@ -12,18 +12,19 @@ use sea_orm::{DbConn, DbErr};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
-    action_id: uuid::Uuid,
+    action_track_id: uuid::Uuid,
 }
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {
-    name: String,
-    description: Option<String>,
+    action_id: Option<uuid::Uuid>,
+    started_at: chrono::DateTime<chrono::FixedOffset>,
+    ended_at: Option<chrono::DateTime<chrono::FixedOffset>>,
 }
 
-#[tracing::instrument(name = "Updating an action", skip(db, user, req, path_param))]
-#[put("/{action_id}")]
-pub async fn update_action(
+#[tracing::instrument(name = "Updating an action track", skip(db, user))]
+#[put("/{action_track_id}")]
+pub async fn update_action_track(
     db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<RequestBody>,
@@ -32,27 +33,30 @@ pub async fn update_action(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ActionMutation::update(
+            match ActionTrackMutation::update(
                 &db,
-                path_param.action_id,
-                user.id,
-                req.name.clone(),
-                req.description.clone(),
+                path_param.action_track_id,
+                UpdateActionTrack {
+                    started_at: req.started_at,
+                    ended_at: req.ended_at,
+                    action_id: req.action_id,
+                    user_id: user.id,
+                },
             )
             .await
             {
-                Ok(action) => HttpResponse::Ok().json(ActionVisible {
-                    id: action.id,
-                    name: action.name,
-                    description: action.description,
-                    created_at: action.created_at,
-                    updated_at: action.updated_at,
+                Ok(action_track) => HttpResponse::Ok().json(ActionTrackVisible {
+                    id: action_track.id,
+                    action_id: action_track.action_id,
+                    started_at: action_track.started_at,
+                    ended_at: action_track.ended_at,
+                    duration: action_track.duration,
                 }),
                 Err(e) => match e {
                     DbErr::Custom(message) => match message.parse::<CustomDbErr>().unwrap() {
                         CustomDbErr::NotFound => {
                             HttpResponse::NotFound().json(types::ErrorResponse {
-                                error: "Action with this id was not found".to_string(),
+                                error: "ActionTrack with this id was not found".to_string(),
                             })
                         }
                     },
@@ -78,16 +82,22 @@ mod tests {
         dev::{Service, ServiceResponse},
         http, test, App, HttpMessage,
     };
+    use chrono::Utc;
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use crate::{entities::action, test_utils};
+    use crate::{entities::action_track, test_utils};
 
     use super::*;
 
     async fn init_app(
         db: DbConn,
     ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
-        test::init_service(App::new().service(update_action).app_data(Data::new(db))).await
+        test::init_service(
+            App::new()
+                .service(update_action_track)
+                .app_data(Data::new(db)),
+        )
+        .await
     }
 
     #[actix_web::test]
@@ -97,14 +107,17 @@ mod tests {
         let user = test_utils::seed::create_active_user(&db).await?;
         let action =
             test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
-        let new_name = "action_after_update".to_string();
-        let new_description = "Action after update.".to_string();
+        let action_track = test_utils::seed::create_action_track(&db, None, None, user.id).await?;
+        let ended_at: chrono::DateTime<chrono::FixedOffset> = Utc::now().into();
+        let duration = 180;
+        let started_at = ended_at - chrono::TimeDelta::seconds(duration.into());
 
         let req = test::TestRequest::put()
-            .uri(&format!("/{}", action.id))
+            .uri(&format!("/{}", action_track.id))
             .set_json(RequestBody {
-                name: new_name.clone(),
-                description: Some(new_description.clone()),
+                action_id: Some(action.id),
+                started_at,
+                ended_at: Some(ended_at),
             })
             .to_request();
         req.extensions_mut().insert(user.clone());
@@ -112,22 +125,22 @@ mod tests {
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::OK);
 
-        let returned_action: ActionVisible = test::read_body_json(res).await;
-        assert_eq!(returned_action.id, action.id);
-        assert_eq!(returned_action.name, new_name.clone());
-        assert_eq!(returned_action.description, Some(new_description.clone()));
-        assert_eq!(returned_action.created_at, action.created_at);
-        assert!(returned_action.updated_at > action.updated_at);
+        let returned_action_track: ActionTrackVisible = test::read_body_json(res).await;
+        assert_eq!(returned_action_track.id, action_track.id);
+        assert_eq!(returned_action_track.action_id, Some(action.id));
+        assert_eq!(returned_action_track.started_at, started_at);
+        assert_eq!(returned_action_track.ended_at, Some(ended_at));
+        assert_eq!(returned_action_track.duration, Some(duration));
 
-        let updated_action = action::Entity::find_by_id(action.id)
+        let updated_action_track = action_track::Entity::find_by_id(action_track.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(updated_action.name, new_name.clone());
-        assert_eq!(updated_action.description, Some(new_description.clone()));
-        assert_eq!(updated_action.user_id, user.id);
-        assert_eq!(updated_action.created_at, returned_action.created_at);
-        assert_eq!(updated_action.updated_at, returned_action.updated_at);
+        assert_eq!(updated_action_track.action_id, Some(action.id));
+        assert_eq!(updated_action_track.user_id, user.id);
+        assert_eq!(updated_action_track.started_at, started_at);
+        assert_eq!(updated_action_track.ended_at, Some(ended_at));
+        assert_eq!(updated_action_track.duration, Some(duration));
 
         Ok(())
     }
@@ -137,14 +150,14 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let action =
-            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
+        let action_track = test_utils::seed::create_action_track(&db, None, None, user.id).await?;
 
         let req = test::TestRequest::put()
-            .uri(&format!("/{}", action.id))
+            .uri(&format!("/{}", action_track.id))
             .set_json(RequestBody {
-                name: "action_after_update_route".to_string(),
-                description: None,
+                action_id: None,
+                started_at: Utc::now().into(),
+                ended_at: None,
             })
             .to_request();
 

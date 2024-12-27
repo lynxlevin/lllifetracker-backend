@@ -3,29 +3,27 @@
 use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
-#[sea_orm(table_name = "record")]
+#[sea_orm(table_name = "action_track")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
     pub user_id: Uuid,
-    pub tag_id: Option<Uuid>,
-    pub action_name: Option<String>,
+    pub action_id: Option<Uuid>,
     pub started_at: DateTimeWithTimeZone,
     pub ended_at: Option<DateTimeWithTimeZone>,
-    pub created_at: DateTimeWithTimeZone,
-    pub updated_at: DateTimeWithTimeZone,
+    pub duration: Option<i64>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::tag::Entity",
-        from = "Column::TagId",
-        to = "super::tag::Column::Id",
+        belongs_to = "super::action::Entity",
+        from = "Column::ActionId",
+        to = "super::action::Column::Id",
         on_update = "NoAction",
-        on_delete = "SetNull"
+        on_delete = "Cascade"
     )]
-    Tag,
+    Action,
     #[sea_orm(
         belongs_to = "super::user::Entity",
         from = "Column::UserId",
@@ -36,9 +34,9 @@ pub enum Relation {
     User,
 }
 
-impl Related<super::tag::Entity> for Entity {
+impl Related<super::action::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::Tag.def()
+        Relation::Action.def()
     }
 }
 

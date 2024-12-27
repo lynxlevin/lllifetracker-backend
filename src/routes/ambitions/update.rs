@@ -95,13 +95,8 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (ambition, _) = test_utils::seed::create_ambition_and_tag(
-            &db,
-            "ambition_for_update_route".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let ambition =
+            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
         let new_name = "ambition_after_update_route".to_string();
         let new_description = Some("edited_description".to_string());
 
@@ -142,9 +137,9 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (ambition, _) = test_utils::seed::create_ambition_and_tag(
+        let ambition = test_utils::seed::create_ambition(
             &db,
-            "ambition_for_update_route".to_string(),
+            "ambition".to_string(),
             Some("Original description".to_string()),
             user.id,
         )
@@ -188,13 +183,8 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (ambition, _) = test_utils::seed::create_ambition_and_tag(
-            &db,
-            "ambition_for_update_route_unauthorized".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let ambition =
+            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
 
         let req = test::TestRequest::put()
             .uri(&format!("/{}", ambition.id))

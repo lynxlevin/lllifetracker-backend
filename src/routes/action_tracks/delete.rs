@@ -1,6 +1,6 @@
 use crate::{
     entities::user as user_entity,
-    services::ambition_mutation::AmbitionMutation,
+    services::action_track_mutation::ActionTrackMutation,
     types::{self, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
@@ -12,12 +12,12 @@ use sea_orm::DbConn;
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
-    ambition_id: uuid::Uuid,
+    action_track_id: uuid::Uuid,
 }
 
-#[tracing::instrument(name = "Deleting an ambition", skip(db, user, path_param))]
-#[delete("/{ambition_id}")]
-pub async fn delete_ambition(
+#[tracing::instrument(name = "Deleting an action track", skip(db, user))]
+#[delete("/{action_track_id}")]
+pub async fn delete_action_track(
     db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
     path_param: Path<PathParam>,
@@ -25,7 +25,7 @@ pub async fn delete_ambition(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match AmbitionMutation::delete(&db, path_param.ambition_id, user.id).await {
+            match ActionTrackMutation::delete(&db, path_param.action_track_id, user.id).await {
                 Ok(_) => HttpResponse::NoContent().into(),
                 Err(e) => {
                     tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
@@ -51,7 +51,7 @@ mod tests {
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
     use crate::{
-        entities::{ambition, tag},
+        entities::{action, action_track},
         test_utils,
     };
 
@@ -60,7 +60,12 @@ mod tests {
     async fn init_app(
         db: DbConn,
     ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
-        test::init_service(App::new().service(delete_ambition).app_data(Data::new(db))).await
+        test::init_service(
+            App::new()
+                .service(delete_action_track)
+                .app_data(Data::new(db)),
+        )
+        .await
     }
 
     #[actix_web::test]
@@ -68,23 +73,26 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (ambition, tag) =
-            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
-                .await?;
+        let action =
+            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
+        let action_track =
+            test_utils::seed::create_action_track(&db, None, Some(action.id), user.id).await?;
 
         let req = test::TestRequest::delete()
-            .uri(&format!("/{}", ambition.id))
+            .uri(&format!("/{}", action_track.id))
             .to_request();
         req.extensions_mut().insert(user.clone());
 
-        let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status(), http::StatusCode::NO_CONTENT);
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::NO_CONTENT);
 
-        let ambition_in_db = ambition::Entity::find_by_id(ambition.id).one(&db).await?;
-        assert!(ambition_in_db.is_none());
+        let action_track_in_db = action_track::Entity::find_by_id(action_track.id)
+            .one(&db)
+            .await?;
+        assert!(action_track_in_db.is_none());
 
-        let tag_in_db = tag::Entity::find_by_id(tag.id).one(&db).await?;
-        assert!(tag_in_db.is_none());
+        let action_in_db = action::Entity::find_by_id(action.id).one(&db).await?;
+        assert!(action_in_db.is_some());
 
         Ok(())
     }
@@ -94,15 +102,14 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let ambition =
-            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
+        let action_track = test_utils::seed::create_action_track(&db, None, None, user.id).await?;
 
         let req = test::TestRequest::delete()
-            .uri(&format!("/{}", ambition.id))
+            .uri(&format!("/{}", action_track.id))
             .to_request();
 
-        let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status(), http::StatusCode::UNAUTHORIZED);
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::UNAUTHORIZED);
 
         Ok(())
     }

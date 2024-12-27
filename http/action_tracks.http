@@ -1,0 +1,48 @@
+# ActionTracks
+# Turn on debug to use these.
+###
+# @name login
+POST {{endpoint}}/api/users/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "password"
+}
+
+###
+# @name list
+GET {{endpoint}}/api/action_tracks
+
+###
+# @name list_active_only
+GET {{endpoint}}/api/action_tracks?active_only=true
+
+@action_track_id=dd0f57b0-b9c0-40bd-8180-b6553de785d5
+@action_id="4ea4010c-05bd-4607-9199-8d07f8ba7d03"
+
+###
+# @name create
+POST {{endpoint}}/api/action_tracks
+Content-Type: application/json
+
+{
+  "started_at": "2024-12-27T12:51:04.000Z",
+  "action_id": null
+}
+
+###
+# @name update
+PUT {{endpoint}}/api/action_tracks/{{action_track_id}}
+Content-Type: application/json
+
+{
+  "started_at": "2024-12-27T12:50:04.000Z",
+  "ended_at": "2024-12-27T12:55:25.700Z",
+  "action_id": {{action_id}}
+}
+
+###
+# @name delete
+DELETE {{endpoint}}/api/action_tracks/{{action_track_id}}
+

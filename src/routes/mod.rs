@@ -7,6 +7,7 @@ mod mission_memos;
 mod objectives;
 mod tags;
 mod users;
+mod action_tracks;
 
 pub use actions::action_routes;
 pub use ambitions::ambition_routes;
@@ -17,3 +18,4 @@ pub use mission_memos::mission_memo_routes;
 pub use objectives::objective_routes;
 pub use tags::tag_routes;
 pub use users::auth_routes;
+pub use action_tracks::action_track_routes;

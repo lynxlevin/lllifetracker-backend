@@ -68,13 +68,9 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (objective, tag) = test_utils::seed::create_objective_and_tag(
-            &db,
-            "objective_for_delete_route".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let (objective, tag) =
+            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
+                .await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!("/{}", objective.id))
@@ -98,13 +94,8 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (objective, _) = test_utils::seed::create_objective_and_tag(
-            &db,
-            "objective_for_delete_route_unauthorized".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let objective =
+            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!("/{}", objective.id))

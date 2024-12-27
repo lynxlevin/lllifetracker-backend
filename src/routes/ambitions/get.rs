@@ -79,10 +79,10 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (ambition, _) = test_utils::seed::create_ambition_and_tag(
+        let ambition = test_utils::seed::create_ambition(
             &db,
-            "ambition_for_get".to_string(),
-            Some("ambition_for_get".to_string()),
+            "ambition".to_string(),
+            Some("ambition".to_string()),
             user.id,
         )
         .await?;
@@ -110,13 +110,8 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (ambition, _) = test_utils::seed::create_ambition_and_tag(
-            &db,
-            "ambition_for_get".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let ambition =
+            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
 
         let req = test::TestRequest::get()
             .uri(&format!("/{}", ambition.id))

@@ -80,26 +80,20 @@ mod tests {
     async fn find_all_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (action_0, _) =
-            test_utils::seed::create_action_and_tag(&db, "action_0".to_string(), None, user.id)
-                .await?;
-        let (action_1, _) = test_utils::seed::create_action_and_tag(
+        let action_0 =
+            test_utils::seed::create_action(&db, "action_0".to_string(), None, user.id).await?;
+        let action_1 = test_utils::seed::create_action(
             &db,
             "action_1".to_string(),
             Some("Action_1".to_string()),
             user.id,
         )
         .await?;
-        let _archived_action = test_utils::seed::create_action_and_tag(
-            &db,
-            "archived_action".to_string(),
-            None,
-            user.id,
-        )
-        .await?
-        .0
-        .archive(&db)
-        .await?;
+        let _archived_action =
+            test_utils::seed::create_action(&db, "archived_action".to_string(), None, user.id)
+                .await?
+                .archive(&db)
+                .await?;
 
         let res = ActionQuery::find_all_by_user_id(&db, user.id).await?;
 
@@ -174,23 +168,20 @@ mod tests {
             test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, true, true)
                 .await?;
         let _archived_action =
-            test_utils::seed::create_action_and_tag(&db, "archived".to_string(), None, user.id)
+            test_utils::seed::create_action(&db, "archived".to_string(), None, user.id)
                 .await?
-                .0
                 .archive(&db)
                 .await?;
         let _archived_objective =
-            test_utils::seed::create_objective_and_tag(&db, "archived".to_string(), None, user.id)
+            test_utils::seed::create_objective(&db, "archived".to_string(), None, user.id)
                 .await?
-                .0
                 .archive(&db)
                 .await?
                 .connect_action(&db, action_0.id)
                 .await?;
         let _archived_ambition =
-            test_utils::seed::create_ambition_and_tag(&db, "archived".to_string(), None, user.id)
+            test_utils::seed::create_ambition(&db, "archived".to_string(), None, user.id)
                 .await?
-                .0
                 .archive(&db)
                 .await?
                 .connect_objective(&db, objective_0.id)

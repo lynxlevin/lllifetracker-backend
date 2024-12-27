@@ -95,9 +95,8 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (objective, _) =
-            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
-                .await?;
+        let objective =
+            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
         let new_name = "objective_after_update".to_string();
         let new_description = "Objective after update.".to_string();
 
@@ -116,11 +115,17 @@ mod tests {
         let returned_objective: ObjectiveVisible = test::read_body_json(res).await;
         assert_eq!(returned_objective.id, objective.id);
         assert_eq!(returned_objective.name, new_name.clone());
-        assert_eq!(returned_objective.description, Some(new_description.clone()));
+        assert_eq!(
+            returned_objective.description,
+            Some(new_description.clone())
+        );
         assert_eq!(returned_objective.created_at, objective.created_at);
         assert!(returned_objective.updated_at > objective.updated_at);
 
-        let updated_objective = objective::Entity::find_by_id(objective.id).one(&db).await?.unwrap();
+        let updated_objective = objective::Entity::find_by_id(objective.id)
+            .one(&db)
+            .await?
+            .unwrap();
         assert_eq!(updated_objective.id, objective.id);
         assert_eq!(updated_objective.name, new_name.clone());
         assert_eq!(updated_objective.description, Some(new_description.clone()));
@@ -136,9 +141,8 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (objective, _) =
-            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
-                .await?;
+        let objective =
+            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
 
         let req = test::TestRequest::put()
             .uri(&format!("/{}", objective.id))

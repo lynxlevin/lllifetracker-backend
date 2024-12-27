@@ -85,9 +85,8 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (objective, _) =
-            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
-                .await?;
+        let objective =
+            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
 
         let req = test::TestRequest::put()
             .uri(&format!("/{}/archive", objective.id))
@@ -107,10 +106,16 @@ mod tests {
         assert_eq!(returned_objective.created_at, objective.created_at);
         assert!(returned_objective.updated_at > objective.updated_at);
 
-        let archived_objective = objective::Entity::find_by_id(objective.id).one(&db).await?.unwrap();
+        let archived_objective = objective::Entity::find_by_id(objective.id)
+            .one(&db)
+            .await?
+            .unwrap();
         assert_eq!(archived_objective.id, objective.id);
         assert_eq!(archived_objective.name, objective.name.clone());
-        assert_eq!(archived_objective.description, objective.description.clone());
+        assert_eq!(
+            archived_objective.description,
+            objective.description.clone()
+        );
         assert_eq!(archived_objective.archived, true);
         assert_eq!(archived_objective.created_at, objective.created_at);
         assert_eq!(archived_objective.updated_at, returned_objective.updated_at);
@@ -123,9 +128,8 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (objective, _) =
-            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
-                .await?;
+        let objective =
+            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
 
         let req = test::TestRequest::put()
             .uri(&format!("/{}/archive", objective.id))

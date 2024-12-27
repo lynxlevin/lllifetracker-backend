@@ -49,8 +49,6 @@ pub enum Relation {
         on_delete = "Cascade"
     )]
     Objective,
-    #[sea_orm(has_many = "super::record::Entity")]
-    Record,
     #[sea_orm(
         belongs_to = "super::user::Entity",
         from = "Column::UserId",
@@ -94,12 +92,6 @@ impl Related<super::mission_memos_tags::Entity> for Entity {
 impl Related<super::objective::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Objective.def()
-    }
-}
-
-impl Related<super::record::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Record.def()
     }
 }
 

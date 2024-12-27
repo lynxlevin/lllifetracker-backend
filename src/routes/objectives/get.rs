@@ -80,10 +80,10 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (objective, _) = test_utils::seed::create_objective_and_tag(
+        let objective = test_utils::seed::create_objective(
             &db,
-            "objective_for_get".to_string(),
-            Some("Objective for get.".to_string()),
+            "objective".to_string(),
+            Some("Objective".to_string()),
             user.id,
         )
         .await?;
@@ -111,13 +111,8 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (objective, _) = test_utils::seed::create_objective_and_tag(
-            &db,
-            "objective_for_get".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let objective =
+            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
 
         let req = test::TestRequest::get()
             .uri(&format!("/{}", objective.id))
