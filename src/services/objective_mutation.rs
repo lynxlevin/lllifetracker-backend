@@ -29,6 +29,7 @@ impl ObjectiveMutation {
                     user_id: Set(form_data.user_id),
                     name: Set(form_data.name.to_owned()),
                     description: Set(form_data.description.to_owned()),
+                    archived: Set(false),
                     created_at: Set(now.into()),
                     updated_at: Set(now.into()),
                 }
@@ -78,6 +79,20 @@ impl ObjectiveMutation {
             .delete(db)
             .await?;
         Ok(())
+    }
+
+    pub async fn archive(
+        db: &DbConn,
+        objective_id: uuid::Uuid,
+        user_id: uuid::Uuid,
+    ) -> Result<objective::Model, DbErr> {
+        let mut objective: objective::ActiveModel =
+            ObjectiveQuery::find_by_id_and_user_id(db, objective_id, user_id)
+                .await?
+                .into();
+        objective.archived = Set(true);
+        objective.updated_at = Set(Utc::now().into());
+        objective.update(db).await
     }
 
     pub async fn connect_action(
@@ -139,6 +154,7 @@ mod tests {
             .unwrap();
         assert_eq!(returned_objective.name, name.clone());
         assert_eq!(returned_objective.description, Some(description.clone()));
+        assert_eq!(returned_objective.archived, false);
         assert_eq!(returned_objective.user_id, user.id);
 
         let created_objective = objective::Entity::find_by_id(returned_objective.id)
@@ -150,6 +166,7 @@ mod tests {
             created_objective.description,
             returned_objective.description
         );
+        assert_eq!(created_objective.archived, false);
         assert_eq!(created_objective.user_id, returned_objective.user_id);
         assert_eq!(created_objective.created_at, returned_objective.created_at);
         assert_eq!(created_objective.updated_at, returned_objective.updated_at);
@@ -180,20 +197,32 @@ mod tests {
         let new_name = "objective_after_update".to_string();
         let new_description = "Objective after update.".to_string();
 
-        let returned_objective =
-            ObjectiveMutation::update(&db, objective.id, user.id, new_name.clone(), Some(new_description.clone())).await?;
+        let returned_objective = ObjectiveMutation::update(
+            &db,
+            objective.id,
+            user.id,
+            new_name.clone(),
+            Some(new_description.clone()),
+        )
+        .await?;
         assert_eq!(returned_objective.id, objective.id);
         assert_eq!(returned_objective.name, new_name.clone());
-        assert_eq!(returned_objective.description, Some(new_description.clone()));
+        assert_eq!(
+            returned_objective.description,
+            Some(new_description.clone())
+        );
+        assert_eq!(returned_objective.archived, objective.archived);
         assert_eq!(returned_objective.user_id, user.id);
         assert_eq!(returned_objective.created_at, objective.created_at);
         assert!(returned_objective.updated_at > objective.updated_at);
 
         let updated_objective = objective::Entity::find_by_id(objective.id)
             .one(&db)
-            .await?.unwrap();
+            .await?
+            .unwrap();
         assert_eq!(updated_objective.name, new_name.clone());
         assert_eq!(updated_objective.description, Some(new_description.clone()));
+        assert_eq!(updated_objective.archived, objective.archived);
         assert_eq!(updated_objective.user_id, user.id);
         assert_eq!(updated_objective.created_at, objective.created_at);
         assert_eq!(updated_objective.updated_at, returned_objective.updated_at);
@@ -214,10 +243,15 @@ mod tests {
         .await?;
         let new_name = "objective_after_update_unauthorized".to_string();
 
-        let error =
-            ObjectiveMutation::update(&db, objective.id, uuid::Uuid::new_v4(), new_name.clone(), None)
-                .await
-                .unwrap_err();
+        let error = ObjectiveMutation::update(
+            &db,
+            objective.id,
+            uuid::Uuid::new_v4(),
+            new_name.clone(),
+            None,
+        )
+        .await
+        .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
 
         Ok(())
@@ -259,6 +293,59 @@ mod tests {
         .await?;
 
         let error = ObjectiveMutation::delete(&db, objective.id, uuid::Uuid::new_v4())
+            .await
+            .unwrap_err();
+        assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn archive() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
+        let (objective, _) =
+            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
+                .await?;
+
+        let returned_objective = ObjectiveMutation::archive(&db, objective.id, user.id).await?;
+        assert_eq!(returned_objective.id, objective.id);
+        assert_eq!(returned_objective.name, objective.name.clone());
+        assert_eq!(
+            returned_objective.description,
+            objective.description.clone()
+        );
+        assert_eq!(returned_objective.archived, true);
+        assert_eq!(returned_objective.user_id, user.id);
+        assert_eq!(returned_objective.created_at, objective.created_at);
+        assert!(returned_objective.updated_at > objective.updated_at);
+
+        let archived_objective = objective::Entity::find_by_id(objective.id)
+            .one(&db)
+            .await?
+            .unwrap();
+        assert_eq!(archived_objective.name, objective.name.clone());
+        assert_eq!(
+            archived_objective.description,
+            objective.description.clone()
+        );
+        assert_eq!(archived_objective.archived, true);
+        assert_eq!(archived_objective.user_id, user.id);
+        assert_eq!(archived_objective.created_at, objective.created_at);
+        assert_eq!(archived_objective.updated_at, returned_objective.updated_at);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn archive_unauthorized() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
+        let (objective, _) =
+            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
+                .await?;
+
+        let error = ObjectiveMutation::archive(&db, objective.id, uuid::Uuid::new_v4())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));

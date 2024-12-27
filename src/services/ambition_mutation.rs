@@ -28,6 +28,7 @@ impl AmbitionMutation {
                     id: Set(ambition_id),
                     user_id: Set(form_data.user_id),
                     name: Set(form_data.name.to_owned()),
+                    archived: Set(false),
                     description: Set(form_data.description),
                     created_at: Set(now.into()),
                     updated_at: Set(now.into()),
@@ -78,6 +79,20 @@ impl AmbitionMutation {
             .delete(db)
             .await?;
         Ok(())
+    }
+
+    pub async fn archive(
+        db: &DbConn,
+        ambition_id: uuid::Uuid,
+        user_id: uuid::Uuid,
+    ) -> Result<ambition::Model, DbErr> {
+        let mut ambition: ambition::ActiveModel =
+            AmbitionQuery::find_by_id_and_user_id(db, ambition_id, user_id)
+                .await?
+                .into();
+        ambition.archived = Set(true);
+        ambition.updated_at = Set(Utc::now().into());
+        ambition.update(db).await
     }
 
     pub async fn connect_objective(
@@ -140,17 +155,19 @@ mod tests {
             .unwrap();
         assert_eq!(returned_ambition.name, name);
         assert_eq!(returned_ambition.description, description);
+        assert_eq!(returned_ambition.archived, false);
         assert_eq!(returned_ambition.user_id, user.id);
 
         let created_ambition = ambition::Entity::find_by_id(returned_ambition.id)
-            .filter(ambition::Column::Name.eq(name))
-            .filter(ambition::Column::Description.eq(description))
-            .filter(ambition::Column::UserId.eq(user.id))
-            .filter(ambition::Column::CreatedAt.eq(returned_ambition.created_at))
-            .filter(ambition::Column::UpdatedAt.eq(returned_ambition.updated_at))
             .one(&db)
-            .await?;
-        assert!(created_ambition.is_some());
+            .await?
+            .unwrap();
+        assert_eq!(created_ambition.name, returned_ambition.name);
+        assert_eq!(created_ambition.description, returned_ambition.description);
+        assert_eq!(created_ambition.archived, false);
+        assert_eq!(created_ambition.user_id, returned_ambition.user_id);
+        assert_eq!(created_ambition.created_at, returned_ambition.created_at);
+        assert_eq!(created_ambition.updated_at, returned_ambition.updated_at);
 
         let created_tag = tag::Entity::find()
             .filter(tag::Column::UserId.eq(user.id))
@@ -189,19 +206,21 @@ mod tests {
         assert_eq!(returned_ambition.id, ambition.id);
         assert_eq!(returned_ambition.name, new_name);
         assert_eq!(returned_ambition.description, new_description);
+        assert_eq!(returned_ambition.archived, ambition.archived);
         assert_eq!(returned_ambition.user_id, user.id);
         assert_eq!(returned_ambition.created_at, ambition.created_at);
         assert!(returned_ambition.updated_at > ambition.updated_at);
 
         let updated_ambition = ambition::Entity::find_by_id(returned_ambition.id)
-            .filter(ambition::Column::Name.eq(new_name))
-            .filter(ambition::Column::Description.eq(new_description))
-            .filter(ambition::Column::UserId.eq(user.id))
-            .filter(ambition::Column::CreatedAt.eq(returned_ambition.created_at))
-            .filter(ambition::Column::UpdatedAt.eq(returned_ambition.updated_at))
             .one(&db)
-            .await?;
-        assert!(updated_ambition.is_some());
+            .await?
+            .unwrap();
+        assert_eq!(updated_ambition.name, returned_ambition.name);
+        assert_eq!(updated_ambition.description, returned_ambition.description);
+        assert_eq!(updated_ambition.archived, returned_ambition.archived);
+        assert_eq!(updated_ambition.user_id, returned_ambition.user_id);
+        assert_eq!(updated_ambition.created_at, returned_ambition.created_at);
+        assert_eq!(updated_ambition.updated_at, returned_ambition.updated_at);
 
         Ok(())
     }
@@ -270,6 +289,53 @@ mod tests {
         .await?;
 
         let error = AmbitionMutation::delete(&db, ambition.id, uuid::Uuid::new_v4())
+            .await
+            .unwrap_err();
+        assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn archive() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
+        let (ambition, _) =
+            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
+                .await?;
+
+        let returned_ambition = AmbitionMutation::archive(&db, ambition.id, user.id).await?;
+        assert_eq!(returned_ambition.id, ambition.id);
+        assert_eq!(returned_ambition.name, ambition.name.clone());
+        assert_eq!(returned_ambition.description, ambition.description.clone());
+        assert_eq!(returned_ambition.archived, true);
+        assert_eq!(returned_ambition.user_id, user.id);
+        assert_eq!(returned_ambition.created_at, ambition.created_at);
+        assert!(returned_ambition.updated_at > ambition.updated_at);
+
+        let updated_ambition = ambition::Entity::find_by_id(returned_ambition.id)
+            .one(&db)
+            .await?
+            .unwrap();
+        assert_eq!(updated_ambition.name, returned_ambition.name);
+        assert_eq!(updated_ambition.description, returned_ambition.description);
+        assert_eq!(updated_ambition.archived, true);
+        assert_eq!(updated_ambition.user_id, returned_ambition.user_id);
+        assert_eq!(updated_ambition.created_at, returned_ambition.created_at);
+        assert_eq!(updated_ambition.updated_at, returned_ambition.updated_at);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn archive_unauthorized() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
+        let (ambition, _) =
+            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
+                .await?;
+
+        let error = AmbitionMutation::archive(&db, ambition.id, uuid::Uuid::new_v4())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));

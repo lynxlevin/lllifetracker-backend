@@ -16,6 +16,7 @@ mod m20241218_000001_create_mission_memos_table;
 mod m20241218_000002_create_mission_memos_tags_table;
 mod m20241222_000001_create_book_excerpts_table;
 mod m20241222_000002_create_book_excerpts_tags_table;
+mod m20241226_000001_add_archived_to_ambition_objective_action_tables;
 
 
 pub struct Migrator;
@@ -40,6 +41,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20241218_000002_create_mission_memos_tags_table::Migration),
             Box::new(m20241222_000001_create_book_excerpts_table::Migration),
             Box::new(m20241222_000002_create_book_excerpts_tags_table::Migration),
+            Box::new(m20241226_000001_add_archived_to_ambition_objective_action_tables::Migration),
         ]
     }
 }

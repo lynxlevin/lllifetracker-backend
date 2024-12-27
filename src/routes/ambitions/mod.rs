@@ -1,3 +1,4 @@
+mod archive;
 mod connect;
 mod create;
 mod delete;
@@ -16,6 +17,7 @@ pub fn ambition_routes(cfg: &mut ServiceConfig) {
             .service(create::create_ambition)
             .service(update::update_ambition)
             .service(delete::delete_ambition)
+            .service(archive::archive_ambition)
             .service(connect::connect_objective)
             .service(disconnect::disconnect_objective),
         // MYMEMO: Can restrict AuthenticateUser this way.

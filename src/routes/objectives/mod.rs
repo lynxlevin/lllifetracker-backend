@@ -1,3 +1,4 @@
+mod archive;
 mod connect;
 mod create;
 mod delete;
@@ -16,6 +17,7 @@ pub fn objective_routes(cfg: &mut ServiceConfig) {
             .service(create::create_objective)
             .service(update::update_objective)
             .service(delete::delete_objective)
+            .service(archive::archive_objective)
             .service(connect::connect_action)
             .service(disconnect::disconnect_action),
         // MYMEMO: Can restrict AuthenticateUser this way.
