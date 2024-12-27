@@ -133,7 +133,10 @@ impl AmbitionMutation {
 
 #[cfg(test)]
 mod tests {
-    use crate::{test_utils, types::CustomDbErr};
+    use crate::{
+        test_utils::{self, factory},
+        types::CustomDbErr,
+    };
 
     use super::*;
 
@@ -185,8 +188,8 @@ mod tests {
     async fn update() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let ambition =
-            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
+        let ambition = factory::ambition(user.id).insert(&db).await?;
+
         let new_name = "Test AmbitionMutation::update_after".to_string();
         let new_description = Some("After update.".to_string());
 
@@ -224,8 +227,8 @@ mod tests {
     async fn update_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let ambition =
-            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
+        let ambition = factory::ambition(user.id).insert(&db).await?;
+
         let new_name = "Test AmbitionMutation::update_after".to_string();
         let new_description = Some("After update.".to_string());
 
@@ -247,9 +250,7 @@ mod tests {
     async fn delete() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (ambition, tag) =
-            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
-                .await?;
+        let (ambition, tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
 
         AmbitionMutation::delete(&db, ambition.id, user.id).await?;
 
@@ -266,8 +267,7 @@ mod tests {
     async fn delete_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let ambition =
-            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
+        let ambition = factory::ambition(user.id).insert(&db).await?;
 
         let error = AmbitionMutation::delete(&db, ambition.id, uuid::Uuid::new_v4())
             .await
@@ -281,8 +281,7 @@ mod tests {
     async fn archive() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let ambition =
-            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
+        let ambition = factory::ambition(user.id).insert(&db).await?;
 
         let returned_ambition = AmbitionMutation::archive(&db, ambition.id, user.id).await?;
         assert_eq!(returned_ambition.id, ambition.id);
@@ -311,8 +310,7 @@ mod tests {
     async fn archive_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let ambition =
-            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
+        let ambition = factory::ambition(user.id).insert(&db).await?;
 
         let error = AmbitionMutation::archive(&db, ambition.id, uuid::Uuid::new_v4())
             .await
@@ -326,10 +324,9 @@ mod tests {
     async fn connect_objective() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let ambition =
-            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
+        let ambition = factory::ambition(user.id).insert(&db).await?;
         let objective =
-            test_utils::seed::create_objective(&db, "ambition".to_string(), None, user.id).await?;
+            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
 
         AmbitionMutation::connect_objective(&db, ambition.id, objective.id).await?;
 
@@ -347,12 +344,9 @@ mod tests {
     async fn disconnect_objective() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let ambition =
-            test_utils::seed::create_ambition(&db, "ambitionive".to_string(), None, user.id)
-                .await?;
+        let ambition = factory::ambition(user.id).insert(&db).await?;
         let objective =
-            test_utils::seed::create_objective(&db, "ambitionive".to_string(), None, user.id)
-                .await?;
+            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
         let _connection = ambitions_objectives::ActiveModel {
             ambition_id: Set(ambition.id),
             objective_id: Set(objective.id),

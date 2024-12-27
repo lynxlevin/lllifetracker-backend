@@ -146,7 +146,7 @@ mod tests {
     use chrono::Datelike;
     use sea_orm::DbErr;
 
-    use crate::test_utils;
+    use crate::test_utils::{self, factory};
     use crate::types::CustomDbErr;
 
     use super::*;
@@ -155,10 +155,15 @@ mod tests {
     async fn create() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (_, tag_0) =
-            test_utils::seed::create_action_and_tag(&db, "action_0".to_string(), None, user.id).await?;
-        let (_, tag_1) =
-            test_utils::seed::create_action_and_tag(&db, "action_1".to_string(), None, user.id).await?;
+        let (_, tag_0) = factory::action(user.id)
+            .name("action_0".to_string())
+            .insert_with_tag(&db)
+            .await?;
+        let (_, tag_1) = factory::action(user.id)
+            .name("action_1".to_string())
+            .insert_with_tag(&db)
+            .await?;
+
         let memo_title = "New Memo".to_string();
         let memo_text = "This is a new memo for testing create method.".to_string();
         let today = chrono::Utc::now().date_naive();
@@ -179,7 +184,8 @@ mod tests {
 
         let created_memo = memo::Entity::find_by_id(returned_memo.id)
             .one(&db)
-            .await?.unwrap();
+            .await?
+            .unwrap();
         assert_eq!(created_memo.title, memo_title.clone());
         assert_eq!(created_memo.text, memo_text.clone());
         assert_eq!(created_memo.date, today);
@@ -227,9 +233,7 @@ mod tests {
         assert_eq!(returned_memo.created_at, memo.created_at);
         assert!(returned_memo.updated_at > memo.updated_at);
 
-        let updated_memo = memo::Entity::find_by_id(memo.id)
-            .one(&db)
-            .await?.unwrap();
+        let updated_memo = memo::Entity::find_by_id(memo.id).one(&db).await?.unwrap();
         assert_eq!(updated_memo.title, form.title.clone().unwrap());
         assert_eq!(updated_memo.text, memo.text);
         assert_eq!(updated_memo.date, memo.date);
@@ -267,9 +271,7 @@ mod tests {
         assert_eq!(returned_memo.created_at, memo.created_at);
         assert!(returned_memo.updated_at > memo.updated_at);
 
-        let updated_memo = memo::Entity::find_by_id(memo.id)
-            .one(&db)
-            .await?.unwrap();
+        let updated_memo = memo::Entity::find_by_id(memo.id).one(&db).await?.unwrap();
         assert_eq!(updated_memo.title, memo.title);
         assert_eq!(updated_memo.text, form.text.clone().unwrap());
         assert_eq!(updated_memo.date, memo.date);
@@ -307,9 +309,7 @@ mod tests {
         assert_eq!(returned_memo.created_at, memo.created_at);
         assert!(returned_memo.updated_at > memo.updated_at);
 
-        let updated_memo = memo::Entity::find_by_id(memo.id)
-            .one(&db)
-            .await?.unwrap();
+        let updated_memo = memo::Entity::find_by_id(memo.id).one(&db).await?.unwrap();
         assert_eq!(updated_memo.title, memo.title);
         assert_eq!(updated_memo.text, memo.text);
         assert_eq!(updated_memo.date, form.date.clone().unwrap());
@@ -326,9 +326,7 @@ mod tests {
         let user = test_utils::seed::create_active_user(&db).await?;
         let memo =
             test_utils::seed::create_memo(&db, "Memo without tags".to_string(), user.id).await?;
-        let (_, ambition_tag) =
-            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
-                .await?;
+        let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
 
         let form = UpdateMemo {
             id: memo.id,
@@ -350,9 +348,7 @@ mod tests {
         assert_eq!(returned_memo.created_at, memo.created_at);
         assert!(returned_memo.updated_at > memo.updated_at);
 
-        let updated_memo = memo::Entity::find_by_id(memo.id)
-            .one(&db)
-            .await?.unwrap();
+        let updated_memo = memo::Entity::find_by_id(memo.id).one(&db).await?.unwrap();
         assert_eq!(updated_memo.title, memo.title);
         assert_eq!(updated_memo.text, memo.text);
         assert_eq!(updated_memo.date, memo.date);
@@ -378,9 +374,7 @@ mod tests {
         let user = test_utils::seed::create_active_user(&db).await?;
         let memo =
             test_utils::seed::create_memo(&db, "Memo without tags".to_string(), user.id).await?;
-        let (_, ambition_tag) =
-            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
-                .await?;
+        let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
         memos_tags::ActiveModel {
             memo_id: Set(memo.id),
             tag_id: Set(ambition_tag.id),
@@ -408,9 +402,7 @@ mod tests {
         assert_eq!(returned_memo.created_at, memo.created_at);
         assert!(returned_memo.updated_at > memo.updated_at);
 
-        let updated_memo = memo::Entity::find_by_id(memo.id)
-            .one(&db)
-            .await?.unwrap();
+        let updated_memo = memo::Entity::find_by_id(memo.id).one(&db).await?.unwrap();
         assert_eq!(updated_memo.title, memo.title);
         assert_eq!(updated_memo.text, memo.text);
         assert_eq!(updated_memo.date, memo.date);
@@ -460,9 +452,7 @@ mod tests {
         let user = test_utils::seed::create_active_user(&db).await?;
         let memo =
             test_utils::seed::create_memo(&db, "Memo to delete.".to_string(), user.id).await?;
-        let (_, ambition_tag) =
-            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
-                .await?;
+        let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
         memos_tags::ActiveModel {
             memo_id: Set(memo.id),
             tag_id: Set(ambition_tag.id),

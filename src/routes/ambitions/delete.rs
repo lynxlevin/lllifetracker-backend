@@ -52,7 +52,7 @@ mod tests {
 
     use crate::{
         entities::{ambition, tag},
-        test_utils,
+        test_utils::{self, factory},
     };
 
     use super::*;
@@ -68,9 +68,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (ambition, tag) =
-            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
-                .await?;
+        let (ambition, tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!("/{}", ambition.id))
@@ -94,8 +92,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let ambition =
-            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
+        let ambition = factory::ambition(user.id).insert(&db).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!("/{}", ambition.id))

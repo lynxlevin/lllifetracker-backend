@@ -130,7 +130,7 @@ mod tests {
     use sea_orm::{entity::prelude::*, DbErr};
     use types::{AmbitionVisible, AmbitionVisibleWithLinks};
 
-    use crate::test_utils;
+    use crate::test_utils::{self, factory};
 
     use super::*;
 
@@ -150,20 +150,19 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let ambition_0 =
-            test_utils::seed::create_ambition(&db, "ambition_0".to_string(), None, user.id).await?;
-        let ambition_1 = test_utils::seed::create_ambition(
-            &db,
-            "ambition1".to_string(),
-            Some("ambition1".to_string()),
-            user.id,
-        )
-        .await?;
-        let _archived_ambition =
-            test_utils::seed::create_ambition(&db, "archived".to_string(), None, user.id)
-                .await?
-                .archive(&db)
-                .await?;
+        let ambition_0 = factory::ambition(user.id)
+            .name("ambition_0".to_string())
+            .insert(&db)
+            .await?;
+        let ambition_1 = factory::ambition(user.id)
+            .name("ambition1".to_string())
+            .description(Some("ambition1".to_string()))
+            .insert(&db)
+            .await?;
+        let _archived_ambition = factory::ambition(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
 
         let req = test::TestRequest::get().uri("/").to_request();
         req.extensions_mut().insert(user.clone());
@@ -292,21 +291,16 @@ mod tests {
         let (ambition_0, objective_0, action_0) =
             test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, true, true)
                 .await?;
-        let _archived_ambition =
-            test_utils::seed::create_ambition(&db, "archived".to_string(), None, user.id)
-                .await?
-                .archive(&db)
-                .await?;
+        let _archived_ambition = factory::ambition(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
         let archived_objective =
             test_utils::seed::create_objective(&db, "archived".to_string(), None, user.id)
                 .await?
                 .archive(&db)
                 .await?;
-        let archived_action =
-            test_utils::seed::create_action(&db, "archived".to_string(), None, user.id)
-                .await?
-                .archive(&db)
-                .await?;
+        let archived_action = factory::action(user.id).archived(true).insert(&db).await?;
         let ambition_0 = ambition_0
             .connect_objective(&db, archived_objective.id)
             .await?;

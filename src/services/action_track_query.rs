@@ -39,7 +39,7 @@ impl ActionTrackQuery {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_utils;
+    use crate::test_utils::{self, factory};
 
     use super::*;
 
@@ -47,8 +47,7 @@ mod tests {
     async fn find_all_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let action =
-            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
+        let action = factory::action(user.id).insert(&db).await?;
         let action_track_0 =
             test_utils::seed::create_action_track(&db, Some(120), None, user.id).await?;
         let action_track_1 =
@@ -86,8 +85,7 @@ mod tests {
     async fn find_all_by_user_id_active_only() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let action =
-            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
+        let action = factory::action(user.id).insert(&db).await?;
         let _inactive_action_track =
             test_utils::seed::create_action_track(&db, Some(120), None, user.id).await?;
         let active_action_track =

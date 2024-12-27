@@ -52,7 +52,7 @@ mod tests {
 
     use crate::{
         entities::{mission_memo, mission_memos_tags},
-        test_utils,
+        test_utils::{self, factory},
     };
 
     use super::*;
@@ -79,9 +79,7 @@ mod tests {
             user.id,
         )
         .await?;
-        let (_, ambition_tag) =
-            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
-                .await?;
+        let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
         mission_memos_tags::ActiveModel {
             mission_memo_id: Set(mission_memo.id),
             tag_id: Set(ambition_tag.id),

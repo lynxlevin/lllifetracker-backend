@@ -1,8 +1,8 @@
 use crate::entities::{action, ambition, memo, memos_tags, objective, tag};
 use crate::types::{CustomDbErr, MemoWithTagQueryResult};
-use sea_orm::entity::prelude::*;
 use migration::NullOrdering::Last;
-use sea_orm::{QueryOrder, QuerySelect, JoinType::LeftJoin, Order::Asc};
+use sea_orm::entity::prelude::*;
+use sea_orm::{JoinType::LeftJoin, Order::Asc, QueryOrder, QuerySelect};
 
 pub struct MemoQuery;
 
@@ -47,7 +47,7 @@ impl MemoQuery {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_utils;
+    use crate::test_utils::{self, factory};
     use sea_orm::ActiveValue::Set;
 
     use super::*;
@@ -58,23 +58,32 @@ mod tests {
         let user = test_utils::seed::create_active_user(&db).await?;
         let memo_0 = test_utils::seed::create_memo(&db, "memo_0".to_string(), user.id).await?;
         let memo_1 = test_utils::seed::create_memo(&db, "memo_1".to_string(), user.id).await?;
-        let (action, action_tag) = test_utils::seed::create_action_and_tag(&db, "action".to_string(), None, user.id).await?;
-        let (ambition, ambition_tag) = test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id).await?;
-        let (objective, objective_tag) = test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id).await?;
+        let (action, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
+        let (ambition, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
+        let (objective, objective_tag) =
+            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
+                .await?;
         memos_tags::ActiveModel {
             memo_id: Set(memo_0.id),
             tag_id: Set(ambition_tag.id),
-        }.insert(&db).await?;
+        }
+        .insert(&db)
+        .await?;
         memos_tags::ActiveModel {
             memo_id: Set(memo_1.id),
             tag_id: Set(objective_tag.id),
-        }.insert(&db).await?;
+        }
+        .insert(&db)
+        .await?;
         memos_tags::ActiveModel {
             memo_id: Set(memo_1.id),
             tag_id: Set(action_tag.id),
-        }.insert(&db).await?;
+        }
+        .insert(&db)
+        .await?;
 
-        let res: Vec<MemoWithTagQueryResult> = MemoQuery::find_all_with_tags_by_user_id(&db, user.id).await?;
+        let res: Vec<MemoWithTagQueryResult> =
+            MemoQuery::find_all_with_tags_by_user_id(&db, user.id).await?;
 
         let expected = vec![
             MemoWithTagQueryResult {

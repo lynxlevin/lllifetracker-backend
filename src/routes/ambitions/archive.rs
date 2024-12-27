@@ -65,7 +65,7 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use crate::{entities::ambition, test_utils};
+    use crate::{entities::ambition, test_utils::{self, factory}};
 
     use super::*;
 
@@ -80,8 +80,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let ambition =
-            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
+        let ambition = factory::ambition(user.id).insert(&db).await?;
 
         let req = test::TestRequest::put()
             .uri(&format!("/{}/archive", ambition.id))
@@ -117,8 +116,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let ambition =
-            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
+        let ambition = factory::ambition(user.id).insert(&db).await?;
 
         let req = test::TestRequest::put()
             .uri(&format!("/{}/archive", ambition.id))

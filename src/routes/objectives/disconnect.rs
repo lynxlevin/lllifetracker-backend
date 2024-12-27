@@ -106,7 +106,7 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, ActiveValue::Set, DbErr, EntityTrait};
 
-    use crate::{entities::objectives_actions, test_utils};
+    use crate::{entities::objectives_actions, test_utils::{self, factory}};
 
     use super::*;
 
@@ -128,8 +128,7 @@ mod tests {
         let user = test_utils::seed::create_active_user(&db).await?;
         let objective =
             test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
-        let action =
-            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
+        let action = factory::action(user.id).insert(&db).await?;
         let _connection = objectives_actions::ActiveModel {
             objective_id: Set(objective.id),
             action_id: Set(action.id),
@@ -167,8 +166,7 @@ mod tests {
         let objective =
             test_utils::seed::create_objective(&db, "objective".to_string(), None, another_user.id)
                 .await?;
-        let action =
-            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
+        let action = factory::action(user.id).insert(&db).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!(
@@ -192,9 +190,7 @@ mod tests {
         let another_user = test_utils::seed::create_active_user(&db).await?;
         let objective =
             test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
-        let action =
-            test_utils::seed::create_action(&db, "action".to_string(), None, another_user.id)
-                .await?;
+        let action = factory::action(another_user.id).insert(&db).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!(
@@ -217,8 +213,7 @@ mod tests {
         let user = test_utils::seed::create_active_user(&db).await?;
         let objective =
             test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
-        let action =
-            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
+        let action = factory::action(user.id).insert(&db).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!(

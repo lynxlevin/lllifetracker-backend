@@ -69,7 +69,7 @@ mod tests {
 
     use crate::{
         entities::action_track,
-        test_utils,
+        test_utils::{self, factory},
     };
 
     use super::*;
@@ -89,7 +89,7 @@ mod tests {
     async fn happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let action = test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
+        let action = factory::action(user.id).insert(&db).await?;
         let app = init_app(db.clone()).await;
 
         let started_at: chrono::DateTime<chrono::FixedOffset> = Utc::now().into();

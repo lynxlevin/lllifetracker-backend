@@ -7,6 +7,7 @@ use sea_orm::{
 
 pub mod entities;
 pub mod seed;
+pub mod factory;
 
 #[cfg(test)]
 pub async fn init_db() -> Result<DbConn, DbErr> {

@@ -48,11 +48,11 @@ mod tests {
         dev::{Service, ServiceResponse},
         http, test, App, HttpMessage,
     };
-    use sea_orm::{entity::prelude::*, DbErr, EntityTrait, ActiveValue::Set};
+    use sea_orm::{entity::prelude::*, ActiveValue::Set, DbErr, EntityTrait};
 
     use crate::{
         entities::{memo, memos_tags},
-        test_utils,
+        test_utils::{self, factory},
     };
 
     use super::*;
@@ -70,9 +70,7 @@ mod tests {
         let user = test_utils::seed::create_active_user(&db).await?;
         let memo =
             test_utils::seed::create_memo(&db, "Memo to delete.".to_string(), user.id).await?;
-        let (_, ambition_tag) =
-            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
-                .await?;
+        let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
         memos_tags::ActiveModel {
             memo_id: Set(memo.id),
             tag_id: Set(ambition_tag.id),

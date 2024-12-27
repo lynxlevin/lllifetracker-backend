@@ -53,7 +53,7 @@ impl MissionMemoQuery {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_utils;
+    use crate::test_utils::{self, factory};
     use chrono::Utc;
     use sea_orm::ActiveValue::Set;
 
@@ -89,12 +89,8 @@ mod tests {
             .into();
         accomplished_mission_memo.accomplished_at = Set(Some(Utc::now().into()));
         let accomplished_mission_memo = accomplished_mission_memo.update(&db).await?;
-        let (action, action_tag) =
-            test_utils::seed::create_action_and_tag(&db, "action".to_string(), None, user.id)
-                .await?;
-        let (ambition, ambition_tag) =
-            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
-                .await?;
+        let (action, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
+        let (ambition, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
         let (objective, objective_tag) =
             test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
                 .await?;

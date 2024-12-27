@@ -108,7 +108,7 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, ActiveValue::Set, DbErr, EntityTrait};
 
-    use crate::{entities::ambitions_objectives, test_utils};
+    use crate::{entities::ambitions_objectives, test_utils::{self, factory}};
 
     use super::*;
 
@@ -128,8 +128,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let ambition =
-            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
+        let ambition = factory::ambition(user.id).insert(&db).await?;
         let objective =
             test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
         let _connection = ambitions_objectives::ActiveModel {
@@ -166,9 +165,7 @@ mod tests {
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
         let another_user = test_utils::seed::create_active_user(&db).await?;
-        let ambition =
-            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, another_user.id)
-                .await?;
+        let ambition = factory::ambition(another_user.id).insert(&db).await?;
         let objective =
             test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
 
@@ -192,8 +189,7 @@ mod tests {
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
         let another_user = test_utils::seed::create_active_user(&db).await?;
-        let ambition =
-            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
+        let ambition = factory::ambition(user.id).insert(&db).await?;
         let objective =
             test_utils::seed::create_objective(&db, "objective".to_string(), None, another_user.id)
                 .await?;
@@ -217,8 +213,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let ambition =
-            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
+        let ambition = factory::ambition(user.id).insert(&db).await?;
         let objective =
             test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
 

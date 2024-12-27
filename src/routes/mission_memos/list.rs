@@ -107,7 +107,10 @@ mod tests {
     use sea_orm::{entity::prelude::*, DbErr, Set};
     use types::TagType;
 
-    use crate::{entities::mission_memos_tags, test_utils};
+    use crate::{
+        entities::mission_memos_tags,
+        test_utils::{self, factory},
+    };
 
     use super::*;
 
@@ -133,12 +136,8 @@ mod tests {
         let mission_memo_1 =
             test_utils::seed::create_mission_memo(&db, "mission_memo_1".to_string(), user.id)
                 .await?;
-        let (action, action_tag) =
-            test_utils::seed::create_action_and_tag(&db, "action".to_string(), None, user.id)
-                .await?;
-        let (ambition, ambition_tag) =
-            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
-                .await?;
+        let (action, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
+        let (ambition, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
         let (objective, objective_tag) =
             test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
                 .await?;

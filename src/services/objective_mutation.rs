@@ -133,7 +133,10 @@ impl ObjectiveMutation {
 
 #[cfg(test)]
 mod tests {
-    use crate::{test_utils, types::CustomDbErr};
+    use crate::{
+        test_utils::{self, factory},
+        types::CustomDbErr,
+    };
 
     use super::*;
 
@@ -338,8 +341,7 @@ mod tests {
         let user = test_utils::seed::create_active_user(&db).await?;
         let objective =
             test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
-        let action =
-            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
+        let action = factory::action(user.id).insert(&db).await?;
 
         ObjectiveMutation::connect_action(&db, objective.id, action.id).await?;
 
@@ -357,16 +359,12 @@ mod tests {
     async fn disconnect_action() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
         let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
-        let action =
-            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
-        let _connection = objectives_actions::ActiveModel {
-            objective_id: Set(objective.id),
-            action_id: Set(action.id),
-        }
-        .insert(&db)
-        .await?;
+            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id)
+                .await?
+                .connect_action(&db, action.id)
+                .await?;
 
         ObjectiveMutation::disconnect_action(&db, objective.id, action.id).await?;
 

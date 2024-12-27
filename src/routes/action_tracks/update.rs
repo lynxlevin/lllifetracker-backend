@@ -85,7 +85,7 @@ mod tests {
     use chrono::Utc;
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use crate::{entities::action_track, test_utils};
+    use crate::{entities::action_track, test_utils::{self, factory}};
 
     use super::*;
 
@@ -105,8 +105,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let action =
-            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
+        let action = factory::action(user.id).insert(&db).await?;
         let action_track = test_utils::seed::create_action_track(&db, None, None, user.id).await?;
         let ended_at: chrono::DateTime<chrono::FixedOffset> = Utc::now().into();
         let duration = 180;

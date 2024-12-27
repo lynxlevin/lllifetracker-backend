@@ -78,7 +78,7 @@ impl ObjectiveQuery {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_utils;
+    use crate::test_utils::{self, factory};
 
     use super::*;
 
@@ -183,18 +183,13 @@ mod tests {
                 .await?
                 .archive(&db)
                 .await?;
-        let _archived_ambition =
-            test_utils::seed::create_ambition(&db, "archived".to_string(), None, user.id)
-                .await?
-                .archive(&db)
-                .await?
-                .connect_objective(&db, objective_0.id)
-                .await?;
-        let archived_action =
-            test_utils::seed::create_action(&db, "archived".to_string(), None, user.id)
-                .await?
-                .archive(&db)
-                .await?;
+        let _archived_ambition = factory::ambition(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?
+            .connect_objective(&db, objective_0.id)
+            .await?;
+        let archived_action = factory::action(user.id).archived(true).insert(&db).await?;
         let objective_0 = objective_0.connect_action(&db, archived_action.id).await?;
 
         let res = ObjectiveQuery::find_all_with_linked_by_user_id(&db, user.id).await?;

@@ -152,7 +152,7 @@ mod tests {
     use chrono::Datelike;
     use sea_orm::DbErr;
 
-    use crate::test_utils;
+    use crate::test_utils::{self, factory};
     use crate::types::CustomDbErr;
 
     use super::*;
@@ -183,12 +183,15 @@ mod tests {
     async fn create() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (_, tag_0) =
-            test_utils::seed::create_action_and_tag(&db, "action_0".to_string(), None, user.id)
-                .await?;
-        let (_, tag_1) =
-            test_utils::seed::create_action_and_tag(&db, "action_1".to_string(), None, user.id)
-                .await?;
+        let (_, tag_0) = factory::action(user.id)
+            .name("action_0".to_string())
+            .insert_with_tag(&db)
+            .await?;
+        let (_, tag_1) = factory::action(user.id)
+            .name("action_1".to_string())
+            .insert_with_tag(&db)
+            .await?;
+
         let book_excerpt_title = "New Book Excerpt".to_string();
         let page_number = 13;
         let book_excerpt_text = "This is a new Book Excerpt for testing create method.".to_string();
@@ -401,9 +404,7 @@ mod tests {
             user.id,
         )
         .await?;
-        let (_, ambition_tag) =
-            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
-                .await?;
+        let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
 
         let form = UpdateBookExcerpt {
             id: book_excerpt.id,
@@ -450,9 +451,7 @@ mod tests {
             user.id,
         )
         .await?;
-        let (_, ambition_tag) =
-            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
-                .await?;
+        let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
         book_excerpts_tags::ActiveModel {
             book_excerpt_id: Set(book_excerpt.id),
             tag_id: Set(ambition_tag.id),
@@ -536,9 +535,7 @@ mod tests {
             user.id,
         )
         .await?;
-        let (_, ambition_tag) =
-            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
-                .await?;
+        let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
         book_excerpts_tags::ActiveModel {
             book_excerpt_id: Set(book_excerpt.id),
             tag_id: Set(ambition_tag.id),

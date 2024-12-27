@@ -72,7 +72,7 @@ impl ActionQuery {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_utils;
+    use crate::test_utils::{self, factory};
 
     use super::*;
 
@@ -80,20 +80,16 @@ mod tests {
     async fn find_all_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let action_0 =
-            test_utils::seed::create_action(&db, "action_0".to_string(), None, user.id).await?;
-        let action_1 = test_utils::seed::create_action(
-            &db,
-            "action_1".to_string(),
-            Some("Action_1".to_string()),
-            user.id,
-        )
-        .await?;
-        let _archived_action =
-            test_utils::seed::create_action(&db, "archived_action".to_string(), None, user.id)
-                .await?
-                .archive(&db)
-                .await?;
+        let action_0 = factory::action(user.id)
+            .name("action_0".to_string())
+            .insert(&db)
+            .await?;
+        let action_1 = factory::action(user.id)
+            .name("action_1".to_string())
+            .description(Some("Action_1".to_string()))
+            .insert(&db)
+            .await?;
+        let _archived_action = factory::action(user.id).archived(true).insert(&db).await?;
 
         let res = ActionQuery::find_all_by_user_id(&db, user.id).await?;
 
@@ -167,11 +163,7 @@ mod tests {
         let (ambition_0, objective_0, action_0) =
             test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, true, true)
                 .await?;
-        let _archived_action =
-            test_utils::seed::create_action(&db, "archived".to_string(), None, user.id)
-                .await?
-                .archive(&db)
-                .await?;
+        let _archived_action = factory::action(user.id).archived(true).insert(&db).await?;
         let _archived_objective =
             test_utils::seed::create_objective(&db, "archived".to_string(), None, user.id)
                 .await?
@@ -179,13 +171,12 @@ mod tests {
                 .await?
                 .connect_action(&db, action_0.id)
                 .await?;
-        let _archived_ambition =
-            test_utils::seed::create_ambition(&db, "archived".to_string(), None, user.id)
-                .await?
-                .archive(&db)
-                .await?
-                .connect_objective(&db, objective_0.id)
-                .await?;
+        let _archived_ambition = factory::ambition(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?
+            .connect_objective(&db, objective_0.id)
+            .await?;
 
         let res = ActionQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
 

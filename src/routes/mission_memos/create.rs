@@ -75,7 +75,7 @@ mod tests {
 
     use crate::{
         entities::{mission_memo, mission_memos_tags},
-        test_utils,
+        test_utils::{self, factory},
     };
 
     use super::*;
@@ -101,12 +101,8 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (_, tag_0) =
-            test_utils::seed::create_action_and_tag(&db, "action_0".to_string(), None, user.id)
-                .await?;
-        let (_, tag_1) =
-            test_utils::seed::create_action_and_tag(&db, "action_1".to_string(), None, user.id)
-                .await?;
+        let (_, tag_0) = factory::action(user.id).name("action_0".to_string()).insert_with_tag(&db).await?;
+        let (_, tag_1) = factory::action(user.id).name("action_1".to_string()).insert_with_tag(&db).await?;
 
         let mission_memo_title = "New Mission Memo".to_string();
         let mission_memo_text = "This is a new mission memo for testing create method.".to_string();

@@ -77,7 +77,7 @@ mod tests {
     use sea_orm::DbErr;
 
     use crate::entities::action;
-    use crate::test_utils;
+    use crate::test_utils::{self, factory};
     use crate::types::CustomDbErr;
 
     use super::*;
@@ -86,8 +86,7 @@ mod tests {
     async fn create() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let action =
-            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
+        let action = factory::action(user.id).insert(&db).await?;
 
         let form_data = NewActionTrack {
             started_at: Utc::now().into(),
@@ -121,8 +120,7 @@ mod tests {
     async fn update() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let action =
-            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
+        let action = factory::action(user.id).insert(&db).await?;
         let action_track = test_utils::seed::create_action_track(&db, None, None, user.id).await?;
         let ended_at: chrono::DateTime<chrono::FixedOffset> = Utc::now().into();
         let duration = 180;
@@ -186,8 +184,7 @@ mod tests {
     async fn delete() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let action =
-            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
+        let action = factory::action(user.id).insert(&db).await?;
         let action_track =
             test_utils::seed::create_action_track(&db, None, Some(action.id), user.id).await?;
 

@@ -26,7 +26,13 @@ pub async fn list_action_tracks(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ActionTrackQuery::find_all_by_user_id(&db, user.id, query.active_only.unwrap_or(false)).await {
+            match ActionTrackQuery::find_all_by_user_id(
+                &db,
+                user.id,
+                query.active_only.unwrap_or(false),
+            )
+            .await
+            {
                 Ok(action_tracks) => HttpResponse::Ok().json(action_tracks),
                 Err(e) => {
                     tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
@@ -52,7 +58,7 @@ mod tests {
     use sea_orm::{entity::prelude::*, DbErr};
     use types::ActionTrackWithActionName;
 
-    use crate::test_utils;
+    use crate::test_utils::{self, factory};
 
     use super::*;
 
@@ -72,8 +78,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let action =
-            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
+        let action = factory::action(user.id).insert(&db).await?;
         let action_track_0 =
             test_utils::seed::create_action_track(&db, Some(120), None, user.id).await?;
         let action_track_1 =
@@ -119,14 +124,15 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let action =
-            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
+        let action = factory::action(user.id).insert(&db).await?;
         let _inactive_action_track =
             test_utils::seed::create_action_track(&db, Some(120), None, user.id).await?;
         let active_action_track =
             test_utils::seed::create_action_track(&db, None, Some(action.id), user.id).await?;
 
-        let req = test::TestRequest::get().uri("/?active_only=true").to_request();
+        let req = test::TestRequest::get()
+            .uri("/?active_only=true")
+            .to_request();
         req.extensions_mut().insert(user.clone());
 
         let resp = test::call_service(&app, req).await;
