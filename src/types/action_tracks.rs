@@ -10,7 +10,7 @@ pub struct ActionTrackVisible {
     pub action_id: Option<uuid::Uuid>,
     pub started_at: chrono::DateTime<chrono::FixedOffset>,
     pub ended_at: Option<chrono::DateTime<chrono::FixedOffset>>,
-    pub duration: Option<i32>,
+    pub duration: Option<i64>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, PartialEq, FromQueryResult, Debug)]
@@ -20,5 +20,5 @@ pub struct ActionTrackWithActionName {
     pub action_name: Option<String>,
     pub started_at: chrono::DateTime<chrono::FixedOffset>,
     pub ended_at: Option<chrono::DateTime<chrono::FixedOffset>>,
-    pub duration: Option<i32>,
+    pub duration: Option<i64>,
 }

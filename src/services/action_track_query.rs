@@ -24,17 +24,17 @@ impl ActionTrackQuery {
             .await
     }
 
-    // pub async fn find_by_id_and_user_id(
-    //     db: &DbConn,
-    //     action_track_id: uuid::Uuid,
-    //     user_id: uuid::Uuid,
-    // ) -> Result<action_track::Model, DbErr> {
-    //     action_track::Entity::find_by_id(action_track_id)
-    //         .filter(action_track::Column::UserId.eq(user_id))
-    //         .one(db)
-    //         .await?
-    //         .ok_or(DbErr::Custom(CustomDbErr::NotFound.to_string()))
-    // }
+    pub async fn find_by_id_and_user_id(
+        db: &DbConn,
+        action_track_id: uuid::Uuid,
+        user_id: uuid::Uuid,
+    ) -> Result<action_track::Model, DbErr> {
+        action_track::Entity::find_by_id(action_track_id)
+            .filter(action_track::Column::UserId.eq(user_id))
+            .one(db)
+            .await?
+            .ok_or(DbErr::Custom(CustomDbErr::NotFound.to_string()))
+    }
 }
 
 #[cfg(test)]

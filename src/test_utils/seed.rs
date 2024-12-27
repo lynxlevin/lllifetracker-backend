@@ -242,7 +242,7 @@ pub async fn create_book_excerpt(
 #[cfg(test)]
 pub async fn create_action_track(
     db: &DbConn,
-    duration: Option<i32>,
+    duration: Option<i64>,
     action_id: Option<uuid::Uuid>,
     user_id: uuid::Uuid,
 ) -> Result<action_track::Model, DbErr> {

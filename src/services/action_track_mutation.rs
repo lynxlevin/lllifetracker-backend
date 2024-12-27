@@ -1,9 +1,19 @@
 use crate::entities::action_track;
 use sea_orm::{entity::prelude::*, ActiveValue::NotSet, Set};
 
+use super::action_track_query::ActionTrackQuery;
+
 #[derive(serde::Deserialize, Debug, serde::Serialize, Clone)]
 pub struct NewActionTrack {
     pub started_at: chrono::DateTime<chrono::FixedOffset>,
+    pub action_id: Option<uuid::Uuid>,
+    pub user_id: uuid::Uuid,
+}
+
+#[derive(serde::Deserialize, Debug, serde::Serialize, Clone)]
+pub struct UpdateActionTrack {
+    pub started_at: chrono::DateTime<chrono::FixedOffset>,
+    pub ended_at: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub action_id: Option<uuid::Uuid>,
     pub user_id: uuid::Uuid,
 }
@@ -27,22 +37,24 @@ impl ActionTrackMutation {
         .await
     }
 
-    // pub async fn update(
-    //     db: &DbConn,
-    //     action_id: uuid::Uuid,
-    //     user_id: uuid::Uuid,
-    //     name: String,
-    //     description: Option<String>,
-    // ) -> Result<action::Model, DbErr> {
-    //     let mut action: action::ActiveModel =
-    //         ActionQuery::find_by_id_and_user_id(db, action_id, user_id)
-    //             .await?
-    //             .into();
-    //     action.name = Set(name);
-    //     action.description = Set(description);
-    //     action.updated_at = Set(Utc::now().into());
-    //     action.update(db).await
-    // }
+    pub async fn update(
+        db: &DbConn,
+        action_track_id: uuid::Uuid,
+        form_data: UpdateActionTrack,
+    ) -> Result<action_track::Model, DbErr> {
+        let mut action_track: action_track::ActiveModel =
+            ActionTrackQuery::find_by_id_and_user_id(db, action_track_id, form_data.user_id)
+                .await?
+                .into();
+        action_track.action_id = Set(form_data.action_id);
+        action_track.started_at = Set(form_data.started_at);
+        action_track.ended_at = Set(form_data.ended_at);
+        match form_data.ended_at {
+            Some(ended_at) => action_track.duration = Set(Some((ended_at - form_data.started_at).num_seconds())),
+            None => action_track.duration = Set(None),
+        }
+        action_track.update(db).await
+    }
 
     // pub async fn delete(
     //     db: &DbConn,
@@ -102,72 +114,70 @@ mod tests {
         Ok(())
     }
 
-    // #[actix_web::test]
-    // async fn update() -> Result<(), DbErr> {
-    //     let db = test_utils::init_db().await?;
-    //     let user = test_utils::seed::create_active_user(&db).await?;
-    //     let (action, _) = test_utils::seed::create_action_and_tag(
-    //         &db,
-    //         "action_before_update".to_string(),
-    //         None,
-    //         user.id,
-    //     )
-    //     .await?;
-    //     let new_name = "action_after_update".to_string();
-    //     let new_description = "Action after update.".to_string();
+    #[actix_web::test]
+    async fn update() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
+        let action =
+            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
+        let action_track = test_utils::seed::create_action_track(&db, None, None, user.id).await?;
+        let ended_at: chrono::DateTime<chrono::FixedOffset> = Utc::now().into();
+        let duration = 180;
+        let started_at = ended_at - chrono::TimeDelta::seconds(duration.into());
 
-    //     let returned_action = ActionMutation::update(
-    //         &db,
-    //         action.id,
-    //         user.id,
-    //         new_name.clone(),
-    //         Some(new_description.clone()),
-    //     )
-    //     .await?;
-    //     assert_eq!(returned_action.id, action.id);
-    //     assert_eq!(returned_action.name, new_name.clone());
-    //     assert_eq!(returned_action.description, Some(new_description.clone()));
-    //     assert_eq!(returned_action.archived, action.archived);
-    //     assert_eq!(returned_action.user_id, user.id);
-    //     assert_eq!(returned_action.created_at, action.created_at);
-    //     assert!(returned_action.updated_at > action.updated_at);
+        let returned_action = ActionTrackMutation::update(
+            &db,
+            action_track.id,
+            UpdateActionTrack {
+                user_id: user.id,
+                action_id: Some(action.id),
+                started_at: started_at,
+                ended_at: Some(ended_at),
+            }
+        )
+        .await?;
+        assert_eq!(returned_action.id, action_track.id);
+        assert_eq!(returned_action.action_id, Some(action.id));
+        assert_eq!(returned_action.user_id, user.id);
+        assert_eq!(returned_action.started_at, started_at);
+        assert_eq!(returned_action.ended_at, Some(ended_at));
+        assert_eq!(returned_action.duration, Some(duration));
 
-    //     let updated_action = action::Entity::find_by_id(action.id)
-    //         .one(&db)
-    //         .await?
-    //         .unwrap();
-    //     assert_eq!(updated_action.id, action.id);
-    //     assert_eq!(updated_action.name, new_name.clone());
-    //     assert_eq!(updated_action.description, Some(new_description.clone()));
-    //     assert_eq!(updated_action.archived, action.archived);
-    //     assert_eq!(updated_action.user_id, user.id);
-    //     assert_eq!(updated_action.created_at, action.created_at);
-    //     assert_eq!(updated_action.updated_at, returned_action.updated_at);
+        let updated_action = action_track::Entity::find_by_id(action_track.id)
+            .one(&db)
+            .await?
+            .unwrap();
+        assert_eq!(updated_action.action_id, Some(action.id));
+        assert_eq!(updated_action.user_id, user.id);
+        assert_eq!(updated_action.started_at, started_at);
+        assert_eq!(updated_action.ended_at, Some(ended_at));
+        assert_eq!(updated_action.duration, Some(duration));
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 
-    // #[actix_web::test]
-    // async fn update_unauthorized() -> Result<(), DbErr> {
-    //     let db = test_utils::init_db().await?;
-    //     let user = test_utils::seed::create_active_user(&db).await?;
-    //     let (action, _) = test_utils::seed::create_action_and_tag(
-    //         &db,
-    //         "action_before_update_unauthorized".to_string(),
-    //         None,
-    //         user.id,
-    //     )
-    //     .await?;
-    //     let new_name = "action_after_update_unauthorized".to_string();
+    #[actix_web::test]
+    async fn update_unauthorized() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
+        let action_track = test_utils::seed::create_action_track(&db, None, None, user.id).await?;
 
-    //     let error =
-    //         ActionMutation::update(&db, action.id, uuid::Uuid::new_v4(), new_name.clone(), None)
-    //             .await
-    //             .unwrap_err();
-    //     assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
+        let error = ActionTrackMutation::update(
+            &db,
+            action_track.id,
+            UpdateActionTrack {
+                user_id: uuid::Uuid::new_v4(),
+                action_id: None,
+                started_at: Utc::now().into(),
+                ended_at: None,
+            }
+        )
+        .await
+        .unwrap_err();
+        assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 
     // #[actix_web::test]
     // async fn delete() -> Result<(), DbErr> {
