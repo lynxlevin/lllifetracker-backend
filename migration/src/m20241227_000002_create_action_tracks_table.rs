@@ -26,7 +26,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(timestamp_with_time_zone_null(ActionTrack::EndedAt))
                     // NOTE: Using interval column results in "not implemented" error on `sea-orm-cli generate entity`.
-                    .col(integer_null(ActionTrack::Duration))
+                    .col(big_integer_null(ActionTrack::Duration))
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk-action_tracks-user_id")

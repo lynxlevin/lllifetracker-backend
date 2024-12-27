@@ -11,7 +11,7 @@ pub struct Model {
     pub action_id: Option<Uuid>,
     pub started_at: DateTimeWithTimeZone,
     pub ended_at: Option<DateTimeWithTimeZone>,
-    pub duration: Option<i32>,
+    pub duration: Option<i64>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
