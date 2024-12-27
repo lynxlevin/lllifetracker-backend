@@ -3,6 +3,7 @@
 pub mod prelude;
 
 pub mod action;
+pub mod action_track;
 pub mod ambition;
 pub mod ambitions_objectives;
 pub mod book_excerpt;
@@ -13,7 +14,6 @@ pub mod mission_memo;
 pub mod mission_memos_tags;
 pub mod objective;
 pub mod objectives_actions;
-pub mod record;
 pub mod sea_orm_active_enums;
 pub mod tag;
 pub mod user;
