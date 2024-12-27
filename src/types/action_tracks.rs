@@ -13,8 +13,8 @@ pub struct ActionTrackVisible {
     pub duration: Option<i32>,
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
-pub struct ActionVisibleWithActionName {
+#[derive(serde::Serialize, serde::Deserialize, PartialEq, FromQueryResult, Debug)]
+pub struct ActionTrackWithActionName {
     pub id: uuid::Uuid,
     pub action_id: Option<uuid::Uuid>,
     pub action_name: Option<String>,
