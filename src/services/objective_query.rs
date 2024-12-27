@@ -86,14 +86,10 @@ mod tests {
     async fn find_all_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (objective_0, _) = test_utils::seed::create_objective_and_tag(
-            &db,
-            "objective_0".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
-        let (objective_1, _) = test_utils::seed::create_objective_and_tag(
+        let objective_0 =
+            test_utils::seed::create_objective(&db, "objective_0".to_string(), None, user.id)
+                .await?;
+        let objective_1 = test_utils::seed::create_objective(
             &db,
             "objective_1".to_string(),
             Some("objective_1".to_string()),
@@ -101,9 +97,8 @@ mod tests {
         )
         .await?;
         let _archived_objective =
-            test_utils::seed::create_objective_and_tag(&db, "archived".to_string(), None, user.id)
+            test_utils::seed::create_objective(&db, "archived".to_string(), None, user.id)
                 .await?
-                .0
                 .archive(&db)
                 .await?;
 
@@ -184,9 +179,8 @@ mod tests {
             test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, true, true)
                 .await?;
         let _archived_objective =
-            test_utils::seed::create_objective_and_tag(&db, "archived".to_string(), None, user.id)
+            test_utils::seed::create_objective(&db, "archived".to_string(), None, user.id)
                 .await?
-                .0
                 .archive(&db)
                 .await?;
         let _archived_ambition =

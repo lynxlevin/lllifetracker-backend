@@ -298,9 +298,8 @@ mod tests {
                 .archive(&db)
                 .await?;
         let archived_objective =
-            test_utils::seed::create_objective_and_tag(&db, "archived".to_string(), None, user.id)
+            test_utils::seed::create_objective(&db, "archived".to_string(), None, user.id)
                 .await?
-                .0
                 .archive(&db)
                 .await?;
         let archived_action =

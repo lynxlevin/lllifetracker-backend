@@ -187,13 +187,8 @@ mod tests {
     async fn update() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (objective, _) = test_utils::seed::create_objective_and_tag(
-            &db,
-            "objective_before_update".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let objective =
+            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
         let new_name = "objective_after_update".to_string();
         let new_description = "Objective after update.".to_string();
 
@@ -234,13 +229,8 @@ mod tests {
     async fn update_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (objective, _) = test_utils::seed::create_objective_and_tag(
-            &db,
-            "objective_before_update_unauthorized".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let objective =
+            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
         let new_name = "objective_after_update_unauthorized".to_string();
 
         let error = ObjectiveMutation::update(
@@ -261,13 +251,9 @@ mod tests {
     async fn delete() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (objective, tag) = test_utils::seed::create_objective_and_tag(
-            &db,
-            "objective_for_delete".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let (objective, tag) =
+            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
+                .await?;
 
         ObjectiveMutation::delete(&db, objective.id, user.id).await?;
 
@@ -284,13 +270,8 @@ mod tests {
     async fn delete_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (objective, _) = test_utils::seed::create_objective_and_tag(
-            &db,
-            "objective_for_delete_unauthorized".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let objective =
+            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
 
         let error = ObjectiveMutation::delete(&db, objective.id, uuid::Uuid::new_v4())
             .await
@@ -304,9 +285,8 @@ mod tests {
     async fn archive() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (objective, _) =
-            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
-                .await?;
+        let objective =
+            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
 
         let returned_objective = ObjectiveMutation::archive(&db, objective.id, user.id).await?;
         assert_eq!(returned_objective.id, objective.id);
@@ -341,9 +321,8 @@ mod tests {
     async fn archive_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (objective, _) =
-            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
-                .await?;
+        let objective =
+            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
 
         let error = ObjectiveMutation::archive(&db, objective.id, uuid::Uuid::new_v4())
             .await
@@ -357,13 +336,8 @@ mod tests {
     async fn connect_action() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (objective, _) = test_utils::seed::create_objective_and_tag(
-            &db,
-            "Test objective_service::ObjectiveMutation::connect_action".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let objective =
+            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
         let action =
             test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
 
@@ -383,13 +357,8 @@ mod tests {
     async fn disconnect_action() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (objective, _) = test_utils::seed::create_objective_and_tag(
-            &db,
-            "Test objective_service::ObjectiveMutation::disconnect_action".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let objective =
+            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
         let action =
             test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
         let _connection = objectives_actions::ActiveModel {

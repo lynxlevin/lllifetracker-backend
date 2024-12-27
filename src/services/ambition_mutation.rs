@@ -328,13 +328,8 @@ mod tests {
         let user = test_utils::seed::create_active_user(&db).await?;
         let ambition =
             test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
-        let (objective, _) = test_utils::seed::create_objective_and_tag(
-            &db,
-            "Test AmbitionMutation::connect_objective".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let objective =
+            test_utils::seed::create_objective(&db, "ambition".to_string(), None, user.id).await?;
 
         AmbitionMutation::connect_objective(&db, ambition.id, objective.id).await?;
 
@@ -355,13 +350,9 @@ mod tests {
         let ambition =
             test_utils::seed::create_ambition(&db, "ambitionive".to_string(), None, user.id)
                 .await?;
-        let (objective, _) = test_utils::seed::create_objective_and_tag(
-            &db,
-            "Test AmbitionMutation::disconnect_objective".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let objective =
+            test_utils::seed::create_objective(&db, "ambitionive".to_string(), None, user.id)
+                .await?;
         let _connection = ambitions_objectives::ActiveModel {
             ambition_id: Set(ambition.id),
             objective_id: Set(objective.id),
