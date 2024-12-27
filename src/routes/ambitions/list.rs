@@ -295,11 +295,10 @@ mod tests {
             .archived(true)
             .insert(&db)
             .await?;
-        let archived_objective =
-            test_utils::seed::create_objective(&db, "archived".to_string(), None, user.id)
-                .await?
-                .archive(&db)
-                .await?;
+        let archived_objective = factory::objective(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
         let archived_action = factory::action(user.id).archived(true).insert(&db).await?;
         let ambition_0 = ambition_0
             .connect_objective(&db, archived_objective.id)

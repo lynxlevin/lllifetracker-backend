@@ -52,7 +52,7 @@ mod tests {
 
     use crate::{
         entities::{objective, tag},
-        test_utils,
+        test_utils::{self, factory},
     };
 
     use super::*;
@@ -68,9 +68,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (objective, tag) =
-            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
-                .await?;
+        let (objective, tag) = factory::objective(user.id).insert_with_tag(&db).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!("/{}", objective.id))
@@ -94,8 +92,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
+        let objective = factory::objective(user.id).insert(&db).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!("/{}", objective.id))

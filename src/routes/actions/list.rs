@@ -278,13 +278,12 @@ mod tests {
             test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, true, true)
                 .await?;
         let _archived_action = factory::action(user.id).archived(true).insert(&db).await?;
-        let _archived_objective =
-            test_utils::seed::create_objective(&db, "archived".to_string(), None, user.id)
-                .await?
-                .archive(&db)
-                .await?
-                .connect_action(&db, action_0.id)
-                .await?;
+        let _archived_objective = factory::objective(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?
+            .connect_action(&db, action_0.id)
+            .await?;
         let _archived_ambition = factory::ambition(user.id)
             .archived(true)
             .insert(&db)

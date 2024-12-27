@@ -54,9 +54,7 @@ mod tests {
     async fn find_all_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (_, objective_tag) =
-            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
-                .await?;
+        let (_, objective_tag) = factory::objective(user.id).insert_with_tag(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
         let (_, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
         let _archived_action = factory::action(user.id)
@@ -67,12 +65,10 @@ mod tests {
             .archived(true)
             .insert_with_tag(&db)
             .await?;
-        let _archived_objective =
-            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
-                .await?
-                .0
-                .archive(&db)
-                .await?;
+        let _archived_objective = factory::objective(user.id)
+            .archived(true)
+            .insert_with_tag(&db)
+            .await?;
 
         let res = TagQuery::find_all_by_user_id(&db, user.id).await?;
 

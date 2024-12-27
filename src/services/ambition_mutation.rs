@@ -325,8 +325,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
         let ambition = factory::ambition(user.id).insert(&db).await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
+        let objective = factory::objective(user.id).insert(&db).await?;
 
         AmbitionMutation::connect_objective(&db, ambition.id, objective.id).await?;
 
@@ -344,15 +343,12 @@ mod tests {
     async fn disconnect_objective() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let ambition = factory::ambition(user.id).insert(&db).await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
-        let _connection = ambitions_objectives::ActiveModel {
-            ambition_id: Set(ambition.id),
-            objective_id: Set(objective.id),
-        }
-        .insert(&db)
-        .await?;
+        let objective = factory::objective(user.id).insert(&db).await?;
+        let ambition = factory::ambition(user.id)
+            .insert(&db)
+            .await?
+            .connect_objective(&db, objective.id)
+            .await?;
 
         AmbitionMutation::disconnect_objective(&db, ambition.id, objective.id).await?;
 

@@ -132,8 +132,7 @@ mod tests {
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
         let ambition = factory::ambition(user.id).insert(&db).await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
+        let objective = factory::objective(user.id).insert(&db).await?;
 
         let req = test::TestRequest::post()
             .uri(&format!(
@@ -163,8 +162,7 @@ mod tests {
         let user = test_utils::seed::create_active_user(&db).await?;
         let another_user = test_utils::seed::create_active_user(&db).await?;
         let ambition = factory::ambition(another_user.id).insert(&db).await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
+        let objective = factory::objective(user.id).insert(&db).await?;
 
         let req = test::TestRequest::post()
             .uri(&format!(
@@ -187,9 +185,7 @@ mod tests {
         let user = test_utils::seed::create_active_user(&db).await?;
         let another_user = test_utils::seed::create_active_user(&db).await?;
         let ambition = factory::ambition(user.id).insert(&db).await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, another_user.id)
-                .await?;
+        let objective = factory::objective(another_user.id).insert(&db).await?;
 
         let req = test::TestRequest::post()
             .uri(&format!(
@@ -211,8 +207,7 @@ mod tests {
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
         let ambition = factory::ambition(user.id).insert(&db).await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
+        let objective = factory::objective(user.id).insert(&db).await?;
 
         let req = test::TestRequest::post()
             .uri(&format!(

@@ -104,9 +104,12 @@ mod tests {
         dev::{Service, ServiceResponse},
         http, test, App, HttpMessage,
     };
-    use sea_orm::{entity::prelude::*, ActiveValue::Set, DbErr, EntityTrait};
+    use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use crate::{entities::objectives_actions, test_utils::{self, factory}};
+    use crate::{
+        entities::objectives_actions,
+        test_utils::{self, factory},
+    };
 
     use super::*;
 
@@ -126,15 +129,12 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
         let action = factory::action(user.id).insert(&db).await?;
-        let _connection = objectives_actions::ActiveModel {
-            objective_id: Set(objective.id),
-            action_id: Set(action.id),
-        }
-        .insert(&db)
-        .await?;
+        let objective = factory::objective(user.id)
+            .insert(&db)
+            .await?
+            .connect_action(&db, action.id)
+            .await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!(
@@ -163,9 +163,7 @@ mod tests {
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
         let another_user = test_utils::seed::create_active_user(&db).await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, another_user.id)
-                .await?;
+        let objective = factory::objective(another_user.id).insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
 
         let req = test::TestRequest::delete()
@@ -188,8 +186,7 @@ mod tests {
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
         let another_user = test_utils::seed::create_active_user(&db).await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
+        let objective = factory::objective(user.id).insert(&db).await?;
         let action = factory::action(another_user.id).insert(&db).await?;
 
         let req = test::TestRequest::delete()
@@ -211,8 +208,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
+        let objective = factory::objective(user.id).insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
 
         let req = test::TestRequest::delete()

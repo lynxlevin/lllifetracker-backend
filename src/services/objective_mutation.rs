@@ -190,8 +190,8 @@ mod tests {
     async fn update() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
+        let objective = factory::objective(user.id).insert(&db).await?;
+
         let new_name = "objective_after_update".to_string();
         let new_description = "Objective after update.".to_string();
 
@@ -232,8 +232,8 @@ mod tests {
     async fn update_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
+        let objective = factory::objective(user.id).insert(&db).await?;
+
         let new_name = "objective_after_update_unauthorized".to_string();
 
         let error = ObjectiveMutation::update(
@@ -254,9 +254,7 @@ mod tests {
     async fn delete() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (objective, tag) =
-            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
-                .await?;
+        let (objective, tag) = factory::objective(user.id).insert_with_tag(&db).await?;
 
         ObjectiveMutation::delete(&db, objective.id, user.id).await?;
 
@@ -273,8 +271,7 @@ mod tests {
     async fn delete_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
+        let objective = factory::objective(user.id).insert(&db).await?;
 
         let error = ObjectiveMutation::delete(&db, objective.id, uuid::Uuid::new_v4())
             .await
@@ -288,8 +285,7 @@ mod tests {
     async fn archive() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
+        let objective = factory::objective(user.id).insert(&db).await?;
 
         let returned_objective = ObjectiveMutation::archive(&db, objective.id, user.id).await?;
         assert_eq!(returned_objective.id, objective.id);
@@ -324,8 +320,7 @@ mod tests {
     async fn archive_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
+        let objective = factory::objective(user.id).insert(&db).await?;
 
         let error = ObjectiveMutation::archive(&db, objective.id, uuid::Uuid::new_v4())
             .await
@@ -339,8 +334,7 @@ mod tests {
     async fn connect_action() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
+        let objective = factory::objective(user.id).insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
 
         ObjectiveMutation::connect_action(&db, objective.id, action.id).await?;
@@ -360,11 +354,11 @@ mod tests {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id)
-                .await?
-                .connect_action(&db, action.id)
-                .await?;
+        let objective = factory::objective(user.id)
+            .insert(&db)
+            .await?
+            .connect_action(&db, action.id)
+            .await?;
 
         ObjectiveMutation::disconnect_action(&db, objective.id, action.id).await?;
 

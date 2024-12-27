@@ -65,9 +65,7 @@ mod tests {
                 .await?;
         let (action, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
         let (ambition, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
-        let (objective, objective_tag) =
-            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
-                .await?;
+        let (objective, objective_tag) = factory::objective(user.id).insert_with_tag(&db).await?;
         book_excerpts_tags::ActiveModel {
             book_excerpt_id: Set(book_excerpt_0.id),
             tag_id: Set(ambition_tag.id),

@@ -149,17 +149,18 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let objective_0 =
-            test_utils::seed::create_objective(&db, "objective_0".to_string(), None, user.id)
-                .await?;
-        let objective_1 =
-            test_utils::seed::create_objective(&db, "objective_1".to_string(), None, user.id)
-                .await?;
-        let _archived_objective =
-            test_utils::seed::create_objective(&db, "archived".to_string(), None, user.id)
-                .await?
-                .archive(&db)
-                .await?;
+        let objective_0 = factory::objective(user.id)
+            .name("objective_0".to_string())
+            .insert(&db)
+            .await?;
+        let objective_1 = factory::objective(user.id)
+            .name("objective_1".to_string())
+            .insert(&db)
+            .await?;
+        let _archived_objective = factory::objective(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
 
         let req = test::TestRequest::get().uri("/").to_request();
         req.extensions_mut().insert(user.clone());
@@ -285,11 +286,10 @@ mod tests {
         let (ambition_0, objective_0, action_0) =
             test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, true, true)
                 .await?;
-        let _archived_objective =
-            test_utils::seed::create_objective(&db, "archived".to_string(), None, user.id)
-                .await?
-                .archive(&db)
-                .await?;
+        let _archived_objective = factory::objective(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
         let _archived_ambition = factory::ambition(user.id)
             .archived(true)
             .insert(&db)
