@@ -309,9 +309,8 @@ mod tests {
                 .connect_objective(&db, objective_0.id)
                 .await?;
         let archived_action =
-            test_utils::seed::create_action_and_tag(&db, "archived".to_string(), None, user.id)
+            test_utils::seed::create_action(&db, "archived".to_string(), None, user.id)
                 .await?
-                .0
                 .archive(&db)
                 .await?;
         let objective_0 = objective_0.connect_action(&db, archived_action.id).await?;

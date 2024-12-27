@@ -155,13 +155,8 @@ mod tests {
     async fn update() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (action, _) = test_utils::seed::create_action_and_tag(
-            &db,
-            "action_before_update".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let action =
+            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
         let new_name = "action_after_update".to_string();
         let new_description = "Action after update.".to_string();
 
@@ -200,13 +195,8 @@ mod tests {
     async fn update_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (action, _) = test_utils::seed::create_action_and_tag(
-            &db,
-            "action_before_update_unauthorized".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let action =
+            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
         let new_name = "action_after_update_unauthorized".to_string();
 
         let error =
@@ -245,13 +235,8 @@ mod tests {
     async fn delete_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (action, _) = test_utils::seed::create_action_and_tag(
-            &db,
-            "action_for_delete_unauthorized".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let action =
+            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
 
         let error = ActionMutation::delete(&db, action.id, uuid::Uuid::new_v4())
             .await
@@ -265,9 +250,8 @@ mod tests {
     async fn archive() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (action, _) =
-            test_utils::seed::create_action_and_tag(&db, "action".to_string(), None, user.id)
-                .await?;
+        let action =
+            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
 
         ActionMutation::archive(&db, action.id, user.id).await?;
 

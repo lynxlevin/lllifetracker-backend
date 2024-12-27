@@ -307,9 +307,8 @@ mod tests {
                 .archive(&db)
                 .await?;
         let archived_action =
-            test_utils::seed::create_action_and_tag(&db, "archived".to_string(), None, user.id)
+            test_utils::seed::create_action(&db, "archived".to_string(), None, user.id)
                 .await?
-                .0
                 .archive(&db)
                 .await?;
         let ambition_0 = ambition_0

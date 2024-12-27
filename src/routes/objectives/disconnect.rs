@@ -1,8 +1,8 @@
 use crate::{
     entities::user as user_entity,
     services::{
-        action_query::ActionQuery,
-        objective_mutation::ObjectiveMutation, objective_query::ObjectiveQuery,
+        action_query::ActionQuery, objective_mutation::ObjectiveMutation,
+        objective_query::ObjectiveQuery,
     },
     types::{self, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE},
 };
@@ -133,13 +133,8 @@ mod tests {
             user.id,
         )
         .await?;
-        let (action, _) = test_utils::seed::create_action_and_tag(
-            &db,
-            "action_for_connect_route".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let action =
+            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
         let _connection = objectives_actions::ActiveModel {
             objective_id: Set(objective.id),
             action_id: Set(action.id),
@@ -181,13 +176,8 @@ mod tests {
             another_user.id,
         )
         .await?;
-        let (action, _) = test_utils::seed::create_action_and_tag(
-            &db,
-            "action_for_connect_route".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let action =
+            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!(
@@ -216,13 +206,9 @@ mod tests {
             user.id,
         )
         .await?;
-        let (action, _) = test_utils::seed::create_action_and_tag(
-            &db,
-            "action_for_connect_route".to_string(),
-            None,
-            another_user.id,
-        )
-        .await?;
+        let action =
+            test_utils::seed::create_action(&db, "action".to_string(), None, another_user.id)
+                .await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!(
@@ -250,13 +236,8 @@ mod tests {
             user.id,
         )
         .await?;
-        let (action, _) = test_utils::seed::create_action_and_tag(
-            &db,
-            "action_for_connect_route".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let action =
+            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!(

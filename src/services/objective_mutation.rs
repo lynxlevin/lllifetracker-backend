@@ -364,13 +364,8 @@ mod tests {
             user.id,
         )
         .await?;
-        let (action, _) = test_utils::seed::create_action_and_tag(
-            &db,
-            "Test objective_service::ObjectiveMutation::connect_action".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let action =
+            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
 
         ObjectiveMutation::connect_action(&db, objective.id, action.id).await?;
 
@@ -395,13 +390,8 @@ mod tests {
             user.id,
         )
         .await?;
-        let (action, _) = test_utils::seed::create_action_and_tag(
-            &db,
-            "Test objective_service::ObjectiveMutation::disconnect_action".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let action =
+            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
         let _connection = objectives_actions::ActiveModel {
             objective_id: Set(objective.id),
             action_id: Set(action.id),

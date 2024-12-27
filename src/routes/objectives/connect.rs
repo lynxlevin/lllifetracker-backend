@@ -128,13 +128,8 @@ mod tests {
             user.id,
         )
         .await?;
-        let (action, _) = test_utils::seed::create_action_and_tag(
-            &db,
-            "action_for_connect_route".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let action =
+            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
 
         let req = test::TestRequest::post()
             .uri(&format!(
@@ -170,13 +165,8 @@ mod tests {
             another_user.id,
         )
         .await?;
-        let (action, _) = test_utils::seed::create_action_and_tag(
-            &db,
-            "action_for_connect_route".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let action =
+            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
 
         let req = test::TestRequest::post()
             .uri(&format!(
@@ -205,13 +195,9 @@ mod tests {
             user.id,
         )
         .await?;
-        let (action, _) = test_utils::seed::create_action_and_tag(
-            &db,
-            "action_for_connect_route".to_string(),
-            None,
-            another_user.id,
-        )
-        .await?;
+        let action =
+            test_utils::seed::create_action(&db, "action".to_string(), None, another_user.id)
+                .await?;
 
         let req = test::TestRequest::post()
             .uri(&format!(
@@ -239,13 +225,8 @@ mod tests {
             user.id,
         )
         .await?;
-        let (action, _) = test_utils::seed::create_action_and_tag(
-            &db,
-            "action_for_connect_route".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let action =
+            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
 
         let req = test::TestRequest::post()
             .uri(&format!(

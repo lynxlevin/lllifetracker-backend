@@ -32,7 +32,14 @@ pub async fn update_action(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ActionMutation::update(&db, path_param.action_id, user.id, req.name.clone(), req.description.clone()).await
+            match ActionMutation::update(
+                &db,
+                path_param.action_id,
+                user.id,
+                req.name.clone(),
+                req.description.clone(),
+            )
+            .await
             {
                 Ok(action) => HttpResponse::Ok().json(ActionVisible {
                     id: action.id,
@@ -88,13 +95,8 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (action, _) = test_utils::seed::create_action_and_tag(
-            &db,
-            "action_for_update_route".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let action =
+            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
         let new_name = "action_after_update".to_string();
         let new_description = "Action after update.".to_string();
 
@@ -119,7 +121,8 @@ mod tests {
 
         let updated_action = action::Entity::find_by_id(action.id)
             .one(&db)
-            .await?.unwrap();
+            .await?
+            .unwrap();
         assert_eq!(updated_action.name, new_name.clone());
         assert_eq!(updated_action.description, Some(new_description.clone()));
         assert_eq!(updated_action.user_id, user.id);
@@ -134,13 +137,8 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (action, _) = test_utils::seed::create_action_and_tag(
-            &db,
-            "action_for_update_route_unauthorized".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let action =
+            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
 
         let req = test::TestRequest::put()
             .uri(&format!("/{}", action.id))

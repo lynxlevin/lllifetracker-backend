@@ -1,7 +1,7 @@
 use crate::entities::{
-    action, ambition, objective, tag, user, memo, mission_memo, book_excerpt
+    action, action_track, ambition, book_excerpt, memo, mission_memo, objective, tag, user,
 };
-use chrono::Utc;
+use chrono::{Duration, Utc};
 use sea_orm::{prelude::*, DbConn, DbErr, Set};
 
 #[cfg(test)]
@@ -105,14 +105,14 @@ pub async fn create_objective_and_tag(
 }
 
 #[cfg(test)]
-pub async fn create_action_and_tag(
+pub async fn create_action(
     db: &DbConn,
     name: String,
     description: Option<String>,
     user_id: uuid::Uuid,
-) -> Result<(action::Model, tag::Model), DbErr> {
+) -> Result<action::Model, DbErr> {
     let now = Utc::now();
-    let action = action::ActiveModel {
+    action::ActiveModel {
         id: Set(uuid::Uuid::new_v4()),
         name: Set(name),
         description: Set(description),
@@ -122,10 +122,18 @@ pub async fn create_action_and_tag(
         updated_at: Set(now.into()),
     }
     .insert(db)
-    .await?;
+    .await
+}
 
+#[cfg(test)]
+pub async fn create_action_and_tag(
+    db: &DbConn,
+    name: String,
+    description: Option<String>,
+    user_id: uuid::Uuid,
+) -> Result<(action::Model, tag::Model), DbErr> {
+    let action = create_action(db, name, description, user_id).await?;
     let tag = create_tag(db, None, None, Some(action.id), user_id).await?;
-
     Ok((action, tag))
 }
 
@@ -136,9 +144,27 @@ pub async fn create_set_of_ambition_objective_action(
     connect_ambition_objective: bool,
     connect_objective_action: bool,
 ) -> Result<(ambition::Model, objective::Model, action::Model), DbErr> {
-    let (ambition, _) = create_ambition_and_tag(db, "ambition".to_string(), Some("Ambition".to_string()), user_id).await?;
-    let (objective, _) = create_objective_and_tag(db, "objective".to_string(), Some("Objective".to_string()), user_id).await?;
-    let (action, _) = create_action_and_tag(db, "action".to_string(), Some("Action".to_string()), user_id).await?;
+    let (ambition, _) = create_ambition_and_tag(
+        db,
+        "ambition".to_string(),
+        Some("Ambition".to_string()),
+        user_id,
+    )
+    .await?;
+    let (objective, _) = create_objective_and_tag(
+        db,
+        "objective".to_string(),
+        Some("Objective".to_string()),
+        user_id,
+    )
+    .await?;
+    let (action, _) = create_action_and_tag(
+        db,
+        "action".to_string(),
+        Some("Action".to_string()),
+        user_id,
+    )
+    .await?;
     if connect_ambition_objective {
         ambition.clone().connect_objective(db, objective.id).await?;
     }
@@ -150,7 +176,11 @@ pub async fn create_set_of_ambition_objective_action(
 }
 
 #[cfg(test)]
-pub async fn create_memo(db: &DbConn, title: String, user_id: uuid::Uuid) -> Result<memo::Model, DbErr> {
+pub async fn create_memo(
+    db: &DbConn,
+    title: String,
+    user_id: uuid::Uuid,
+) -> Result<memo::Model, DbErr> {
     let now = Utc::now();
     memo::ActiveModel {
         id: Set(uuid::Uuid::new_v4()),
@@ -167,7 +197,11 @@ pub async fn create_memo(db: &DbConn, title: String, user_id: uuid::Uuid) -> Res
 }
 
 #[cfg(test)]
-pub async fn create_mission_memo(db: &DbConn, title: String, user_id: uuid::Uuid) -> Result<mission_memo::Model, DbErr> {
+pub async fn create_mission_memo(
+    db: &DbConn,
+    title: String,
+    user_id: uuid::Uuid,
+) -> Result<mission_memo::Model, DbErr> {
     let now = Utc::now();
     mission_memo::ActiveModel {
         id: Set(uuid::Uuid::new_v4()),
@@ -185,7 +219,11 @@ pub async fn create_mission_memo(db: &DbConn, title: String, user_id: uuid::Uuid
 }
 
 #[cfg(test)]
-pub async fn create_book_excerpt(db: &DbConn, title: String, user_id: uuid::Uuid) -> Result<book_excerpt::Model, DbErr> {
+pub async fn create_book_excerpt(
+    db: &DbConn,
+    title: String,
+    user_id: uuid::Uuid,
+) -> Result<book_excerpt::Model, DbErr> {
     let now = Utc::now();
     book_excerpt::ActiveModel {
         id: Set(uuid::Uuid::new_v4()),
@@ -196,6 +234,26 @@ pub async fn create_book_excerpt(db: &DbConn, title: String, user_id: uuid::Uuid
         user_id: Set(user_id),
         created_at: Set(now.into()),
         updated_at: Set(now.into()),
+    }
+    .insert(db)
+    .await
+}
+
+#[cfg(test)]
+pub async fn create_action_track(
+    db: &DbConn,
+    duration: i32,
+    action_id: Option<uuid::Uuid>,
+    user_id: uuid::Uuid,
+) -> Result<action_track::Model, DbErr> {
+    let now = Utc::now();
+    action_track::ActiveModel {
+        id: Set(uuid::Uuid::new_v4()),
+        user_id: Set(user_id),
+        action_id: Set(action_id),
+        started_at: Set((now - Duration::seconds(duration.into())).into()),
+        ended_at: Set(Some(now.into())),
+        duration: Set(Some(duration)),
     }
     .insert(db)
     .await
