@@ -1,5 +1,6 @@
 pub mod action_mutation;
 pub mod action_query;
+pub mod action_track_mutation;
 pub mod ambition_mutation;
 pub mod ambition_query;
 pub mod book_excerpt_mutation;
