@@ -190,9 +190,8 @@ mod tests {
                 .archive(&db)
                 .await?;
         let _archived_ambition =
-            test_utils::seed::create_ambition_and_tag(&db, "archived".to_string(), None, user.id)
+            test_utils::seed::create_ambition(&db, "archived".to_string(), None, user.id)
                 .await?
-                .0
                 .archive(&db)
                 .await?
                 .connect_objective(&db, objective_0.id)

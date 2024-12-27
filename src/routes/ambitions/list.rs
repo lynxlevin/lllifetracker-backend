@@ -150,20 +150,18 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (ambition_0, _) =
-            test_utils::seed::create_ambition_and_tag(&db, "ambition_1".to_string(), None, user.id)
-                .await?;
-        let (ambition_1, _) = test_utils::seed::create_ambition_and_tag(
+        let ambition_0 =
+            test_utils::seed::create_ambition(&db, "ambition_0".to_string(), None, user.id).await?;
+        let ambition_1 = test_utils::seed::create_ambition(
             &db,
-            "ambition2".to_string(),
-            Some("ambition2".to_string()),
+            "ambition1".to_string(),
+            Some("ambition1".to_string()),
             user.id,
         )
         .await?;
         let _archived_ambition =
-            test_utils::seed::create_ambition_and_tag(&db, "archived".to_string(), None, user.id)
+            test_utils::seed::create_ambition(&db, "archived".to_string(), None, user.id)
                 .await?
-                .0
                 .archive(&db)
                 .await?;
 
@@ -295,9 +293,8 @@ mod tests {
             test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, true, true)
                 .await?;
         let _archived_ambition =
-            test_utils::seed::create_ambition_and_tag(&db, "archived".to_string(), None, user.id)
+            test_utils::seed::create_ambition(&db, "archived".to_string(), None, user.id)
                 .await?
-                .0
                 .archive(&db)
                 .await?;
         let archived_objective =

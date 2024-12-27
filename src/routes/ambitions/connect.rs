@@ -128,13 +128,8 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (ambition, _) = test_utils::seed::create_ambition_and_tag(
-            &db,
-            "ambition_for_connect_route".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let ambition =
+            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_for_connect_route".to_string(),
@@ -170,13 +165,9 @@ mod tests {
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
         let another_user = test_utils::seed::create_active_user(&db).await?;
-        let (ambition, _) = test_utils::seed::create_ambition_and_tag(
-            &db,
-            "ambition_for_connect_route".to_string(),
-            None,
-            another_user.id,
-        )
-        .await?;
+        let ambition =
+            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, another_user.id)
+                .await?;
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_for_connect_route".to_string(),
@@ -205,13 +196,8 @@ mod tests {
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
         let another_user = test_utils::seed::create_active_user(&db).await?;
-        let (ambition, _) = test_utils::seed::create_ambition_and_tag(
-            &db,
-            "ambition_for_connect_route".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let ambition =
+            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_for_connect_route".to_string(),
@@ -239,13 +225,8 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (ambition, _) = test_utils::seed::create_ambition_and_tag(
-            &db,
-            "ambition_for_connect_route".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let ambition =
+            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
         let (objective, _) = test_utils::seed::create_objective_and_tag(
             &db,
             "objective_for_connect_route".to_string(),

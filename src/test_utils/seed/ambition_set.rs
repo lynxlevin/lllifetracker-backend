@@ -23,14 +23,14 @@ pub async fn create_tag(
 }
 
 #[cfg(test)]
-pub async fn create_ambition_and_tag(
+pub async fn create_ambition(
     db: &DbConn,
     name: String,
     description: Option<String>,
     user_id: uuid::Uuid,
-) -> Result<(ambition::Model, tag::Model), DbErr> {
+) -> Result<ambition::Model, DbErr> {
     let now = Utc::now();
-    let ambition = ambition::ActiveModel {
+    ambition::ActiveModel {
         id: Set(uuid::Uuid::new_v4()),
         name: Set(name),
         description: Set(description),
@@ -40,11 +40,40 @@ pub async fn create_ambition_and_tag(
         updated_at: Set(now.into()),
     }
     .insert(db)
-    .await?;
+    .await
+}
 
+#[cfg(test)]
+pub async fn create_ambition_and_tag(
+    db: &DbConn,
+    name: String,
+    description: Option<String>,
+    user_id: uuid::Uuid,
+) -> Result<(ambition::Model, tag::Model), DbErr> {
+    let ambition = create_ambition(db, name, description, user_id).await?;
     let tag = create_tag(db, Some(ambition.id), None, None, user_id).await?;
-
     Ok((ambition, tag))
+}
+
+#[cfg(test)]
+pub async fn create_objective(
+    db: &DbConn,
+    name: String,
+    description: Option<String>,
+    user_id: uuid::Uuid,
+) -> Result<objective::Model, DbErr> {
+    let now = Utc::now();
+    objective::ActiveModel {
+        id: Set(uuid::Uuid::new_v4()),
+        name: Set(name),
+        description: Set(description),
+        archived: Set(false),
+        user_id: Set(user_id),
+        created_at: Set(now.into()),
+        updated_at: Set(now.into()),
+    }
+    .insert(db)
+    .await
 }
 
 #[cfg(test)]
@@ -54,21 +83,8 @@ pub async fn create_objective_and_tag(
     description: Option<String>,
     user_id: uuid::Uuid,
 ) -> Result<(objective::Model, tag::Model), DbErr> {
-    let now = Utc::now();
-    let objective = objective::ActiveModel {
-        id: Set(uuid::Uuid::new_v4()),
-        name: Set(name),
-        description: Set(description),
-        archived: Set(false),
-        user_id: Set(user_id),
-        created_at: Set(now.into()),
-        updated_at: Set(now.into()),
-    }
-    .insert(db)
-    .await?;
-
+    let objective = create_objective(db, name, description, user_id).await?;
     let tag = create_tag(db, None, Some(objective.id), None, user_id).await?;
-
     Ok((objective, tag))
 }
 
