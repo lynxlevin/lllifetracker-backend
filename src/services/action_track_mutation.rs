@@ -50,23 +50,25 @@ impl ActionTrackMutation {
         action_track.started_at = Set(form_data.started_at);
         action_track.ended_at = Set(form_data.ended_at);
         match form_data.ended_at {
-            Some(ended_at) => action_track.duration = Set(Some((ended_at - form_data.started_at).num_seconds())),
+            Some(ended_at) => {
+                action_track.duration = Set(Some((ended_at - form_data.started_at).num_seconds()))
+            }
             None => action_track.duration = Set(None),
         }
         action_track.update(db).await
     }
 
-    // pub async fn delete(
-    //     db: &DbConn,
-    //     action_id: uuid::Uuid,
-    //     user_id: uuid::Uuid,
-    // ) -> Result<(), DbErr> {
-    //     ActionQuery::find_by_id_and_user_id(db, action_id, user_id)
-    //         .await?
-    //         .delete(db)
-    //         .await?;
-    //     Ok(())
-    // }
+    pub async fn delete(
+        db: &DbConn,
+        action_track_id: uuid::Uuid,
+        user_id: uuid::Uuid,
+    ) -> Result<(), DbErr> {
+        ActionTrackQuery::find_by_id_and_user_id(db, action_track_id, user_id)
+            .await?
+            .delete(db)
+            .await?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -74,6 +76,7 @@ mod tests {
     use chrono::Utc;
     use sea_orm::DbErr;
 
+    use crate::entities::action;
     use crate::test_utils;
     use crate::types::CustomDbErr;
 
@@ -133,7 +136,7 @@ mod tests {
                 action_id: Some(action.id),
                 started_at: started_at,
                 ended_at: Some(ended_at),
-            }
+            },
         )
         .await?;
         assert_eq!(returned_action.id, action_track.id);
@@ -170,7 +173,7 @@ mod tests {
                 action_id: None,
                 started_at: Utc::now().into(),
                 ended_at: None,
-            }
+            },
         )
         .await
         .unwrap_err();
@@ -179,46 +182,40 @@ mod tests {
         Ok(())
     }
 
-    // #[actix_web::test]
-    // async fn delete() -> Result<(), DbErr> {
-    //     let db = test_utils::init_db().await?;
-    //     let user = test_utils::seed::create_active_user(&db).await?;
-    //     let (action, tag) = test_utils::seed::create_action_and_tag(
-    //         &db,
-    //         "action_for_delete".to_string(),
-    //         None,
-    //         user.id,
-    //     )
-    //     .await?;
+    #[actix_web::test]
+    async fn delete() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
+        let action =
+            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
+        let action_track =
+            test_utils::seed::create_action_track(&db, None, Some(action.id), user.id).await?;
 
-    //     ActionMutation::delete(&db, action.id, user.id).await?;
+        ActionTrackMutation::delete(&db, action_track.id, user.id).await?;
 
-    //     let action_in_db = action::Entity::find_by_id(action.id).one(&db).await?;
-    //     assert!(action_in_db.is_none());
+        let action_track_in_db = action_track::Entity::find_by_id(action_track.id)
+            .one(&db)
+            .await?;
+        assert!(action_track_in_db.is_none());
 
-    //     let tag_in_db = tag::Entity::find_by_id(tag.id).one(&db).await?;
-    //     assert!(tag_in_db.is_none());
+        let action_in_db = action::Entity::find_by_id(action.id).one(&db).await?;
+        assert!(action_in_db.is_some());
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 
-    // #[actix_web::test]
-    // async fn delete_unauthorized() -> Result<(), DbErr> {
-    //     let db = test_utils::init_db().await?;
-    //     let user = test_utils::seed::create_active_user(&db).await?;
-    //     let (action, _) = test_utils::seed::create_action_and_tag(
-    //         &db,
-    //         "action_for_delete_unauthorized".to_string(),
-    //         None,
-    //         user.id,
-    //     )
-    //     .await?;
+    #[actix_web::test]
+    async fn delete_unauthorized() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = test_utils::seed::create_active_user(&db).await?;
+        let action_track =
+            test_utils::seed::create_action_track(&db, None, None, user.id).await?;
 
-    //     let error = ActionMutation::delete(&db, action.id, uuid::Uuid::new_v4())
-    //         .await
-    //         .unwrap_err();
-    //     assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
+        let error = ActionTrackMutation::delete(&db, action_track.id, uuid::Uuid::new_v4())
+            .await
+            .unwrap_err();
+        assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 }
