@@ -187,14 +187,16 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let (ambition_0, objective_0, action_0) =
-            test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, true, true)
-                .await?;
-        let (ambition_1, objective_1, action_1) =
-            test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, false, false)
-                .await?;
-        let ambition_1 = ambition_1.connect_objective(&db, objective_0.id).await?;
-        let objective_1 = objective_1.connect_action(&db, action_0.id).await?;
+        let ambition_0 = factory::ambition(user.id).insert(&db).await?;
+        let objective_0 = factory::objective(user.id).insert(&db).await?;
+        let action_0 = factory::action(user.id).insert(&db).await?;
+        factory::link_ambition_objective(&db, ambition_0.id, objective_0.id).await?;
+        factory::link_objective_action(&db, objective_0.id, action_0.id).await?;
+        let ambition_1 = factory::ambition(user.id).insert(&db).await?;
+        let objective_1 = factory::objective(user.id).insert(&db).await?;
+        let action_1 = factory::action(user.id).insert(&db).await?;
+        factory::link_ambition_objective(&db, ambition_1.id, objective_0.id).await?;
+        factory::link_objective_action(&db, objective_1.id, action_0.id).await?;
 
         let req = test::TestRequest::get().uri("/?links=true").to_request();
         req.extensions_mut().insert(user.clone());
@@ -277,19 +279,17 @@ mod tests {
         let (ambition_0, objective_0, action_0) =
             test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, true, true)
                 .await?;
+        let archived_ambition = factory::ambition(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
+        let archived_objective = factory::objective(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
         let _archived_action = factory::action(user.id).archived(true).insert(&db).await?;
-        let _archived_objective = factory::objective(user.id)
-            .archived(true)
-            .insert(&db)
-            .await?
-            .connect_action(&db, action_0.id)
-            .await?;
-        let _archived_ambition = factory::ambition(user.id)
-            .archived(true)
-            .insert(&db)
-            .await?
-            .connect_objective(&db, objective_0.id)
-            .await?;
+        factory::link_ambition_objective(&db, archived_ambition.id, objective_0.id).await?;
+        factory::link_objective_action(&db, archived_objective.id, action_0.id).await?;
 
         let req = test::TestRequest::get().uri("/?links=true").to_request();
         req.extensions_mut().insert(user.clone());

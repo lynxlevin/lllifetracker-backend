@@ -136,9 +136,9 @@ mod tests {
         let (ambition_1, objective_1, action_1) =
             test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, false, false)
                 .await?;
-        let objective_0 = objective_0.connect_action(&db, action_1.id).await?;
-        let objective_1 = objective_1.connect_action(&db, action_1.id).await?;
-        let ambition_1 = ambition_1.connect_objective(&db, objective_0.id).await?;
+        factory::link_ambition_objective(&db, ambition_1.id, objective_0.id).await?;
+        factory::link_objective_action(&db, objective_0.id, action_1.id).await?;
+        factory::link_objective_action(&db, objective_1.id, action_1.id).await?;
 
         let res = ObjectiveQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
 
@@ -176,18 +176,17 @@ mod tests {
         let (ambition_0, objective_0, action_0) =
             test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, true, true)
                 .await?;
+        let archived_ambition = factory::ambition(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
         let _archived_objective = factory::objective(user.id)
             .archived(true)
             .insert(&db)
             .await?;
-        let _archived_ambition = factory::ambition(user.id)
-            .archived(true)
-            .insert(&db)
-            .await?
-            .connect_objective(&db, objective_0.id)
-            .await?;
         let archived_action = factory::action(user.id).archived(true).insert(&db).await?;
-        let objective_0 = objective_0.connect_action(&db, archived_action.id).await?;
+        factory::link_ambition_objective(&db, archived_ambition.id, objective_0.id).await?;
+        factory::link_objective_action(&db, objective_0.id, archived_action.id).await?;
 
         let res = ObjectiveQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
 

@@ -132,9 +132,8 @@ mod tests {
         let action = factory::action(user.id).insert(&db).await?;
         let objective = factory::objective(user.id)
             .insert(&db)
-            .await?
-            .connect_action(&db, action.id)
             .await?;
+        factory::link_objective_action(&db, objective.id, action.id).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!(

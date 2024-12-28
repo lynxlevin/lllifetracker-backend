@@ -207,8 +207,8 @@ mod tests {
         let (ambition_1, objective_1, action_1) =
             test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, false, false)
                 .await?;
-        let ambition_0 = ambition_0.connect_objective(&db, objective_1.id).await?;
-        let objective_0 = objective_0.connect_action(&db, action_1.id).await?;
+        factory::link_ambition_objective(&db, ambition_0.id, objective_1.id).await?;
+        factory::link_objective_action(&db, objective_0.id, action_1.id).await?;
 
         let req = test::TestRequest::get().uri("/?links=true").to_request();
         req.extensions_mut().insert(user.clone());
@@ -300,10 +300,8 @@ mod tests {
             .insert(&db)
             .await?;
         let archived_action = factory::action(user.id).archived(true).insert(&db).await?;
-        let ambition_0 = ambition_0
-            .connect_objective(&db, archived_objective.id)
-            .await?;
-        let objective_0 = objective_0.connect_action(&db, archived_action.id).await?;
+        factory::link_ambition_objective(&db, ambition_0.id, archived_objective.id).await?;
+        factory::link_objective_action(&db, objective_0.id, archived_action.id).await?;
 
         let req = test::TestRequest::get().uri("/?links=true").to_request();
         req.extensions_mut().insert(user.clone());

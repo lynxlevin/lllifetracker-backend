@@ -128,6 +128,8 @@ pub async fn create_set_of_ambition_objective_action(
     connect_ambition_objective: bool,
     connect_objective_action: bool,
 ) -> Result<(ambition::Model, objective::Model, action::Model), DbErr> {
+    use crate::test_utils::factory;
+
     let (ambition, _) = create_ambition_and_tag(
         db,
         "ambition".to_string(),
@@ -150,10 +152,10 @@ pub async fn create_set_of_ambition_objective_action(
     )
     .await?;
     if connect_ambition_objective {
-        ambition.clone().connect_objective(db, objective.id).await?;
+        factory::link_ambition_objective(db, ambition.id, objective.id).await?;
     }
     if connect_objective_action {
-        objective.clone().connect_action(db, action.id).await?;
+        factory::link_objective_action(db, objective.id, action.id).await?;
     }
 
     Ok((ambition, objective, action))
