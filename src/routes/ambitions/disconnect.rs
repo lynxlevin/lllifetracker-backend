@@ -110,7 +110,7 @@ mod tests {
 
     use crate::{
         entities::ambitions_objectives,
-        test_utils::{self, factory},
+        test_utils::{self, *},
     };
 
     use super::*;

@@ -109,7 +109,7 @@ mod tests {
 
     use crate::{
         entities::mission_memos_tags,
-        test_utils::{self, factory},
+        test_utils::{self, *},
     };
 
     use super::*;

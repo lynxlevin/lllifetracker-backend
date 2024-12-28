@@ -52,7 +52,7 @@ mod tests {
 
     use crate::{
         entities::{action, action_track},
-        test_utils::{self, factory},
+        test_utils::{self, *},
     };
 
     use super::*;

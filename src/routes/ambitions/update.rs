@@ -82,7 +82,7 @@ mod tests {
 
     use crate::{
         entities::ambition,
-        test_utils::{self, factory},
+        test_utils::{self, *},
     };
 
     use super::*;

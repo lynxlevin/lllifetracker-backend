@@ -108,7 +108,7 @@ mod tests {
 
     use crate::{
         entities::objectives_actions,
-        test_utils::{self, factory},
+        test_utils::{self, *},
     };
 
     use super::*;

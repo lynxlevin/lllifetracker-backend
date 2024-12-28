@@ -46,7 +46,7 @@ impl TagQuery {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_utils::{self, factory};
+    use crate::test_utils::{self, *};
 
     use super::*;
 

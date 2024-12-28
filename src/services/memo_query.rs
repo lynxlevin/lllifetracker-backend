@@ -47,7 +47,7 @@ impl MemoQuery {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_utils::{self, factory};
+    use crate::test_utils::{self, *};
     use sea_orm::ActiveValue::Set;
 
     use super::*;

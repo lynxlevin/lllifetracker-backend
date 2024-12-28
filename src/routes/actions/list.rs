@@ -41,7 +41,7 @@ pub async fn list_actions(
                                     name: action.name.clone(),
                                     description: action.description.clone(),
                                     created_at: action.created_at,
-                                    updated_at: action.created_at,
+                                    updated_at: action.updated_at,
                                     objectives: vec![],
                                 };
                                 if let Some(objective) = get_objective(&action) {
@@ -128,7 +128,7 @@ mod tests {
     use sea_orm::{entity::prelude::*, DbErr};
     use types::{ActionVisible, ActionVisibleWithLinks};
 
-    use crate::test_utils::{self, factory};
+    use crate::test_utils::{self, *};
 
     use super::*;
 

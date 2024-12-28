@@ -134,7 +134,7 @@ impl AmbitionMutation {
 #[cfg(test)]
 mod tests {
     use crate::{
-        test_utils::{self, factory},
+        test_utils::{self, *},
         types::CustomDbErr,
     };
 

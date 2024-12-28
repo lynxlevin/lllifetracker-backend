@@ -85,7 +85,7 @@ mod tests {
     use chrono::Utc;
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use crate::{entities::action_track, test_utils::{self, factory}};
+    use crate::{entities::action_track, test_utils::{self, *}};
 
     use super::*;
 

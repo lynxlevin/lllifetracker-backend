@@ -74,7 +74,7 @@ impl AmbitionQuery {
 mod tests {
     use std::vec;
 
-    use crate::test_utils::{self, factory};
+    use crate::test_utils::{self, *};
 
     use super::*;
 

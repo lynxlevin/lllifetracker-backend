@@ -80,7 +80,7 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use crate::{entities::objective, test_utils::{self, factory}};
+    use crate::{entities::objective, test_utils::{self, *}};
 
     use super::*;
 

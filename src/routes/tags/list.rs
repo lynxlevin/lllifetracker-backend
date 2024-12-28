@@ -76,7 +76,7 @@ mod tests {
     use sea_orm::{entity::prelude::*, DbErr};
     use types::TagType;
 
-    use crate::test_utils::{self, factory};
+    use crate::test_utils::{self, *};
 
     use super::*;
 

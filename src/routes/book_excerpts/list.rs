@@ -108,7 +108,7 @@ mod tests {
 
     use crate::{
         entities::book_excerpts_tags,
-        test_utils::{self, factory},
+        test_utils::{self, *},
     };
 
     use super::*;

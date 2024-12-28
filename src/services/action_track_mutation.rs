@@ -77,7 +77,7 @@ mod tests {
     use sea_orm::DbErr;
 
     use crate::entities::action;
-    use crate::test_utils::{self, factory};
+    use crate::test_utils::{self, *};
     use crate::types::CustomDbErr;
 
     use super::*;
