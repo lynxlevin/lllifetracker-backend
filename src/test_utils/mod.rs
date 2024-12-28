@@ -7,7 +7,7 @@ use sea_orm::{
 
 pub mod seed;
 pub mod factory;
-pub use factory::{AmbitionFactory, ObjectiveFactory, ActionFactory};
+pub use factory::{AmbitionFactory, ObjectiveFactory, ActionFactory, MemoFactory};
 
 #[cfg(test)]
 pub async fn init_db() -> Result<DbConn, DbErr> {

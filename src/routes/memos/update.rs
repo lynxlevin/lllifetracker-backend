@@ -108,8 +108,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let memo =
-            test_utils::seed::create_memo(&db, "Memo without tags".to_string(), user.id).await?;
+        let memo = factory::memo(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
         let form = RequestBody {
             title: Some("memo after update title".to_string()),
@@ -185,8 +184,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let memo =
-            test_utils::seed::create_memo(&db, "Memo without tags".to_string(), user.id).await?;
+        let memo = factory::memo(user.id).insert(&db).await?;
 
         let req = test::TestRequest::put()
             .uri(&format!("/{}", memo.id))

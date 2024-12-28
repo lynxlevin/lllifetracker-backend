@@ -48,7 +48,6 @@ impl MemoQuery {
 #[cfg(test)]
 mod tests {
     use crate::test_utils::{self, *};
-    use sea_orm::ActiveValue::Set;
 
     use super::*;
 
@@ -56,29 +55,20 @@ mod tests {
     async fn find_all_with_tags_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let memo_0 = test_utils::seed::create_memo(&db, "memo_0".to_string(), user.id).await?;
-        let memo_1 = test_utils::seed::create_memo(&db, "memo_1".to_string(), user.id).await?;
+        let memo_0 = factory::memo(user.id)
+            .title("memo_0".to_string())
+            .insert(&db)
+            .await?;
+        let memo_1 = factory::memo(user.id)
+            .title("memo_1".to_string())
+            .insert(&db)
+            .await?;
         let (action, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
         let (ambition, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
         let (objective, objective_tag) = factory::objective(user.id).insert_with_tag(&db).await?;
-        memos_tags::ActiveModel {
-            memo_id: Set(memo_0.id),
-            tag_id: Set(ambition_tag.id),
-        }
-        .insert(&db)
-        .await?;
-        memos_tags::ActiveModel {
-            memo_id: Set(memo_1.id),
-            tag_id: Set(objective_tag.id),
-        }
-        .insert(&db)
-        .await?;
-        memos_tags::ActiveModel {
-            memo_id: Set(memo_1.id),
-            tag_id: Set(action_tag.id),
-        }
-        .insert(&db)
-        .await?;
+        factory::link_memo_tag(&db, memo_0.id, ambition_tag.id).await?;
+        factory::link_memo_tag(&db, memo_1.id, objective_tag.id).await?;
+        factory::link_memo_tag(&db, memo_1.id, action_tag.id).await?;
 
         let res: Vec<MemoWithTagQueryResult> =
             MemoQuery::find_all_with_tags_by_user_id(&db, user.id).await?;

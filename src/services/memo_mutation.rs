@@ -210,8 +210,7 @@ mod tests {
     async fn partial_update_title() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let memo =
-            test_utils::seed::create_memo(&db, "Memo without tags".to_string(), user.id).await?;
+        let memo = factory::memo(user.id).insert(&db).await?;
 
         let form = UpdateMemo {
             id: memo.id,
@@ -248,8 +247,7 @@ mod tests {
     async fn partial_update_text() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let memo =
-            test_utils::seed::create_memo(&db, "Memo without tags".to_string(), user.id).await?;
+        let memo = factory::memo(user.id).insert(&db).await?;
 
         let form = UpdateMemo {
             id: memo.id,
@@ -286,8 +284,7 @@ mod tests {
     async fn partial_update_date() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let memo =
-            test_utils::seed::create_memo(&db, "Memo without tags".to_string(), user.id).await?;
+        let memo = factory::memo(user.id).insert(&db).await?;
 
         let form = UpdateMemo {
             id: memo.id,
@@ -324,8 +321,7 @@ mod tests {
     async fn partial_update_add_tags() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let memo =
-            test_utils::seed::create_memo(&db, "Memo without tags".to_string(), user.id).await?;
+        let memo = factory::memo(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
 
         let form = UpdateMemo {
@@ -372,15 +368,9 @@ mod tests {
     async fn partial_update_remove_tags() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let memo =
-            test_utils::seed::create_memo(&db, "Memo without tags".to_string(), user.id).await?;
+        let memo = factory::memo(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
-        memos_tags::ActiveModel {
-            memo_id: Set(memo.id),
-            tag_id: Set(ambition_tag.id),
-        }
-        .insert(&db)
-        .await?;
+        factory::link_memo_tag(&db, memo.id, ambition_tag.id).await?;
 
         let form = UpdateMemo {
             id: memo.id,
@@ -425,8 +415,7 @@ mod tests {
     async fn partial_update_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let memo =
-            test_utils::seed::create_memo(&db, "Memo without tags".to_string(), user.id).await?;
+        let memo = factory::memo(user.id).insert(&db).await?;
         let form = UpdateMemo {
             id: memo.id,
             title: None,
@@ -450,15 +439,9 @@ mod tests {
     async fn delete() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let memo =
-            test_utils::seed::create_memo(&db, "Memo to delete.".to_string(), user.id).await?;
+        let memo = factory::memo(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
-        memos_tags::ActiveModel {
-            memo_id: Set(memo.id),
-            tag_id: Set(ambition_tag.id),
-        }
-        .insert(&db)
-        .await?;
+        factory::link_memo_tag(&db, memo.id, ambition_tag.id).await?;
 
         MemoMutation::delete(&db, memo.id, user.id).await?;
 
@@ -479,8 +462,7 @@ mod tests {
     async fn delete_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let memo =
-            test_utils::seed::create_memo(&db, "Memo to delete.".to_string(), user.id).await?;
+        let memo = factory::memo(user.id).insert(&db).await?;
 
         let error = MemoMutation::delete(&db, memo.id, uuid::Uuid::new_v4())
             .await
