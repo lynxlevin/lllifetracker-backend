@@ -68,7 +68,10 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use crate::{entities::mission_memo, test_utils};
+    use crate::{
+        entities::mission_memo,
+        test_utils::{self, factory},
+    };
 
     use super::*;
 
@@ -93,8 +96,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let mission_memo =
-            test_utils::seed::create_mission_memo(&db, "Mission Memo".to_string(), user.id).await?;
+        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
 
         let req = test::TestRequest::put()
             .uri(&format!("/{}/archive", mission_memo.id))
@@ -157,12 +159,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let mission_memo = test_utils::seed::create_mission_memo(
-            &db,
-            "Mission Memo without tags".to_string(),
-            user.id,
-        )
-        .await?;
+        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
 
         let req = test::TestRequest::put()
             .uri(&format!("/{}/archive", mission_memo.id))

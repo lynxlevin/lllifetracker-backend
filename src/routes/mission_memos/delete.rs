@@ -48,7 +48,7 @@ mod tests {
         dev::{Service, ServiceResponse},
         http, test, App, HttpMessage,
     };
-    use sea_orm::{entity::prelude::*, ActiveValue::Set, DbErr, EntityTrait};
+    use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
     use crate::{
         entities::{mission_memo, mission_memos_tags},
@@ -73,19 +73,9 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let mission_memo = test_utils::seed::create_mission_memo(
-            &db,
-            "Mission Memo to delete.".to_string(),
-            user.id,
-        )
-        .await?;
+        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
-        mission_memos_tags::ActiveModel {
-            mission_memo_id: Set(mission_memo.id),
-            tag_id: Set(ambition_tag.id),
-        }
-        .insert(&db)
-        .await?;
+        factory::link_mission_memo_tag(&db, mission_memo.id, ambition_tag.id).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!("/{}", mission_memo.id))
@@ -115,12 +105,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let mission_memo = test_utils::seed::create_mission_memo(
-            &db,
-            "Mission Memo to delete.".to_string(),
-            user.id,
-        )
-        .await?;
+        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!("/{}", mission_memo.id))

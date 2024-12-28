@@ -55,7 +55,6 @@ impl MissionMemoQuery {
 mod tests {
     use crate::test_utils::{self, *};
     use chrono::Utc;
-    use sea_orm::ActiveValue::Set;
 
     use super::*;
 
@@ -63,53 +62,28 @@ mod tests {
     async fn find_all_with_tags_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let mission_memo_0 =
-            test_utils::seed::create_mission_memo(&db, "mission_memo_0".to_string(), user.id)
-                .await?;
-        let mission_memo_1 =
-            test_utils::seed::create_mission_memo(&db, "mission_memo_1".to_string(), user.id)
-                .await?;
-        let mut archived_mission_memo: mission_memo::ActiveModel =
-            test_utils::seed::create_mission_memo(
-                &db,
-                "archived_mission_memo".to_string(),
-                user.id,
-            )
-            .await?
-            .into();
-        archived_mission_memo.archived = Set(true);
-        let archived_mission_memo = archived_mission_memo.update(&db).await?;
-        let mut accomplished_mission_memo: mission_memo::ActiveModel =
-            test_utils::seed::create_mission_memo(
-                &db,
-                "accomplished_mission_memo".to_string(),
-                user.id,
-            )
-            .await?
-            .into();
-        accomplished_mission_memo.accomplished_at = Set(Some(Utc::now().into()));
-        let accomplished_mission_memo = accomplished_mission_memo.update(&db).await?;
+        let mission_memo_0 = factory::mission_memo(user.id)
+            .title("mission_memo_0".to_string())
+            .insert(&db)
+            .await?;
+        let mission_memo_1 = factory::mission_memo(user.id)
+            .title("mission_memo_1".to_string())
+            .insert(&db)
+            .await?;
+        let archived_mission_memo = factory::mission_memo(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
+        let accomplished_mission_memo = factory::mission_memo(user.id)
+            .accomplished_at(Some(Utc::now().into()))
+            .insert(&db)
+            .await?;
         let (action, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
         let (ambition, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
         let (objective, objective_tag) = factory::objective(user.id).insert_with_tag(&db).await?;
-        mission_memos_tags::ActiveModel {
-            mission_memo_id: Set(mission_memo_0.id),
-            tag_id: Set(ambition_tag.id),
-        }
-        .insert(&db)
-        .await?;
-        mission_memos_tags::ActiveModel {
-            mission_memo_id: Set(mission_memo_1.id),
-            tag_id: Set(objective_tag.id),
-        }
-        .insert(&db)
-        .await?;
-        mission_memos_tags::ActiveModel {
-            mission_memo_id: Set(mission_memo_1.id),
-            tag_id: Set(action_tag.id),
-        }
-        .insert(&db)
-        .await?;
+        factory::link_mission_memo_tag(&db, mission_memo_0.id, ambition_tag.id).await?;
+        factory::link_mission_memo_tag(&db, mission_memo_1.id, objective_tag.id).await?;
+        factory::link_mission_memo_tag(&db, mission_memo_1.id, action_tag.id).await?;
 
         let res: Vec<MissionMemoWithTagQueryResult> =
             MissionMemoQuery::find_all_with_tags_by_user_id(&db, user.id).await?;

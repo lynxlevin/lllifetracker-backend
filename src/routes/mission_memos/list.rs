@@ -104,13 +104,10 @@ mod tests {
         web::scope,
         App, HttpMessage,
     };
-    use sea_orm::{entity::prelude::*, DbErr, Set};
+    use sea_orm::{entity::prelude::*, DbErr};
     use types::TagType;
 
-    use crate::{
-        entities::mission_memos_tags,
-        test_utils::{self, *},
-    };
+    use crate::test_utils::{self, *};
 
     use super::*;
 
@@ -130,33 +127,20 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let mission_memo_0 =
-            test_utils::seed::create_mission_memo(&db, "mission_memo_0".to_string(), user.id)
-                .await?;
-        let mission_memo_1 =
-            test_utils::seed::create_mission_memo(&db, "mission_memo_1".to_string(), user.id)
-                .await?;
+        let mission_memo_0 = factory::mission_memo(user.id)
+            .title("mission_memo_0".to_string())
+            .insert(&db)
+            .await?;
+        let mission_memo_1 = factory::mission_memo(user.id)
+            .title("mission_memo_1".to_string())
+            .insert(&db)
+            .await?;
         let (action, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
         let (ambition, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
         let (objective, objective_tag) = factory::objective(user.id).insert_with_tag(&db).await?;
-        mission_memos_tags::ActiveModel {
-            mission_memo_id: Set(mission_memo_0.id),
-            tag_id: Set(ambition_tag.id),
-        }
-        .insert(&db)
-        .await?;
-        mission_memos_tags::ActiveModel {
-            mission_memo_id: Set(mission_memo_1.id),
-            tag_id: Set(objective_tag.id),
-        }
-        .insert(&db)
-        .await?;
-        mission_memos_tags::ActiveModel {
-            mission_memo_id: Set(mission_memo_1.id),
-            tag_id: Set(action_tag.id),
-        }
-        .insert(&db)
-        .await?;
+        factory::link_mission_memo_tag(&db, mission_memo_0.id, ambition_tag.id).await?;
+        factory::link_mission_memo_tag(&db, mission_memo_1.id, objective_tag.id).await?;
+        factory::link_mission_memo_tag(&db, mission_memo_1.id, action_tag.id).await?;
 
         let req = test::TestRequest::get().uri("/").to_request();
         req.extensions_mut().insert(user.clone());

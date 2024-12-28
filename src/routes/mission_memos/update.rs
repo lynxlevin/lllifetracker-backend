@@ -115,13 +115,9 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let mission_memo = test_utils::seed::create_mission_memo(
-            &db,
-            "Mission Memo without tags".to_string(),
-            user.id,
-        )
-        .await?;
+        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
+
         let form = RequestBody {
             title: Some("mission memo after update title".to_string()),
             text: Some("mission memo after update text".to_string()),
@@ -206,12 +202,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let mission_memo = test_utils::seed::create_mission_memo(
-            &db,
-            "Mission Memo without tags".to_string(),
-            user.id,
-        )
-        .await?;
+        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
 
         let req = test::TestRequest::put()
             .uri(&format!("/{}", mission_memo.id))

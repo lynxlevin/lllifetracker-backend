@@ -281,12 +281,7 @@ mod tests {
     async fn partial_update_title() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let mission_memo = test_utils::seed::create_mission_memo(
-            &db,
-            "Mission memo without tags".to_string(),
-            user.id,
-        )
-        .await?;
+        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
 
         let form = UpdateMissionMemo {
             id: mission_memo.id,
@@ -317,12 +312,7 @@ mod tests {
     async fn partial_update_text() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let mission_memo = test_utils::seed::create_mission_memo(
-            &db,
-            "Mission memo without tags".to_string(),
-            user.id,
-        )
-        .await?;
+        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
 
         let form = UpdateMissionMemo {
             id: mission_memo.id,
@@ -354,12 +344,7 @@ mod tests {
     async fn partial_update_date() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let mission_memo = test_utils::seed::create_mission_memo(
-            &db,
-            "Mission memo without tags".to_string(),
-            user.id,
-        )
-        .await?;
+        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
 
         let form = UpdateMissionMemo {
             id: mission_memo.id,
@@ -391,12 +376,7 @@ mod tests {
     async fn partial_update_add_tags() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let mission_memo = test_utils::seed::create_mission_memo(
-            &db,
-            "Mission memo without tags".to_string(),
-            user.id,
-        )
-        .await?;
+        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
 
         let form = UpdateMissionMemo {
@@ -437,19 +417,9 @@ mod tests {
     async fn partial_update_remove_tags() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let mission_memo = test_utils::seed::create_mission_memo(
-            &db,
-            "Mission memo without tags".to_string(),
-            user.id,
-        )
-        .await?;
+        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
-        mission_memos_tags::ActiveModel {
-            mission_memo_id: Set(mission_memo.id),
-            tag_id: Set(ambition_tag.id),
-        }
-        .insert(&db)
-        .await?;
+        factory::link_mission_memo_tag(&db, mission_memo.id, ambition_tag.id).await?;
 
         let form = UpdateMissionMemo {
             id: mission_memo.id,
@@ -488,12 +458,7 @@ mod tests {
     async fn partial_update_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let mission_memo = test_utils::seed::create_mission_memo(
-            &db,
-            "Mission memo without tags".to_string(),
-            user.id,
-        )
-        .await?;
+        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
         let form = UpdateMissionMemo {
             id: mission_memo.id,
             title: None,
@@ -519,19 +484,9 @@ mod tests {
     async fn delete() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let mission_memo = test_utils::seed::create_mission_memo(
-            &db,
-            "Mission memo to delete.".to_string(),
-            user.id,
-        )
-        .await?;
+        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
-        mission_memos_tags::ActiveModel {
-            mission_memo_id: Set(mission_memo.id),
-            tag_id: Set(ambition_tag.id),
-        }
-        .insert(&db)
-        .await?;
+        factory::link_mission_memo_tag(&db, mission_memo.id, ambition_tag.id).await?;
 
         MissionMemoMutation::delete(&db, mission_memo.id, user.id).await?;
 
@@ -554,12 +509,7 @@ mod tests {
     async fn delete_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let mission_memo = test_utils::seed::create_mission_memo(
-            &db,
-            "Mission memo to delete.".to_string(),
-            user.id,
-        )
-        .await?;
+        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
 
         let error = MissionMemoMutation::delete(&db, mission_memo.id, uuid::Uuid::new_v4())
             .await
@@ -573,8 +523,7 @@ mod tests {
     async fn archive() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let mission_memo =
-            test_utils::seed::create_mission_memo(&db, "Mission memo".to_string(), user.id).await?;
+        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
 
         let mut expected = mission_memo.clone();
         expected.archived = true;
@@ -597,8 +546,7 @@ mod tests {
     async fn archive_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let mission_memo =
-            test_utils::seed::create_mission_memo(&db, "Mission memo".to_string(), user.id).await?;
+        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
 
         let error = MissionMemoMutation::archive(&db, mission_memo.id, uuid::Uuid::new_v4())
             .await
@@ -612,8 +560,7 @@ mod tests {
     async fn mark_accomplished() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let mission_memo =
-            test_utils::seed::create_mission_memo(&db, "Mission memo".to_string(), user.id).await?;
+        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
 
         let mut expected = mission_memo.clone();
         expected.accomplished_at = Some(Utc::now().into());
@@ -637,8 +584,7 @@ mod tests {
     async fn mark_accomplished_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let mission_memo =
-            test_utils::seed::create_mission_memo(&db, "Mission memo".to_string(), user.id).await?;
+        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
 
         let error =
             MissionMemoMutation::mark_accomplished(&db, mission_memo.id, uuid::Uuid::new_v4())
