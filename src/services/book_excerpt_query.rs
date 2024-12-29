@@ -55,7 +55,7 @@ mod tests {
     #[actix_web::test]
     async fn find_all_with_tags_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let book_excerpt_0 = factory::book_excerpt(user.id)
             .title("book_excerpt_0".to_string())
             .insert(&db)

@@ -215,7 +215,7 @@ mod tests {
     #[actix_web::test]
     async fn create() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let (_, tag_0) = factory::action(user.id)
             .name("action_0".to_string())
             .insert_with_tag(&db)
@@ -280,7 +280,7 @@ mod tests {
     #[actix_web::test]
     async fn partial_update_title() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
 
         let form = UpdateMissionMemo {
@@ -311,7 +311,7 @@ mod tests {
     #[actix_web::test]
     async fn partial_update_text() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
 
         let form = UpdateMissionMemo {
@@ -343,7 +343,7 @@ mod tests {
     #[actix_web::test]
     async fn partial_update_date() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
 
         let form = UpdateMissionMemo {
@@ -375,7 +375,7 @@ mod tests {
     #[actix_web::test]
     async fn partial_update_add_tags() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
 
@@ -416,7 +416,7 @@ mod tests {
     #[actix_web::test]
     async fn partial_update_remove_tags() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
         factory::link_mission_memo_tag(&db, mission_memo.id, ambition_tag.id).await?;
@@ -457,7 +457,7 @@ mod tests {
     #[actix_web::test]
     async fn partial_update_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
         let form = UpdateMissionMemo {
             id: mission_memo.id,
@@ -483,7 +483,7 @@ mod tests {
     #[actix_web::test]
     async fn delete() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
         factory::link_mission_memo_tag(&db, mission_memo.id, ambition_tag.id).await?;
@@ -508,7 +508,7 @@ mod tests {
     #[actix_web::test]
     async fn delete_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
 
         let error = MissionMemoMutation::delete(&db, mission_memo.id, uuid::Uuid::new_v4())
@@ -522,7 +522,7 @@ mod tests {
     #[actix_web::test]
     async fn archive() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
 
         let mut expected = mission_memo.clone();
@@ -545,7 +545,7 @@ mod tests {
     #[actix_web::test]
     async fn archive_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
 
         let error = MissionMemoMutation::archive(&db, mission_memo.id, uuid::Uuid::new_v4())
@@ -559,7 +559,7 @@ mod tests {
     #[actix_web::test]
     async fn mark_accomplished() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
 
         let mut expected = mission_memo.clone();
@@ -583,7 +583,7 @@ mod tests {
     #[actix_web::test]
     async fn mark_accomplished_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
 
         let error =

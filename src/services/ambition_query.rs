@@ -81,7 +81,7 @@ mod tests {
     #[actix_web::test]
     async fn find_all_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let ambition_0 = factory::ambition(user.id)
             .name("ambition_0".to_string())
             .description(Some("desc_0".to_string()))
@@ -125,7 +125,7 @@ mod tests {
     #[actix_web::test]
     async fn find_all_with_linked_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let ambition_0 = factory::ambition(user.id).insert(&db).await?;
         let objective_0 = factory::objective(user.id).insert(&db).await?;
         let action_0 = factory::action(user.id).insert(&db).await?;
@@ -166,7 +166,7 @@ mod tests {
     async fn find_all_with_linked_by_user_id_archived_items_should_not_be_returned(
     ) -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let ambition_0 = factory::ambition(user.id).insert(&db).await?;
         let objective_0 = factory::objective(user.id).insert(&db).await?;
         let action_0 = factory::action(user.id).insert(&db).await?;

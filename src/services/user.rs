@@ -94,7 +94,7 @@ impl Query {
 
 #[cfg(test)]
 mod mutation_tests {
-    use crate::test_utils;
+    use crate::test_utils::{self, *};
 
     use super::*;
 
@@ -134,7 +134,7 @@ mod mutation_tests {
     #[actix_web::test]
     async fn activate_user_by_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_inactive_user(&db).await?;
+        let user = factory::user().is_active(false).insert(&db).await?;
 
         let returned_user = Mutation::activate_user_by_id(&db, user.id).await?;
         assert_eq!(returned_user.id, user.id);
@@ -158,7 +158,7 @@ mod mutation_tests {
     #[actix_web::test]
     async fn update_user_password() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let new_password = "updated_password".to_string();
 
         let returned_user =

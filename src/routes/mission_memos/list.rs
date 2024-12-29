@@ -126,7 +126,7 @@ mod tests {
     async fn happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let mission_memo_0 = factory::mission_memo(user.id)
             .title("mission_memo_0".to_string())
             .insert(&db)

@@ -107,7 +107,7 @@ mod tests {
     #[actix_web::test]
     async fn create_with_tag() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let action_name = "create_with_tag".to_string();
         let action_description = "Create with Tag.".to_string();
 
@@ -154,7 +154,7 @@ mod tests {
     #[actix_web::test]
     async fn update() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
 
         let new_name = "action_after_update".to_string();
@@ -194,7 +194,7 @@ mod tests {
     #[actix_web::test]
     async fn update_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
 
         let new_name = "action_after_update_unauthorized".to_string();
@@ -211,7 +211,7 @@ mod tests {
     #[actix_web::test]
     async fn delete() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let (action, tag) =  factory::action(user.id).insert_with_tag(&db).await?;
 
         ActionMutation::delete(&db, action.id, user.id).await?;
@@ -228,7 +228,7 @@ mod tests {
     #[actix_web::test]
     async fn delete_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
 
         let error = ActionMutation::delete(&db, action.id, uuid::Uuid::new_v4())
@@ -242,7 +242,7 @@ mod tests {
     #[actix_web::test]
     async fn archive() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
 
         ActionMutation::archive(&db, action.id, user.id).await?;

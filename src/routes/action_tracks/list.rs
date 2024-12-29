@@ -77,7 +77,7 @@ mod tests {
     async fn happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
         let action_track_0 = factory::action_track(user.id)
             .duration(Some(120))
@@ -128,7 +128,7 @@ mod tests {
     async fn happy_path_active_only() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
         let _inactive_action_track = factory::action_track(user.id)
             .duration(Some(120))

@@ -88,7 +88,7 @@ mod tests {
     #[actix_web::test]
     async fn happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
         let app = init_app(db.clone()).await;
 

@@ -59,7 +59,7 @@ pub async fn create_ambition(
 mod tests {
     use crate::{
         entities::{ambition, tag},
-        test_utils,
+        test_utils::{self, *},
     };
 
     use super::*;
@@ -86,7 +86,7 @@ mod tests {
     #[actix_web::test]
     async fn happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let app = init_app(db.clone()).await;
 
         let name = "Test create_ambition route".to_string();
@@ -132,7 +132,7 @@ mod tests {
     #[actix_web::test]
     async fn happy_path_no_description() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let app = init_app(db.clone()).await;
 
         let name = "Test create_ambition route".to_string();

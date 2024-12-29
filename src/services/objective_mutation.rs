@@ -143,7 +143,7 @@ mod tests {
     #[actix_web::test]
     async fn create_with_tag() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let name = "create_with_tag".to_string();
         let description = "Create with tag.".to_string();
 
@@ -189,7 +189,7 @@ mod tests {
     #[actix_web::test]
     async fn update() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let objective = factory::objective(user.id).insert(&db).await?;
 
         let new_name = "objective_after_update".to_string();
@@ -231,7 +231,7 @@ mod tests {
     #[actix_web::test]
     async fn update_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let objective = factory::objective(user.id).insert(&db).await?;
 
         let new_name = "objective_after_update_unauthorized".to_string();
@@ -253,7 +253,7 @@ mod tests {
     #[actix_web::test]
     async fn delete() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let (objective, tag) = factory::objective(user.id).insert_with_tag(&db).await?;
 
         ObjectiveMutation::delete(&db, objective.id, user.id).await?;
@@ -270,7 +270,7 @@ mod tests {
     #[actix_web::test]
     async fn delete_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let objective = factory::objective(user.id).insert(&db).await?;
 
         let error = ObjectiveMutation::delete(&db, objective.id, uuid::Uuid::new_v4())
@@ -284,7 +284,7 @@ mod tests {
     #[actix_web::test]
     async fn archive() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let objective = factory::objective(user.id).insert(&db).await?;
 
         let returned_objective = ObjectiveMutation::archive(&db, objective.id, user.id).await?;
@@ -319,7 +319,7 @@ mod tests {
     #[actix_web::test]
     async fn archive_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let objective = factory::objective(user.id).insert(&db).await?;
 
         let error = ObjectiveMutation::archive(&db, objective.id, uuid::Uuid::new_v4())
@@ -333,7 +333,7 @@ mod tests {
     #[actix_web::test]
     async fn connect_action() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let objective = factory::objective(user.id).insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
 
@@ -352,7 +352,7 @@ mod tests {
     #[actix_web::test]
     async fn disconnect_action() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
         let objective = factory::objective(user.id)
             .insert(&db)

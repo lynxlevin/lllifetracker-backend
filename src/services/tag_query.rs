@@ -53,7 +53,7 @@ mod tests {
     #[actix_web::test]
     async fn find_all_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let (_, objective_tag) = factory::objective(user.id).insert_with_tag(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
         let (_, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;

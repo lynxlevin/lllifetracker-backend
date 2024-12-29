@@ -67,7 +67,7 @@ mod tests {
     async fn happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let (action, tag) = factory::action(user.id).insert_with_tag(&db).await?;
 
         let req = test::TestRequest::delete()
@@ -91,7 +91,7 @@ mod tests {
     async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
 
         let req = test::TestRequest::delete()

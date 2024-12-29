@@ -147,7 +147,7 @@ mod tests {
     async fn happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let action_0 = factory::action(user.id)
             .name("action_0".to_string())
             .insert(&db)
@@ -186,7 +186,7 @@ mod tests {
     async fn happy_path_with_links() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let ambition_0 = factory::ambition(user.id).insert(&db).await?;
         let objective_0 = factory::objective(user.id).insert(&db).await?;
         let action_0 = factory::action(user.id).insert(&db).await?;
@@ -275,7 +275,7 @@ mod tests {
     async fn happy_path_with_links_archived_items_should_not_be_returned() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let ambition_0 = factory::ambition(user.id).insert(&db).await?;
         let objective_0 = factory::objective(user.id).insert(&db).await?;
         let action_0 = factory::action(user.id).insert(&db).await?;
