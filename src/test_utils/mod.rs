@@ -1,13 +1,17 @@
 use crate::entities::{
-    action, ambition, ambitions_objectives, objective, objectives_actions, tag, user, memo, memos_tags, mission_memo, mission_memos_tags, book_excerpt, book_excerpts_tags, action_track
+    action, action_track, ambition, ambitions_objectives, book_excerpt, book_excerpts_tags, memo,
+    memos_tags, mission_memo, mission_memos_tags, objective, objectives_actions, tag, user,
 };
 use sea_orm::{
     sea_query::TableCreateStatement, ConnectionTrait, Database, DbBackend, DbConn, DbErr, Schema,
 };
 
-pub mod seed;
 pub mod factory;
-pub use factory::{AmbitionFactory, ObjectiveFactory, ActionFactory, MemoFactory, MissionMemoFactory};
+pub mod seed;
+pub use factory::{
+    ActionFactory, AmbitionFactory, BookExcerptFactory, MemoFactory, MissionMemoFactory,
+    ObjectiveFactory,
+};
 
 #[cfg(test)]
 pub async fn init_db() -> Result<DbConn, DbErr> {

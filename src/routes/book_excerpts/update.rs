@@ -116,13 +116,9 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let book_excerpt = test_utils::seed::create_book_excerpt(
-            &db,
-            "book excerpt without tags".to_string(),
-            user.id,
-        )
-        .await?;
+        let book_excerpt = factory::book_excerpt(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
+
         let form = RequestBody {
             title: Some("book excerpt after update title".to_string()),
             page_number: Some(998),
@@ -207,12 +203,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let book_excerpt = test_utils::seed::create_book_excerpt(
-            &db,
-            "book excerpt without tags".to_string(),
-            user.id,
-        )
-        .await?;
+        let book_excerpt = factory::book_excerpt(user.id).insert(&db).await?;
 
         let req = test::TestRequest::put()
             .uri(&format!("/{}", book_excerpt.id))

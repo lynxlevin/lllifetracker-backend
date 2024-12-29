@@ -248,12 +248,7 @@ mod tests {
     async fn partial_update_title() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let book_excerpt = test_utils::seed::create_book_excerpt(
-            &db,
-            "Book Excerpt without tags".to_string(),
-            user.id,
-        )
-        .await?;
+        let book_excerpt = factory::book_excerpt(user.id).insert(&db).await?;
 
         let form = UpdateBookExcerpt {
             id: book_excerpt.id,
@@ -285,12 +280,7 @@ mod tests {
     async fn partial_update_page_number() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let book_excerpt = test_utils::seed::create_book_excerpt(
-            &db,
-            "Book Excerpt without tags".to_string(),
-            user.id,
-        )
-        .await?;
+        let book_excerpt = factory::book_excerpt(user.id).insert(&db).await?;
 
         let form = UpdateBookExcerpt {
             id: book_excerpt.id,
@@ -322,12 +312,7 @@ mod tests {
     async fn partial_update_text() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let book_excerpt = test_utils::seed::create_book_excerpt(
-            &db,
-            "Book Excerpt without tags".to_string(),
-            user.id,
-        )
-        .await?;
+        let book_excerpt = factory::book_excerpt(user.id).insert(&db).await?;
 
         let form = UpdateBookExcerpt {
             id: book_excerpt.id,
@@ -360,12 +345,7 @@ mod tests {
     async fn partial_update_date() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let book_excerpt = test_utils::seed::create_book_excerpt(
-            &db,
-            "Book Excerpt without tags".to_string(),
-            user.id,
-        )
-        .await?;
+        let book_excerpt = factory::book_excerpt(user.id).insert(&db).await?;
 
         let form = UpdateBookExcerpt {
             id: book_excerpt.id,
@@ -398,12 +378,7 @@ mod tests {
     async fn partial_update_add_tags() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let book_excerpt = test_utils::seed::create_book_excerpt(
-            &db,
-            "Book Excerpt without tags".to_string(),
-            user.id,
-        )
-        .await?;
+        let book_excerpt = factory::book_excerpt(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
 
         let form = UpdateBookExcerpt {
@@ -445,19 +420,9 @@ mod tests {
     async fn partial_update_remove_tags() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let book_excerpt = test_utils::seed::create_book_excerpt(
-            &db,
-            "Book Excerpt without tags".to_string(),
-            user.id,
-        )
-        .await?;
+        let book_excerpt = factory::book_excerpt(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
-        book_excerpts_tags::ActiveModel {
-            book_excerpt_id: Set(book_excerpt.id),
-            tag_id: Set(ambition_tag.id),
-        }
-        .insert(&db)
-        .await?;
+        factory::link_book_excerpt_tag(&db, book_excerpt.id, ambition_tag.id).await?;
 
         let form = UpdateBookExcerpt {
             id: book_excerpt.id,
@@ -497,12 +462,7 @@ mod tests {
     async fn partial_update_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let book_excerpt = test_utils::seed::create_book_excerpt(
-            &db,
-            "Book Excerpt without tags".to_string(),
-            user.id,
-        )
-        .await?;
+        let book_excerpt = factory::book_excerpt(user.id).insert(&db).await?;
         let form = UpdateBookExcerpt {
             id: book_excerpt.id,
             title: None,
@@ -529,19 +489,9 @@ mod tests {
     async fn delete() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let book_excerpt = test_utils::seed::create_book_excerpt(
-            &db,
-            "Book Excerpt to delete.".to_string(),
-            user.id,
-        )
-        .await?;
+        let book_excerpt = factory::book_excerpt(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
-        book_excerpts_tags::ActiveModel {
-            book_excerpt_id: Set(book_excerpt.id),
-            tag_id: Set(ambition_tag.id),
-        }
-        .insert(&db)
-        .await?;
+        factory::link_book_excerpt_tag(&db, book_excerpt.id, ambition_tag.id).await?;
 
         BookExcerptMutation::delete(&db, book_excerpt.id, user.id).await?;
 
@@ -564,12 +514,7 @@ mod tests {
     async fn delete_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let book_excerpt = test_utils::seed::create_book_excerpt(
-            &db,
-            "Book Excerpt to delete.".to_string(),
-            user.id,
-        )
-        .await?;
+        let book_excerpt = factory::book_excerpt(user.id).insert(&db).await?;
 
         let error = BookExcerptMutation::delete(&db, book_excerpt.id, uuid::Uuid::new_v4())
             .await
