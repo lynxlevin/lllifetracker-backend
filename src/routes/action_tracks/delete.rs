@@ -74,8 +74,10 @@ mod tests {
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
-        let action_track =
-            test_utils::seed::create_action_track(&db, None, Some(action.id), user.id).await?;
+        let action_track = factory::action_track(user.id)
+            .action_id(Some(action.id))
+            .insert(&db)
+            .await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!("/{}", action_track.id))
@@ -101,7 +103,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let action_track = test_utils::seed::create_action_track(&db, None, None, user.id).await?;
+        let action_track = factory::action_track(user.id).insert(&db).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!("/{}", action_track.id))

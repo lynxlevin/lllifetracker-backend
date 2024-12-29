@@ -48,10 +48,15 @@ mod tests {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
-        let action_track_0 =
-            test_utils::seed::create_action_track(&db, Some(120), None, user.id).await?;
-        let action_track_1 =
-            test_utils::seed::create_action_track(&db, Some(180), Some(action.id), user.id).await?;
+        let action_track_0 = factory::action_track(user.id)
+            .duration(Some(120))
+            .insert(&db)
+            .await?;
+        let action_track_1 = factory::action_track(user.id)
+            .duration(Some(180))
+            .action_id(Some(action.id))
+            .insert(&db)
+            .await?;
 
         let res = ActionTrackQuery::find_all_by_user_id(&db, user.id, false).await?;
 
@@ -86,10 +91,14 @@ mod tests {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
-        let _inactive_action_track =
-            test_utils::seed::create_action_track(&db, Some(120), None, user.id).await?;
-        let active_action_track =
-            test_utils::seed::create_action_track(&db, None, Some(action.id), user.id).await?;
+        let _inactive_action_track = factory::action_track(user.id)
+            .duration(Some(120))
+            .insert(&db)
+            .await?;
+        let active_action_track = factory::action_track(user.id)
+            .action_id(Some(action.id))
+            .insert(&db)
+            .await?;
 
         let res = ActionTrackQuery::find_all_by_user_id(&db, user.id, true).await?;
 

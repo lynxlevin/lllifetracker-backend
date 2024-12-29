@@ -9,8 +9,8 @@ use sea_orm::{
 pub mod factory;
 pub mod seed;
 pub use factory::{
-    ActionFactory, AmbitionFactory, BookExcerptFactory, MemoFactory, MissionMemoFactory,
-    ObjectiveFactory,
+    ActionFactory, ActionTrackFactory, AmbitionFactory, BookExcerptFactory, MemoFactory,
+    MissionMemoFactory, ObjectiveFactory,
 };
 
 #[cfg(test)]

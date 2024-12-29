@@ -121,7 +121,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
-        let action_track = test_utils::seed::create_action_track(&db, None, None, user.id).await?;
+        let action_track = factory::action_track(user.id).insert(&db).await?;
         let ended_at: chrono::DateTime<chrono::FixedOffset> = Utc::now().into();
         let duration = 180;
         let started_at = ended_at - chrono::TimeDelta::seconds(duration.into());
@@ -161,7 +161,7 @@ mod tests {
     async fn update_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let action_track = test_utils::seed::create_action_track(&db, None, None, user.id).await?;
+        let action_track = factory::action_track(user.id).insert(&db).await?;
 
         let error = ActionTrackMutation::update(
             &db,
@@ -185,8 +185,10 @@ mod tests {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
-        let action_track =
-            test_utils::seed::create_action_track(&db, None, Some(action.id), user.id).await?;
+        let action_track = factory::action_track(user.id)
+            .action_id(Some(action.id))
+            .insert(&db)
+            .await?;
 
         ActionTrackMutation::delete(&db, action_track.id, user.id).await?;
 
@@ -205,8 +207,7 @@ mod tests {
     async fn delete_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = test_utils::seed::create_active_user(&db).await?;
-        let action_track =
-            test_utils::seed::create_action_track(&db, None, None, user.id).await?;
+        let action_track = factory::action_track(user.id).insert(&db).await?;
 
         let error = ActionTrackMutation::delete(&db, action_track.id, uuid::Uuid::new_v4())
             .await
