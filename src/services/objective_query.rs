@@ -78,29 +78,27 @@ impl ObjectiveQuery {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_utils;
+    use crate::test_utils::{self, *};
 
     use super::*;
 
     #[actix_web::test]
     async fn find_all_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let objective_0 =
-            test_utils::seed::create_objective(&db, "objective_0".to_string(), None, user.id)
-                .await?;
-        let objective_1 = test_utils::seed::create_objective(
-            &db,
-            "objective_1".to_string(),
-            Some("objective_1".to_string()),
-            user.id,
-        )
-        .await?;
-        let _archived_objective =
-            test_utils::seed::create_objective(&db, "archived".to_string(), None, user.id)
-                .await?
-                .archive(&db)
-                .await?;
+        let user = factory::user().insert(&db).await?;
+        let objective_0 = factory::objective(user.id)
+            .name("objective_0".to_string())
+            .insert(&db)
+            .await?;
+        let objective_1 = factory::objective(user.id)
+            .name("objective_1".to_string())
+            .description(Some("objective_1".to_string()))
+            .insert(&db)
+            .await?;
+        let _archived_objective = factory::objective(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
 
         let res = ObjectiveQuery::find_all_by_user_id(&db, user.id).await?;
 
@@ -131,16 +129,18 @@ mod tests {
     #[actix_web::test]
     async fn find_all_with_linked_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let (ambition_0, objective_0, action_0) =
-            test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, true, true)
-                .await?;
-        let (ambition_1, objective_1, action_1) =
-            test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, false, false)
-                .await?;
-        let objective_0 = objective_0.connect_action(&db, action_1.id).await?;
-        let objective_1 = objective_1.connect_action(&db, action_1.id).await?;
-        let ambition_1 = ambition_1.connect_objective(&db, objective_0.id).await?;
+        let user = factory::user().insert(&db).await?;
+        let ambition_0 = factory::ambition(user.id).insert(&db).await?;
+        let objective_0 = factory::objective(user.id).insert(&db).await?;
+        let action_0 = factory::action(user.id).insert(&db).await?;
+        let ambition_1 = factory::ambition(user.id).insert(&db).await?;
+        let objective_1 = factory::objective(user.id).insert(&db).await?;
+        let action_1 = factory::action(user.id).insert(&db).await?;
+        factory::link_ambition_objective(&db, ambition_0.id, objective_0.id).await?;
+        factory::link_ambition_objective(&db, ambition_1.id, objective_0.id).await?;
+        factory::link_objective_action(&db, objective_0.id, action_0.id).await?;
+        factory::link_objective_action(&db, objective_0.id, action_1.id).await?;
+        factory::link_objective_action(&db, objective_1.id, action_1.id).await?;
 
         let res = ObjectiveQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
 
@@ -174,28 +174,23 @@ mod tests {
     async fn find_all_with_linked_by_user_id_archived_items_should_not_be_returned(
     ) -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let (ambition_0, objective_0, action_0) =
-            test_utils::seed::create_set_of_ambition_objective_action(&db, user.id, true, true)
-                .await?;
-        let _archived_objective =
-            test_utils::seed::create_objective(&db, "archived".to_string(), None, user.id)
-                .await?
-                .archive(&db)
-                .await?;
-        let _archived_ambition =
-            test_utils::seed::create_ambition(&db, "archived".to_string(), None, user.id)
-                .await?
-                .archive(&db)
-                .await?
-                .connect_objective(&db, objective_0.id)
-                .await?;
-        let archived_action =
-            test_utils::seed::create_action(&db, "archived".to_string(), None, user.id)
-                .await?
-                .archive(&db)
-                .await?;
-        let objective_0 = objective_0.connect_action(&db, archived_action.id).await?;
+        let user = factory::user().insert(&db).await?;
+        let ambition_0 = factory::ambition(user.id).insert(&db).await?;
+        let objective_0 = factory::objective(user.id).insert(&db).await?;
+        let action_0 = factory::action(user.id).insert(&db).await?;
+        let archived_ambition = factory::ambition(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
+        let _archived_objective = factory::objective(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
+        let archived_action = factory::action(user.id).archived(true).insert(&db).await?;
+        factory::link_ambition_objective(&db, ambition_0.id, objective_0.id).await?;
+        factory::link_ambition_objective(&db, archived_ambition.id, objective_0.id).await?;
+        factory::link_objective_action(&db, objective_0.id, action_0.id).await?;
+        factory::link_objective_action(&db, objective_0.id, archived_action.id).await?;
 
         let res = ObjectiveQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
 

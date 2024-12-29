@@ -85,7 +85,7 @@ mod tests {
     use chrono::Utc;
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use crate::{entities::action_track, test_utils};
+    use crate::{entities::action_track, test_utils::{self, *}};
 
     use super::*;
 
@@ -104,10 +104,9 @@ mod tests {
     async fn happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let action =
-            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
-        let action_track = test_utils::seed::create_action_track(&db, None, None, user.id).await?;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
+        let action_track = factory::action_track(user.id).insert(&db).await?;
         let ended_at: chrono::DateTime<chrono::FixedOffset> = Utc::now().into();
         let duration = 180;
         let started_at = ended_at - chrono::TimeDelta::seconds(duration.into());
@@ -149,8 +148,8 @@ mod tests {
     async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let action_track = test_utils::seed::create_action_track(&db, None, None, user.id).await?;
+        let user = factory::user().insert(&db).await?;
+        let action_track = factory::action_track(user.id).insert(&db).await?;
 
         let req = test::TestRequest::put()
             .uri(&format!("/{}", action_track.id))

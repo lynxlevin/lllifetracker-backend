@@ -106,17 +106,18 @@ mod tests {
     use super::*;
     use actix_session::SessionExt;
     use actix_web::test;
+    use sea_orm::prelude::*;
 
     use crate::{
         entities::user,
-        test_utils,
+        test_utils::{self, *},
         types::{USER_EMAIL_KEY, USER_ID_KEY},
     };
 
     #[actix_web::test]
     async fn test_set_user() -> Result<(), String> {
         let db = test_utils::init_db().await.unwrap();
-        let user = test_utils::seed::create_active_user(&db).await.unwrap();
+        let user = factory::user().insert(&db).await.unwrap();
         let srv_req = test::TestRequest::default()
             .app_data(Data::new(db.clone()))
             .to_srv_request();

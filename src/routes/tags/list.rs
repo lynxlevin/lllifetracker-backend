@@ -76,7 +76,7 @@ mod tests {
     use sea_orm::{entity::prelude::*, DbErr};
     use types::TagType;
 
-    use crate::test_utils;
+    use crate::test_utils::{self, *};
 
     use super::*;
 
@@ -95,34 +95,22 @@ mod tests {
     async fn happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let (action, action_tag) =
-            test_utils::seed::create_action_and_tag(&db, "action".to_string(), None, user.id)
-                .await?;
-        let (ambition, ambition_tag) =
-            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
-                .await?;
-        let (objective, objective_tag) =
-            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
-                .await?;
-        let _archived_action =
-            test_utils::seed::create_action_and_tag(&db, "action".to_string(), None, user.id)
-                .await?
-                .0
-                .archive(&db)
-                .await?;
-        let _archived_ambition =
-            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
-                .await?
-                .0
-                .archive(&db)
-                .await?;
-        let _archived_objective =
-            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
-                .await?
-                .0
-                .archive(&db)
-                .await?;
+        let user = factory::user().insert(&db).await?;
+        let (action, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
+        let (ambition, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
+        let (objective, objective_tag) = factory::objective(user.id).insert_with_tag(&db).await?;
+        let _archived_action = factory::action(user.id)
+            .archived(true)
+            .insert_with_tag(&db)
+            .await?;
+        let _archived_ambition = factory::ambition(user.id)
+            .archived(true)
+            .insert_with_tag(&db)
+            .await?;
+        let _archived_objective = factory::objective(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
 
         let req = test::TestRequest::get().uri("/").to_request();
         req.extensions_mut().insert(user.clone());

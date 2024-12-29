@@ -68,7 +68,7 @@ mod tests {
 
     use crate::{
         entities::{action, tag},
-        test_utils,
+        test_utils::{self, *},
     };
 
     use super::*;
@@ -87,7 +87,7 @@ mod tests {
     #[actix_web::test]
     async fn happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let app = init_app(db.clone()).await;
 
         let name = "create_action".to_string();

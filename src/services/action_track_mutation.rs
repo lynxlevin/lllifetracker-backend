@@ -77,7 +77,7 @@ mod tests {
     use sea_orm::DbErr;
 
     use crate::entities::action;
-    use crate::test_utils;
+    use crate::test_utils::{self, *};
     use crate::types::CustomDbErr;
 
     use super::*;
@@ -85,9 +85,8 @@ mod tests {
     #[actix_web::test]
     async fn create() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let action =
-            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
 
         let form_data = NewActionTrack {
             started_at: Utc::now().into(),
@@ -120,10 +119,9 @@ mod tests {
     #[actix_web::test]
     async fn update() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let action =
-            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
-        let action_track = test_utils::seed::create_action_track(&db, None, None, user.id).await?;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
+        let action_track = factory::action_track(user.id).insert(&db).await?;
         let ended_at: chrono::DateTime<chrono::FixedOffset> = Utc::now().into();
         let duration = 180;
         let started_at = ended_at - chrono::TimeDelta::seconds(duration.into());
@@ -162,8 +160,8 @@ mod tests {
     #[actix_web::test]
     async fn update_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let action_track = test_utils::seed::create_action_track(&db, None, None, user.id).await?;
+        let user = factory::user().insert(&db).await?;
+        let action_track = factory::action_track(user.id).insert(&db).await?;
 
         let error = ActionTrackMutation::update(
             &db,
@@ -185,11 +183,12 @@ mod tests {
     #[actix_web::test]
     async fn delete() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let action =
-            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
-        let action_track =
-            test_utils::seed::create_action_track(&db, None, Some(action.id), user.id).await?;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
+        let action_track = factory::action_track(user.id)
+            .action_id(Some(action.id))
+            .insert(&db)
+            .await?;
 
         ActionTrackMutation::delete(&db, action_track.id, user.id).await?;
 
@@ -207,9 +206,8 @@ mod tests {
     #[actix_web::test]
     async fn delete_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let action_track =
-            test_utils::seed::create_action_track(&db, None, None, user.id).await?;
+        let user = factory::user().insert(&db).await?;
+        let action_track = factory::action_track(user.id).insert(&db).await?;
 
         let error = ActionTrackMutation::delete(&db, action_track.id, uuid::Uuid::new_v4())
             .await

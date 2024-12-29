@@ -80,7 +80,10 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use crate::{entities::ambition, test_utils};
+    use crate::{
+        entities::ambition,
+        test_utils::{self, *},
+    };
 
     use super::*;
 
@@ -94,9 +97,9 @@ mod tests {
     async fn happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let ambition =
-            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
+        let user = factory::user().insert(&db).await?;
+        let ambition = factory::ambition(user.id).insert(&db).await?;
+
         let new_name = "ambition_after_update_route".to_string();
         let new_description = Some("edited_description".to_string());
 
@@ -136,14 +139,12 @@ mod tests {
     async fn happy_path_no_description() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let ambition = test_utils::seed::create_ambition(
-            &db,
-            "ambition".to_string(),
-            Some("Original description".to_string()),
-            user.id,
-        )
-        .await?;
+        let user = factory::user().insert(&db).await?;
+        let ambition = factory::ambition(user.id)
+            .description(Some("Original description".to_string()))
+            .insert(&db)
+            .await?;
+
         let new_name = "ambition_after_update_route".to_string();
 
         let req = test::TestRequest::put()
@@ -182,9 +183,8 @@ mod tests {
     async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let ambition =
-            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
+        let user = factory::user().insert(&db).await?;
+        let ambition = factory::ambition(user.id).insert(&db).await?;
 
         let req = test::TestRequest::put()
             .uri(&format!("/{}", ambition.id))

@@ -59,7 +59,7 @@ pub async fn create_objective(
 mod tests {
     use crate::{
         entities::{objective, tag},
-        test_utils,
+        test_utils::{self, *},
     };
 
     use super::*;
@@ -87,7 +87,7 @@ mod tests {
     async fn happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
+        let user = factory::user().insert(&db).await?;
         let name = "create_objective route happy path".to_string();
         let description = "Create objective route happy path.".to_string();
 

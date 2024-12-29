@@ -52,7 +52,7 @@ mod tests {
 
     use crate::{
         entities::{action, tag},
-        test_utils,
+        test_utils::{self, *},
     };
 
     use super::*;
@@ -67,14 +67,8 @@ mod tests {
     async fn happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let (action, tag) = test_utils::seed::create_action_and_tag(
-            &db,
-            "action_for_delete_route".to_string(),
-            None,
-            user.id,
-        )
-        .await?;
+        let user = factory::user().insert(&db).await?;
+        let (action, tag) = factory::action(user.id).insert_with_tag(&db).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!("/{}", action.id))
@@ -97,9 +91,8 @@ mod tests {
     async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let action =
-            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!("/{}", action.id))

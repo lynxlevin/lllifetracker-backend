@@ -52,7 +52,7 @@ mod tests {
 
     use crate::{
         entities::{action, action_track},
-        test_utils,
+        test_utils::{self, *},
     };
 
     use super::*;
@@ -72,11 +72,12 @@ mod tests {
     async fn happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let action =
-            test_utils::seed::create_action(&db, "action".to_string(), None, user.id).await?;
-        let action_track =
-            test_utils::seed::create_action_track(&db, None, Some(action.id), user.id).await?;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
+        let action_track = factory::action_track(user.id)
+            .action_id(Some(action.id))
+            .insert(&db)
+            .await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!("/{}", action_track.id))
@@ -101,8 +102,8 @@ mod tests {
     async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let action_track = test_utils::seed::create_action_track(&db, None, None, user.id).await?;
+        let user = factory::user().insert(&db).await?;
+        let action_track = factory::action_track(user.id).insert(&db).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!("/{}", action_track.id))

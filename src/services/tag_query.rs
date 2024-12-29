@@ -46,41 +46,29 @@ impl TagQuery {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_utils;
+    use crate::test_utils::{self, *};
 
     use super::*;
 
     #[actix_web::test]
     async fn find_all_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let (_, objective_tag) =
-            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
-                .await?;
-        let (_, ambition_tag) =
-            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
-                .await?;
-        let (_, action_tag) =
-            test_utils::seed::create_action_and_tag(&db, "action".to_string(), None, user.id)
-                .await?;
-        let _archived_action =
-            test_utils::seed::create_action_and_tag(&db, "action".to_string(), None, user.id)
-                .await?
-                .0
-                .archive(&db)
-                .await?;
-        let _archived_ambition =
-            test_utils::seed::create_ambition_and_tag(&db, "ambition".to_string(), None, user.id)
-                .await?
-                .0
-                .archive(&db)
-                .await?;
-        let _archived_objective =
-            test_utils::seed::create_objective_and_tag(&db, "objective".to_string(), None, user.id)
-                .await?
-                .0
-                .archive(&db)
-                .await?;
+        let user = factory::user().insert(&db).await?;
+        let (_, objective_tag) = factory::objective(user.id).insert_with_tag(&db).await?;
+        let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
+        let (_, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
+        let _archived_action = factory::action(user.id)
+            .archived(true)
+            .insert_with_tag(&db)
+            .await?;
+        let _archived_ambition = factory::ambition(user.id)
+            .archived(true)
+            .insert_with_tag(&db)
+            .await?;
+        let _archived_objective = factory::objective(user.id)
+            .archived(true)
+            .insert_with_tag(&db)
+            .await?;
 
         let res = TagQuery::find_all_by_user_id(&db, user.id).await?;
 

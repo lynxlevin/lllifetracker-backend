@@ -73,7 +73,7 @@ mod tests {
 
     use crate::{
         entities::{memo, memos_tags},
-        test_utils,
+        test_utils::{self, *},
     };
 
     use super::*;
@@ -98,11 +98,15 @@ mod tests {
     async fn happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let (_, tag_0) =
-            test_utils::seed::create_action_and_tag(&db, "action_0".to_string(), None, user.id).await?;
-        let (_, tag_1) =
-            test_utils::seed::create_action_and_tag(&db, "action_1".to_string(), None, user.id).await?;
+        let user = factory::user().insert(&db).await?;
+        let (_, tag_0) = factory::action(user.id)
+            .name("action_0".to_string())
+            .insert_with_tag(&db)
+            .await?;
+        let (_, tag_1) = factory::action(user.id)
+            .name("action_1".to_string())
+            .insert_with_tag(&db)
+            .await?;
 
         let memo_title = "New Memo".to_string();
         let memo_text = "This is a new memo for testing create method.".to_string();

@@ -65,7 +65,7 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use crate::{entities::objective, test_utils};
+    use crate::{entities::objective, test_utils::{self, *}};
 
     use super::*;
 
@@ -84,9 +84,8 @@ mod tests {
     async fn happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
+        let user = factory::user().insert(&db).await?;
+        let objective = factory::objective(user.id).insert(&db).await?;
 
         let req = test::TestRequest::put()
             .uri(&format!("/{}/archive", objective.id))
@@ -127,9 +126,8 @@ mod tests {
     async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
+        let user = factory::user().insert(&db).await?;
+        let objective = factory::objective(user.id).insert(&db).await?;
 
         let req = test::TestRequest::put()
             .uri(&format!("/{}/archive", objective.id))

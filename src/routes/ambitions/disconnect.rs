@@ -106,9 +106,12 @@ mod tests {
         dev::{Service, ServiceResponse},
         http, test, App, HttpMessage,
     };
-    use sea_orm::{entity::prelude::*, ActiveValue::Set, DbErr, EntityTrait};
+    use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use crate::{entities::ambitions_objectives, test_utils};
+    use crate::{
+        entities::ambitions_objectives,
+        test_utils::{self, *},
+    };
 
     use super::*;
 
@@ -127,17 +130,10 @@ mod tests {
     async fn happy_path() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let ambition =
-            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
-        let _connection = ambitions_objectives::ActiveModel {
-            ambition_id: Set(ambition.id),
-            objective_id: Set(objective.id),
-        }
-        .insert(&db)
-        .await?;
+        let user = factory::user().insert(&db).await?;
+        let ambition = factory::ambition(user.id).insert(&db).await?;
+        let objective = factory::objective(user.id).insert(&db).await?;
+        factory::link_ambition_objective(&db, ambition.id, objective.id).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!(
@@ -164,13 +160,10 @@ mod tests {
     async fn invalid_ambition() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let another_user = test_utils::seed::create_active_user(&db).await?;
-        let ambition =
-            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, another_user.id)
-                .await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
+        let user = factory::user().insert(&db).await?;
+        let another_user = factory::user().insert(&db).await?;
+        let ambition = factory::ambition(another_user.id).insert(&db).await?;
+        let objective = factory::objective(user.id).insert(&db).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!(
@@ -190,13 +183,10 @@ mod tests {
     async fn invalid_objective() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let another_user = test_utils::seed::create_active_user(&db).await?;
-        let ambition =
-            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, another_user.id)
-                .await?;
+        let user = factory::user().insert(&db).await?;
+        let another_user = factory::user().insert(&db).await?;
+        let ambition = factory::ambition(user.id).insert(&db).await?;
+        let objective = factory::objective(another_user.id).insert(&db).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!(
@@ -216,11 +206,9 @@ mod tests {
     async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
-        let user = test_utils::seed::create_active_user(&db).await?;
-        let ambition =
-            test_utils::seed::create_ambition(&db, "ambition".to_string(), None, user.id).await?;
-        let objective =
-            test_utils::seed::create_objective(&db, "objective".to_string(), None, user.id).await?;
+        let user = factory::user().insert(&db).await?;
+        let ambition = factory::ambition(user.id).insert(&db).await?;
+        let objective = factory::objective(user.id).insert(&db).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!(
