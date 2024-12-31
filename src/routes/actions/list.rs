@@ -335,6 +335,47 @@ mod tests {
     }
 
     #[actix_web::test]
+    async fn happy_path_with_links_item_linked_to_archived_items_only_should_be_returned() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
+        let archived_ambition = factory::ambition(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
+        let archived_objective = factory::objective(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
+        factory::link_objective_action(&db, archived_objective.id, action.id).await?;
+        factory::link_ambition_objective(&db, archived_ambition.id, archived_objective.id).await?;
+
+        let req = test::TestRequest::get().uri("/?links=true").to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), http::StatusCode::OK);
+
+        let body: Vec<ActionVisibleWithLinks> = test::read_body_json(resp).await;
+        assert_eq!(body.len(), 1);
+
+        let expected = serde_json::json!([{
+            "id": action.id,
+            "name": action.name,
+            "description": action.description,
+            "created_at": action.created_at,
+            "updated_at": action.updated_at,
+            "objectives": [],
+        }]);
+
+        let body = serde_json::to_value(&body).unwrap();
+        assert_eq!(expected, body);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
     async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;

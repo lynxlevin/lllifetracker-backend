@@ -190,4 +190,30 @@ mod tests {
 
         Ok(())
     }
+
+    #[actix_web::test]
+    async fn find_all_with_linked_by_user_id_item_linked_to_archived_items_only_should_be_returned(
+    ) -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
+        let archived_ambition = factory::ambition(user.id).archived(true).insert(&db).await?;
+        let archived_objective = factory::objective(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
+        factory::link_objective_action(&db, archived_objective.id, action.id).await?;
+        factory::link_ambition_objective(&db, archived_ambition.id, archived_objective.id).await?;
+
+        let res = ActionQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
+
+        assert_eq!(res.len(), 1);
+
+        // NOTE: Check only ids for convenience.
+        let res_organized = vec![(res[0].id, res[0].objective_id, res[0].ambition_id)];
+        let expected = vec![(action.id, None, None)];
+        assert_eq!(res_organized[0], expected[0]);
+
+        Ok(())
+    }
 }
