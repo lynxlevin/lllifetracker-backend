@@ -1,7 +1,7 @@
 use crate::entities::{action, ambition, ambitions_objectives, objective, objectives_actions};
 use crate::types::{ActionVisible, ActionWithLinksQueryResult, CustomDbErr};
 use migration::{Alias, IntoCondition, NullOrdering::Last};
-use sea_orm::{entity::prelude::*, JoinType::LeftJoin, QueryOrder, QuerySelect, Order::Asc};
+use sea_orm::{entity::prelude::*, JoinType::LeftJoin, Order::Asc, QueryOrder, QuerySelect};
 
 pub struct ActionQuery;
 
@@ -37,13 +37,29 @@ impl ActionQuery {
             .column_as(ambition::Column::CreatedAt, "ambition_created_at")
             .column_as(ambition::Column::UpdatedAt, "ambition_updated_at")
             .join_rev(LeftJoin, objectives_actions::Relation::Action.def())
-            .join_as(LeftJoin, objectives_actions::Relation::Objective.def().on_condition(|_left, right| {
-                Expr::col((right, objective::Column::Archived)).eq(false).into_condition()
-            }), Alias::new("objective"))
+            .join_as(
+                LeftJoin,
+                objectives_actions::Relation::Objective
+                    .def()
+                    .on_condition(|_left, right| {
+                        Expr::col((right, objective::Column::Archived))
+                            .eq(false)
+                            .into_condition()
+                    }),
+                Alias::new("objective"),
+            )
             .join_rev(LeftJoin, ambitions_objectives::Relation::Objective.def())
-            .join_as(LeftJoin, ambitions_objectives::Relation::Ambition.def().on_condition(|_left, right| {
-                Expr::col((right, ambition::Column::Archived)).eq(false).into_condition()
-            }), Alias::new("ambition"))
+            .join_as(
+                LeftJoin,
+                ambitions_objectives::Relation::Ambition
+                    .def()
+                    .on_condition(|_left, right| {
+                        Expr::col((right, ambition::Column::Archived))
+                            .eq(false)
+                            .into_condition()
+                    }),
+                Alias::new("ambition"),
+            )
             .order_by_asc(action::Column::CreatedAt)
             .order_by_with_nulls(objective::Column::CreatedAt, Asc, Last)
             .order_by_with_nulls(ambition::Column::CreatedAt, Asc, Last)
@@ -202,7 +218,10 @@ mod tests {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
-        let archived_ambition = factory::ambition(user.id).archived(true).insert(&db).await?;
+        let archived_ambition = factory::ambition(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
         let archived_objective = factory::objective(user.id)
             .archived(true)
             .insert(&db)
