@@ -1,6 +1,9 @@
 use crate::entities::{action, ambition, ambitions_objectives, objective, objectives_actions};
 use crate::types::{AmbitionVisible, AmbitionWithLinksQueryResult, CustomDbErr};
-use sea_orm::{entity::prelude::*, Condition, JoinType::LeftJoin, QueryOrder, QuerySelect};
+use migration::{Alias, IntoCondition, NullOrdering::Last};
+use sea_orm::{
+    entity::prelude::*, JoinType::LeftJoin, Order::Asc, QueryOrder, QuerySelect,
+};
 
 pub struct AmbitionQuery;
 
@@ -25,16 +28,6 @@ impl AmbitionQuery {
         ambition::Entity::find()
             .filter(ambition::Column::UserId.eq(user_id))
             .filter(ambition::Column::Archived.eq(false))
-            .filter(
-                Condition::any()
-                    .add(objective::Column::Archived.eq(false))
-                    .add(objective::Column::Archived.is_null()),
-            )
-            .filter(
-                Condition::any()
-                    .add(action::Column::Archived.eq(false))
-                    .add(action::Column::Archived.is_null()),
-            )
             .column_as(objective::Column::Id, "objective_id")
             .column_as(objective::Column::Name, "objective_name")
             .column_as(objective::Column::Description, "objective_description")
@@ -46,12 +39,32 @@ impl AmbitionQuery {
             .column_as(action::Column::CreatedAt, "action_created_at")
             .column_as(action::Column::UpdatedAt, "action_updated_at")
             .join_rev(LeftJoin, ambitions_objectives::Relation::Ambition.def())
-            .join(LeftJoin, ambitions_objectives::Relation::Objective.def())
+            .join_as(
+                LeftJoin,
+                ambitions_objectives::Relation::Objective
+                    .def()
+                    .on_condition(|_left, right| {
+                        Expr::col((right, objective::Column::Archived))
+                            .eq(false)
+                            .into_condition()
+                    }),
+                Alias::new("objective"),
+            )
             .join_rev(LeftJoin, objectives_actions::Relation::Objective.def())
-            .join(LeftJoin, objectives_actions::Relation::Action.def())
+            .join_as(
+                LeftJoin,
+                objectives_actions::Relation::Action
+                    .def()
+                    .on_condition(|_left, right| {
+                        Expr::col((right, action::Column::Archived))
+                            .eq(false)
+                            .into_condition()
+                    }),
+                Alias::new("action"),
+            )
             .order_by_asc(ambition::Column::CreatedAt)
-            .order_by_asc(objective::Column::CreatedAt)
-            .order_by_asc(action::Column::CreatedAt)
+            .order_by_with_nulls(objective::Column::CreatedAt, Asc, Last)
+            .order_by_with_nulls(action::Column::CreatedAt, Asc, Last)
             .into_model::<AmbitionWithLinksQueryResult>()
             .all(db)
             .await
@@ -72,8 +85,6 @@ impl AmbitionQuery {
 
 #[cfg(test)]
 mod tests {
-    use std::vec;
-
     use crate::test_utils::{self, *};
 
     use super::*;
@@ -98,7 +109,7 @@ mod tests {
 
         let res = AmbitionQuery::find_all_by_user_id(&db, user.id).await?;
 
-        let expected = vec![
+        let expected = [
             AmbitionVisible {
                 id: ambition_0.id,
                 name: ambition_0.name,
@@ -142,13 +153,13 @@ mod tests {
         assert_eq!(res.len(), 4);
 
         // NOTE: Check only ids for convenience.
-        let res_organized = vec![
+        let res_organized = [
             (res[0].id, res[0].objective_id, res[0].action_id),
             (res[1].id, res[1].objective_id, res[1].action_id),
             (res[2].id, res[2].objective_id, res[2].action_id),
             (res[3].id, res[3].objective_id, res[3].action_id),
         ];
-        let expected = vec![
+        let expected = [
             (ambition_0.id, Some(objective_0.id), Some(action_0.id)),
             (ambition_0.id, Some(objective_0.id), Some(action_1.id)),
             (ambition_0.id, Some(objective_1.id), None),
@@ -163,7 +174,7 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn find_all_with_linked_by_user_id_archived_items_should_not_be_returned(
+    async fn find_all_with_linked_by_user_id_archived_items_should_be_returned_as_none(
     ) -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
@@ -186,12 +197,48 @@ mod tests {
 
         let res = AmbitionQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
 
+        assert_eq!(res.len(), 3);
+
+        // NOTE: Check only ids for convenience.
+        let res_organized = [
+            (res[0].id, res[0].objective_id, res[0].action_id),
+            (res[1].id, res[1].objective_id, res[1].action_id),
+            (res[2].id, res[2].objective_id, res[2].action_id),
+        ];
+        let expected = [
+            (ambition_0.id, Some(objective_0.id), Some(action_0.id)),
+            (ambition_0.id, Some(objective_0.id), None),
+            (ambition_0.id, None, None),
+        ];
+        assert_eq!(res_organized[0], expected[0]);
+        assert_eq!(res_organized[1], expected[1]);
+        assert_eq!(res_organized[2], expected[2]);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn find_all_with_linked_by_user_id_item_linked_to_archived_items_should_be_returned(
+    ) -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let ambition = factory::ambition(user.id).insert(&db).await?;
+        let archived_objective = factory::objective(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
+        let archived_action = factory::action(user.id).archived(true).insert(&db).await?;
+        factory::link_ambition_objective(&db, ambition.id, archived_objective.id).await?;
+        factory::link_objective_action(&db, archived_objective.id, archived_action.id).await?;
+
+        let res = AmbitionQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
+
         assert_eq!(res.len(), 1);
 
         // NOTE: Check only ids for convenience.
-        let res_organized = vec![(res[0].id, res[0].objective_id, res[0].action_id)];
-        let expected = vec![(ambition_0.id, Some(objective_0.id), Some(action_0.id))];
-        assert_eq!(res_organized, expected);
+        let res_organized = [(res[0].id, res[0].objective_id, res[0].action_id)];
+        let expected = [(ambition.id, None, None)];
+        assert_eq!(res_organized[0], expected[0]);
 
         Ok(())
     }
