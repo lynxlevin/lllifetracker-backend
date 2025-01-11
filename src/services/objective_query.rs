@@ -102,7 +102,7 @@ mod tests {
 
         let res = ObjectiveQuery::find_all_by_user_id(&db, user.id).await?;
 
-        let expected = vec![
+        let expected = [
             ObjectiveVisible {
                 id: objective_0.id,
                 name: objective_0.name,
@@ -147,14 +147,14 @@ mod tests {
         assert_eq!(res.len(), 5);
 
         // NOTE: Check only ids for convenience.
-        let res_organized = vec![
+        let res_organized = [
             (res[0].id, res[0].ambition_id, res[0].action_id),
             (res[1].id, res[1].ambition_id, res[1].action_id),
             (res[2].id, res[2].ambition_id, res[2].action_id),
             (res[3].id, res[3].ambition_id, res[3].action_id),
             (res[4].id, res[4].ambition_id, res[4].action_id),
         ];
-        let expected = vec![
+        let expected = [
             (objective_0.id, Some(ambition_0.id), Some(action_0.id)),
             (objective_0.id, Some(ambition_0.id), Some(action_1.id)),
             (objective_0.id, Some(ambition_1.id), Some(action_0.id)),
@@ -171,7 +171,7 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn find_all_with_linked_by_user_id_archived_items_should_not_be_returned(
+    async fn find_all_with_linked_by_user_id_archived_items_should_be_returned_as_none(
     ) -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
@@ -194,12 +194,48 @@ mod tests {
 
         let res = ObjectiveQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
 
+        assert_eq!(res.len(), 3);
+
+        // NOTE: Check only ids for convenience.
+        let res_organized = [
+            (res[0].id, res[0].ambition_id, res[0].action_id),
+            (res[1].id, res[1].ambition_id, res[1].action_id),
+            (res[2].id, res[2].ambition_id, res[2].action_id),
+        ];
+        let expected = [
+            (objective_0.id, Some(ambition_0.id), Some(action_0.id)),
+            (objective_0.id, Some(ambition_0.id), None),
+            (objective_0.id, None, None),
+        ];
+        assert_eq!(res_organized[0], expected[0]);
+        assert_eq!(res_organized[1], expected[1]);
+        assert_eq!(res_organized[2], expected[2]);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn find_all_with_linked_by_user_id_item_linked_to_archived_items_should_be_returned(
+    ) -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let objective = factory::objective(user.id).insert(&db).await?;
+        let archived_ambition = factory::ambition(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
+        let archived_action = factory::action(user.id).archived(true).insert(&db).await?;
+        factory::link_ambition_objective(&db, archived_ambition.id, objective.id).await?;
+        factory::link_objective_action(&db, objective.id, archived_action.id).await?;
+
+        let res = ObjectiveQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
+
         assert_eq!(res.len(), 1);
 
         // NOTE: Check only ids for convenience.
-        let res_organized = vec![(res[0].id, res[0].ambition_id, res[0].action_id)];
-        let expected = vec![(objective_0.id, Some(ambition_0.id), Some(action_0.id))];
-        assert_eq!(res_organized, expected);
+        let res_organized = [(res[0].id, res[0].ambition_id, res[0].action_id)];
+        let expected = [(objective.id, None, None)];
+        assert_eq!(res_organized[0], expected[0]);
 
         Ok(())
     }

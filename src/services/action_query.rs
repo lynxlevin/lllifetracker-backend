@@ -88,7 +88,7 @@ mod tests {
 
         let res = ActionQuery::find_all_by_user_id(&db, user.id).await?;
 
-        let expected = vec![
+        let expected = [
             ActionVisible {
                 id: action_0.id,
                 name: action_0.name,
@@ -132,13 +132,13 @@ mod tests {
         assert_eq!(res.len(), 4);
 
         // NOTE: Check only ids for convenience.
-        let res_organized = vec![
+        let res_organized = [
             (res[0].id, res[0].objective_id, res[0].ambition_id),
             (res[1].id, res[1].objective_id, res[1].ambition_id),
             (res[2].id, res[2].objective_id, res[2].ambition_id),
             (res[3].id, res[3].objective_id, res[3].ambition_id),
         ];
-        let expected = vec![
+        let expected = [
             (action_0.id, Some(objective_0.id), Some(ambition_0.id)),
             (action_0.id, Some(objective_0.id), Some(ambition_1.id)),
             (action_0.id, Some(objective_1.id), None),
@@ -179,12 +179,12 @@ mod tests {
         assert_eq!(res.len(), 3);
 
         // NOTE: Check only ids for convenience.
-        let res_organized = vec![
+        let res_organized = [
             (res[0].id, res[0].objective_id, res[0].ambition_id),
             (res[1].id, res[1].objective_id, res[1].ambition_id),
             (res[2].id, res[2].objective_id, res[2].ambition_id),
         ];
-        let expected = vec![
+        let expected = [
             (action_0.id, Some(objective_0.id), Some(ambition_0.id)),
             (action_0.id, Some(objective_0.id), None),
             (action_0.id, None, None),
@@ -215,8 +215,8 @@ mod tests {
         assert_eq!(res.len(), 1);
 
         // NOTE: Check only ids for convenience.
-        let res_organized = vec![(res[0].id, res[0].objective_id, res[0].ambition_id)];
-        let expected = vec![(action.id, None, None)];
+        let res_organized = [(res[0].id, res[0].objective_id, res[0].ambition_id)];
+        let expected = [(action.id, None, None)];
         assert_eq!(res_organized[0], expected[0]);
 
         Ok(())

@@ -335,7 +335,7 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn happy_path_with_links_item_linked_to_archived_items_only_should_be_returned() -> Result<(), DbErr> {
+    async fn happy_path_with_links_item_linked_to_archived_items_should_be_returned() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
