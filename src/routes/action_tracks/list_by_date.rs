@@ -1,5 +1,5 @@
 use crate::{
-    entities::{user as user_entity, sea_orm_active_enums::TimezoneEnum},
+    entities::{sea_orm_active_enums::TimezoneEnum, user as user_entity},
     services::action_track_query::ActionTrackQuery,
     types::{self, ActionTrackWithActionName, INTERNAL_SERVER_ERROR_MESSAGE},
 };
@@ -8,7 +8,7 @@ use actix_web::{
     web::{Data, ReqData},
     HttpResponse,
 };
-use chrono::FixedOffset;
+use chrono::{FixedOffset, TimeZone};
 use sea_orm::DbConn;
 
 #[tracing::instrument(name = "Listing a user's action tracks by date", skip(db, user))]
@@ -25,19 +25,23 @@ pub async fn list_action_tracks_by_date(
                     let mut res: Vec<Vec<ActionTrackWithActionName>> = vec![];
                     let user_offset = match user.timezone {
                         TimezoneEnum::Utc => FixedOffset::east_opt(0).unwrap(),
-                        TimezoneEnum::AsiaTokyo => FixedOffset::east_opt(9*3600).unwrap(),
+                        TimezoneEnum::AsiaTokyo => FixedOffset::east_opt(9 * 3600).unwrap(),
                     };
                     for action_track in action_tracks {
-                        if res.is_empty() || res.last().unwrap().last().unwrap().started_at.with_timezone(&user_offset).date_naive() != action_track.started_at.with_timezone(&user_offset).date_naive() {
-                            res.push(vec![action_track]);
+                        if res.is_empty()
+                            || !started_on_same_day(
+                                res.last().unwrap().last().unwrap(),
+                                &action_track,
+                                &user_offset,
+                            )
+                        {
+                            res.push(vec![action_track])
                         } else {
-                            let mut last_track = res.pop().unwrap();
-                            last_track.push(action_track);
-                            res.push(last_track);
+                            res.last_mut().unwrap().push(action_track);
                         }
                     }
                     HttpResponse::Ok().json(res)
-                },
+                }
                 Err(e) => {
                     tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
                     HttpResponse::InternalServerError().json(types::ErrorResponse {
@@ -50,13 +54,21 @@ pub async fn list_action_tracks_by_date(
     }
 }
 
+fn started_on_same_day<Tz2: TimeZone>(
+    date_1: &ActionTrackWithActionName,
+    date_2: &ActionTrackWithActionName,
+    user_timezone: &Tz2,
+) -> bool {
+    date_1.started_at.with_timezone(user_timezone).date_naive()
+        == date_2.started_at.with_timezone(user_timezone).date_naive()
+}
+
 #[cfg(test)]
 mod tests {
     use actix_http::Request;
     use actix_web::{
         dev::{Service, ServiceResponse},
-        http, test,
-        App, HttpMessage,
+        http, test, App, HttpMessage,
     };
     use sea_orm::{entity::prelude::*, DbErr};
     use types::ActionTrackWithActionName;
