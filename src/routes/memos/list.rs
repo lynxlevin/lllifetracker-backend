@@ -42,9 +42,7 @@ pub async fn list_memos(
                             res.push(res_memo);
                         } else {
                             if let Some(tag) = get_tag(&memo) {
-                                let mut last_memo = res.pop().unwrap();
-                                last_memo.push_tag(tag);
-                                res.push(last_memo);
+                                res.last_mut().unwrap().push_tag(tag);
                             }
                         }
                     }

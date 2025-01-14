@@ -44,9 +44,7 @@ pub async fn list_mission_memos(
                             res.push(res_mission_memo);
                         } else {
                             if let Some(tag) = get_tag(&mission_memo) {
-                                let mut last_mission_memo = res.pop().unwrap();
-                                last_mission_memo.push_tag(tag);
-                                res.push(last_mission_memo);
+                                res.last_mut().unwrap().push_tag(tag);
                             }
                         }
                     }

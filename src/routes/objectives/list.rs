@@ -52,7 +52,7 @@ pub async fn list_objectives(
                                 }
                                 res.push(res_objective);
                             } else {
-                                let mut last_objective = res.pop().unwrap();
+                                let last_objective = res.last_mut().unwrap();
                                 if let Some(ambition) = get_ambition(&objective) {
                                     if !last_objective.ambitions.contains(&ambition) {
                                         last_objective.push_ambition(ambition);
@@ -63,7 +63,6 @@ pub async fn list_objectives(
                                         last_objective.push_action(action);
                                     }
                                 }
-                                res.push(last_objective);
                             }
                         }
                         HttpResponse::Ok().json(res)

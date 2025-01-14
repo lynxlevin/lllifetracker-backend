@@ -50,8 +50,6 @@ impl ActionVisibleWithLinks {
     }
 
     pub fn push_ambition(&mut self, ambition: AmbitionVisible) {
-        let mut last_objective = self.objectives.pop().unwrap();
-        last_objective.push_ambition(ambition);
-        self.push_objective(last_objective);
+        self.objectives.last_mut().unwrap().push_ambition(ambition);
     }
 }
