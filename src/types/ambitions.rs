@@ -1,9 +1,11 @@
-use sea_orm::{DerivePartialModel, FromQueryResult};
 use crate::entities::prelude::Ambition;
+use sea_orm::{DerivePartialModel, FromQueryResult};
 
 use super::{objectives::ObjectiveVisibleWithActions, ActionVisible};
 
-#[derive(serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug)]
+#[derive(
+    serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug,
+)]
 #[sea_orm(entity = "Ambition")]
 pub struct AmbitionVisible {
     pub id: uuid::Uuid,
@@ -48,8 +50,6 @@ impl AmbitionVisibleWithLinks {
     }
 
     pub fn push_action(&mut self, action: ActionVisible) {
-        let mut last_objective = self.objectives.pop().unwrap();
-        last_objective.push_action(action);
-        self.push_objective(last_objective);
+        self.objectives.last_mut().unwrap().push_action(action);
     }
 }

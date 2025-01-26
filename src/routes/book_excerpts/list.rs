@@ -43,9 +43,7 @@ pub async fn list_book_excerpts(
                             res.push(res_book_excerpt);
                         } else {
                             if let Some(tag) = get_tag(&book_excerpt) {
-                                let mut last_book_excerpt = res.pop().unwrap();
-                                last_book_excerpt.push_tag(tag);
-                                res.push(last_book_excerpt);
+                                res.last_mut().unwrap().push_tag(tag);
                             }
                         }
                     }

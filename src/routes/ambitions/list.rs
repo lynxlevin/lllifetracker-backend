@@ -55,14 +55,13 @@ pub async fn list_ambitions(
                                 res.push(res_ambition);
                             } else {
                                 if let Some(objective) = get_objective(&ambition) {
-                                    let mut last_ambition = res.pop().unwrap();
+                                    let last_ambition = res.last_mut().unwrap();
                                     if objective.id != last_ambition.objectives.last().unwrap().id {
                                         last_ambition.push_objective(objective);
                                     }
                                     if let Some(action) = get_action(&ambition) {
                                         last_ambition.push_action(action);
                                     }
-                                    res.push(last_ambition);
                                 }
                             }
                         }
