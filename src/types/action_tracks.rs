@@ -22,3 +22,15 @@ pub struct ActionTrackWithActionName {
     pub ended_at: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub duration: Option<i64>,
 }
+
+#[derive(serde::Serialize, serde::Deserialize, PartialEq, Debug)]
+pub struct ActionTrackAggregation {
+    pub durations_by_action: Vec<ActionTrackAggregationDuration>,
+}
+
+
+#[derive(serde::Serialize, serde::Deserialize, PartialEq, Debug)]
+pub struct ActionTrackAggregationDuration {
+    pub action_id: uuid::Uuid,
+    pub duration: i64,
+}

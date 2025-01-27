@@ -50,3 +50,8 @@ Content-Type: application/json
 # @name delete
 DELETE {{endpoint}}/api/action_tracks/{{action_track_id}}
 
+
+###
+# @name aggregation
+GET {{endpoint}}/api/action_tracks/aggregation?started_at_from=2025-01-26T15:00:00Z&started_at_to=2025-01-27T14:59:59Z
+

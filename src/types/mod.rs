@@ -11,24 +11,17 @@ mod tags;
 mod tokens;
 mod users;
 
-pub use action_tracks::{ActionTrackVisible, ActionTrackWithActionName};
-pub use actions::{ActionVisible, ActionVisibleWithLinks, ActionWithLinksQueryResult};
-pub use ambitions::{AmbitionVisible, AmbitionVisibleWithLinks, AmbitionWithLinksQueryResult};
-pub use book_excerpts::{
-    BookExcerptVisible, BookExcerptVisibleWithTags, BookExcerptWithTagQueryResult,
-};
+pub use action_tracks::*;
+pub use actions::*;
+pub use ambitions::*;
+pub use book_excerpts::*;
 pub use db::CustomDbErr;
 pub use general::{
     ErrorResponse, SuccessResponse, INTERNAL_SERVER_ERROR_MESSAGE, USER_EMAIL_KEY, USER_ID_KEY,
 };
-pub use memos::{MemoVisible, MemoVisibleWithTags, MemoWithTagQueryResult};
-pub use mission_memos::{
-    MissionMemoVisible, MissionMemoVisibleWithTags, MissionMemoWithTagQueryResult,
-};
-pub use objectives::{
-    ObjectiveVisible, ObjectiveVisibleWithActions, ObjectiveVisibleWithAmbitions,
-    ObjectiveVisibleWithLinks, ObjectiveWithLinksQueryResult,
-};
-pub use tags::{TagQueryResult, TagType, TagVisible};
+pub use memos::*;
+pub use mission_memos::*;
+pub use objectives::*;
+pub use tags::*;
 pub use tokens::ConfirmationToken;
 pub use users::UserVisible;

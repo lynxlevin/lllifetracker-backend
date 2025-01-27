@@ -3,6 +3,7 @@ mod delete;
 mod list;
 mod list_by_date;
 mod update;
+mod aggregation;
 
 use actix_web::web::{scope, ServiceConfig};
 
