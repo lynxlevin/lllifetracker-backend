@@ -19,7 +19,10 @@ pub fn action_track(user_id: Uuid) -> action_track::ActiveModel {
 pub trait ActionTrackFactory {
     fn action_id(self, action_id: Option<Uuid>) -> action_track::ActiveModel;
     fn duration(self, duration: Option<i64>) -> action_track::ActiveModel;
-    fn started_at(self, started_at: chrono::DateTime<chrono::FixedOffset>) -> action_track::ActiveModel;
+    fn started_at(
+        self,
+        started_at: chrono::DateTime<chrono::FixedOffset>,
+    ) -> action_track::ActiveModel;
 }
 
 #[cfg(test)]
@@ -33,15 +36,23 @@ impl ActionTrackFactory for action_track::ActiveModel {
         self.duration = Set(duration);
         match duration {
             Some(duration) => {
-                self.ended_at = Set(Some((self.started_at.clone().unwrap() + Duration::seconds(duration)).into()));
+                self.ended_at = Set(Some(
+                    (self.started_at.clone().unwrap() + Duration::seconds(duration)).into(),
+                ));
             }
             None => self.ended_at = Set(None),
         }
         self
     }
 
-    fn started_at(mut self, started_at: chrono::DateTime<chrono::FixedOffset>) -> action_track::ActiveModel {
+    fn started_at(
+        mut self,
+        started_at: chrono::DateTime<chrono::FixedOffset>,
+    ) -> action_track::ActiveModel {
         self.started_at = Set(started_at);
+        if self.duration == NotSet {
+            return self;
+        }
         if let Some(duration) = self.duration.clone().unwrap() {
             self.ended_at = Set((started_at + Duration::seconds(duration)).into());
         }
