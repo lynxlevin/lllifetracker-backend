@@ -100,20 +100,20 @@ mod tests {
 
         let expected = vec![
             ActionTrackWithActionName {
-                id: action_track_0.id,
-                action_id: None,
-                action_name: None,
-                started_at: action_track_0.started_at,
-                ended_at: action_track_0.ended_at,
-                duration: action_track_0.duration,
-            },
-            ActionTrackWithActionName {
                 id: action_track_1.id,
                 action_id: Some(action.id),
                 action_name: Some(action.name),
                 started_at: action_track_1.started_at,
                 ended_at: action_track_1.ended_at,
                 duration: action_track_1.duration,
+            },
+            ActionTrackWithActionName {
+                id: action_track_0.id,
+                action_id: None,
+                action_name: None,
+                started_at: action_track_0.started_at,
+                ended_at: action_track_0.ended_at,
+                duration: action_track_0.duration,
             },
         ];
 

@@ -70,6 +70,7 @@ mod tests {
         dev::{Service, ServiceResponse},
         http, test, App, HttpMessage,
     };
+    use chrono::{Duration, Utc};
     use sea_orm::{entity::prelude::*, DbErr};
     use types::ActionTrackWithActionName;
 
@@ -94,7 +95,7 @@ mod tests {
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
-        let one_day = 86_400;
+        let now = Utc::now();
         let action_track_0 = factory::action_track(user.id)
             .duration(Some(120))
             .insert(&db)
@@ -104,7 +105,8 @@ mod tests {
             .insert(&db)
             .await?;
         let action_track_2 = factory::action_track(user.id)
-            .duration(Some(one_day + 120))
+            .duration(Some(120))
+            .started_at((now - Duration::days(1)).into())
             .action_id(Some(action.id))
             .insert(&db)
             .await?;
