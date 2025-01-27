@@ -4,9 +4,10 @@ use chrono::{DateTime, FixedOffset};
 use sea_orm::{entity::prelude::*, JoinType::LeftJoin, QueryOrder, QuerySelect};
 
 pub struct ActionTrackQueryFilters {
-    started_at_gte: Option<DateTime<FixedOffset>>,
-    started_at_lte: Option<DateTime<FixedOffset>>,
-    inactive_only: bool,
+    pub started_at_gte: Option<DateTime<FixedOffset>>,
+    pub started_at_lte: Option<DateTime<FixedOffset>>,
+    pub inactive_only: bool,
+    pub with_action_id: bool,
 }
 
 pub struct ActionTrackQuery;
@@ -17,6 +18,7 @@ impl ActionTrackQuery {
             started_at_gte: None,
             started_at_lte: None,
             inactive_only: false,
+            with_action_id: true,
         }
     }
 
@@ -41,8 +43,14 @@ impl ActionTrackQuery {
         } else {
             query
         };
+        let query = if filters.with_action_id {
+            query.filter(action_track::Column::ActionId.is_not_null())
+        } else {
+            query.filter(action_track::Column::ActionId.is_null())
+        };
         query
             .filter(action_track::Column::UserId.eq(user_id))
+            .order_by_asc(action_track::Column::ActionId)
             .order_by_desc(action_track::Column::StartedAt)
             .into_model::<ActionTrackVisible>()
             .all(db)
