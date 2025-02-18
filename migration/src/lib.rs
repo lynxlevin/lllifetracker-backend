@@ -19,6 +19,7 @@ mod m20241222_000002_create_book_excerpts_tags_table;
 mod m20241226_000001_add_archived_to_ambition_objective_action_tables;
 mod m20241227_000001_remove_records_table;
 mod m20241227_000002_create_action_tracks_table;
+mod m20250219_000001_add_ordering_trackable_to_actions_table;
 
 pub struct Migrator;
 
@@ -45,6 +46,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20241226_000001_add_archived_to_ambition_objective_action_tables::Migration),
             Box::new(m20241227_000001_remove_records_table::Migration),
             Box::new(m20241227_000002_create_action_tracks_table::Migration),
+            Box::new(m20250219_000001_add_ordering_trackable_to_actions_table::Migration),
         ]
     }
 }
