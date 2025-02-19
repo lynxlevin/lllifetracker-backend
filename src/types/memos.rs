@@ -1,4 +1,4 @@
-use crate::entities::prelude::Memo;
+use crate::entities::{memo, prelude::Memo};
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
 use super::TagVisible;
@@ -14,6 +14,19 @@ pub struct MemoVisible {
     pub date: chrono::NaiveDate,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
+}
+
+impl From<memo::Model> for MemoVisible {
+    fn from(item: memo::Model) -> Self {
+        MemoVisible {
+            id: item.id,
+            title: item.title,
+            text: item.text,
+            date: item.date,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+        }
+    }
 }
 
 #[derive(FromQueryResult, Debug, serde::Serialize, serde::Deserialize, PartialEq)]

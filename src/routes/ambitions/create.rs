@@ -36,13 +36,10 @@ pub async fn create_ambition(
             )
             .await
             {
-                Ok(ambition) => HttpResponse::Created().json(AmbitionVisible {
-                    id: ambition.id,
-                    name: ambition.name,
-                    description: ambition.description,
-                    created_at: ambition.created_at,
-                    updated_at: ambition.updated_at,
-                }),
+                Ok(ambition) => {
+                    let res: AmbitionVisible = ambition.into();
+                    HttpResponse::Created().json(res)
+                }
                 Err(e) => {
                     tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
                     HttpResponse::InternalServerError().json(types::ErrorResponse {

@@ -36,13 +36,10 @@ pub async fn create_objective(
             )
             .await
             {
-                Ok(objective) => HttpResponse::Created().json(ObjectiveVisible {
-                    id: objective.id,
-                    name: objective.name,
-                    description: objective.description,
-                    created_at: objective.created_at,
-                    updated_at: objective.updated_at,
-                }),
+                Ok(objective) => {
+                    let res: ObjectiveVisible = objective.into();
+                    HttpResponse::Created().json(res)
+                }
                 Err(e) => {
                     tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
                     HttpResponse::InternalServerError().json(types::ErrorResponse {

@@ -1,7 +1,7 @@
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
 use super::{ActionVisibleForLinking, AmbitionVisible};
-use crate::entities::prelude::Objective;
+use crate::entities::{objective, prelude::Objective};
 
 #[derive(
     serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug,
@@ -13,6 +13,18 @@ pub struct ObjectiveVisible {
     pub description: Option<String>,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
+}
+
+impl From<objective::Model> for ObjectiveVisible {
+    fn from(item: objective::Model) -> Self {
+        ObjectiveVisible {
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+        }
+    }
 }
 
 #[derive(FromQueryResult, Debug, serde::Serialize, serde::Deserialize)]

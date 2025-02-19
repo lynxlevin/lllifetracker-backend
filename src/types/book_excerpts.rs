@@ -1,4 +1,4 @@
-use crate::entities::prelude::BookExcerpt;
+use crate::entities::{book_excerpt, prelude::BookExcerpt};
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
 use super::TagVisible;
@@ -15,6 +15,20 @@ pub struct BookExcerptVisible {
     pub date: chrono::NaiveDate,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
+}
+
+impl From<book_excerpt::Model> for BookExcerptVisible {
+    fn from(item: book_excerpt::Model) -> Self {
+        BookExcerptVisible {
+            id: item.id,
+            title: item.title,
+            page_number: item.page_number,
+            text: item.text,
+            date: item.date,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+        }
+    }
 }
 
 #[derive(FromQueryResult, Debug, serde::Serialize, serde::Deserialize, PartialEq)]

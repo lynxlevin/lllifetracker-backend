@@ -42,15 +42,10 @@ pub async fn create_book_excerpt(
             )
             .await
             {
-                Ok(book_excerpt) => HttpResponse::Created().json(BookExcerptVisible {
-                    id: book_excerpt.id,
-                    title: book_excerpt.title,
-                    page_number: book_excerpt.page_number,
-                    text: book_excerpt.text,
-                    date: book_excerpt.date,
-                    created_at: book_excerpt.created_at,
-                    updated_at: book_excerpt.updated_at,
-                }),
+                Ok(book_excerpt) => {
+                    let res: BookExcerptVisible = book_excerpt.into();
+                    HttpResponse::Created().json(res)
+                }
                 Err(e) => {
                     tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
                     HttpResponse::InternalServerError().json(types::ErrorResponse {

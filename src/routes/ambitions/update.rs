@@ -41,13 +41,10 @@ pub async fn update_ambition(
             )
             .await
             {
-                Ok(ambition) => HttpResponse::Ok().json(AmbitionVisible {
-                    id: ambition.id,
-                    name: ambition.name,
-                    description: ambition.description,
-                    created_at: ambition.created_at,
-                    updated_at: ambition.updated_at,
-                }),
+                Ok(ambition) => {
+                    let res: AmbitionVisible = ambition.into();
+                    HttpResponse::Ok().json(res)
+                }
                 Err(e) => match e {
                     DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
                         CustomDbErr::NotFound => {

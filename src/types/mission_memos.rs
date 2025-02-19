@@ -1,4 +1,4 @@
-use crate::entities::prelude::MissionMemo;
+use crate::entities::{mission_memo, prelude::MissionMemo};
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
 use super::TagVisible;
@@ -16,6 +16,21 @@ pub struct MissionMemoVisible {
     pub accomplished_at: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
+}
+
+impl From<mission_memo::Model> for MissionMemoVisible {
+    fn from(item: mission_memo::Model) -> Self {
+        MissionMemoVisible {
+            id: item.id,
+            title: item.title,
+            text: item.text,
+            date: item.date,
+            archived: item.archived,
+            accomplished_at: item.accomplished_at,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+        }
+    }
 }
 
 #[derive(FromQueryResult, Debug, serde::Serialize, serde::Deserialize, PartialEq)]
