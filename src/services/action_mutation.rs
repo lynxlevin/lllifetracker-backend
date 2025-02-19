@@ -61,6 +61,7 @@ impl ActionMutation {
         user_id: uuid::Uuid,
         name: String,
         description: Option<String>,
+        trackable: bool,
     ) -> Result<action::Model, DbErr> {
         let mut action: action::ActiveModel =
             ActionQuery::find_by_id_and_user_id(db, action_id, user_id)
@@ -68,6 +69,7 @@ impl ActionMutation {
                 .into();
         action.name = Set(name);
         action.description = Set(description);
+        action.trackable = Set(trackable);
         action.updated_at = Set(Utc::now().into());
         action.update(db).await
     }
@@ -186,6 +188,7 @@ mod tests {
 
         let new_name = "action_after_update".to_string();
         let new_description = "Action after update.".to_string();
+        let new_trackable = false;
 
         let returned_action = ActionMutation::update(
             &db,
@@ -193,12 +196,14 @@ mod tests {
             user.id,
             new_name.clone(),
             Some(new_description.clone()),
+            new_trackable,
         )
         .await?;
         assert_eq!(returned_action.id, action.id);
         assert_eq!(returned_action.name, new_name.clone());
         assert_eq!(returned_action.description, Some(new_description.clone()));
         assert_eq!(returned_action.archived, action.archived);
+        assert_eq!(returned_action.trackable, new_trackable);
         assert_eq!(returned_action.user_id, user.id);
         assert_eq!(returned_action.created_at, action.created_at);
         assert!(returned_action.updated_at > action.updated_at);
@@ -211,6 +216,7 @@ mod tests {
         assert_eq!(updated_action.name, new_name.clone());
         assert_eq!(updated_action.description, Some(new_description.clone()));
         assert_eq!(updated_action.archived, action.archived);
+        assert_eq!(updated_action.trackable, new_trackable);
         assert_eq!(updated_action.user_id, user.id);
         assert_eq!(updated_action.created_at, action.created_at);
         assert_eq!(updated_action.updated_at, returned_action.updated_at);
@@ -227,7 +233,7 @@ mod tests {
         let new_name = "action_after_update_unauthorized".to_string();
 
         let error =
-            ActionMutation::update(&db, action.id, uuid::Uuid::new_v4(), new_name.clone(), None)
+            ActionMutation::update(&db, action.id, uuid::Uuid::new_v4(), new_name.clone(), None, true)
                 .await
                 .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
