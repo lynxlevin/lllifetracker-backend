@@ -36,13 +36,10 @@ pub async fn create_action(
             )
             .await
             {
-                Ok(action) => HttpResponse::Created().json(ActionVisible {
-                    id: action.id,
-                    name: action.name,
-                    description: action.description,
-                    created_at: action.created_at,
-                    updated_at: action.updated_at,
-                }),
+                Ok(action) => {
+                    let res: ActionVisible = action.into();
+                    HttpResponse::Created().json(res)
+                }
                 Err(e) => {
                     tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
                     HttpResponse::InternalServerError().json(types::ErrorResponse {

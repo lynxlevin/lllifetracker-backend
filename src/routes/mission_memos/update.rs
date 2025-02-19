@@ -43,16 +43,10 @@ pub async fn update_mission_memo(
                 user_id: user.id,
             };
             match MissionMemoMutation::partial_update(&db, form).await {
-                Ok(mission_memo) => HttpResponse::Ok().json(MissionMemoVisible {
-                    id: mission_memo.id,
-                    title: mission_memo.title,
-                    text: mission_memo.text,
-                    date: mission_memo.date,
-                    archived: mission_memo.archived,
-                    accomplished_at: mission_memo.accomplished_at,
-                    created_at: mission_memo.created_at,
-                    updated_at: mission_memo.updated_at,
-                }),
+                Ok(mission_memo) => {
+                    let res: MissionMemoVisible = mission_memo.into();
+                    HttpResponse::Ok().json(res)
+                }
                 Err(e) => match e {
                     TransactionError::Transaction(DbErr::Custom(message)) => {
                         match message.parse::<CustomDbErr>().unwrap() {

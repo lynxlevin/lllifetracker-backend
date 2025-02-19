@@ -40,14 +40,10 @@ pub async fn create_memo(
             )
             .await
             {
-                Ok(memo) => HttpResponse::Created().json(MemoVisible {
-                    id: memo.id,
-                    title: memo.title,
-                    text: memo.text,
-                    date: memo.date,
-                    created_at: memo.created_at,
-                    updated_at: memo.updated_at,
-                }),
+                Ok(memo) => {
+                    let res: MemoVisible = memo.into();
+                    HttpResponse::Created().json(res)
+                }
                 Err(e) => {
                     tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
                     HttpResponse::InternalServerError().json(types::ErrorResponse {

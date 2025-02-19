@@ -45,15 +45,10 @@ pub async fn update_book_excerpt(
                 user_id: user.id,
             };
             match BookExcerptMutation::partial_update(&db, form).await {
-                Ok(book_excerpt) => HttpResponse::Ok().json(BookExcerptVisible {
-                    id: book_excerpt.id,
-                    title: book_excerpt.title,
-                    page_number: book_excerpt.page_number,
-                    text: book_excerpt.text,
-                    date: book_excerpt.date,
-                    created_at: book_excerpt.created_at,
-                    updated_at: book_excerpt.updated_at,
-                }),
+                Ok(book_excerpt) => {
+                    let res: BookExcerptVisible = book_excerpt.into();
+                    HttpResponse::Ok().json(res)
+                }
                 Err(e) => match e {
                     TransactionError::Transaction(DbErr::Custom(message)) => {
                         match message.parse::<CustomDbErr>().unwrap() {

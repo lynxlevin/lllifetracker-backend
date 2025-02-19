@@ -1,7 +1,7 @@
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
-use super::{ActionVisible, AmbitionVisible};
-use crate::entities::prelude::Objective;
+use super::{ActionVisibleForLinking, AmbitionVisible};
+use crate::entities::{objective, prelude::Objective};
 
 #[derive(
     serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug,
@@ -13,6 +13,18 @@ pub struct ObjectiveVisible {
     pub description: Option<String>,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
+}
+
+impl From<objective::Model> for ObjectiveVisible {
+    fn from(item: objective::Model) -> Self {
+        ObjectiveVisible {
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+        }
+    }
 }
 
 #[derive(FromQueryResult, Debug, serde::Serialize, serde::Deserialize)]
@@ -42,14 +54,14 @@ pub struct ObjectiveVisibleWithLinks {
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
     pub ambitions: Vec<AmbitionVisible>,
-    pub actions: Vec<ActionVisible>,
+    pub actions: Vec<ActionVisibleForLinking>,
 }
 
 impl ObjectiveVisibleWithLinks {
     pub fn push_ambition(&mut self, ambition: AmbitionVisible) {
         self.ambitions.push(ambition);
     }
-    pub fn push_action(&mut self, action: ActionVisible) {
+    pub fn push_action(&mut self, action: ActionVisibleForLinking) {
         self.actions.push(action);
     }
 }
@@ -61,11 +73,11 @@ pub struct ObjectiveVisibleWithActions {
     pub description: Option<String>,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
-    pub actions: Vec<ActionVisible>,
+    pub actions: Vec<ActionVisibleForLinking>,
 }
 
 impl ObjectiveVisibleWithActions {
-    pub fn push_action(&mut self, action: ActionVisible) {
+    pub fn push_action(&mut self, action: ActionVisibleForLinking) {
         self.actions.push(action);
     }
 }

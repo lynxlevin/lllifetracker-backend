@@ -26,13 +26,10 @@ pub async fn archive_ambition(
         Some(user) => {
             let user = user.into_inner();
             match AmbitionMutation::archive(&db, path_param.ambition_id, user.id).await {
-                Ok(ambition) => HttpResponse::Ok().json(AmbitionVisible {
-                    id: ambition.id,
-                    name: ambition.name,
-                    description: ambition.description,
-                    created_at: ambition.created_at,
-                    updated_at: ambition.updated_at,
-                }),
+                Ok(ambition) => {
+                    let res: AmbitionVisible = ambition.into();
+                    HttpResponse::Ok().json(res)
+                }
                 Err(e) => match e {
                     DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
                         CustomDbErr::NotFound => {
@@ -65,7 +62,10 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use crate::{entities::ambition, test_utils::{self, *}};
+    use crate::{
+        entities::ambition,
+        test_utils::{self, *},
+    };
 
     use super::*;
 

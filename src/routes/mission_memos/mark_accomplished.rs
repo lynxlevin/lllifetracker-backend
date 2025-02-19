@@ -31,16 +31,10 @@ pub async fn mark_accomplished_mission_memo(
             match MissionMemoMutation::mark_accomplished(&db, path_param.mission_memo_id, user.id)
                 .await
             {
-                Ok(mission_memo) => HttpResponse::Ok().json(MissionMemoVisible {
-                    id: mission_memo.id,
-                    title: mission_memo.title,
-                    text: mission_memo.text,
-                    date: mission_memo.date,
-                    archived: mission_memo.archived,
-                    accomplished_at: mission_memo.accomplished_at,
-                    created_at: mission_memo.created_at,
-                    updated_at: mission_memo.updated_at,
-                }),
+                Ok(mission_memo) => {
+                    let res: MissionMemoVisible = mission_memo.into();
+                    HttpResponse::Ok().json(res)
+                }
                 Err(e) => match e {
                     DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
                         CustomDbErr::NotFound => {
@@ -73,7 +67,10 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use crate::{entities::mission_memo, test_utils::{self, *}};
+    use crate::{
+        entities::mission_memo,
+        test_utils::{self, *},
+    };
 
     use super::*;
 

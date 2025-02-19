@@ -4,8 +4,7 @@ use crate::{
     entities::user as user_entity,
     services::ambition_query::AmbitionQuery,
     types::{
-        self, ActionVisible, AmbitionVisibleWithLinks, AmbitionWithLinksQueryResult,
-        ObjectiveVisibleWithActions, INTERNAL_SERVER_ERROR_MESSAGE,
+        self, ActionVisibleForLinking, AmbitionVisibleWithLinks, AmbitionWithLinksQueryResult, ObjectiveVisibleWithActions, INTERNAL_SERVER_ERROR_MESSAGE
     },
 };
 use actix_web::{
@@ -104,11 +103,11 @@ fn get_objective(ambition: &AmbitionWithLinksQueryResult) -> Option<ObjectiveVis
     })
 }
 
-fn get_action(ambition: &AmbitionWithLinksQueryResult) -> Option<ActionVisible> {
+fn get_action(ambition: &AmbitionWithLinksQueryResult) -> Option<ActionVisibleForLinking> {
     if ambition.action_id.is_none() {
         return None;
     }
-    Some(ActionVisible {
+    Some(ActionVisibleForLinking {
         id: ambition.action_id.unwrap(),
         name: ambition.action_name.clone().unwrap(),
         description: ambition.action_description.clone(),

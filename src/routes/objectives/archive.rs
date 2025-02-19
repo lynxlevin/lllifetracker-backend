@@ -26,13 +26,10 @@ pub async fn archive_objective(
         Some(user) => {
             let user = user.into_inner();
             match ObjectiveMutation::archive(&db, path_param.objective_id, user.id).await {
-                Ok(objective) => HttpResponse::Ok().json(ObjectiveVisible {
-                    id: objective.id,
-                    name: objective.name,
-                    description: objective.description,
-                    created_at: objective.created_at,
-                    updated_at: objective.updated_at,
-                }),
+                Ok(objective) => {
+                    let res: ObjectiveVisible = objective.into();
+                    HttpResponse::Ok().json(res)
+                }
                 Err(e) => match e {
                     DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
                         CustomDbErr::NotFound => {
@@ -65,7 +62,10 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use crate::{entities::objective, test_utils::{self, *}};
+    use crate::{
+        entities::objective,
+        test_utils::{self, *},
+    };
 
     use super::*;
 

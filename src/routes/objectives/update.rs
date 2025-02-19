@@ -41,13 +41,10 @@ pub async fn update_objective(
             )
             .await
             {
-                Ok(objective) => HttpResponse::Ok().json(ObjectiveVisible {
-                    id: objective.id,
-                    name: objective.name,
-                    description: objective.description,
-                    created_at: objective.created_at,
-                    updated_at: objective.updated_at,
-                }),
+                Ok(objective) => {
+                    let res: ObjectiveVisible = objective.into();
+                    HttpResponse::Ok().json(res)
+                }
                 Err(e) => match e {
                     DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
                         CustomDbErr::NotFound => {

@@ -45,13 +45,10 @@ pub async fn update_action_track(
             )
             .await
             {
-                Ok(action_track) => HttpResponse::Ok().json(ActionTrackVisible {
-                    id: action_track.id,
-                    action_id: action_track.action_id,
-                    started_at: action_track.started_at,
-                    ended_at: action_track.ended_at,
-                    duration: action_track.duration,
-                }),
+                Ok(action_track) => {
+                    let res: ActionTrackVisible = action_track.into();
+                    HttpResponse::Ok().json(res)
+                }
                 Err(e) => match e {
                     DbErr::Custom(message) => match message.parse::<CustomDbErr>().unwrap() {
                         CustomDbErr::NotFound => {

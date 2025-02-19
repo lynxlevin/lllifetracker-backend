@@ -26,13 +26,10 @@ pub async fn get_action(
         Some(user) => {
             let user = user.into_inner();
             match ActionQuery::find_by_id_and_user_id(&data, path_param.action_id, user.id).await {
-                Ok(action) => HttpResponse::Ok().json(ActionVisible {
-                    id: action.id,
-                    name: action.name,
-                    description: action.description,
-                    created_at: action.created_at,
-                    updated_at: action.updated_at,
-                }),
+                Ok(action) => {
+                    let res: ActionVisible = action.into();
+                    HttpResponse::Ok().json(res)
+                }
                 Err(e) => match e {
                     DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
                         CustomDbErr::NotFound => {

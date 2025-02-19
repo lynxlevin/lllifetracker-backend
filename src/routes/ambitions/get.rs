@@ -27,13 +27,10 @@ pub async fn get_ambition(
             let user = user.into_inner();
             match AmbitionQuery::find_by_id_and_user_id(&db, path_param.ambition_id, user.id).await
             {
-                Ok(ambition) => HttpResponse::Ok().json(AmbitionVisible {
-                    id: ambition.id,
-                    name: ambition.name,
-                    description: ambition.description,
-                    created_at: ambition.created_at,
-                    updated_at: ambition.updated_at,
-                }),
+                Ok(ambition) => {
+                    let res: AmbitionVisible = ambition.into();
+                    HttpResponse::Ok().json(res)
+                }
                 Err(e) => match e {
                     DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
                         CustomDbErr::NotFound => {
