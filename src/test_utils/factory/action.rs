@@ -13,6 +13,8 @@ pub fn action(user_id: Uuid) -> action::ActiveModel {
         name: Set("action".to_string()),
         description: Set(None),
         archived: Set(false),
+        ordering: NotSet,
+        trackable: Set(true),
         created_at: Set(now.into()),
         updated_at: Set(now.into()),
     }

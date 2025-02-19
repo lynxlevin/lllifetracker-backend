@@ -1,6 +1,6 @@
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
-use super::{ActionVisible, AmbitionVisible};
+use super::{ActionVisibleForLinking, AmbitionVisible};
 use crate::entities::prelude::Objective;
 
 #[derive(
@@ -42,14 +42,14 @@ pub struct ObjectiveVisibleWithLinks {
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
     pub ambitions: Vec<AmbitionVisible>,
-    pub actions: Vec<ActionVisible>,
+    pub actions: Vec<ActionVisibleForLinking>,
 }
 
 impl ObjectiveVisibleWithLinks {
     pub fn push_ambition(&mut self, ambition: AmbitionVisible) {
         self.ambitions.push(ambition);
     }
-    pub fn push_action(&mut self, action: ActionVisible) {
+    pub fn push_action(&mut self, action: ActionVisibleForLinking) {
         self.actions.push(action);
     }
 }
@@ -61,11 +61,11 @@ pub struct ObjectiveVisibleWithActions {
     pub description: Option<String>,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
-    pub actions: Vec<ActionVisible>,
+    pub actions: Vec<ActionVisibleForLinking>,
 }
 
 impl ObjectiveVisibleWithActions {
-    pub fn push_action(&mut self, action: ActionVisible) {
+    pub fn push_action(&mut self, action: ActionVisibleForLinking) {
         self.actions.push(action);
     }
 }

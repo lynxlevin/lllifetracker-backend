@@ -2,7 +2,7 @@ use crate::{
     entities::user as user_entity,
     services::objective_query::ObjectiveQuery,
     types::{
-        self, ActionVisible, AmbitionVisible, ObjectiveVisibleWithLinks,
+        self, ActionVisibleForLinking, AmbitionVisible, ObjectiveVisibleWithLinks,
         ObjectiveWithLinksQueryResult, INTERNAL_SERVER_ERROR_MESSAGE,
     },
 };
@@ -103,11 +103,11 @@ fn get_ambition(objective: &ObjectiveWithLinksQueryResult) -> Option<AmbitionVis
     })
 }
 
-fn get_action(objective: &ObjectiveWithLinksQueryResult) -> Option<ActionVisible> {
+fn get_action(objective: &ObjectiveWithLinksQueryResult) -> Option<ActionVisibleForLinking> {
     if objective.action_id.is_none() {
         return None;
     }
-    Some(ActionVisible {
+    Some(ActionVisibleForLinking {
         id: objective.action_id.unwrap(),
         name: objective.action_name.clone().unwrap(),
         description: objective.action_description.clone(),

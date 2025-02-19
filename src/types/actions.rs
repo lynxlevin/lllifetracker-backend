@@ -1,4 +1,4 @@
-use crate::entities::prelude::Action;
+use crate::entities::{action, prelude::Action};
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
 use super::{objectives::ObjectiveVisibleWithAmbitions, AmbitionVisible};
@@ -8,6 +8,32 @@ use super::{objectives::ObjectiveVisibleWithAmbitions, AmbitionVisible};
 )]
 #[sea_orm(entity = "Action")]
 pub struct ActionVisible {
+    pub id: uuid::Uuid,
+    pub name: String,
+    pub description: Option<String>,
+    pub trackable: bool,
+    pub created_at: chrono::DateTime<chrono::FixedOffset>,
+    pub updated_at: chrono::DateTime<chrono::FixedOffset>,
+}
+
+impl From<action::Model> for ActionVisible {
+    fn from(item: action::Model) -> Self {
+        ActionVisible {
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            trackable: item.trackable,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+        }
+    }
+}
+
+#[derive(
+    serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug,
+)]
+#[sea_orm(entity = "Action")]
+pub struct ActionVisibleForLinking {
     pub id: uuid::Uuid,
     pub name: String,
     pub description: Option<String>,

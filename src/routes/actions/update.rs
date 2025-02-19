@@ -41,13 +41,10 @@ pub async fn update_action(
             )
             .await
             {
-                Ok(action) => HttpResponse::Ok().json(ActionVisible {
-                    id: action.id,
-                    name: action.name,
-                    description: action.description,
-                    created_at: action.created_at,
-                    updated_at: action.updated_at,
-                }),
+                Ok(action) => {
+                    let res: ActionVisible = action.into();
+                    HttpResponse::Ok().json(res)
+                }
                 Err(e) => match e {
                     DbErr::Custom(message) => match message.parse::<CustomDbErr>().unwrap() {
                         CustomDbErr::NotFound => {

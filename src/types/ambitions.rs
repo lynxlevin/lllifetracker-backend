@@ -1,7 +1,7 @@
 use crate::entities::prelude::Ambition;
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
-use super::{objectives::ObjectiveVisibleWithActions, ActionVisible};
+use super::{objectives::ObjectiveVisibleWithActions, ActionVisibleForLinking};
 
 #[derive(
     serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug,
@@ -49,7 +49,7 @@ impl AmbitionVisibleWithLinks {
         self.objectives.push(objective);
     }
 
-    pub fn push_action(&mut self, action: ActionVisible) {
+    pub fn push_action(&mut self, action: ActionVisibleForLinking) {
         self.objectives.last_mut().unwrap().push_action(action);
     }
 }
