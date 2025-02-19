@@ -25,6 +25,7 @@ pub trait ActionFactory {
     fn name(self, name: String) -> action::ActiveModel;
     fn description(self, description: Option<String>) -> action::ActiveModel;
     fn archived(self, archived: bool) -> action::ActiveModel;
+    fn ordering(self, ordering: Option<i32>) -> action::ActiveModel;
     fn insert_with_tag(
         self,
         db: &DbConn,
@@ -45,6 +46,11 @@ impl ActionFactory for action::ActiveModel {
 
     fn archived(mut self, archived: bool) -> action::ActiveModel {
         self.archived = Set(archived);
+        self
+    }
+
+    fn ordering(mut self, ordering: Option<i32>) -> action::ActiveModel {
+        self.ordering = Set(ordering);
         self
     }
 

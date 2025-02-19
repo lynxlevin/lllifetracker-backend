@@ -13,6 +13,7 @@ impl ActionQuery {
         action::Entity::find()
             .filter(action::Column::UserId.eq(user_id))
             .filter(action::Column::Archived.eq(false))
+            .order_by_with_nulls(action::Column::Ordering, Asc, Last)
             .order_by_asc(action::Column::CreatedAt)
             .into_partial_model::<ActionVisible>()
             .all(db)
@@ -126,6 +127,59 @@ mod tests {
         assert_eq!(res.len(), expected.len());
         assert_eq!(res[0], expected[0]);
         assert_eq!(res[1], expected[1]);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn find_all_by_user_id_sort_by_ordering() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let action_0 = factory::action(user.id)
+            .insert(&db)
+            .await?;
+        let action_1 = factory::action(user.id)
+            .ordering(Some(2))
+            .insert(&db)
+            .await?;
+        let action_2 = factory::action(user.id)
+            .ordering(Some(1))
+            .insert(&db)
+            .await?;
+
+        let res = ActionQuery::find_all_by_user_id(&db, user.id).await?;
+
+        let expected = [
+            ActionVisible {
+                id: action_2.id,
+                name: action_2.name,
+                description: action_2.description,
+                trackable: action_2.trackable,
+                created_at: action_2.created_at,
+                updated_at: action_2.updated_at,
+            },
+            ActionVisible {
+                id: action_1.id,
+                name: action_1.name,
+                description: action_1.description,
+                trackable: action_1.trackable,
+                created_at: action_1.created_at,
+                updated_at: action_1.updated_at,
+            },
+            ActionVisible {
+                id: action_0.id,
+                name: action_0.name,
+                description: action_0.description,
+                trackable: action_0.trackable,
+                created_at: action_0.created_at,
+                updated_at: action_0.updated_at,
+            },
+        ];
+
+        assert_eq!(res.len(), expected.len());
+        assert_eq!(res[0], expected[0]);
+        assert_eq!(res[1], expected[1]);
+        assert_eq!(res[2], expected[2]);
 
         Ok(())
     }
