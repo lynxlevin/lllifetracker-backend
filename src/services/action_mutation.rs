@@ -11,7 +11,6 @@ use super::action_query::ActionQuery;
 pub struct NewAction {
     pub name: String,
     pub description: Option<String>,
-    pub trackable: bool,
     pub user_id: uuid::Uuid,
 }
 
@@ -33,7 +32,7 @@ impl ActionMutation {
                     description: Set(form_data.description.to_owned()),
                     archived: Set(false),
                     ordering: NotSet,
-                    trackable: Set(form_data.trackable),
+                    trackable: Set(true),
                     created_at: Set(now.into()),
                     updated_at: Set(now.into()),
                 }
@@ -140,12 +139,10 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let action_name = "create_with_tag".to_string();
         let action_description = "Create with Tag.".to_string();
-        let action_trackable = false;
 
         let form_data = NewAction {
             name: action_name.clone(),
             description: Some(action_description.clone()),
-            trackable: action_trackable,
             user_id: user.id,
         };
 
@@ -158,7 +155,6 @@ mod tests {
             Some(action_description.clone())
         );
         assert_eq!(returned_action.archived, false);
-        assert_eq!(returned_action.trackable, action_trackable);
         assert_eq!(returned_action.user_id, user.id);
 
         let created_action = action::Entity::find_by_id(returned_action.id)
@@ -168,7 +164,6 @@ mod tests {
         assert_eq!(created_action.name, action_name.clone());
         assert_eq!(created_action.description, Some(action_description.clone()));
         assert_eq!(created_action.archived, false);
-        assert_eq!(created_action.trackable, action_trackable);
         assert_eq!(created_action.user_id, user.id);
         assert_eq!(created_action.created_at, returned_action.created_at);
         assert_eq!(created_action.updated_at, returned_action.updated_at);

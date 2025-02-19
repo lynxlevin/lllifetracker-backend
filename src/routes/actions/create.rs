@@ -14,7 +14,6 @@ use sea_orm::DbConn;
 struct RequestBody {
     name: String,
     description: Option<String>,
-    trackable: bool,
 }
 
 #[tracing::instrument(name = "Creating an action", skip(db, user))]
@@ -32,7 +31,6 @@ pub async fn create_action(
                 NewAction {
                     name: req.name.clone(),
                     description: req.description.clone(),
-                    trackable: req.trackable,
                     user_id: user.id,
                 },
             )
@@ -91,13 +89,11 @@ mod tests {
 
         let name = "create_action".to_string();
         let description = "Create action.".to_string();
-        let trackable = false;
         let req = test::TestRequest::post()
             .uri("/")
             .set_json(RequestBody {
                 name: name.clone(),
                 description: Some(description.clone()),
-                trackable,
             })
             .to_request();
         req.extensions_mut().insert(user.clone());
@@ -108,7 +104,6 @@ mod tests {
         let returned_action: ActionVisible = test::read_body_json(res).await;
         assert_eq!(returned_action.name, name.clone());
         assert_eq!(returned_action.description, Some(description.clone()));
-        assert_eq!(returned_action.description, Some(description.clone()));
 
         let created_action = action::Entity::find_by_id(returned_action.id)
             .one(&db)
@@ -117,7 +112,6 @@ mod tests {
         assert_eq!(created_action.name, name);
         assert_eq!(created_action.description, Some(description));
         assert_eq!(created_action.archived, false);
-        assert_eq!(created_action.trackable, trackable);
         assert_eq!(created_action.user_id, user.id);
         assert_eq!(created_action.created_at, returned_action.created_at);
         assert_eq!(created_action.updated_at, returned_action.updated_at);
@@ -144,7 +138,6 @@ mod tests {
             .set_json(RequestBody {
                 name: "Test create_action not logged in".to_string(),
                 description: None,
-                trackable: true,
             })
             .to_request();
 
