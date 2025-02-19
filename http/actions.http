@@ -31,7 +31,8 @@ Content-Type: application/json
 
 {
   "name": "Second action",
-  "description": "Second action description"
+  "description": "Second action description",
+  "trackable": true
 }
 
 ###
@@ -41,10 +42,22 @@ Content-Type: application/json
 
 {
   "name": "My action edited",
-  "description": "Description added"
+  "description": "Description added",
+  "trackable": false
 }
 
 ###
 # @name delete
 DELETE {{endpoint}}/api/actions/{{action_id}}
+
+###
+# @name bulk_update_ordering
+PUT {{endpoint}}/api/actions/bulk_update_ordering
+Content-Type: application/json
+
+{
+  "ordering": [
+    ""
+  ]
+}
 
