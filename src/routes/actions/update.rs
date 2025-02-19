@@ -19,7 +19,7 @@ struct PathParam {
 struct RequestBody {
     name: String,
     description: Option<String>,
-    trackable: bool,
+    trackable: Option<bool>,
 }
 
 #[tracing::instrument(name = "Updating an action", skip(db, user, req, path_param))]
@@ -105,7 +105,7 @@ mod tests {
             .set_json(RequestBody {
                 name: new_name.clone(),
                 description: Some(new_description.clone()),
-                trackable: new_trackable,
+                trackable: Some(new_trackable),
             })
             .to_request();
         req.extensions_mut().insert(user.clone());
@@ -147,7 +147,7 @@ mod tests {
             .set_json(RequestBody {
                 name: "action_after_update_route".to_string(),
                 description: None,
-                trackable: false,
+                trackable: None,
             })
             .to_request();
 

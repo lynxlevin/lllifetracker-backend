@@ -31,8 +31,7 @@ Content-Type: application/json
 
 {
   "name": "Second action",
-  "description": "Second action description",
-  "trackable": true
+  "description": "Second action description"
 }
 
 ###
