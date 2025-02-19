@@ -1,6 +1,9 @@
 use crate::entities::{action, tag};
 use chrono::Utc;
-use sea_orm::{entity::prelude::*, ActiveValue::NotSet, Set, TransactionError, TransactionTrait};
+use sea_orm::{
+    entity::prelude::*, ActiveValue::NotSet, IntoActiveModel, Set, TransactionError,
+    TransactionTrait,
+};
 
 use super::action_query::ActionQuery;
 
@@ -93,6 +96,28 @@ impl ActionMutation {
         action.archived = Set(true);
         action.updated_at = Set(Utc::now().into());
         action.update(db).await
+    }
+
+    // FIXME: Reduce query.
+    pub async fn bulk_update_ordering(
+        db: &DbConn,
+        user_id: uuid::Uuid,
+        ordering: Vec<uuid::Uuid>,
+    ) -> Result<(), DbErr> {
+        let actions = action::Entity::find()
+            .filter(action::Column::UserId.eq(user_id))
+            .filter(action::Column::Id.is_in(ordering.clone()))
+            .all(db)
+            .await?;
+        for action in actions {
+            let order = &ordering.iter().position(|id| id == &action.id);
+            if let Some(order) = order {
+                let mut action = action.into_active_model();
+                action.ordering = Set(Some((order + 1) as i32));
+                action.update(db).await?;
+            }
+        }
+        Ok(())
     }
 }
 
@@ -214,7 +239,7 @@ mod tests {
     async fn delete() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let (action, tag) =  factory::action(user.id).insert_with_tag(&db).await?;
+        let (action, tag) = factory::action(user.id).insert_with_tag(&db).await?;
 
         ActionMutation::delete(&db, action.id, user.id).await?;
 
@@ -254,6 +279,47 @@ mod tests {
             .await?
             .unwrap();
         assert!(action_in_db.archived);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn bulk_update_ordering() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let action_0 = factory::action(user.id).insert(&db).await?;
+        let action_1 = factory::action(user.id).insert(&db).await?;
+        let action_2 = factory::action(user.id).insert(&db).await?;
+        let another_user = factory::user().insert(&db).await?;
+        let another_users_action = factory::action(another_user.id).insert(&db).await?;
+
+        let ordering = vec![action_0.id, action_1.id];
+
+        ActionMutation::bulk_update_ordering(&db, user.id, ordering).await?;
+
+        let action_in_db_0 = action::Entity::find_by_id(action_0.id)
+            .one(&db)
+            .await?
+            .unwrap();
+        assert_eq!(action_in_db_0.ordering, Some(1));
+
+        let action_in_db_1 = action::Entity::find_by_id(action_1.id)
+            .one(&db)
+            .await?
+            .unwrap();
+        assert_eq!(action_in_db_1.ordering, Some(2));
+
+        let action_in_db_2 = action::Entity::find_by_id(action_2.id)
+            .one(&db)
+            .await?
+            .unwrap();
+        assert_eq!(action_in_db_2.ordering, None);
+
+        let another_users_action_in_db = action::Entity::find_by_id(another_users_action.id)
+            .one(&db)
+            .await?
+            .unwrap();
+        assert_eq!(another_users_action_in_db.ordering, None);
 
         Ok(())
     }
