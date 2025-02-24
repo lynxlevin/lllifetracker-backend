@@ -32,7 +32,7 @@ pub async fn issue_confirmation_token_pasetors(
         }
     };
 
-    let settings = crate::settings::get_settings();
+    let settings = settings::get_settings();
     let current_date_time = chrono::Local::now();
     let dt = {
         if is_for_password_change.is_some() {
@@ -89,7 +89,7 @@ pub async fn verify_confirmation_token_pasetor(
     redis_connection: &mut deadpool_redis::Connection,
     is_password: Option<bool>,
 ) -> Result<::types::ConfirmationToken, String> {
-    let settings = crate::settings::get_settings();
+    let settings = settings::get_settings();
     let sk = SymmetricKey::<V4>::from(settings.secret.secret_key.as_bytes()).unwrap();
 
     let validation_rules = ClaimsValidationRules::new();

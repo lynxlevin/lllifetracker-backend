@@ -3,7 +3,7 @@ use std::{
     rc::Rc,
 };
 
-use crate::utils::auth::session::get_user_id;
+use crate::auth::session::get_user_id;
 use actix_session::SessionExt;
 use actix_web::{
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},

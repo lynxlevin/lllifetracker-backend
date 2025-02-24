@@ -1,12 +1,3 @@
 pub mod routes;
-pub mod settings;
 pub mod startup;
 pub mod telemetry;
-pub mod utils;
-
-pub static ENV: once_cell::sync::Lazy<minijinja::Environment<'static>> =
-    once_cell::sync::Lazy::new(|| {
-        let mut env = minijinja::Environment::new();
-        env.set_loader(minijinja::path_loader("templates"));
-        env
-    });
