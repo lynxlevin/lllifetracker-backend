@@ -1,7 +1,7 @@
 use entities::user as user_entity;
+use ::types::{self, ActionTrackVisible, INTERNAL_SERVER_ERROR_MESSAGE};
 use crate::{
     services::action_track_mutation::{ActionTrackMutation, NewActionTrack},
-    types::{self, ActionTrackVisible, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
     post,

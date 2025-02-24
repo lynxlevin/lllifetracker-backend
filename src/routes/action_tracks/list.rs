@@ -1,7 +1,7 @@
 use entities::user as user_entity;
+use ::types::{self, INTERNAL_SERVER_ERROR_MESSAGE};
 use crate::{
     services::action_track_query::ActionTrackQuery,
-    types::{self, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
     get,
@@ -56,7 +56,7 @@ mod tests {
         App, HttpMessage,
     };
     use sea_orm::{entity::prelude::*, DbErr};
-    use types::ActionTrackWithActionName;
+    use ::types::ActionTrackWithActionName;
 
     use crate::test_utils::{self, *};
 

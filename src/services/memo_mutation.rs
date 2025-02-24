@@ -147,7 +147,7 @@ mod tests {
     use sea_orm::DbErr;
 
     use crate::test_utils::{self, *};
-    use crate::types::CustomDbErr;
+    use ::types::CustomDbErr;
 
     use super::*;
 

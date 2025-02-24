@@ -62,18 +62,18 @@ pub async fn register(
                 }
 
                 tracing::event!(target: "backend", tracing::Level::INFO, "User created successfully.");
-                HttpResponse::Ok().json(crate::types::SuccessResponse { message: message })
+                HttpResponse::Ok().json(::types::SuccessResponse { message: message })
             }
             Err(e) => {
                 tracing::event!(target: "backend", tracing::Level::ERROR, "{}", e);
-                HttpResponse::InternalServerError().json(crate::types::ErrorResponse {
+                HttpResponse::InternalServerError().json(::types::ErrorResponse {
                     error: "We cannot activate your account at the moment".to_string(),
                 })
             }
         },
         Err(e) => {
             tracing::event!(target: "backend", tracing::Level::ERROR, "Failed to create user: {:#?}", e);
-            HttpResponse::InternalServerError().json(crate::types::ErrorResponse {
+            HttpResponse::InternalServerError().json(::types::ErrorResponse {
                 error: "Some error on user registration.".to_string(),
             })
         }

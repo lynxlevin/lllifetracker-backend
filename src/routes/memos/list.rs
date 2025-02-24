@@ -1,10 +1,10 @@
 use entities::user as user_entity;
+use ::types::{
+    self, MemoVisibleWithTags, MemoWithTagQueryResult, TagType, TagVisible,
+    INTERNAL_SERVER_ERROR_MESSAGE,
+};
 use crate::{
     services::memo_query::MemoQuery,
-    types::{
-        self, MemoVisibleWithTags, MemoWithTagQueryResult, TagType, TagVisible,
-        INTERNAL_SERVER_ERROR_MESSAGE,
-    },
 };
 use actix_web::{
     get,
@@ -101,7 +101,7 @@ mod tests {
         App, HttpMessage,
     };
     use sea_orm::{entity::prelude::*, DbErr};
-    use types::TagType;
+    use ::types::TagType;
 
     use crate::test_utils::{self, *};
 

@@ -133,9 +133,9 @@ impl ObjectiveMutation {
 
 #[cfg(test)]
 mod tests {
+    use ::types::CustomDbErr;
     use crate::{
         test_utils::{self, *},
-        types::CustomDbErr,
     };
 
     use super::*;

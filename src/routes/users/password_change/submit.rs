@@ -6,9 +6,9 @@ use actix_web::{
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
 
+use ::types::{self, INTERNAL_SERVER_ERROR_MESSAGE};
 use crate::{
     services::user as user_service,
-    types::{self, INTERNAL_SERVER_ERROR_MESSAGE},
     utils::auth::{password, tokens::verify_confirmation_token_pasetor},
 };
 

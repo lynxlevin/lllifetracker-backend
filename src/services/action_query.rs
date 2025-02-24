@@ -1,5 +1,5 @@
 use entities::{action, ambition, ambitions_objectives, objective, objectives_actions};
-use crate::types::{ActionVisible, ActionWithLinksQueryResult, CustomDbErr};
+use ::types::{ActionVisible, ActionWithLinksQueryResult, CustomDbErr};
 use migration::{Alias, IntoCondition, NullOrdering::Last};
 use sea_orm::{entity::prelude::*, JoinType::LeftJoin, Order::Asc, QueryOrder, QuerySelect};
 

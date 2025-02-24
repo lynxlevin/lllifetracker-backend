@@ -1,5 +1,6 @@
+use ::types::INTERNAL_SERVER_ERROR_MESSAGE;
 use crate::{
-    services::user::Query as UserQuery, types::INTERNAL_SERVER_ERROR_MESSAGE,
+    services::user::Query as UserQuery,
     utils::emails::send_multipart_email,
 };
 use actix_web::{
@@ -42,25 +43,25 @@ pub async fn resend_email(
                         .unwrap();
 
                         tracing::event!(target: "backend", tracing::Level::INFO, "Verification email re-sent successfully.");
-                        HttpResponse::Ok().json(crate::types::SuccessResponse { message: "Account activation link has been sent to your email address. Kindly take action before its expiration".to_string() })
+                        HttpResponse::Ok().json(::types::SuccessResponse { message: "Account activation link has been sent to your email address. Kindly take action before its expiration".to_string() })
                     },
                     Err(e) => {
                         tracing::event!(target: "backend", tracing::Level::ERROR, "{}", e);
-                        HttpResponse::InternalServerError().json(crate::types::ErrorResponse {
+                        HttpResponse::InternalServerError().json(::types::ErrorResponse {
                             error: "We cannot activate your account at the moment".to_string(),
                         })
                     }
                 }
             },
             None => {
-                HttpResponse::NotFound().json(crate::types::ErrorResponse {
+                HttpResponse::NotFound().json(::types::ErrorResponse {
                     error: "User with this email was not found. This happens if you have already activated this user.".to_string(),
                 })
             }
         },
         Err(e) => {
             tracing::event!(target: "backend", tracing::Level::ERROR, "User not found : {:#?}", e);
-            HttpResponse::InternalServerError().json(crate::types::ErrorResponse {
+            HttpResponse::InternalServerError().json(::types::ErrorResponse {
                 error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
             })
         }

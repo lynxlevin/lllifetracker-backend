@@ -131,7 +131,7 @@ mod tests {
 
     use entities::tag;
     use crate::test_utils::{self, *};
-    use crate::types::CustomDbErr;
+    use ::types::CustomDbErr;
 
     use super::*;
 

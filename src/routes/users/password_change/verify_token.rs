@@ -6,9 +6,9 @@ use actix_web::{
 };
 use deadpool_redis::Pool;
 
+use ::types::INTERNAL_SERVER_ERROR_MESSAGE;
 use crate::{
     settings,
-    types::INTERNAL_SERVER_ERROR_MESSAGE,
     utils::auth::tokens::{issue_confirmation_token_pasetors, verify_confirmation_token_pasetor},
 };
 

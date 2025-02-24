@@ -1,7 +1,7 @@
 use entities::user as user_entity;
+use ::types::{self, CustomDbErr, ObjectiveVisible, INTERNAL_SERVER_ERROR_MESSAGE};
 use crate::{
     services::objective_mutation::ObjectiveMutation,
-    types::{self, CustomDbErr, ObjectiveVisible, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
     put,

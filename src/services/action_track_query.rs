@@ -1,5 +1,5 @@
 use entities::{action, action_track};
-use crate::types::{ActionTrackVisible, ActionTrackWithActionName, CustomDbErr};
+use ::types::{ActionTrackVisible, ActionTrackWithActionName, CustomDbErr};
 use chrono::{DateTime, FixedOffset};
 use sea_orm::{entity::prelude::*, JoinType::LeftJoin, QueryOrder, QuerySelect};
 

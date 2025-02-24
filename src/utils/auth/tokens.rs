@@ -88,7 +88,7 @@ pub async fn verify_confirmation_token_pasetor(
     token: String,
     redis_connection: &mut deadpool_redis::Connection,
     is_password: Option<bool>,
-) -> Result<crate::types::ConfirmationToken, String> {
+) -> Result<::types::ConfirmationToken, String> {
     let settings = crate::settings::get_settings();
     let sk = SymmetricKey::<V4>::from(settings.secret.secret_key.as_bytes()).unwrap();
 
@@ -139,7 +139,7 @@ pub async fn verify_confirmation_token_pasetor(
                     return Err("Token has been used or expired.".to_string());
                 }
 
-                Ok(crate::types::ConfirmationToken { user_id: user_uuid })
+                Ok(::types::ConfirmationToken { user_id: user_uuid })
             }
             Err(e) => Err(format!("{}", e)),
         },

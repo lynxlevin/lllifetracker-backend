@@ -109,9 +109,9 @@ mod tests {
     use sea_orm::prelude::*;
 
     use entities::user;
+    use ::types::{USER_EMAIL_KEY, USER_ID_KEY};
     use crate::{
         test_utils::{self, *},
-        types::{USER_EMAIL_KEY, USER_ID_KEY},
     };
 
     #[actix_web::test]

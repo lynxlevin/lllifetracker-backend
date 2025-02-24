@@ -1,7 +1,7 @@
 use entities::user as user_entity;
+use ::types::{self, MemoVisible, INTERNAL_SERVER_ERROR_MESSAGE};
 use crate::{
     services::memo_mutation::{MemoMutation, NewMemo},
-    types::{self, MemoVisible, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
     post,

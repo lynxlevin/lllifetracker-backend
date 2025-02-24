@@ -1,7 +1,7 @@
 use entities::user as user_entity;
+use ::types::{self, BookExcerptVisible, INTERNAL_SERVER_ERROR_MESSAGE};
 use crate::{
     services::book_excerpt_mutation::{BookExcerptMutation, NewBookExcerpt},
-    types::{self, BookExcerptVisible, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
     post,

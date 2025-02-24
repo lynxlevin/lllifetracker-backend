@@ -1,5 +1,5 @@
 use entities::{action, ambition, book_excerpt, book_excerpts_tags, objective, tag};
-use crate::types::{BookExcerptWithTagQueryResult, CustomDbErr};
+use ::types::{BookExcerptWithTagQueryResult, CustomDbErr};
 use migration::NullOrdering::Last;
 use sea_orm::entity::prelude::*;
 use sea_orm::{JoinType::LeftJoin, Order::Asc, QueryOrder, QuerySelect};

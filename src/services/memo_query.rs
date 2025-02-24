@@ -1,5 +1,5 @@
 use entities::{action, ambition, memo, memos_tags, objective, tag};
-use crate::types::{CustomDbErr, MemoWithTagQueryResult};
+use ::types::{CustomDbErr, MemoWithTagQueryResult};
 use migration::NullOrdering::Last;
 use sea_orm::entity::prelude::*;
 use sea_orm::{JoinType::LeftJoin, Order::Asc, QueryOrder, QuerySelect};

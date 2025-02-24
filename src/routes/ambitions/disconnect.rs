@@ -1,10 +1,10 @@
 use entities::user as user_entity;
+use ::types::{self, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE};
 use crate::{
     services::{
         ambition_mutation::AmbitionMutation, ambition_query::AmbitionQuery,
         objective_query::ObjectiveQuery,
     },
-    types::{self, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE},
 };
 use actix_web::{
     delete,

@@ -1,5 +1,5 @@
 use entities::{action, ambition, objective, tag};
-use crate::types::TagQueryResult;
+use ::types::TagQueryResult;
 use migration::NullOrdering::Last;
 use sea_orm::{
     entity::prelude::*, Condition, JoinType::LeftJoin, Order::Asc, QueryOrder, QuerySelect,
