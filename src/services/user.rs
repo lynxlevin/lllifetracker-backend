@@ -94,7 +94,7 @@ impl Query {
 
 #[cfg(test)]
 mod mutation_tests {
-    use crate::test_utils::{self, *};
+    use test_utils::{self, *};
 
     use super::*;
 

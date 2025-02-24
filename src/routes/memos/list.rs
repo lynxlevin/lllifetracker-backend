@@ -103,7 +103,7 @@ mod tests {
     use sea_orm::{entity::prelude::*, DbErr};
     use ::types::TagType;
 
-    use crate::test_utils::{self, *};
+    use test_utils::{self, *};
 
     use super::*;
 

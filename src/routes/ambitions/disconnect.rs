@@ -109,9 +109,7 @@ mod tests {
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
     use entities::ambitions_objectives;
-    use crate::{
-        test_utils::{self, *},
-    };
+    use test_utils::{self, *};
 
     use super::*;
 

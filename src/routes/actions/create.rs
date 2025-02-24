@@ -64,9 +64,7 @@ mod tests {
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
     use entities::{action, tag};
-    use crate::{
-        test_utils::{self, *},
-    };
+    use test_utils::{self, *};
 
     use super::*;
 

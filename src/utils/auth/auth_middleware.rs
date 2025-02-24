@@ -110,9 +110,7 @@ mod tests {
 
     use entities::user;
     use ::types::{USER_EMAIL_KEY, USER_ID_KEY};
-    use crate::{
-        test_utils::{self, *},
-    };
+    use test_utils::{self, *};
 
     #[actix_web::test]
     async fn test_set_user() -> Result<(), String> {

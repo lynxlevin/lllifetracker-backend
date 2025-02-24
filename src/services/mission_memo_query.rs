@@ -53,7 +53,7 @@ impl MissionMemoQuery {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_utils::{self, *};
+    use test_utils::{self, *};
     use chrono::Utc;
 
     use super::*;

@@ -55,9 +55,7 @@ pub async fn create_ambition(
 #[cfg(test)]
 mod tests {
     use entities::{ambition, tag};
-    use crate::{
-        test_utils::{self, *},
-    };
+    use test_utils::{self, *};
 
     use super::*;
     use actix_http::Request;

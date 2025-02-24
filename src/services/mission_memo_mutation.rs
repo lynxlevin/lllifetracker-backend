@@ -176,7 +176,7 @@ mod tests {
     use chrono::Datelike;
     use sea_orm::DbErr;
 
-    use crate::test_utils::{self, *};
+    use test_utils::{self, *};
     use ::types::CustomDbErr;
 
     use super::*;

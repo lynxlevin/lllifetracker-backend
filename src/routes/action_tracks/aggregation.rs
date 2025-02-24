@@ -74,7 +74,7 @@ mod tests {
     use chrono::{DateTime, Duration, FixedOffset};
     use sea_orm::{entity::prelude::*, DbErr};
 
-    use crate::test_utils::{self, *};
+    use test_utils::{self, *};
 
     use super::*;
 

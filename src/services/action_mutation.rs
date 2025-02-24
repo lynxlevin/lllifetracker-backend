@@ -130,7 +130,7 @@ mod tests {
     use sea_orm::DbErr;
 
     use entities::tag;
-    use crate::test_utils::{self, *};
+    use test_utils::{self, *};
     use ::types::CustomDbErr;
 
     use super::*;
