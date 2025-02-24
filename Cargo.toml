@@ -6,7 +6,15 @@ edition = "2021"
 
 [workspace]
 resolver = "2"
-members = ["src/entities", "src/types", "src/test_utils", "src/services", "src/utils", "src/settings"]
+members = [
+    "src/entities",
+    "src/types",
+    "src/test_utils",
+    "src/services",
+    "src/utils",
+    "src/settings",
+    "src/routes",
+]
 
 [lib]
 path = "src/lib.rs"
@@ -41,6 +49,7 @@ pasetors = { version = "^0.6.8", features = [
     "std",
     "v4",
 ], default-features = false }
+routes = { path = "src/routes" }
 # Features here: https://www.sea-ql.org/SeaORM/docs/install-and-config/database-and-async-runtime/#extra-features
 sea-orm = { version = "~1.0", features = [
     "sqlx-postgres",

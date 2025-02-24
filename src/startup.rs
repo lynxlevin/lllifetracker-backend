@@ -8,7 +8,7 @@ use actix_web::{
 use sea_orm::*;
 use std::env;
 
-use crate::routes::{
+use routes::{
     action_routes, action_track_routes, ambition_routes, auth_routes, book_excerpt_routes,
     memo_routes, mission_memo_routes, objective_routes, tag_routes,
 };
@@ -104,7 +104,7 @@ async fn run(
             })
             .service(
                 scope("/api")
-                    .service(crate::routes::health_check)
+                    .service(routes::health_check)
                     .configure(auth_routes)
                     .configure(ambition_routes)
                     .configure(objective_routes)

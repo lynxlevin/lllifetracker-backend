@@ -2586,6 +2586,7 @@ dependencies = [
  "minijinja",
  "once_cell",
  "pasetors",
+ "routes",
  "sea-orm",
  "serde",
  "serde_json",
@@ -3717,6 +3718,28 @@ dependencies = [
  "bitflags 2.6.0",
  "serde",
  "serde_derive",
+]
+
+[[package]]
+name = "routes"
+version = "0.1.0"
+dependencies = [
+ "actix-http",
+ "actix-session",
+ "actix-web",
+ "chrono",
+ "deadpool-redis",
+ "entities",
+ "sea-orm",
+ "serde",
+ "serde_json",
+ "services",
+ "settings",
+ "test_utils",
+ "tracing",
+ "types",
+ "utils",
+ "uuid",
 ]
 
 [[package]]
