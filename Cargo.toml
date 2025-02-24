@@ -6,7 +6,7 @@ edition = "2021"
 
 [workspace]
 resolver = "2"
-members = ["src/entities", "src/types", "src/test_utils"]
+members = ["src/entities", "src/types", "src/test_utils", "src/services"]
 
 [lib]
 path = "src/lib.rs"
@@ -52,6 +52,7 @@ sea-orm = { version = "~1.0", features = [
 ] }
 serde = "^1.0.204"
 serde_json = "^1.0.120"
+services = { path = "src/services" }
 tracing = "^0.1.40"
 tracing-appender = "^0.2.3"
 tracing-subscriber = { version = "^0.3.18", features = [

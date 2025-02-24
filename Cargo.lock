@@ -2589,6 +2589,7 @@ dependencies = [
  "sea-orm",
  "serde",
  "serde_json",
+ "services",
  "test_utils",
  "tracing",
  "tracing-appender",
@@ -4135,6 +4136,21 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
+]
+
+[[package]]
+name = "services"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "chrono",
+ "entities",
+ "migration",
+ "sea-orm",
+ "serde",
+ "test_utils",
+ "types",
+ "uuid",
 ]
 
 [[package]]
