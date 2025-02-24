@@ -1,4 +1,4 @@
-use crate::utils::emails::send_multipart_email;
+use utils::emails::send_multipart_email;
 use actix_web::{
     web::{Data, Json},
     HttpResponse,

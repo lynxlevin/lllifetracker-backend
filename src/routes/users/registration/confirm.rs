@@ -20,11 +20,11 @@ pub async fn confirm(
     db: Data<DbConn>,
     redis_pool: Data<Pool>,
 ) -> HttpResponse {
-    let settings = crate::settings::get_settings();
+    let settings = settings::get_settings();
 
     match redis_pool.get().await {
         Ok(ref mut redis_con) => {
-            match crate::utils::auth::tokens::verify_confirmation_token_pasetor(
+            match utils::auth::tokens::verify_confirmation_token_pasetor(
                 parameters.token.clone(),
                 redis_con,
                 None,

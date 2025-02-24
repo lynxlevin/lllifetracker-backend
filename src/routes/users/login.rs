@@ -1,4 +1,4 @@
-use crate::utils::auth::password::verify_password;
+use utils::auth::password::verify_password;
 use ::types::{INTERNAL_SERVER_ERROR_MESSAGE, USER_EMAIL_KEY, USER_ID_KEY};
 use actix_session::SessionInsertError;
 use actix_web::{

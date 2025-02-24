@@ -1,4 +1,4 @@
-use crate::utils::emails::send_multipart_email;
+use utils::emails::send_multipart_email;
 use ::types::INTERNAL_SERVER_ERROR_MESSAGE;
 use actix_web::{
     post,

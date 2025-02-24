@@ -1,4 +1,5 @@
-use lllifetracker_backend::{settings as backend_settings, startup, telemetry};
+use lllifetracker_backend::{startup, telemetry};
+use settings as backend_settings;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
