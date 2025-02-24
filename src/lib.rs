@@ -3,7 +3,6 @@ pub mod services;
 pub mod settings;
 pub mod startup;
 pub mod telemetry;
-pub mod types;
 pub mod utils;
 
 #[cfg(test)]
