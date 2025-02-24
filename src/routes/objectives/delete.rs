@@ -1,8 +1,6 @@
 use entities::user as user_entity;
 use ::types::{self, INTERNAL_SERVER_ERROR_MESSAGE};
-use crate::{
-    services::objective_mutation::ObjectiveMutation,
-};
+use services::objective_mutation::ObjectiveMutation;
 use actix_web::{
     delete,
     web::{Data, Path, ReqData},

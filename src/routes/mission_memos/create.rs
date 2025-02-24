@@ -1,8 +1,6 @@
 use entities::user as user_entity;
 use ::types::{self, MissionMemoVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use crate::{
-    services::mission_memo_mutation::{MissionMemoMutation, NewMissionMemo},
-};
+use services::mission_memo_mutation::{MissionMemoMutation, NewMissionMemo};
 use actix_web::{
     post,
     web::{Data, Json, ReqData},

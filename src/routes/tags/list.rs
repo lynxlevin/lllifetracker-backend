@@ -1,8 +1,6 @@
 use entities::user as user_entity;
 use ::types::{self, TagQueryResult, TagType, TagVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use crate::{
-    services::tag_query::TagQuery,
-};
+use services::tag_query::TagQuery;
 use actix_web::{
     get,
     web::{Data, ReqData},

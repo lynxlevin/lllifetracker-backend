@@ -1,8 +1,6 @@
 use entities::user as user_entity;
 use ::types::{self, CustomDbErr, MemoVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use crate::{
-    services::memo_mutation::{MemoMutation, UpdateMemo},
-};
+use services::memo_mutation::{MemoMutation, UpdateMemo};
 use actix_web::{
     put,
     web::{Data, Json, Path, ReqData},

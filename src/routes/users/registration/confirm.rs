@@ -1,4 +1,4 @@
-use crate::services::user::Mutation as UserMutation;
+use services::user::Mutation as UserMutation;
 use actix_web::{
     get,
     http::header,

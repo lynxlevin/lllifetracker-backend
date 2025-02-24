@@ -1,8 +1,6 @@
 use entities::user as user_entity;
 use ::types::{self, INTERNAL_SERVER_ERROR_MESSAGE};
-use crate::{
-    services::book_excerpt_mutation::BookExcerptMutation,
-};
+use services::book_excerpt_mutation::BookExcerptMutation;
 use actix_web::{
     delete,
     web::{Data, Path, ReqData},

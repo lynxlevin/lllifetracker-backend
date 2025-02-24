@@ -1,8 +1,6 @@
 use entities::user as user_entity;
 use ::types::{self, CustomDbErr, ObjectiveVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use crate::{
-    services::objective_query::ObjectiveQuery,
-};
+use services::objective_query::ObjectiveQuery;
 use actix_web::{
     get,
     web::{Data, Path, ReqData},

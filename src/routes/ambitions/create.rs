@@ -1,8 +1,6 @@
 use entities::user as user_entity;
 use ::types::{self, AmbitionVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use crate::{
-    services::ambition_mutation::{AmbitionMutation, NewAmbition},
-};
+use services::ambition_mutation::{AmbitionMutation, NewAmbition};
 use actix_web::{
     post,
     web::{Data, Json, ReqData},

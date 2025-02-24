@@ -4,9 +4,7 @@ use entities::user as user_entity;
 use ::types::{
     self, ActionVisibleForLinking, AmbitionVisibleWithLinks, AmbitionWithLinksQueryResult, ObjectiveVisibleWithActions, INTERNAL_SERVER_ERROR_MESSAGE
 };
-use crate::{
-    services::ambition_query::AmbitionQuery,
-};
+use services::ambition_query::AmbitionQuery;
 use actix_web::{
     get,
     web::{self, Data, ReqData},

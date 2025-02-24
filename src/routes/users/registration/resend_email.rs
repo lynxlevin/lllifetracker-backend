@@ -1,8 +1,5 @@
+use crate::utils::emails::send_multipart_email;
 use ::types::INTERNAL_SERVER_ERROR_MESSAGE;
-use crate::{
-    services::user::Query as UserQuery,
-    utils::emails::send_multipart_email,
-};
 use actix_web::{
     post,
     web::{Data, Json},
@@ -10,6 +7,7 @@ use actix_web::{
 };
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
+use services::user::Query as UserQuery;
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {

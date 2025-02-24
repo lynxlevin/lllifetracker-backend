@@ -3,9 +3,7 @@ use ::types::{
     self, ActionVisibleForLinking, AmbitionVisible, ObjectiveVisibleWithLinks,
     ObjectiveWithLinksQueryResult, INTERNAL_SERVER_ERROR_MESSAGE,
 };
-use crate::{
-    services::objective_query::ObjectiveQuery,
-};
+use services::objective_query::ObjectiveQuery;
 use actix_web::{
     get,
     web::{Data, Query, ReqData},

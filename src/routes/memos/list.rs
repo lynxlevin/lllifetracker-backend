@@ -3,9 +3,7 @@ use ::types::{
     self, MemoVisibleWithTags, MemoWithTagQueryResult, TagType, TagVisible,
     INTERNAL_SERVER_ERROR_MESSAGE,
 };
-use crate::{
-    services::memo_query::MemoQuery,
-};
+use services::memo_query::MemoQuery;
 use actix_web::{
     get,
     web::{Data, ReqData},

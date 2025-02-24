@@ -1,8 +1,6 @@
 use entities::user as user_entity;
 use ::types::{self, CustomDbErr, MissionMemoVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use crate::{
-    services::mission_memo_mutation::MissionMemoMutation,
-};
+use services::mission_memo_mutation::MissionMemoMutation;
 use actix_web::{
     put,
     web::{Data, Path, ReqData},

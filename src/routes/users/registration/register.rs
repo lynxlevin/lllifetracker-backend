@@ -1,4 +1,4 @@
-use crate::services::user;
+use services::user;
 use actix_web::{
     post,
     web::{Data, Json},

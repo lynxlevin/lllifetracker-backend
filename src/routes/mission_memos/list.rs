@@ -3,9 +3,7 @@ use ::types::{
     self, MissionMemoVisibleWithTags, MissionMemoWithTagQueryResult, TagType, TagVisible,
     INTERNAL_SERVER_ERROR_MESSAGE,
 };
-use crate::{
-    services::mission_memo_query::MissionMemoQuery,
-};
+use services::mission_memo_query::MissionMemoQuery;
 use actix_web::{
     get,
     web::{Data, ReqData},

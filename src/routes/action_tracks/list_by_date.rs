@@ -1,8 +1,6 @@
 use entities::{sea_orm_active_enums::TimezoneEnum, user as user_entity};
 use ::types::{self, ActionTrackWithActionName, INTERNAL_SERVER_ERROR_MESSAGE};
-use crate::{
-    services::action_track_query::ActionTrackQuery,
-};
+use services::action_track_query::ActionTrackQuery;
 use actix_web::{
     get,
     web::{Data, ReqData},

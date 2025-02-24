@@ -1,8 +1,6 @@
 use entities::user as user_entity;
 use ::types::{self, BookExcerptVisible, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE};
-use crate::{
-    services::book_excerpt_mutation::{BookExcerptMutation, UpdateBookExcerpt},
-};
+use services::book_excerpt_mutation::{BookExcerptMutation, UpdateBookExcerpt};
 use actix_web::{
     put,
     web::{Data, Json, Path, ReqData},

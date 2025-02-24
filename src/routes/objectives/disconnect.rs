@@ -1,17 +1,15 @@
-use entities::user as user_entity;
 use ::types::{self, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE};
-use crate::{
-    services::{
-        action_query::ActionQuery, objective_mutation::ObjectiveMutation,
-        objective_query::ObjectiveQuery,
-    },
-};
 use actix_web::{
     delete,
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use entities::user as user_entity;
 use sea_orm::{DbConn, DbErr};
+use services::{
+    action_query::ActionQuery, objective_mutation::ObjectiveMutation,
+    objective_query::ObjectiveQuery,
+};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -128,9 +126,7 @@ mod tests {
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
-        let objective = factory::objective(user.id)
-            .insert(&db)
-            .await?;
+        let objective = factory::objective(user.id).insert(&db).await?;
         factory::link_objective_action(&db, objective.id, action.id).await?;
 
         let req = test::TestRequest::delete()

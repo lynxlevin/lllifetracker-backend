@@ -1,17 +1,15 @@
-use entities::user as user_entity;
 use ::types::{self, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE};
-use crate::{
-    services::{
-        ambition_mutation::AmbitionMutation, ambition_query::AmbitionQuery,
-        objective_query::ObjectiveQuery,
-    },
-};
 use actix_web::{
     delete,
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use entities::user as user_entity;
 use sea_orm::{DbConn, DbErr};
+use services::{
+    ambition_mutation::AmbitionMutation, ambition_query::AmbitionQuery,
+    objective_query::ObjectiveQuery,
+};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {

@@ -1,9 +1,7 @@
 use ::types::{
     self, ActionTrackAggregation, ActionTrackAggregationDuration, INTERNAL_SERVER_ERROR_MESSAGE,
 };
-use crate::{
-    services::action_track_query::ActionTrackQuery,
-};
+use services::action_track_query::ActionTrackQuery;
 use entities::user as user_entity;
 use actix_web::{
     get,

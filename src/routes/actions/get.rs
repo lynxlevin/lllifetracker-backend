@@ -1,8 +1,6 @@
 use entities::user as user_entity;
 use ::types::{self, ActionVisible, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE};
-use crate::{
-    services::action_query::ActionQuery,
-};
+use services::action_query::ActionQuery;
 use actix_web::{
     get,
     web::{Data, Path, ReqData},

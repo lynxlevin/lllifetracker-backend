@@ -1,10 +1,11 @@
-use crate::{services::user::Query as UserQuery, utils::emails::send_multipart_email};
+use crate::utils::emails::send_multipart_email;
 use actix_web::{
     web::{Data, Json},
     HttpResponse,
 };
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
+use services::user::Query as UserQuery;
 
 #[derive(serde::Deserialize, Debug)]
 struct UserEmail {

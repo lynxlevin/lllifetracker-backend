@@ -6,11 +6,9 @@ use actix_web::{
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
 
+use crate::utils::auth::{password, tokens::verify_confirmation_token_pasetor};
 use ::types::{self, INTERNAL_SERVER_ERROR_MESSAGE};
-use crate::{
-    services::user as user_service,
-    utils::auth::{password, tokens::verify_confirmation_token_pasetor},
-};
+use services::user as user_service;
 
 #[derive(serde::Deserialize)]
 struct Parameters {

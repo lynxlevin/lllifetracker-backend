@@ -3,9 +3,7 @@ use ::types::{
     self, BookExcerptVisibleWithTags, BookExcerptWithTagQueryResult, TagType, TagVisible,
     INTERNAL_SERVER_ERROR_MESSAGE,
 };
-use crate::{
-    services::book_excerpt_query::BookExcerptQuery,
-};
+use services::book_excerpt_query::BookExcerptQuery;
 use actix_web::{
     get,
     web::{Data, ReqData},

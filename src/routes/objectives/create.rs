@@ -1,8 +1,6 @@
 use entities::user as user_entity;
 use ::types::{self, ObjectiveVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use crate::{
-    services::objective_mutation::{NewObjective, ObjectiveMutation},
-};
+use services::objective_mutation::{NewObjective, ObjectiveMutation};
 use actix_web::{
     post,
     web::{Data, Json, ReqData},
