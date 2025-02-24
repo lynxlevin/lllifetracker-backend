@@ -1,4 +1,4 @@
-use crate::entities::mission_memo;
+use entities::mission_memo;
 use chrono::Utc;
 use sea_orm::{prelude::DateTimeWithTimeZone, Set};
 use uuid::Uuid;

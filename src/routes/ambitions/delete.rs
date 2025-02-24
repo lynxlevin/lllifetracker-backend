@@ -1,5 +1,5 @@
+use entities::user as user_entity;
 use crate::{
-    entities::user as user_entity,
     services::ambition_mutation::AmbitionMutation,
     types::{self, INTERNAL_SERVER_ERROR_MESSAGE},
 };
@@ -50,8 +50,8 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
+    use entities::{ambition, tag};
     use crate::{
-        entities::{ambition, tag},
         test_utils::{self, *},
     };
 

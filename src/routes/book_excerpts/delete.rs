@@ -1,5 +1,5 @@
+use entities::user as user_entity;
 use crate::{
-    entities::user as user_entity,
     services::book_excerpt_mutation::BookExcerptMutation,
     types::{self, INTERNAL_SERVER_ERROR_MESSAGE},
 };
@@ -50,8 +50,8 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
+    use entities::{book_excerpt, book_excerpts_tags};
     use crate::{
-        entities::{book_excerpt, book_excerpts_tags},
         test_utils::{self, *},
     };
 

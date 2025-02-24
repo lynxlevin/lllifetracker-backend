@@ -1,5 +1,5 @@
+use entities::user as user_entity;
 use crate::{
-    entities::user as user_entity,
     services::action_track_mutation::ActionTrackMutation,
     types::{self, INTERNAL_SERVER_ERROR_MESSAGE},
 };
@@ -50,8 +50,8 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
+    use entities::{action, action_track};
     use crate::{
-        entities::{action, action_track},
         test_utils::{self, *},
     };
 

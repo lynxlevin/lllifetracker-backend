@@ -1,5 +1,5 @@
+use entities::user as user_entity;
 use crate::{
-    entities::user as user_entity,
     services::action_track_query::ActionTrackQuery,
     types::{self, INTERNAL_SERVER_ERROR_MESSAGE},
 };

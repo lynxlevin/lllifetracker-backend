@@ -1,10 +1,10 @@
-use crate::entities::user;
+use entities::user;
 use chrono::Utc;
 use sea_orm::Set;
 
 #[cfg(test)]
 pub fn user() -> user::ActiveModel {
-    use crate::entities::sea_orm_active_enums::TimezoneEnum;
+    use entities::sea_orm_active_enums::TimezoneEnum;
 
     let now = Utc::now();
     user::ActiveModel {

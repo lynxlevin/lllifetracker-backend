@@ -1,4 +1,4 @@
-use crate::entities::{book_excerpt, prelude::BookExcerpt};
+use entities::{book_excerpt, prelude::BookExcerpt};
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
 use super::TagVisible;

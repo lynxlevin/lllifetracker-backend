@@ -1,7 +1,7 @@
 use std::vec;
 
+use entities::user as user_entity;
 use crate::{
-    entities::user as user_entity,
     services::ambition_query::AmbitionQuery,
     types::{
         self, ActionVisibleForLinking, AmbitionVisibleWithLinks, AmbitionWithLinksQueryResult, ObjectiveVisibleWithActions, INTERNAL_SERVER_ERROR_MESSAGE

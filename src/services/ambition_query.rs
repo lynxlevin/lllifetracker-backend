@@ -1,4 +1,4 @@
-use crate::entities::{action, ambition, ambitions_objectives, objective, objectives_actions};
+use entities::{action, ambition, ambitions_objectives, objective, objectives_actions};
 use crate::types::{AmbitionVisible, AmbitionWithLinksQueryResult, CustomDbErr};
 use migration::{Alias, IntoCondition, NullOrdering::Last};
 use sea_orm::{

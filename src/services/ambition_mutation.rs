@@ -1,4 +1,4 @@
-use crate::entities::{ambition, ambitions_objectives, tag};
+use entities::{ambition, ambitions_objectives, tag};
 use chrono::Utc;
 use sea_orm::entity::prelude::*;
 use sea_orm::ActiveValue::NotSet;

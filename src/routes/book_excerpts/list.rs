@@ -1,5 +1,5 @@
+use entities::user as user_entity;
 use crate::{
-    entities::user as user_entity,
     services::book_excerpt_query::BookExcerptQuery,
     types::{
         self, BookExcerptVisibleWithTags, BookExcerptWithTagQueryResult, TagType, TagVisible,

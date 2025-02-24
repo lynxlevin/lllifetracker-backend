@@ -1,5 +1,5 @@
+use entities::user as user_entity;
 use crate::{
-    entities::user as user_entity,
     services::tag_query::TagQuery,
     types::{self, TagQueryResult, TagType, TagVisible, INTERNAL_SERVER_ERROR_MESSAGE},
 };

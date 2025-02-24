@@ -1,4 +1,4 @@
-use crate::entities::{action, ambition, objective, tag};
+use entities::{action, ambition, objective, tag};
 use crate::types::TagQueryResult;
 use migration::NullOrdering::Last;
 use sea_orm::{

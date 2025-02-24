@@ -1,4 +1,4 @@
-use crate::entities::{book_excerpt, book_excerpts_tags};
+use entities::{book_excerpt, book_excerpts_tags};
 use chrono::Utc;
 use sea_orm::{
     entity::prelude::*, DeriveColumn, EnumIter, QuerySelect, Set, TransactionError,

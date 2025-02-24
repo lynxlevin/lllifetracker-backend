@@ -1,4 +1,4 @@
-use crate::entities::{mission_memo, mission_memos_tags};
+use entities::{mission_memo, mission_memos_tags};
 use chrono::Utc;
 use sea_orm::{
     entity::prelude::*, DeriveColumn, EnumIter, QuerySelect, Set, TransactionError,

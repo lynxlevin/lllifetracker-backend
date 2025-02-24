@@ -1,5 +1,5 @@
+use entities::user as user_entity;
 use crate::{
-    entities::user as user_entity,
     services::memo_query::MemoQuery,
     types::{
         self, MemoVisibleWithTags, MemoWithTagQueryResult, TagType, TagVisible,

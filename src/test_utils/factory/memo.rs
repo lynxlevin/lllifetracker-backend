@@ -1,4 +1,4 @@
-use crate::entities::memo;
+use entities::memo;
 use chrono::Utc;
 use sea_orm::Set;
 use uuid::Uuid;

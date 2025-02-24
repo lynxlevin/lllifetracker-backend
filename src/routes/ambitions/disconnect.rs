@@ -1,5 +1,5 @@
+use entities::user as user_entity;
 use crate::{
-    entities::user as user_entity,
     services::{
         ambition_mutation::AmbitionMutation, ambition_query::AmbitionQuery,
         objective_query::ObjectiveQuery,
@@ -108,8 +108,8 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
+    use entities::ambitions_objectives;
     use crate::{
-        entities::ambitions_objectives,
         test_utils::{self, *},
     };
 

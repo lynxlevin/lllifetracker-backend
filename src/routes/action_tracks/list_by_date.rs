@@ -1,5 +1,5 @@
+use entities::{sea_orm_active_enums::TimezoneEnum, user as user_entity};
 use crate::{
-    entities::{sea_orm_active_enums::TimezoneEnum, user as user_entity},
     services::action_track_query::ActionTrackQuery,
     types::{self, ActionTrackWithActionName, INTERNAL_SERVER_ERROR_MESSAGE},
 };

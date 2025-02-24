@@ -1,5 +1,5 @@
+use entities::user as user_entity;
 use crate::{
-    entities::user as user_entity,
     services::ambition_mutation::{AmbitionMutation, NewAmbition},
     types::{self, AmbitionVisible, INTERNAL_SERVER_ERROR_MESSAGE},
 };
@@ -54,8 +54,8 @@ pub async fn create_ambition(
 
 #[cfg(test)]
 mod tests {
+    use entities::{ambition, tag};
     use crate::{
-        entities::{ambition, tag},
         test_utils::{self, *},
     };
 

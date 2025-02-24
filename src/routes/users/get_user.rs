@@ -1,6 +1,6 @@
 use actix_web::{get, web::ReqData, HttpResponse};
 
-use crate::entities::user as user_entity;
+use entities::user as user_entity;
 
 #[get("/me")]
 pub async fn get_user(user: Option<ReqData<user_entity::Model>>) -> HttpResponse {

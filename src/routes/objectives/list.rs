@@ -1,5 +1,5 @@
+use entities::user as user_entity;
 use crate::{
-    entities::user as user_entity,
     services::objective_query::ObjectiveQuery,
     types::{
         self, ActionVisibleForLinking, AmbitionVisible, ObjectiveVisibleWithLinks,

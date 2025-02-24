@@ -1,4 +1,3 @@
-pub mod entities;
 pub mod routes;
 pub mod services;
 pub mod settings;

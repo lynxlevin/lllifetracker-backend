@@ -108,8 +108,8 @@ mod tests {
     use actix_web::test;
     use sea_orm::prelude::*;
 
+    use entities::user;
     use crate::{
-        entities::user,
         test_utils::{self, *},
         types::{USER_EMAIL_KEY, USER_ID_KEY},
     };

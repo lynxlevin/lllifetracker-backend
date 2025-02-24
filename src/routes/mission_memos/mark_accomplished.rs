@@ -1,5 +1,5 @@
+use entities::user as user_entity;
 use crate::{
-    entities::user as user_entity,
     services::mission_memo_mutation::MissionMemoMutation,
     types::{self, CustomDbErr, MissionMemoVisible, INTERNAL_SERVER_ERROR_MESSAGE},
 };
@@ -67,8 +67,8 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
+    use entities::mission_memo;
     use crate::{
-        entities::mission_memo,
         test_utils::{self, *},
     };
 

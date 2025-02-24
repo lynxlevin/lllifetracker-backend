@@ -1,10 +1,10 @@
 use crate::{
-    entities::user as user_entity,
     services::action_track_query::ActionTrackQuery,
     types::{
         self, ActionTrackAggregation, ActionTrackAggregationDuration, INTERNAL_SERVER_ERROR_MESSAGE,
     },
 };
+use entities::user as user_entity;
 use actix_web::{
     get,
     web::{Data, Query, ReqData},

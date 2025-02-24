@@ -1,4 +1,4 @@
-use crate::entities::{action, tag};
+use entities::{action, tag};
 use chrono::Utc;
 use sea_orm::{
     entity::prelude::*, ActiveValue::NotSet, IntoActiveModel, Set, TransactionError,
@@ -129,7 +129,7 @@ impl ActionMutation {
 mod tests {
     use sea_orm::DbErr;
 
-    use crate::entities::tag;
+    use entities::tag;
     use crate::test_utils::{self, *};
     use crate::types::CustomDbErr;
 

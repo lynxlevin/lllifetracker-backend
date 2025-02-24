@@ -1,4 +1,4 @@
-use crate::entities::{action, tag};
+use entities::{action, tag};
 use chrono::Utc;
 use sea_orm::{prelude::*, ActiveValue::NotSet, DbConn, DbErr, Set};
 use std::future::Future;

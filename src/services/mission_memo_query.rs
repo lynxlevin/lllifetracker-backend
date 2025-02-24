@@ -1,4 +1,4 @@
-use crate::entities::{action, ambition, mission_memo, mission_memos_tags, objective, tag};
+use entities::{action, ambition, mission_memo, mission_memos_tags, objective, tag};
 use crate::types::{CustomDbErr, MissionMemoWithTagQueryResult};
 use migration::NullOrdering::{First, Last};
 use sea_orm::entity::prelude::*;

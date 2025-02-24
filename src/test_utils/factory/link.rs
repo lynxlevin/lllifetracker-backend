@@ -1,4 +1,4 @@
-use crate::entities::{
+use entities::{
     ambitions_objectives, book_excerpts_tags, memos_tags, mission_memos_tags, objectives_actions,
 };
 use sea_orm::{prelude::*, DbConn, DbErr, Set};

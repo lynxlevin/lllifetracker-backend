@@ -1,5 +1,5 @@
-use crate::entities::sea_orm_active_enums::TimezoneEnum;
-use crate::entities::user;
+use entities::sea_orm_active_enums::TimezoneEnum;
+use entities::user;
 use chrono::Utc;
 use sea_orm::entity::prelude::*;
 use sea_orm::Set;

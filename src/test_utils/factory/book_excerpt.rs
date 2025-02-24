@@ -1,4 +1,4 @@
-use crate::entities::book_excerpt;
+use entities::book_excerpt;
 use chrono::Utc;
 use sea_orm::Set;
 use uuid::Uuid;

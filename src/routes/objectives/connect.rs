@@ -1,5 +1,5 @@
+use entities::user as user_entity;
 use crate::{
-    entities::user as user_entity,
     services::{
         action_query::ActionQuery, objective_mutation::ObjectiveMutation,
         objective_query::ObjectiveQuery,
@@ -106,8 +106,8 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
+    use entities::objectives_actions;
     use crate::{
-        entities::objectives_actions,
         test_utils::{self, *},
     };
 
