@@ -4,7 +4,6 @@ use sea_orm::{prelude::*, ActiveValue::NotSet, DbConn, DbErr, Set};
 use std::future::Future;
 use uuid::Uuid;
 
-#[cfg(test)]
 pub fn objective(user_id: Uuid) -> objective::ActiveModel {
     let now = Utc::now();
     objective::ActiveModel {
@@ -18,7 +17,6 @@ pub fn objective(user_id: Uuid) -> objective::ActiveModel {
     }
 }
 
-#[cfg(test)]
 pub trait ObjectiveFactory {
     fn name(self, name: String) -> objective::ActiveModel;
     fn description(self, description: Option<String>) -> objective::ActiveModel;
@@ -29,7 +27,6 @@ pub trait ObjectiveFactory {
     ) -> impl Future<Output = Result<(objective::Model, tag::Model), DbErr>> + Send;
 }
 
-#[cfg(test)]
 impl ObjectiveFactory for objective::ActiveModel {
     fn name(mut self, name: String) -> objective::ActiveModel {
         self.name = Set(name);

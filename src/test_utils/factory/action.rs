@@ -4,7 +4,6 @@ use sea_orm::{prelude::*, ActiveValue::NotSet, DbConn, DbErr, Set};
 use std::future::Future;
 use uuid::Uuid;
 
-#[cfg(test)]
 pub fn action(user_id: Uuid) -> action::ActiveModel {
     let now = Utc::now();
     action::ActiveModel {
@@ -20,7 +19,6 @@ pub fn action(user_id: Uuid) -> action::ActiveModel {
     }
 }
 
-#[cfg(test)]
 pub trait ActionFactory {
     fn name(self, name: String) -> action::ActiveModel;
     fn description(self, description: Option<String>) -> action::ActiveModel;
@@ -32,7 +30,6 @@ pub trait ActionFactory {
     ) -> impl Future<Output = Result<(action::Model, tag::Model), DbErr>> + Send;
 }
 
-#[cfg(test)]
 impl ActionFactory for action::ActiveModel {
     fn name(mut self, name: String) -> action::ActiveModel {
         self.name = Set(name);

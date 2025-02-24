@@ -4,7 +4,6 @@ use sea_orm::{prelude::*, ActiveValue::NotSet, DbConn, DbErr, Set};
 use std::future::Future;
 use uuid::Uuid;
 
-#[cfg(test)]
 pub fn ambition(user_id: Uuid) -> ambition::ActiveModel {
     let now = Utc::now();
     ambition::ActiveModel {
@@ -18,7 +17,6 @@ pub fn ambition(user_id: Uuid) -> ambition::ActiveModel {
     }
 }
 
-#[cfg(test)]
 pub trait AmbitionFactory {
     fn name(self, name: String) -> ambition::ActiveModel;
     fn description(self, description: Option<String>) -> ambition::ActiveModel;
@@ -29,7 +27,6 @@ pub trait AmbitionFactory {
     ) -> impl Future<Output = Result<(ambition::Model, tag::Model), DbErr>> + Send;
 }
 
-#[cfg(test)]
 impl AmbitionFactory for ambition::ActiveModel {
     fn name(mut self, name: String) -> ambition::ActiveModel {
         self.name = Set(name);

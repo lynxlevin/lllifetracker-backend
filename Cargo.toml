@@ -6,7 +6,7 @@ edition = "2021"
 
 [workspace]
 resolver = "2"
-members = ["src/entities", "src/types"]
+members = ["src/entities", "src/types", "src/test_utils"]
 
 [lib]
 path = "src/lib.rs"
@@ -76,3 +76,4 @@ sea-orm = { version = "~1.0", features = [
     "with-json",
     "with-uuid",
 ] }
+test_utils = { path = "src/test_utils" }
