@@ -1,12 +1,7 @@
-[package]
-name = "lllifetracker-backend"
-version = "0.1.0"
-authors = ["LynxLevin <lynx.levin88@gmail.com>"]
-edition = "2021"
-
 [workspace]
 resolver = "2"
 members = [
+    ".",
     "src/entities",
     "src/types",
     "src/test_utils",
@@ -14,78 +9,6 @@ members = [
     "src/utils",
     "src/settings",
     "src/routes",
+    "src/life_tracker",
 ]
-
-[lib]
-path = "src/lib.rs"
-
-[[bin]]
-path = "src/main.rs"
-name = "lllifetracker-backend"
-
-[dependencies]
-actix-session = { version = "^0.10.0", features = ["redis-session"] }
-actix-web = "^4.8.0"
-argon2 = { version = "^0.5.3", default-features = false }
-chrono = "^0.4.38"
-config = { version = "^0.14.0", features = ["yaml"] }
-deadpool-redis = "^0.18.0"
-dotenvy = "^0.15.7"
-entities = { path = "src/entities" }
-futures = { version = "^0.3.28", default-features = false }
-hex = { version = "^0.4.3", default-features = false }
-lettre = { version = "^0.11.10", default-features = false, features = [
-    "builder",
-    "pool",
-    "rustls-tls",
-    "smtp-transport",
-] }
-migration = { path = "migration" }
-minijinja = { version = "^2.1.0", features = [
-    "loader",
-], default-features = false }
-once_cell = { version = "^1.19.0", default-features = false }
-pasetors = { version = "^0.6.8", features = [
-    "std",
-    "v4",
-], default-features = false }
-routes = { path = "src/routes" }
-# Features here: https://www.sea-ql.org/SeaORM/docs/install-and-config/database-and-async-runtime/#extra-features
-sea-orm = { version = "~1.0", features = [
-    "sqlx-postgres",
-    "runtime-tokio-rustls",
-    "macros",
-    "with-chrono",
-    "with-json",
-    "with-uuid",
-] }
-serde = "^1.0.204"
-serde_json = "^1.0.120"
-services = { path = "src/services" }
-settings = { path = "src/settings" }
-tracing = "^0.1.40"
-tracing-appender = "^0.2.3"
-tracing-subscriber = { version = "^0.3.18", features = [
-    "fmt",
-    "std",
-    "env-filter",
-    "registry",
-    "json",
-    "tracing-log",
-] }
-types = { path = "src/types" }
-utils = { path = "src/utils" }
-uuid = { version = "^1.10.0", features = ["v4", "serde"] }
-
-[dev-dependencies]
-actix-http = "3.*"
-cargo-watch = "8.*"
-sea-orm = { version = "~1.0", features = [
-    "sqlx-sqlite",
-    "runtime-tokio-rustls",
-    "macros",
-    "with-chrono",
-    "with-json",
-    "with-uuid",
-] }
-test_utils = { path = "src/test_utils" }
+default-members = ["src/life_tracker"]

@@ -1,4 +1,5 @@
-use lllifetracker_backend::{startup, telemetry};
+mod startup;
+mod telemetry;
 use settings as backend_settings;
 
 #[actix_web::main]
