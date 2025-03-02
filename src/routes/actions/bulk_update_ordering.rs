@@ -8,7 +8,6 @@ use actix_web::{
 };
 use sea_orm::DbConn;
 
-
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {
     ordering: Vec<uuid::Uuid>,
