@@ -1,8 +1,6 @@
-use crate::{
-    entities::user as user_entity,
-    services::tag_query::TagQuery,
-    types::{self, TagQueryResult, TagType, TagVisible, INTERNAL_SERVER_ERROR_MESSAGE},
-};
+use entities::user as user_entity;
+use ::types::{self, TagQueryResult, TagType, TagVisible, INTERNAL_SERVER_ERROR_MESSAGE};
+use services::tag_query::TagQuery;
 use actix_web::{
     get,
     web::{Data, ReqData},
@@ -74,9 +72,9 @@ mod tests {
         App, HttpMessage,
     };
     use sea_orm::{entity::prelude::*, DbErr};
-    use types::TagType;
+    use ::types::TagType;
 
-    use crate::test_utils::{self, *};
+    use test_utils::{self, *};
 
     use super::*;
 

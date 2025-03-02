@@ -1,10 +1,8 @@
-use crate::{
-    entities::user as user_entity,
-    services::action_track_query::ActionTrackQuery,
-    types::{
-        self, ActionTrackAggregation, ActionTrackAggregationDuration, INTERNAL_SERVER_ERROR_MESSAGE,
-    },
+use ::types::{
+    self, ActionTrackAggregation, ActionTrackAggregationDuration, INTERNAL_SERVER_ERROR_MESSAGE,
 };
+use services::action_track_query::ActionTrackQuery;
+use entities::user as user_entity;
 use actix_web::{
     get,
     web::{Data, Query, ReqData},
@@ -74,7 +72,7 @@ mod tests {
     use chrono::{DateTime, Duration, FixedOffset};
     use sea_orm::{entity::prelude::*, DbErr};
 
-    use crate::test_utils::{self, *};
+    use test_utils::{self, *};
 
     use super::*;
 

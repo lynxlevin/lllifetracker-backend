@@ -1,8 +1,6 @@
-use crate::{
-    entities::user as user_entity,
-    services::objective_mutation::ObjectiveMutation,
-    types::{self, INTERNAL_SERVER_ERROR_MESSAGE},
-};
+use entities::user as user_entity;
+use ::types::{self, INTERNAL_SERVER_ERROR_MESSAGE};
+use services::objective_mutation::ObjectiveMutation;
 use actix_web::{
     delete,
     web::{Data, Path, ReqData},
@@ -50,10 +48,8 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use crate::{
-        entities::{objective, tag},
-        test_utils::{self, *},
-    };
+    use entities::{objective, tag};
+    use test_utils::{self, *};
 
     use super::*;
 

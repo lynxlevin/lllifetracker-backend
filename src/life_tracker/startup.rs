@@ -8,20 +8,19 @@ use actix_web::{
 use sea_orm::*;
 use std::env;
 
-use crate::{
-    routes::{
-        action_routes, action_track_routes, ambition_routes, auth_routes, book_excerpt_routes, memo_routes, mission_memo_routes, objective_routes, tag_routes
-    },
-    utils::auth::auth_middleware::AuthenticateUser,
+use routes::{
+    action_routes, action_track_routes, ambition_routes, auth_routes, book_excerpt_routes,
+    memo_routes, mission_memo_routes, objective_routes, tag_routes,
 };
 use migration::{Migrator, MigratorTrait};
+use utils::auth::auth_middleware::AuthenticateUser;
 pub struct Application {
     port: u16,
     server: Server,
 }
 
 impl Application {
-    pub async fn build(settings: crate::settings::Settings) -> Result<Self, std::io::Error> {
+    pub async fn build(settings: settings::Settings) -> Result<Self, std::io::Error> {
         let db = get_database_connection().await;
         Migrator::up(&db, None).await.unwrap();
         let address = format!(
@@ -70,7 +69,7 @@ pub async fn get_database_connection() -> DatabaseConnection {
 async fn run(
     listener: std::net::TcpListener,
     db: DatabaseConnection,
-    settings: crate::settings::Settings,
+    settings: settings::Settings,
 ) -> Result<Server, std::io::Error> {
     // MYMEMO: refactor redis usage referencing deadpool redis official. Would like to remove boiler plates at getting connections.
     let redis_url = env::var("REDIS_URL").expect("REDIS_URL must be set");
@@ -105,7 +104,7 @@ async fn run(
             })
             .service(
                 scope("/api")
-                    .service(crate::routes::health_check)
+                    .service(routes::health_check)
                     .configure(auth_routes)
                     .configure(ambition_routes)
                     .configure(objective_routes)

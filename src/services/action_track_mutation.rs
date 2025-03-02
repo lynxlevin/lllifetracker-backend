@@ -1,4 +1,4 @@
-use crate::entities::action_track;
+use entities::action_track;
 use sea_orm::{entity::prelude::*, ActiveValue::NotSet, Set};
 
 use super::action_track_query::ActionTrackQuery;
@@ -76,9 +76,9 @@ mod tests {
     use chrono::Utc;
     use sea_orm::DbErr;
 
-    use crate::entities::action;
-    use crate::test_utils::{self, *};
-    use crate::types::CustomDbErr;
+    use entities::action;
+    use test_utils::{self, *};
+    use ::types::CustomDbErr;
 
     use super::*;
 

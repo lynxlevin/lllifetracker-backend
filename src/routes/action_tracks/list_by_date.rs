@@ -1,8 +1,6 @@
-use crate::{
-    entities::{sea_orm_active_enums::TimezoneEnum, user as user_entity},
-    services::action_track_query::ActionTrackQuery,
-    types::{self, ActionTrackWithActionName, INTERNAL_SERVER_ERROR_MESSAGE},
-};
+use entities::{sea_orm_active_enums::TimezoneEnum, user as user_entity};
+use ::types::{self, ActionTrackWithActionName, INTERNAL_SERVER_ERROR_MESSAGE};
+use services::action_track_query::ActionTrackQuery;
 use actix_web::{
     get,
     web::{Data, ReqData},
@@ -72,9 +70,9 @@ mod tests {
     };
     use chrono::{Duration, Utc};
     use sea_orm::{entity::prelude::*, DbErr};
-    use types::ActionTrackWithActionName;
+    use ::types::ActionTrackWithActionName;
 
-    use crate::test_utils::{self, *};
+    use test_utils::{self, *};
 
     use super::*;
 

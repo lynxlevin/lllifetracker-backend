@@ -1,8 +1,6 @@
-use crate::{
-    entities::user as user_entity,
-    services::book_excerpt_mutation::{BookExcerptMutation, UpdateBookExcerpt},
-    types::{self, BookExcerptVisible, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE},
-};
+use entities::user as user_entity;
+use ::types::{self, BookExcerptVisible, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE};
+use services::book_excerpt_mutation::{BookExcerptMutation, UpdateBookExcerpt};
 use actix_web::{
     put,
     web::{Data, Json, Path, ReqData},
@@ -83,10 +81,8 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait, QuerySelect};
 
-    use crate::{
-        entities::{book_excerpt, book_excerpts_tags},
-        test_utils::{self, *},
-    };
+    use entities::{book_excerpt, book_excerpts_tags};
+    use test_utils::{self, *};
 
     use super::*;
 

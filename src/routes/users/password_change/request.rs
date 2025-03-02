@@ -1,10 +1,11 @@
-use crate::{services::user::Query as UserQuery, utils::emails::send_multipart_email};
+use utils::emails::send_multipart_email;
 use actix_web::{
     web::{Data, Json},
     HttpResponse,
 };
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
+use services::user::Query as UserQuery;
 
 #[derive(serde::Deserialize, Debug)]
 struct UserEmail {
@@ -33,26 +34,26 @@ pub async fn request_password_change(
                     )
                     .await
                     .unwrap();
-                    HttpResponse::Ok().json(crate::types::SuccessResponse {
+                    HttpResponse::Ok().json(::types::SuccessResponse {
                             message: "Password reset instructions have been sent to your email address.Kindly take action before its expiration.".to_string()
                         })
                 }
                 Err(e) => {
                     tracing::event!(target: "backend", tracing::Level::ERROR, "{}", e);
-                    return HttpResponse::InternalServerError().json(crate::types::ErrorResponse {
+                    return HttpResponse::InternalServerError().json(::types::ErrorResponse {
                         error: "Something happened. Please try again.".to_string(),
                     });
                 }
             },
             None => {
-                return HttpResponse::NotFound().json(crate::types::ErrorResponse {
+                return HttpResponse::NotFound().json(::types::ErrorResponse {
                     error: format!("An active user with this email does not exist."),
                 })
             }
         },
         Err(e) => {
             tracing::event!(target: "db", tracing::Level::ERROR, "User not found:{:#?}", e);
-            HttpResponse::NotFound().json(crate::types::ErrorResponse {
+            HttpResponse::NotFound().json(::types::ErrorResponse {
                 error: format!("An active user with this email does not exist."),
             })
         }

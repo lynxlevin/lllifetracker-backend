@@ -1,8 +1,6 @@
-use crate::{
-    entities::user as user_entity,
-    services::action_track_query::ActionTrackQuery,
-    types::{self, INTERNAL_SERVER_ERROR_MESSAGE},
-};
+use entities::user as user_entity;
+use ::types::{self, INTERNAL_SERVER_ERROR_MESSAGE};
+use services::action_track_query::ActionTrackQuery;
 use actix_web::{
     get,
     web::{Data, Query, ReqData},
@@ -56,9 +54,9 @@ mod tests {
         App, HttpMessage,
     };
     use sea_orm::{entity::prelude::*, DbErr};
-    use types::ActionTrackWithActionName;
+    use ::types::ActionTrackWithActionName;
 
-    use crate::test_utils::{self, *};
+    use test_utils::{self, *};
 
     use super::*;
 

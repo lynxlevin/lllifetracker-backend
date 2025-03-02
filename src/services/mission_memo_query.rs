@@ -1,5 +1,5 @@
-use crate::entities::{action, ambition, mission_memo, mission_memos_tags, objective, tag};
-use crate::types::{CustomDbErr, MissionMemoWithTagQueryResult};
+use entities::{action, ambition, mission_memo, mission_memos_tags, objective, tag};
+use ::types::{CustomDbErr, MissionMemoWithTagQueryResult};
 use migration::NullOrdering::{First, Last};
 use sea_orm::entity::prelude::*;
 use sea_orm::{
@@ -53,7 +53,7 @@ impl MissionMemoQuery {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_utils::{self, *};
+    use test_utils::{self, *};
     use chrono::Utc;
 
     use super::*;

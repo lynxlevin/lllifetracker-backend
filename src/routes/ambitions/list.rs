@@ -1,12 +1,10 @@
 use std::vec;
 
-use crate::{
-    entities::user as user_entity,
-    services::ambition_query::AmbitionQuery,
-    types::{
-        self, ActionVisibleForLinking, AmbitionVisibleWithLinks, AmbitionWithLinksQueryResult, ObjectiveVisibleWithActions, INTERNAL_SERVER_ERROR_MESSAGE
-    },
+use entities::user as user_entity;
+use ::types::{
+    self, ActionVisibleForLinking, AmbitionVisibleWithLinks, AmbitionWithLinksQueryResult, ObjectiveVisibleWithActions, INTERNAL_SERVER_ERROR_MESSAGE
 };
+use services::ambition_query::AmbitionQuery;
 use actix_web::{
     get,
     web::{self, Data, ReqData},
@@ -126,9 +124,9 @@ mod tests {
         App, HttpMessage,
     };
     use sea_orm::{entity::prelude::*, DbErr};
-    use types::{AmbitionVisible, AmbitionVisibleWithLinks};
+    use ::types::{AmbitionVisible, AmbitionVisibleWithLinks};
 
-    use crate::test_utils::{self, *};
+    use test_utils::{self, *};
 
     use super::*;
 

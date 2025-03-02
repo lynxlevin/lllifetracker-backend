@@ -1,9 +1,8 @@
-use crate::entities::mission_memo;
+use entities::mission_memo;
 use chrono::Utc;
 use sea_orm::{prelude::DateTimeWithTimeZone, Set};
 use uuid::Uuid;
 
-#[cfg(test)]
 pub fn mission_memo(user_id: Uuid) -> mission_memo::ActiveModel {
     let now = Utc::now();
     mission_memo::ActiveModel {
@@ -19,14 +18,12 @@ pub fn mission_memo(user_id: Uuid) -> mission_memo::ActiveModel {
     }
 }
 
-#[cfg(test)]
 pub trait MissionMemoFactory {
     fn title(self, title: String) -> mission_memo::ActiveModel;
     fn archived(self, archived: bool) -> mission_memo::ActiveModel;
     fn accomplished_at(self, accomplished_at: Option<DateTimeWithTimeZone>) -> mission_memo::ActiveModel;
 }
 
-#[cfg(test)]
 impl MissionMemoFactory for mission_memo::ActiveModel {
     fn title(mut self, title: String) -> mission_memo::ActiveModel {
         self.title = Set(title);

@@ -1,9 +1,8 @@
-use crate::entities::book_excerpt;
+use entities::book_excerpt;
 use chrono::Utc;
 use sea_orm::Set;
 use uuid::Uuid;
 
-#[cfg(test)]
 pub fn book_excerpt(user_id: Uuid) -> book_excerpt::ActiveModel {
     let now = Utc::now();
     book_excerpt::ActiveModel {
@@ -18,12 +17,10 @@ pub fn book_excerpt(user_id: Uuid) -> book_excerpt::ActiveModel {
     }
 }
 
-#[cfg(test)]
 pub trait BookExcerptFactory {
     fn title(self, title: String) -> book_excerpt::ActiveModel;
 }
 
-#[cfg(test)]
 impl BookExcerptFactory for book_excerpt::ActiveModel {
     fn title(mut self, title: String) -> book_excerpt::ActiveModel {
         self.title = Set(title);

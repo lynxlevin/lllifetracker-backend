@@ -1,4 +1,4 @@
-use crate::entities::{action, prelude::Action};
+use entities::{action, prelude::Action};
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
 use super::{objectives::ObjectiveVisibleWithAmbitions, AmbitionVisible};

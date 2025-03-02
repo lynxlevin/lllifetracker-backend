@@ -1,10 +1,9 @@
-use crate::entities::user;
+use entities::user;
 use chrono::Utc;
 use sea_orm::Set;
 
-#[cfg(test)]
 pub fn user() -> user::ActiveModel {
-    use crate::entities::sea_orm_active_enums::TimezoneEnum;
+    use entities::sea_orm_active_enums::TimezoneEnum;
 
     let now = Utc::now();
     user::ActiveModel {
@@ -20,12 +19,10 @@ pub fn user() -> user::ActiveModel {
     }
 }
 
-#[cfg(test)]
 pub trait UserFactory {
     fn is_active(self, is_active: bool) -> user::ActiveModel;
 }
 
-#[cfg(test)]
 impl UserFactory for user::ActiveModel {
     fn is_active(mut self, is_active: bool) -> user::ActiveModel {
         self.is_active = Set(is_active);

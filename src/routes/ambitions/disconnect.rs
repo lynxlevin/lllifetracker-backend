@@ -1,17 +1,15 @@
-use crate::{
-    entities::user as user_entity,
-    services::{
-        ambition_mutation::AmbitionMutation, ambition_query::AmbitionQuery,
-        objective_query::ObjectiveQuery,
-    },
-    types::{self, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE},
-};
+use ::types::{self, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE};
 use actix_web::{
     delete,
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use entities::user as user_entity;
 use sea_orm::{DbConn, DbErr};
+use services::{
+    ambition_mutation::AmbitionMutation, ambition_query::AmbitionQuery,
+    objective_query::ObjectiveQuery,
+};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -108,10 +106,8 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use crate::{
-        entities::ambitions_objectives,
-        test_utils::{self, *},
-    };
+    use entities::ambitions_objectives;
+    use test_utils::{self, *};
 
     use super::*;
 

@@ -1,7 +1,7 @@
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
 use super::{ActionVisibleForLinking, AmbitionVisible};
-use crate::entities::{objective, prelude::Objective};
+use entities::{objective, prelude::Objective};
 
 #[derive(
     serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug,

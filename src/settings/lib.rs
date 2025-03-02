@@ -98,3 +98,10 @@ pub fn get_settings() -> Settings {
         .try_deserialize::<Settings>()
         .expect("Failed to read settings.")
 }
+
+pub static ENV: once_cell::sync::Lazy<minijinja::Environment<'static>> =
+    once_cell::sync::Lazy::new(|| {
+        let mut env = minijinja::Environment::new();
+        env.set_loader(minijinja::path_loader("templates"));
+        env
+    });

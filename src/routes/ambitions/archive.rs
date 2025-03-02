@@ -1,8 +1,6 @@
-use crate::{
-    entities::user as user_entity,
-    services::ambition_mutation::AmbitionMutation,
-    types::{self, AmbitionVisible, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE},
-};
+use entities::user as user_entity;
+use ::types::{self, AmbitionVisible, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE};
+use services::ambition_mutation::AmbitionMutation;
 use actix_web::{
     put,
     web::{Data, Path, ReqData},
@@ -62,10 +60,8 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use crate::{
-        entities::ambition,
-        test_utils::{self, *},
-    };
+    use entities::ambition;
+    use test_utils::{self, *};
 
     use super::*;
 

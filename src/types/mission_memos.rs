@@ -1,4 +1,4 @@
-use crate::entities::{mission_memo, prelude::MissionMemo};
+use entities::{mission_memo, prelude::MissionMemo};
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
 use super::TagVisible;

@@ -1,17 +1,15 @@
-use crate::{
-    entities::user as user_entity,
-    services::{
-        action_query::ActionQuery, objective_mutation::ObjectiveMutation,
-        objective_query::ObjectiveQuery,
-    },
-    types::{self, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE},
-};
+use ::types::{self, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE};
 use actix_web::{
     delete,
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use entities::user as user_entity;
 use sea_orm::{DbConn, DbErr};
+use services::{
+    action_query::ActionQuery, objective_mutation::ObjectiveMutation,
+    objective_query::ObjectiveQuery,
+};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -106,10 +104,8 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use crate::{
-        entities::objectives_actions,
-        test_utils::{self, *},
-    };
+    use entities::objectives_actions;
+    use test_utils::{self, *};
 
     use super::*;
 
@@ -130,9 +126,7 @@ mod tests {
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
-        let objective = factory::objective(user.id)
-            .insert(&db)
-            .await?;
+        let objective = factory::objective(user.id).insert(&db).await?;
         factory::link_objective_action(&db, objective.id, action.id).await?;
 
         let req = test::TestRequest::delete()

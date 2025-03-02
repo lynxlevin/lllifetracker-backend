@@ -1,7 +1,5 @@
-use crate::{
-    services::user::Query as UserQuery, types::INTERNAL_SERVER_ERROR_MESSAGE,
-    utils::emails::send_multipart_email,
-};
+use utils::emails::send_multipart_email;
+use ::types::INTERNAL_SERVER_ERROR_MESSAGE;
 use actix_web::{
     post,
     web::{Data, Json},
@@ -9,6 +7,7 @@ use actix_web::{
 };
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
+use services::user::Query as UserQuery;
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {
@@ -42,25 +41,25 @@ pub async fn resend_email(
                         .unwrap();
 
                         tracing::event!(target: "backend", tracing::Level::INFO, "Verification email re-sent successfully.");
-                        HttpResponse::Ok().json(crate::types::SuccessResponse { message: "Account activation link has been sent to your email address. Kindly take action before its expiration".to_string() })
+                        HttpResponse::Ok().json(::types::SuccessResponse { message: "Account activation link has been sent to your email address. Kindly take action before its expiration".to_string() })
                     },
                     Err(e) => {
                         tracing::event!(target: "backend", tracing::Level::ERROR, "{}", e);
-                        HttpResponse::InternalServerError().json(crate::types::ErrorResponse {
+                        HttpResponse::InternalServerError().json(::types::ErrorResponse {
                             error: "We cannot activate your account at the moment".to_string(),
                         })
                     }
                 }
             },
             None => {
-                HttpResponse::NotFound().json(crate::types::ErrorResponse {
+                HttpResponse::NotFound().json(::types::ErrorResponse {
                     error: "User with this email was not found. This happens if you have already activated this user.".to_string(),
                 })
             }
         },
         Err(e) => {
             tracing::event!(target: "backend", tracing::Level::ERROR, "User not found : {:#?}", e);
-            HttpResponse::InternalServerError().json(crate::types::ErrorResponse {
+            HttpResponse::InternalServerError().json(::types::ErrorResponse {
                 error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
             })
         }

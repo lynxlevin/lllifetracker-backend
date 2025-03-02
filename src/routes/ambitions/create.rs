@@ -1,8 +1,6 @@
-use crate::{
-    entities::user as user_entity,
-    services::ambition_mutation::{AmbitionMutation, NewAmbition},
-    types::{self, AmbitionVisible, INTERNAL_SERVER_ERROR_MESSAGE},
-};
+use entities::user as user_entity;
+use ::types::{self, AmbitionVisible, INTERNAL_SERVER_ERROR_MESSAGE};
+use services::ambition_mutation::{AmbitionMutation, NewAmbition};
 use actix_web::{
     post,
     web::{Data, Json, ReqData},
@@ -54,10 +52,8 @@ pub async fn create_ambition(
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        entities::{ambition, tag},
-        test_utils::{self, *},
-    };
+    use entities::{ambition, tag};
+    use test_utils::{self, *};
 
     use super::*;
     use actix_http::Request;

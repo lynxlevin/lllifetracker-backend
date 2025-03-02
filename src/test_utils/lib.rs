@@ -1,18 +1,19 @@
-use crate::entities::{
+use entities::{
     action, action_track, ambition, ambitions_objectives, book_excerpt, book_excerpts_tags, memo,
     memos_tags, mission_memo, mission_memos_tags, objective, objectives_actions, tag, user,
 };
+
 use sea_orm::{
     sea_query::TableCreateStatement, ConnectionTrait, Database, DbBackend, DbConn, DbErr, Schema,
 };
 
 pub mod factory;
+
 pub use factory::{
     ActionFactory, ActionTrackFactory, AmbitionFactory, BookExcerptFactory, MemoFactory,
     MissionMemoFactory, ObjectiveFactory, UserFactory,
 };
 
-#[cfg(test)]
 pub async fn init_db() -> Result<DbConn, DbErr> {
     let db = Database::connect("sqlite::memory:").await?;
     let schema = Schema::new(DbBackend::Sqlite);

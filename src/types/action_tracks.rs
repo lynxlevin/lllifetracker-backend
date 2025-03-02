@@ -1,4 +1,4 @@
-use crate::entities::{action_track, prelude::ActionTrack};
+use entities::{action_track, prelude::ActionTrack};
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
 #[derive(

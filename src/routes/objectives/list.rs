@@ -1,11 +1,9 @@
-use crate::{
-    entities::user as user_entity,
-    services::objective_query::ObjectiveQuery,
-    types::{
-        self, ActionVisibleForLinking, AmbitionVisible, ObjectiveVisibleWithLinks,
-        ObjectiveWithLinksQueryResult, INTERNAL_SERVER_ERROR_MESSAGE,
-    },
+use entities::user as user_entity;
+use ::types::{
+    self, ActionVisibleForLinking, AmbitionVisible, ObjectiveVisibleWithLinks,
+    ObjectiveWithLinksQueryResult, INTERNAL_SERVER_ERROR_MESSAGE,
 };
+use services::objective_query::ObjectiveQuery;
 use actix_web::{
     get,
     web::{Data, Query, ReqData},
@@ -126,9 +124,9 @@ mod tests {
         App, HttpMessage,
     };
     use sea_orm::{entity::prelude::*, DbErr};
-    use types::ObjectiveVisible;
+    use ::types::ObjectiveVisible;
 
-    use crate::test_utils::{self, *};
+    use test_utils::{self, *};
 
     use super::*;
 

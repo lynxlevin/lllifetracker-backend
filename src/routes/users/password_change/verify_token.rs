@@ -5,12 +5,9 @@ use actix_web::{
     HttpResponse,
 };
 use deadpool_redis::Pool;
-
-use crate::{
-    settings,
-    types::INTERNAL_SERVER_ERROR_MESSAGE,
-    utils::auth::tokens::{issue_confirmation_token_pasetors, verify_confirmation_token_pasetor},
-};
+use ::types::INTERNAL_SERVER_ERROR_MESSAGE;
+use settings;
+use utils::auth::tokens::{issue_confirmation_token_pasetors, verify_confirmation_token_pasetor};
 
 #[derive(serde::Deserialize)]
 struct Parameters {

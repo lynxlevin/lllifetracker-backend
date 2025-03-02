@@ -1,5 +1,5 @@
-use crate::entities::{action, ambition, ambitions_objectives, objective, objectives_actions};
-use crate::types::{AmbitionVisible, AmbitionWithLinksQueryResult, CustomDbErr};
+use entities::{action, ambition, ambitions_objectives, objective, objectives_actions};
+use ::types::{AmbitionVisible, AmbitionWithLinksQueryResult, CustomDbErr};
 use migration::{Alias, IntoCondition, NullOrdering::Last};
 use sea_orm::{
     entity::prelude::*, JoinType::LeftJoin, Order::Asc, QueryOrder, QuerySelect,
@@ -85,7 +85,7 @@ impl AmbitionQuery {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_utils::{self, *};
+    use test_utils::{self, *};
 
     use super::*;
 

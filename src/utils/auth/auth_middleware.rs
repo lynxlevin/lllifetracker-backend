@@ -3,6 +3,7 @@ use std::{
     rc::Rc,
 };
 
+use crate::auth::session::get_user_id;
 use actix_session::SessionExt;
 use actix_web::{
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
@@ -11,8 +12,7 @@ use actix_web::{
 };
 use futures::future::LocalBoxFuture;
 use sea_orm::DbConn;
-
-use crate::{services::user::Query as UserQuery, utils::auth::session::get_user_id};
+use services::user::Query as UserQuery;
 
 pub struct AuthenticateUser;
 
@@ -108,11 +108,9 @@ mod tests {
     use actix_web::test;
     use sea_orm::prelude::*;
 
-    use crate::{
-        entities::user,
-        test_utils::{self, *},
-        types::{USER_EMAIL_KEY, USER_ID_KEY},
-    };
+    use ::types::{USER_EMAIL_KEY, USER_ID_KEY};
+    use entities::user;
+    use test_utils::{self, *};
 
     #[actix_web::test]
     async fn test_set_user() -> Result<(), String> {

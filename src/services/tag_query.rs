@@ -1,5 +1,5 @@
-use crate::entities::{action, ambition, objective, tag};
-use crate::types::TagQueryResult;
+use entities::{action, ambition, objective, tag};
+use ::types::TagQueryResult;
 use migration::NullOrdering::Last;
 use sea_orm::{
     entity::prelude::*, Condition, JoinType::LeftJoin, Order::Asc, QueryOrder, QuerySelect,
@@ -46,7 +46,7 @@ impl TagQuery {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_utils::{self, *};
+    use test_utils::{self, *};
 
     use super::*;
 

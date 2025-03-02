@@ -1,4 +1,4 @@
-use crate::services::user;
+use services::user;
 use actix_web::{
     post,
     web::{Data, Json},
@@ -27,9 +27,9 @@ pub async fn register(
     redis_pool: Data<Pool>,
     new_user: Json<RequestBody>,
 ) -> HttpResponse {
-    let settings = crate::settings::get_settings();
+    let settings = settings::get_settings();
 
-    let hashed_password = crate::utils::auth::password::hash(new_user.0.password.as_bytes()).await;
+    let hashed_password = utils::auth::password::hash(new_user.0.password.as_bytes()).await;
 
     let new_user = user::NewUser {
         password: hashed_password,
@@ -44,7 +44,7 @@ pub async fn register(
             Ok(ref mut redis_con) => {
                 let message: String;
                 if !settings.email.no_verify {
-                    crate::utils::emails::send_multipart_email(
+                    utils::emails::send_multipart_email(
                         "Let's get you verified".to_string(),
                         user.id,
                         user.email,
@@ -62,18 +62,18 @@ pub async fn register(
                 }
 
                 tracing::event!(target: "backend", tracing::Level::INFO, "User created successfully.");
-                HttpResponse::Ok().json(crate::types::SuccessResponse { message: message })
+                HttpResponse::Ok().json(::types::SuccessResponse { message: message })
             }
             Err(e) => {
                 tracing::event!(target: "backend", tracing::Level::ERROR, "{}", e);
-                HttpResponse::InternalServerError().json(crate::types::ErrorResponse {
+                HttpResponse::InternalServerError().json(::types::ErrorResponse {
                     error: "We cannot activate your account at the moment".to_string(),
                 })
             }
         },
         Err(e) => {
             tracing::event!(target: "backend", tracing::Level::ERROR, "Failed to create user: {:#?}", e);
-            HttpResponse::InternalServerError().json(crate::types::ErrorResponse {
+            HttpResponse::InternalServerError().json(::types::ErrorResponse {
                 error: "Some error on user registration.".to_string(),
             })
         }

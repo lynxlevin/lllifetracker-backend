@@ -1,5 +1,5 @@
-use crate::entities::{action, ambition, ambitions_objectives, objective, objectives_actions};
-use crate::types::{CustomDbErr, ObjectiveVisible, ObjectiveWithLinksQueryResult};
+use entities::{action, ambition, ambitions_objectives, objective, objectives_actions};
+use ::types::{CustomDbErr, ObjectiveVisible, ObjectiveWithLinksQueryResult};
 use migration::{Alias, IntoCondition, NullOrdering::Last};
 use sea_orm::{entity::prelude::*, JoinType::LeftJoin, Order::Asc, QueryOrder, QuerySelect};
 
@@ -89,7 +89,7 @@ impl ObjectiveQuery {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_utils::{self, *};
+    use test_utils::{self, *};
 
     use super::*;
 

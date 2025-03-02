@@ -1,4 +1,4 @@
-use crate::entities::{mission_memo, mission_memos_tags};
+use entities::{mission_memo, mission_memos_tags};
 use chrono::Utc;
 use sea_orm::{
     entity::prelude::*, DeriveColumn, EnumIter, QuerySelect, Set, TransactionError,
@@ -176,8 +176,8 @@ mod tests {
     use chrono::Datelike;
     use sea_orm::DbErr;
 
-    use crate::test_utils::{self, *};
-    use crate::types::CustomDbErr;
+    use test_utils::{self, *};
+    use ::types::CustomDbErr;
 
     use super::*;
 

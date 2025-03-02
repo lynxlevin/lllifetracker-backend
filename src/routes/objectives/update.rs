@@ -1,8 +1,6 @@
-use crate::{
-    entities::user as user_entity,
-    services::objective_mutation::ObjectiveMutation,
-    types::{self, CustomDbErr, ObjectiveVisible, INTERNAL_SERVER_ERROR_MESSAGE},
-};
+use entities::user as user_entity;
+use ::types::{self, CustomDbErr, ObjectiveVisible, INTERNAL_SERVER_ERROR_MESSAGE};
+use services::objective_mutation::ObjectiveMutation;
 use actix_web::{
     put,
     web::{Data, Json, Path, ReqData},
@@ -77,7 +75,8 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use crate::{entities::objective, test_utils::{self, *}};
+    use entities::objective;
+    use test_utils::{self, *};
 
     use super::*;
 

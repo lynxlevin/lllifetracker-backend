@@ -1,8 +1,6 @@
-use crate::{
-    entities::user as user_entity,
-    services::action_track_mutation::{ActionTrackMutation, NewActionTrack},
-    types::{self, ActionTrackVisible, INTERNAL_SERVER_ERROR_MESSAGE},
-};
+use entities::user as user_entity;
+use ::types::{self, ActionTrackVisible, INTERNAL_SERVER_ERROR_MESSAGE};
+use services::action_track_mutation::{ActionTrackMutation, NewActionTrack};
 use actix_web::{
     post,
     web::{Data, Json, ReqData},
@@ -64,10 +62,8 @@ mod tests {
     use chrono::Utc;
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use crate::{
-        entities::action_track,
-        test_utils::{self, *},
-    };
+    use entities::action_track;
+    use test_utils::{self, *};
 
     use super::*;
 

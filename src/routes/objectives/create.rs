@@ -1,8 +1,6 @@
-use crate::{
-    entities::user as user_entity,
-    services::objective_mutation::{NewObjective, ObjectiveMutation},
-    types::{self, ObjectiveVisible, INTERNAL_SERVER_ERROR_MESSAGE},
-};
+use entities::user as user_entity;
+use ::types::{self, ObjectiveVisible, INTERNAL_SERVER_ERROR_MESSAGE};
+use services::objective_mutation::{NewObjective, ObjectiveMutation};
 use actix_web::{
     post,
     web::{Data, Json, ReqData},
@@ -54,10 +52,8 @@ pub async fn create_objective(
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        entities::{objective, tag},
-        test_utils::{self, *},
-    };
+    use entities::{objective, tag};
+    use test_utils::{self, *};
 
     use super::*;
     use actix_http::Request;

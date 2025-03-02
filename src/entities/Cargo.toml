@@ -1,0 +1,18 @@
+[package]
+name = "entities"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "entities"
+path = "mod.rs"
+
+[dependencies]
+sea-orm = { version = "~1.0", features = [
+    "sqlx-postgres",
+    "runtime-tokio-rustls",
+    "macros",
+    "with-chrono",
+    "with-json",
+    "with-uuid",
+] }

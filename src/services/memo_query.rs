@@ -1,5 +1,5 @@
-use crate::entities::{action, ambition, memo, memos_tags, objective, tag};
-use crate::types::{CustomDbErr, MemoWithTagQueryResult};
+use entities::{action, ambition, memo, memos_tags, objective, tag};
+use ::types::{CustomDbErr, MemoWithTagQueryResult};
 use migration::NullOrdering::Last;
 use sea_orm::entity::prelude::*;
 use sea_orm::{JoinType::LeftJoin, Order::Asc, QueryOrder, QuerySelect};
@@ -47,7 +47,7 @@ impl MemoQuery {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_utils::{self, *};
+    use test_utils::{self, *};
 
     use super::*;
 

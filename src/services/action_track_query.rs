@@ -1,5 +1,5 @@
-use crate::entities::{action, action_track};
-use crate::types::{ActionTrackVisible, ActionTrackWithActionName, CustomDbErr};
+use entities::{action, action_track};
+use ::types::{ActionTrackVisible, ActionTrackWithActionName, CustomDbErr};
 use chrono::{DateTime, FixedOffset};
 use sea_orm::{entity::prelude::*, JoinType::LeftJoin, QueryOrder, QuerySelect};
 
@@ -93,7 +93,7 @@ impl ActionTrackQuery {
 mod tests {
     use chrono::Duration;
 
-    use crate::test_utils::{self, *};
+    use test_utils::{self, *};
 
     use super::*;
 

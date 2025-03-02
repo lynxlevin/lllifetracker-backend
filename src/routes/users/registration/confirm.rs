@@ -1,4 +1,4 @@
-use crate::services::user::Mutation as UserMutation;
+use services::user::Mutation as UserMutation;
 use actix_web::{
     get,
     http::header,
@@ -20,11 +20,11 @@ pub async fn confirm(
     db: Data<DbConn>,
     redis_pool: Data<Pool>,
 ) -> HttpResponse {
-    let settings = crate::settings::get_settings();
+    let settings = settings::get_settings();
 
     match redis_pool.get().await {
         Ok(ref mut redis_con) => {
-            match crate::utils::auth::tokens::verify_confirmation_token_pasetor(
+            match utils::auth::tokens::verify_confirmation_token_pasetor(
                 parameters.token.clone(),
                 redis_con,
                 None,
@@ -40,7 +40,7 @@ pub async fn confirm(
                                     header::LOCATION,
                                     format!("{}/auth/confirmed", settings.frontend_url),
                                 ))
-                                .json(crate::types::SuccessResponse {
+                                .json(::types::SuccessResponse {
                                     message: "Your account has been activated successfully! You can now log in."
                                         .to_string(),
                                 })
@@ -52,7 +52,7 @@ pub async fn confirm(
                                     header::LOCATION,
                                     format!("{}/auth/error?reason={e}", settings.frontend_url),
                                 ))
-                                .json(crate::types::ErrorResponse {
+                                .json(::types::ErrorResponse {
                                     error: "We cannot activate your account at the moment"
                                         .to_string(),
                                 })
@@ -65,7 +65,7 @@ pub async fn confirm(
                         .insert_header((
                             header::LOCATION,
                             format!("{}/auth/regenerate-token", settings.frontend_url),
-                        )).json(crate::types::ErrorResponse {error: "It appears that your confirmation token has expired or previously used. Kindly generate a new token".to_string()})
+                        )).json(::types::ErrorResponse {error: "It appears that your confirmation token has expired or previously used. Kindly generate a new token".to_string()})
                 }
             }
         }
@@ -76,7 +76,7 @@ pub async fn confirm(
                     header::LOCATION,
                     format!("{}/auth/error", settings.frontend_url),
                 ))
-                .json(crate::types::ErrorResponse {
+                .json(::types::ErrorResponse {
                     error: "We cannot activate your account at the moment".to_string(),
                 })
         }

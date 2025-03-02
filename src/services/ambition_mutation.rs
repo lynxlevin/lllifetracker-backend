@@ -1,4 +1,4 @@
-use crate::entities::{ambition, ambitions_objectives, tag};
+use entities::{ambition, ambitions_objectives, tag};
 use chrono::Utc;
 use sea_orm::entity::prelude::*;
 use sea_orm::ActiveValue::NotSet;
@@ -133,10 +133,8 @@ impl AmbitionMutation {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        test_utils::{self, *},
-        types::CustomDbErr,
-    };
+    use ::types::CustomDbErr;
+    use test_utils::{self, *};
 
     use super::*;
 

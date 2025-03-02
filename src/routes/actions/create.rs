@@ -1,8 +1,6 @@
-use crate::{
-    entities::user as user_entity,
-    services::action_mutation::{ActionMutation, NewAction},
-    types::{self, ActionVisible, INTERNAL_SERVER_ERROR_MESSAGE},
-};
+use entities::user as user_entity;
+use ::types::{self, ActionVisible, INTERNAL_SERVER_ERROR_MESSAGE};
+use services::action_mutation::{ActionMutation, NewAction};
 use actix_web::{
     post,
     web::{Data, Json, ReqData},
@@ -63,10 +61,8 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use crate::{
-        entities::{action, tag},
-        test_utils::{self, *},
-    };
+    use entities::{action, tag};
+    use test_utils::{self, *};
 
     use super::*;
 

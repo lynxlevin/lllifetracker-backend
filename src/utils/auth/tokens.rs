@@ -32,7 +32,7 @@ pub async fn issue_confirmation_token_pasetors(
         }
     };
 
-    let settings = crate::settings::get_settings();
+    let settings = settings::get_settings();
     let current_date_time = chrono::Local::now();
     let dt = {
         if is_for_password_change.is_some() {
@@ -88,8 +88,8 @@ pub async fn verify_confirmation_token_pasetor(
     token: String,
     redis_connection: &mut deadpool_redis::Connection,
     is_password: Option<bool>,
-) -> Result<crate::types::ConfirmationToken, String> {
-    let settings = crate::settings::get_settings();
+) -> Result<::types::ConfirmationToken, String> {
+    let settings = settings::get_settings();
     let sk = SymmetricKey::<V4>::from(settings.secret.secret_key.as_bytes()).unwrap();
 
     let validation_rules = ClaimsValidationRules::new();
@@ -139,7 +139,7 @@ pub async fn verify_confirmation_token_pasetor(
                     return Err("Token has been used or expired.".to_string());
                 }
 
-                Ok(crate::types::ConfirmationToken { user_id: user_uuid })
+                Ok(::types::ConfirmationToken { user_id: user_uuid })
             }
             Err(e) => Err(format!("{}", e)),
         },

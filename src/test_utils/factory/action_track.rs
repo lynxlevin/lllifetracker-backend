@@ -1,9 +1,8 @@
-use crate::entities::action_track;
+use entities::action_track;
 use chrono::{Duration, Utc};
 use sea_orm::{ActiveValue::NotSet, Set};
 use uuid::Uuid;
 
-#[cfg(test)]
 pub fn action_track(user_id: Uuid) -> action_track::ActiveModel {
     action_track::ActiveModel {
         id: Set(Uuid::new_v4()),
@@ -15,7 +14,6 @@ pub fn action_track(user_id: Uuid) -> action_track::ActiveModel {
     }
 }
 
-#[cfg(test)]
 pub trait ActionTrackFactory {
     fn action_id(self, action_id: Option<Uuid>) -> action_track::ActiveModel;
     fn duration(self, duration: Option<i64>) -> action_track::ActiveModel;
@@ -25,7 +23,6 @@ pub trait ActionTrackFactory {
     ) -> action_track::ActiveModel;
 }
 
-#[cfg(test)]
 impl ActionTrackFactory for action_track::ActiveModel {
     fn action_id(mut self, action_id: Option<Uuid>) -> action_track::ActiveModel {
         self.action_id = Set(action_id);

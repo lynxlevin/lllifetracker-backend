@@ -1,8 +1,6 @@
-use crate::{
-    entities::user as user_entity,
-    services::memo_mutation::{MemoMutation, UpdateMemo},
-    types::{self, CustomDbErr, MemoVisible, INTERNAL_SERVER_ERROR_MESSAGE},
-};
+use entities::user as user_entity;
+use ::types::{self, CustomDbErr, MemoVisible, INTERNAL_SERVER_ERROR_MESSAGE};
+use services::memo_mutation::{MemoMutation, UpdateMemo};
 use actix_web::{
     put,
     web::{Data, Json, Path, ReqData},
@@ -81,10 +79,8 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait, QuerySelect};
 
-    use crate::{
-        entities::{memo, memos_tags},
-        test_utils::{self, *},
-    };
+    use entities::{memo, memos_tags};
+    use test_utils::{self, *};
 
     use super::*;
 
