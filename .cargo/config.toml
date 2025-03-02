@@ -1,0 +1,2 @@
+[alias]
+tt = "test -q --no-fail-fast --all-targets"
