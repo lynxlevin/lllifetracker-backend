@@ -1,0 +1,37 @@
+[package]
+name = "life_tracker"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "life_tracker"
+path = "main.rs"
+
+[dependencies]
+actix-session = { version = "^0.10.0", features = ["redis-session"] }
+actix-web = "^4.8.0"
+deadpool-redis = "^0.18.0"
+dotenvy = "^0.15.7"
+migration = { path = "../../migration" }
+routes = { path = "../routes" }
+# Features here: https://www.sea-ql.org/SeaORM/docs/install-and-config/database-and-async-runtime/#extra-features
+sea-orm = { version = "~1.0", features = [
+    "sqlx-postgres",
+    "runtime-tokio-rustls",
+    "macros",
+    "with-chrono",
+    "with-json",
+    "with-uuid",
+] }
+settings = { path = "../settings" }
+tracing = "^0.1.40"
+tracing-appender = "^0.2.3"
+tracing-subscriber = { version = "^0.3.18", features = [
+    "fmt",
+    "std",
+    "env-filter",
+    "registry",
+    "json",
+    "tracing-log",
+] }
+utils = { path = "../utils" }
