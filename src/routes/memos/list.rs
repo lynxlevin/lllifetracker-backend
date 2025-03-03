@@ -92,6 +92,7 @@ fn get_tag(memo: &MemoWithTagQueryResult) -> Option<TagVisible> {
 
 #[cfg(test)]
 mod tests {
+    use chrono::{Duration, Utc};
     use ::types::TagType;
     use actix_http::Request;
     use actix_web::{
@@ -122,12 +123,14 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
+        let now = Utc::now();
         let memo_0 = factory::memo(user.id)
             .title("memo_0".to_string())
             .insert(&db)
             .await?;
         let memo_1 = factory::memo(user.id)
             .title("memo_1".to_string())
+            .date((now - Duration::days(1)).date_naive())
             .insert(&db)
             .await?;
         let (action, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
@@ -147,6 +150,27 @@ mod tests {
         assert_eq!(body.len(), 2);
 
         let expected_0 = serde_json::json!({
+            "id": memo_0.id,
+            "title": memo_0.title.clone(),
+            "text": memo_0.text.clone(),
+            "date": memo_0.date,
+            "favorite": memo_0.favorite,
+            "created_at": memo_0.created_at,
+            "updated_at": memo_0.updated_at,
+            "tags": [
+                {
+                    "id": ambition_tag.id,
+                    "name": ambition.name,
+                    "tag_type": TagType::Ambition,
+                    "created_at": ambition_tag.created_at,
+                },
+            ],
+        });
+
+        let body_0 = serde_json::to_value(&body[0]).unwrap();
+        assert_eq!(expected_0, body_0);
+
+        let expected_1 = serde_json::json!({
             "id": memo_1.id,
             "title": memo_1.title.clone(),
             "text": memo_1.text.clone(),
@@ -166,27 +190,6 @@ mod tests {
                     "name": action.name,
                     "tag_type": TagType::Action,
                     "created_at": action_tag.created_at,
-                },
-            ],
-        });
-
-        let body_0 = serde_json::to_value(&body[0]).unwrap();
-        assert_eq!(expected_0, body_0);
-
-        let expected_1 = serde_json::json!({
-            "id": memo_0.id,
-            "title": memo_0.title.clone(),
-            "text": memo_0.text.clone(),
-            "date": memo_0.date,
-            "favorite": memo_0.favorite,
-            "created_at": memo_0.created_at,
-            "updated_at": memo_0.updated_at,
-            "tags": [
-                {
-                    "id": ambition_tag.id,
-                    "name": ambition.name,
-                    "tag_type": TagType::Ambition,
-                    "created_at": ambition_tag.created_at,
                 },
             ],
         });
