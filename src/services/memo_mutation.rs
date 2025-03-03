@@ -1,5 +1,5 @@
-use entities::{memo, memos_tags};
 use chrono::Utc;
+use entities::{memo, memos_tags};
 use sea_orm::{
     entity::prelude::*, DeriveColumn, EnumIter, QuerySelect, Set, TransactionError,
     TransactionTrait,
@@ -48,6 +48,7 @@ impl MemoMutation {
                     title: Set(form_data.title.to_owned()),
                     text: Set(form_data.text.to_owned()),
                     date: Set(form_data.date),
+                    favorite: Set(false),
                     archived: Set(false),
                     created_at: Set(now.into()),
                     updated_at: Set(now.into()),
@@ -146,8 +147,8 @@ mod tests {
     use chrono::Datelike;
     use sea_orm::DbErr;
 
-    use test_utils::{self, *};
     use ::types::CustomDbErr;
+    use test_utils::{self, *};
 
     use super::*;
 

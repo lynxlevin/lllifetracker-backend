@@ -12,6 +12,7 @@ pub struct MemoVisible {
     pub title: String,
     pub text: String,
     pub date: chrono::NaiveDate,
+    pub favorite: bool,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
 }
@@ -23,6 +24,7 @@ impl From<memo::Model> for MemoVisible {
             title: item.title,
             text: item.text,
             date: item.date,
+            favorite: item.favorite,
             created_at: item.created_at,
             updated_at: item.updated_at,
         }
@@ -35,6 +37,7 @@ pub struct MemoWithTagQueryResult {
     pub title: String,
     pub text: String,
     pub date: chrono::NaiveDate,
+    pub favorite: bool,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
     pub tag_id: Option<uuid::Uuid>,
@@ -50,6 +53,7 @@ pub struct MemoVisibleWithTags {
     pub title: String,
     pub text: String,
     pub date: chrono::NaiveDate,
+    pub favorite: bool,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
     pub tags: Vec<TagVisible>,
