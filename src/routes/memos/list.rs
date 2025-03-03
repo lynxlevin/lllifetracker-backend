@@ -151,6 +151,7 @@ mod tests {
             "title": memo_1.title.clone(),
             "text": memo_1.text.clone(),
             "date": memo_1.date,
+            "favorite": memo_1.favorite,
             "created_at": memo_1.created_at,
             "updated_at": memo_1.updated_at,
             "tags": [
@@ -177,6 +178,7 @@ mod tests {
             "title": memo_0.title.clone(),
             "text": memo_0.text.clone(),
             "date": memo_0.date,
+            "favorite": memo_0.favorite,
             "created_at": memo_0.created_at,
             "updated_at": memo_0.updated_at,
             "tags": [
