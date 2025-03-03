@@ -133,6 +133,12 @@ mod tests {
             .date((now - Duration::days(1)).date_naive())
             .insert(&db)
             .await?;
+        let favorite_memo = factory::memo(user.id)
+            .title("favorite_memo".to_string())
+            .date((now - Duration::days(2)).date_naive())
+            .favorite(true)
+            .insert(&db)
+            .await?;
         let (action, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
         let (ambition, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
         let (objective, objective_tag) = factory::objective(user.id).insert_with_tag(&db).await?;
@@ -147,9 +153,22 @@ mod tests {
         assert_eq!(resp.status(), http::StatusCode::OK);
 
         let body: Vec<MemoVisibleWithTags> = test::read_body_json(resp).await;
-        assert_eq!(body.len(), 2);
+        assert_eq!(body.len(), 3);
 
         let expected_0 = serde_json::json!({
+            "id": favorite_memo.id,
+            "title": favorite_memo.title.clone(),
+            "text": favorite_memo.text.clone(),
+            "date": favorite_memo.date,
+            "favorite": favorite_memo.favorite,
+            "created_at": favorite_memo.created_at,
+            "updated_at": favorite_memo.updated_at,
+            "tags": [],
+        });
+        let body_0 = serde_json::to_value(&body[0]).unwrap();
+        assert_eq!(expected_0, body_0);
+
+        let expected_1 = serde_json::json!({
             "id": memo_0.id,
             "title": memo_0.title.clone(),
             "text": memo_0.text.clone(),
@@ -166,11 +185,10 @@ mod tests {
                 },
             ],
         });
+        let body_1 = serde_json::to_value(&body[1]).unwrap();
+        assert_eq!(expected_1, body_1);
 
-        let body_0 = serde_json::to_value(&body[0]).unwrap();
-        assert_eq!(expected_0, body_0);
-
-        let expected_1 = serde_json::json!({
+        let expected_2 = serde_json::json!({
             "id": memo_1.id,
             "title": memo_1.title.clone(),
             "text": memo_1.text.clone(),
@@ -193,8 +211,8 @@ mod tests {
                 },
             ],
         });
-        let body_1 = serde_json::to_value(&body[1]).unwrap();
-        assert_eq!(expected_1, body_1,);
+        let body_2 = serde_json::to_value(&body[2]).unwrap();
+        assert_eq!(expected_2, body_2,);
 
         Ok(())
     }

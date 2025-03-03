@@ -23,6 +23,7 @@ impl MemoQuery {
             .join(LeftJoin, tag::Relation::Ambition.def())
             .join(LeftJoin, tag::Relation::Objective.def())
             .join(LeftJoin, tag::Relation::Action.def())
+            .order_by_desc(memo::Column::Favorite)
             .order_by_desc(memo::Column::Date)
             .order_by_desc(memo::Column::CreatedAt)
             .order_by_with_nulls(ambition::Column::CreatedAt, Asc, Last)
@@ -67,6 +68,12 @@ mod tests {
             .date((now - Duration::days(1)).date_naive())
             .insert(&db)
             .await?;
+        let favorite_memo = factory::memo(user.id)
+            .title("favorite_memo".to_string())
+            .date((now - Duration::days(2)).date_naive())
+            .favorite(true)
+            .insert(&db)
+            .await?;
         let (action, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
         let (ambition, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
         let (objective, objective_tag) = factory::objective(user.id).insert_with_tag(&db).await?;
@@ -78,6 +85,20 @@ mod tests {
             MemoQuery::find_all_with_tags_by_user_id(&db, user.id).await?;
 
         let expected = vec![
+            MemoWithTagQueryResult {
+                id: favorite_memo.id,
+                title: favorite_memo.title.clone(),
+                text: favorite_memo.text.clone(),
+                date: favorite_memo.date,
+                favorite: favorite_memo.favorite,
+                created_at: favorite_memo.created_at,
+                updated_at: favorite_memo.updated_at,
+                tag_id: None,
+                tag_ambition_name: None,
+                tag_objective_name: None,
+                tag_action_name: None,
+                tag_created_at: None,
+            },
             MemoWithTagQueryResult {
                 id: memo_0.id,
                 title: memo_0.title.clone(),
@@ -126,6 +147,7 @@ mod tests {
         assert_eq!(res[0], expected[0]);
         assert_eq!(res[1], expected[1]);
         assert_eq!(res[2], expected[2]);
+        assert_eq!(res[3], expected[3]);
 
         Ok(())
     }
