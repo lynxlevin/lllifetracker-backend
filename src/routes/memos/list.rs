@@ -1,15 +1,15 @@
-use entities::user as user_entity;
 use ::types::{
     self, MemoVisibleWithTags, MemoWithTagQueryResult, TagType, TagVisible,
     INTERNAL_SERVER_ERROR_MESSAGE,
 };
-use services::memo_query::MemoQuery;
 use actix_web::{
     get,
     web::{Data, ReqData},
     HttpResponse,
 };
+use entities::user as user_entity;
 use sea_orm::DbConn;
+use services::memo_query::MemoQuery;
 
 #[tracing::instrument(name = "Listing user's memos.", skip(db, user))]
 #[get("")]
@@ -30,6 +30,7 @@ pub async fn list_memos(
                                 title: memo.title.clone(),
                                 text: memo.text.clone(),
                                 date: memo.date,
+                                favorite: memo.favorite,
                                 created_at: memo.created_at,
                                 updated_at: memo.updated_at,
                                 tags: vec![],
@@ -91,6 +92,7 @@ fn get_tag(memo: &MemoWithTagQueryResult) -> Option<TagVisible> {
 
 #[cfg(test)]
 mod tests {
+    use ::types::TagType;
     use actix_http::Request;
     use actix_web::{
         dev::{Service, ServiceResponse},
@@ -99,7 +101,6 @@ mod tests {
         App, HttpMessage,
     };
     use sea_orm::{entity::prelude::*, DbErr};
-    use ::types::TagType;
 
     use test_utils::{self, *};
 
