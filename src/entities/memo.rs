@@ -15,6 +15,7 @@ pub struct Model {
     pub archived: bool,
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
+    pub favorite: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
