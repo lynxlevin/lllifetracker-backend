@@ -1,2 +1,3 @@
 [alias]
 tt = "test --no-fail-fast --all-targets --workspace"
+ttq = "test -q --no-fail-fast --all-targets --workspace"
