@@ -18,6 +18,7 @@ struct RequestBody {
     title: Option<String>,
     text: Option<String>,
     date: Option<chrono::NaiveDate>,
+    favorite: Option<bool>,
     tag_ids: Option<Vec<uuid::Uuid>>,
 }
 
@@ -37,6 +38,7 @@ pub async fn update_memo(
                 title: req.title.clone(),
                 text: req.text.clone(),
                 date: req.date,
+                favorite: req.favorite,
                 tag_ids: req.tag_ids.clone(),
                 user_id: user.id,
             };
@@ -106,6 +108,7 @@ mod tests {
             title: Some("memo after update title".to_string()),
             text: Some("memo after update text".to_string()),
             date: Some(chrono::NaiveDate::from_ymd_opt(2024, 11, 3).unwrap()),
+            favorite: Some(true),
             tag_ids: Some(vec![ambition_tag.id]),
         };
 
@@ -122,6 +125,7 @@ mod tests {
         assert_eq!(returned_memo.title, form.title.clone().unwrap());
         assert_eq!(returned_memo.text, form.text.clone().unwrap());
         assert_eq!(returned_memo.date, form.date.unwrap());
+        assert_eq!(returned_memo.favorite, form.favorite.unwrap());
         assert_eq!(returned_memo.created_at, memo.created_at);
         assert!(returned_memo.updated_at > memo.updated_at);
 
@@ -132,6 +136,7 @@ mod tests {
         assert_eq!(updated_memo.title, form.title.unwrap());
         assert_eq!(updated_memo.text, form.text.unwrap());
         assert_eq!(updated_memo.date, form.date.unwrap());
+        assert_eq!(updated_memo.favorite, form.favorite.unwrap());
         assert_eq!(updated_memo.user_id, user.id);
         assert_eq!(updated_memo.created_at, returned_memo.created_at);
         assert_eq!(updated_memo.updated_at, returned_memo.updated_at);
@@ -160,6 +165,7 @@ mod tests {
                 title: None,
                 text: None,
                 date: None,
+                favorite: None,
                 tag_ids: None,
             })
             .to_request();
@@ -184,6 +190,7 @@ mod tests {
                 title: None,
                 text: None,
                 date: None,
+                favorite: None,
                 tag_ids: None,
             })
             .to_request();

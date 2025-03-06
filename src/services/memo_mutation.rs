@@ -1,5 +1,5 @@
-use entities::{memo, memos_tags};
 use chrono::Utc;
+use entities::{memo, memos_tags};
 use sea_orm::{
     entity::prelude::*, DeriveColumn, EnumIter, QuerySelect, Set, TransactionError,
     TransactionTrait,
@@ -27,6 +27,7 @@ pub struct UpdateMemo {
     pub title: Option<String>,
     pub text: Option<String>,
     pub date: Option<chrono::NaiveDate>,
+    pub favorite: Option<bool>,
     pub tag_ids: Option<Vec<uuid::Uuid>>,
     pub user_id: uuid::Uuid,
 }
@@ -48,6 +49,7 @@ impl MemoMutation {
                     title: Set(form_data.title.to_owned()),
                     text: Set(form_data.text.to_owned()),
                     date: Set(form_data.date),
+                    favorite: Set(false),
                     archived: Set(false),
                     created_at: Set(now.into()),
                     updated_at: Set(now.into()),
@@ -86,6 +88,9 @@ impl MemoMutation {
                 }
                 if let Some(date) = form.date {
                     memo.date = Set(date);
+                }
+                if let Some(favorite) = form.favorite {
+                    memo.favorite = Set(favorite);
                 }
                 if let Some(tag_ids) = form.tag_ids {
                     let linked_tag_ids = memos_tags::Entity::find()
@@ -146,8 +151,8 @@ mod tests {
     use chrono::Datelike;
     use sea_orm::DbErr;
 
-    use test_utils::{self, *};
     use ::types::CustomDbErr;
+    use test_utils::{self, *};
 
     use super::*;
 
@@ -217,6 +222,7 @@ mod tests {
             title: Some("Updated Memo".to_string()),
             text: None,
             date: None,
+            favorite: None,
             tag_ids: None,
             user_id: user.id,
         };
@@ -228,6 +234,7 @@ mod tests {
         assert_eq!(returned_memo.title, form.title.clone().unwrap());
         assert_eq!(returned_memo.text, memo.text);
         assert_eq!(returned_memo.date, memo.date);
+        assert_eq!(returned_memo.favorite, memo.favorite);
         assert_eq!(returned_memo.user_id, user.id);
         assert_eq!(returned_memo.created_at, memo.created_at);
         assert!(returned_memo.updated_at > memo.updated_at);
@@ -236,6 +243,7 @@ mod tests {
         assert_eq!(updated_memo.title, form.title.clone().unwrap());
         assert_eq!(updated_memo.text, memo.text);
         assert_eq!(updated_memo.date, memo.date);
+        assert_eq!(updated_memo.favorite, memo.favorite);
         assert_eq!(updated_memo.user_id, user.id);
         assert_eq!(updated_memo.created_at, memo.created_at);
         assert_eq!(updated_memo.updated_at, returned_memo.updated_at);
@@ -254,6 +262,7 @@ mod tests {
             title: None,
             text: Some("Updated memo content.".to_string()),
             date: None,
+            favorite: None,
             tag_ids: None,
             user_id: user.id,
         };
@@ -265,6 +274,7 @@ mod tests {
         assert_eq!(returned_memo.title, memo.title);
         assert_eq!(returned_memo.text, form.text.clone().unwrap());
         assert_eq!(returned_memo.date, memo.date);
+        assert_eq!(returned_memo.favorite, memo.favorite);
         assert_eq!(returned_memo.user_id, user.id);
         assert_eq!(returned_memo.created_at, memo.created_at);
         assert!(returned_memo.updated_at > memo.updated_at);
@@ -273,6 +283,7 @@ mod tests {
         assert_eq!(updated_memo.title, memo.title);
         assert_eq!(updated_memo.text, form.text.clone().unwrap());
         assert_eq!(updated_memo.date, memo.date);
+        assert_eq!(updated_memo.favorite, memo.favorite);
         assert_eq!(updated_memo.user_id, user.id);
         assert_eq!(updated_memo.created_at, memo.created_at);
         assert_eq!(updated_memo.updated_at, returned_memo.updated_at);
@@ -291,6 +302,7 @@ mod tests {
             title: None,
             text: None,
             date: Some(chrono::Utc::now().with_year(1900).unwrap().date_naive()),
+            favorite: None,
             tag_ids: None,
             user_id: user.id,
         };
@@ -302,6 +314,7 @@ mod tests {
         assert_eq!(returned_memo.title, memo.title);
         assert_eq!(returned_memo.text, memo.text);
         assert_eq!(returned_memo.date, form.date.unwrap());
+        assert_eq!(returned_memo.favorite, memo.favorite);
         assert_eq!(returned_memo.user_id, user.id);
         assert_eq!(returned_memo.created_at, memo.created_at);
         assert!(returned_memo.updated_at > memo.updated_at);
@@ -310,6 +323,47 @@ mod tests {
         assert_eq!(updated_memo.title, memo.title);
         assert_eq!(updated_memo.text, memo.text);
         assert_eq!(updated_memo.date, form.date.clone().unwrap());
+        assert_eq!(updated_memo.favorite, memo.favorite);
+        assert_eq!(updated_memo.user_id, user.id);
+        assert_eq!(updated_memo.created_at, memo.created_at);
+        assert_eq!(updated_memo.updated_at, returned_memo.updated_at);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn partial_update_favorite() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let memo = factory::memo(user.id).insert(&db).await?;
+
+        let form = UpdateMemo {
+            id: memo.id,
+            title: None,
+            text: None,
+            date: None,
+            favorite: Some(true),
+            tag_ids: None,
+            user_id: user.id,
+        };
+
+        let returned_memo = MemoMutation::partial_update(&db, form.clone())
+            .await
+            .unwrap();
+        assert_eq!(returned_memo.id, memo.id);
+        assert_eq!(returned_memo.title, memo.title);
+        assert_eq!(returned_memo.text, memo.text);
+        assert_eq!(returned_memo.date, memo.date);
+        assert_eq!(returned_memo.favorite, form.favorite.unwrap());
+        assert_eq!(returned_memo.user_id, user.id);
+        assert_eq!(returned_memo.created_at, memo.created_at);
+        assert!(returned_memo.updated_at > memo.updated_at);
+
+        let updated_memo = memo::Entity::find_by_id(memo.id).one(&db).await?.unwrap();
+        assert_eq!(updated_memo.title, memo.title);
+        assert_eq!(updated_memo.text, memo.text);
+        assert_eq!(updated_memo.date, memo.date);
+        assert_eq!(updated_memo.favorite, form.favorite.unwrap());
         assert_eq!(updated_memo.user_id, user.id);
         assert_eq!(updated_memo.created_at, memo.created_at);
         assert_eq!(updated_memo.updated_at, returned_memo.updated_at);
@@ -329,6 +383,7 @@ mod tests {
             title: None,
             text: None,
             date: None,
+            favorite: None,
             tag_ids: Some(vec![ambition_tag.id]),
             user_id: user.id,
         };
@@ -340,6 +395,7 @@ mod tests {
         assert_eq!(returned_memo.title, memo.title);
         assert_eq!(returned_memo.text, memo.text);
         assert_eq!(returned_memo.date, memo.date);
+        assert_eq!(returned_memo.favorite, memo.favorite);
         assert_eq!(returned_memo.user_id, user.id);
         assert_eq!(returned_memo.created_at, memo.created_at);
         assert!(returned_memo.updated_at > memo.updated_at);
@@ -348,6 +404,7 @@ mod tests {
         assert_eq!(updated_memo.title, memo.title);
         assert_eq!(updated_memo.text, memo.text);
         assert_eq!(updated_memo.date, memo.date);
+        assert_eq!(updated_memo.favorite, memo.favorite);
         assert_eq!(updated_memo.user_id, user.id);
         assert_eq!(updated_memo.created_at, memo.created_at);
         assert_eq!(updated_memo.updated_at, returned_memo.updated_at);
@@ -377,6 +434,7 @@ mod tests {
             title: None,
             text: None,
             date: None,
+            favorite: None,
             tag_ids: Some(vec![]),
             user_id: user.id,
         };
@@ -388,6 +446,7 @@ mod tests {
         assert_eq!(returned_memo.title, memo.title);
         assert_eq!(returned_memo.text, memo.text);
         assert_eq!(returned_memo.date, memo.date);
+        assert_eq!(returned_memo.favorite, memo.favorite);
         assert_eq!(returned_memo.user_id, user.id);
         assert_eq!(returned_memo.created_at, memo.created_at);
         assert!(returned_memo.updated_at > memo.updated_at);
@@ -396,6 +455,7 @@ mod tests {
         assert_eq!(updated_memo.title, memo.title);
         assert_eq!(updated_memo.text, memo.text);
         assert_eq!(updated_memo.date, memo.date);
+        assert_eq!(updated_memo.favorite, memo.favorite);
         assert_eq!(updated_memo.user_id, user.id);
         assert_eq!(updated_memo.created_at, memo.created_at);
         assert_eq!(updated_memo.updated_at, returned_memo.updated_at);
@@ -421,6 +481,7 @@ mod tests {
             title: None,
             text: None,
             date: None,
+            favorite: None,
             tag_ids: None,
             user_id: uuid::Uuid::new_v4(),
         };

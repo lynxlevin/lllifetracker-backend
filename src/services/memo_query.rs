@@ -23,6 +23,8 @@ impl MemoQuery {
             .join(LeftJoin, tag::Relation::Ambition.def())
             .join(LeftJoin, tag::Relation::Objective.def())
             .join(LeftJoin, tag::Relation::Action.def())
+            .order_by_desc(memo::Column::Favorite)
+            .order_by_desc(memo::Column::Date)
             .order_by_desc(memo::Column::CreatedAt)
             .order_by_with_nulls(ambition::Column::CreatedAt, Asc, Last)
             .order_by_with_nulls(objective::Column::CreatedAt, Asc, Last)
@@ -47,6 +49,7 @@ impl MemoQuery {
 
 #[cfg(test)]
 mod tests {
+    use chrono::{Duration, Utc};
     use test_utils::{self, *};
 
     use super::*;
@@ -55,12 +58,20 @@ mod tests {
     async fn find_all_with_tags_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
+        let now = Utc::now();
         let memo_0 = factory::memo(user.id)
             .title("memo_0".to_string())
             .insert(&db)
             .await?;
         let memo_1 = factory::memo(user.id)
             .title("memo_1".to_string())
+            .date((now - Duration::days(1)).date_naive())
+            .insert(&db)
+            .await?;
+        let favorite_memo = factory::memo(user.id)
+            .title("favorite_memo".to_string())
+            .date((now - Duration::days(2)).date_naive())
+            .favorite(true)
             .insert(&db)
             .await?;
         let (action, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
@@ -75,10 +86,39 @@ mod tests {
 
         let expected = vec![
             MemoWithTagQueryResult {
+                id: favorite_memo.id,
+                title: favorite_memo.title.clone(),
+                text: favorite_memo.text.clone(),
+                date: favorite_memo.date,
+                favorite: favorite_memo.favorite,
+                created_at: favorite_memo.created_at,
+                updated_at: favorite_memo.updated_at,
+                tag_id: None,
+                tag_ambition_name: None,
+                tag_objective_name: None,
+                tag_action_name: None,
+                tag_created_at: None,
+            },
+            MemoWithTagQueryResult {
+                id: memo_0.id,
+                title: memo_0.title.clone(),
+                text: memo_0.text.clone(),
+                date: memo_0.date,
+                favorite: memo_0.favorite,
+                created_at: memo_0.created_at,
+                updated_at: memo_0.updated_at,
+                tag_id: Some(ambition_tag.id),
+                tag_ambition_name: Some(ambition.name),
+                tag_objective_name: None,
+                tag_action_name: None,
+                tag_created_at: Some(ambition_tag.created_at),
+            },
+            MemoWithTagQueryResult {
                 id: memo_1.id,
                 title: memo_1.title.clone(),
                 text: memo_1.text.clone(),
                 date: memo_1.date,
+                favorite: memo_1.favorite,
                 created_at: memo_1.created_at,
                 updated_at: memo_1.updated_at,
                 tag_id: Some(objective_tag.id),
@@ -92,6 +132,7 @@ mod tests {
                 title: memo_1.title.clone(),
                 text: memo_1.text.clone(),
                 date: memo_1.date,
+                favorite: memo_1.favorite,
                 created_at: memo_1.created_at,
                 updated_at: memo_1.updated_at,
                 tag_id: Some(action_tag.id),
@@ -100,25 +141,13 @@ mod tests {
                 tag_action_name: Some(action.name),
                 tag_created_at: Some(action_tag.created_at),
             },
-            MemoWithTagQueryResult {
-                id: memo_0.id,
-                title: memo_0.title.clone(),
-                text: memo_0.text.clone(),
-                date: memo_0.date,
-                created_at: memo_0.created_at,
-                updated_at: memo_0.updated_at,
-                tag_id: Some(ambition_tag.id),
-                tag_ambition_name: Some(ambition.name),
-                tag_objective_name: None,
-                tag_action_name: None,
-                tag_created_at: Some(ambition_tag.created_at),
-            },
         ];
 
         assert_eq!(res.len(), expected.len());
         assert_eq!(res[0], expected[0]);
         assert_eq!(res[1], expected[1]);
         assert_eq!(res[2], expected[2]);
+        assert_eq!(res[3], expected[3]);
 
         Ok(())
     }
