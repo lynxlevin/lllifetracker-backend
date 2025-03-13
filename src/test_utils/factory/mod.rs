@@ -1,19 +1,19 @@
 pub mod action;
 pub mod action_track;
 pub mod ambition;
-pub mod book_excerpt;
+pub mod challenge;
+pub mod desired_state;
 pub mod link;
 pub mod memo;
-pub mod mission_memo;
-pub mod objective;
+pub mod reading_note;
 pub mod user;
 
 pub use action::*;
 pub use action_track::*;
 pub use ambition::*;
-pub use book_excerpt::*;
+pub use challenge::*;
+pub use desired_state::*;
 pub use link::*;
 pub use memo::*;
-pub use mission_memo::*;
-pub use objective::*;
+pub use reading_note::*;
 pub use user::*;

@@ -1,13 +1,13 @@
-use entities::book_excerpt;
+use entities::reading_note;
 use chrono::Utc;
 use sea_orm::Set;
 use uuid::Uuid;
 
-pub fn book_excerpt(user_id: Uuid) -> book_excerpt::ActiveModel {
+pub fn reading_note(user_id: Uuid) -> reading_note::ActiveModel {
     let now = Utc::now();
-    book_excerpt::ActiveModel {
+    reading_note::ActiveModel {
         id: Set(uuid::Uuid::new_v4()),
-        title: Set("book_excerpt".to_string()),
+        title: Set("reading_note".to_string()),
         page_number: Set(1),
         text: Set("book content".to_string()),
         date: Set(now.date_naive()),
@@ -17,12 +17,12 @@ pub fn book_excerpt(user_id: Uuid) -> book_excerpt::ActiveModel {
     }
 }
 
-pub trait BookExcerptFactory {
-    fn title(self, title: String) -> book_excerpt::ActiveModel;
+pub trait ReadingNoteFactory {
+    fn title(self, title: String) -> reading_note::ActiveModel;
 }
 
-impl BookExcerptFactory for book_excerpt::ActiveModel {
-    fn title(mut self, title: String) -> book_excerpt::ActiveModel {
+impl ReadingNoteFactory for reading_note::ActiveModel {
+    fn title(mut self, title: String) -> reading_note::ActiveModel {
         self.title = Set(title);
         self
     }
