@@ -1,6 +1,6 @@
 use entities::user as user_entity;
-use ::types::{self, BookExcerptVisible, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::book_excerpt_mutation::{BookExcerptMutation, UpdateBookExcerpt};
+use ::types::{self, ReadingNoteVisible, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE};
+use services::reading_note_mutation::{ReadingNoteMutation, UpdateReadingNote};
 use actix_web::{
     put,
     web::{Data, Json, Path, ReqData},
@@ -10,7 +10,7 @@ use sea_orm::{DbConn, DbErr, TransactionError};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
-    book_excerpt_id: uuid::Uuid,
+    reading_note_id: uuid::Uuid,
 }
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
@@ -23,8 +23,8 @@ struct RequestBody {
 }
 
 #[tracing::instrument(name = "Updating a book excerpt", skip(db, user, req, path_param))]
-#[put("/{book_excerpt_id}")]
-pub async fn update_book_excerpt(
+#[put("/{reading_note_id}")]
+pub async fn update_reading_note(
     db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<RequestBody>,
@@ -33,8 +33,8 @@ pub async fn update_book_excerpt(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            let form = UpdateBookExcerpt {
-                id: path_param.book_excerpt_id,
+            let form = UpdateReadingNote {
+                id: path_param.reading_note_id,
                 title: req.title.clone(),
                 page_number: req.page_number,
                 text: req.text.clone(),
@@ -42,9 +42,9 @@ pub async fn update_book_excerpt(
                 tag_ids: req.tag_ids.clone(),
                 user_id: user.id,
             };
-            match BookExcerptMutation::partial_update(&db, form).await {
-                Ok(book_excerpt) => {
-                    let res: BookExcerptVisible = book_excerpt.into();
+            match ReadingNoteMutation::partial_update(&db, form).await {
+                Ok(reading_note) => {
+                    let res: ReadingNoteVisible = reading_note.into();
                     HttpResponse::Ok().json(res)
                 }
                 Err(e) => match e {
@@ -81,7 +81,7 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait, QuerySelect};
 
-    use entities::{book_excerpt, book_excerpts_tags};
+    use entities::{reading_note, reading_notes_tags};
     use test_utils::{self, *};
 
     use super::*;
@@ -96,7 +96,7 @@ mod tests {
     ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
         test::init_service(
             App::new()
-                .service(update_book_excerpt)
+                .service(update_reading_note)
                 .app_data(Data::new(db)),
         )
         .await
@@ -107,7 +107,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
-        let book_excerpt = factory::book_excerpt(user.id).insert(&db).await?;
+        let reading_note = factory::reading_note(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
 
         let form = RequestBody {
@@ -119,7 +119,7 @@ mod tests {
         };
 
         let req = test::TestRequest::put()
-            .uri(&format!("/{}", book_excerpt.id))
+            .uri(&format!("/{}", reading_note.id))
             .set_json(&form)
             .to_request();
         req.extensions_mut().insert(user.clone());
@@ -127,35 +127,35 @@ mod tests {
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::OK);
 
-        let returned_book_excerpt: BookExcerptVisible = test::read_body_json(res).await;
-        assert_eq!(returned_book_excerpt.title, form.title.clone().unwrap());
-        assert_eq!(returned_book_excerpt.page_number, form.page_number.unwrap());
-        assert_eq!(returned_book_excerpt.text, form.text.clone().unwrap());
-        assert_eq!(returned_book_excerpt.date, form.date.unwrap());
-        assert_eq!(returned_book_excerpt.created_at, book_excerpt.created_at);
-        assert!(returned_book_excerpt.updated_at > book_excerpt.updated_at);
+        let returned_reading_note: ReadingNoteVisible = test::read_body_json(res).await;
+        assert_eq!(returned_reading_note.title, form.title.clone().unwrap());
+        assert_eq!(returned_reading_note.page_number, form.page_number.unwrap());
+        assert_eq!(returned_reading_note.text, form.text.clone().unwrap());
+        assert_eq!(returned_reading_note.date, form.date.unwrap());
+        assert_eq!(returned_reading_note.created_at, reading_note.created_at);
+        assert!(returned_reading_note.updated_at > reading_note.updated_at);
 
-        let updated_book_excerpt = book_excerpt::Entity::find_by_id(returned_book_excerpt.id)
+        let updated_reading_note = reading_note::Entity::find_by_id(returned_reading_note.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(updated_book_excerpt.title, form.title.unwrap());
-        assert_eq!(updated_book_excerpt.page_number, form.page_number.unwrap());
-        assert_eq!(updated_book_excerpt.text, form.text.unwrap());
-        assert_eq!(updated_book_excerpt.date, form.date.unwrap());
-        assert_eq!(updated_book_excerpt.user_id, user.id);
+        assert_eq!(updated_reading_note.title, form.title.unwrap());
+        assert_eq!(updated_reading_note.page_number, form.page_number.unwrap());
+        assert_eq!(updated_reading_note.text, form.text.unwrap());
+        assert_eq!(updated_reading_note.date, form.date.unwrap());
+        assert_eq!(updated_reading_note.user_id, user.id);
         assert_eq!(
-            updated_book_excerpt.created_at,
-            returned_book_excerpt.created_at
+            updated_reading_note.created_at,
+            returned_reading_note.created_at
         );
         assert_eq!(
-            updated_book_excerpt.updated_at,
-            returned_book_excerpt.updated_at
+            updated_reading_note.updated_at,
+            returned_reading_note.updated_at
         );
 
-        let linked_tag_ids: Vec<uuid::Uuid> = book_excerpts_tags::Entity::find()
-            .column_as(book_excerpts_tags::Column::TagId, QueryAs::TagId)
-            .filter(book_excerpts_tags::Column::BookExcerptId.eq(returned_book_excerpt.id))
+        let linked_tag_ids: Vec<uuid::Uuid> = reading_notes_tags::Entity::find()
+            .column_as(reading_notes_tags::Column::TagId, QueryAs::TagId)
+            .filter(reading_notes_tags::Column::ReadingNoteId.eq(returned_reading_note.id))
             .into_values::<_, QueryAs>()
             .all(&db)
             .await?;
@@ -194,10 +194,10 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
-        let book_excerpt = factory::book_excerpt(user.id).insert(&db).await?;
+        let reading_note = factory::reading_note(user.id).insert(&db).await?;
 
         let req = test::TestRequest::put()
-            .uri(&format!("/{}", book_excerpt.id))
+            .uri(&format!("/{}", reading_note.id))
             .set_json(RequestBody {
                 title: None,
                 page_number: None,

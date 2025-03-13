@@ -1,9 +1,9 @@
 use entities::user as user_entity;
 use ::types::{
-    self, MissionMemoVisibleWithTags, MissionMemoWithTagQueryResult, TagType, TagVisible,
+    self, ChallengeVisibleWithTags, ChallengeWithTagQueryResult, TagType, TagVisible,
     INTERNAL_SERVER_ERROR_MESSAGE,
 };
-use services::mission_memo_query::MissionMemoQuery;
+use services::challenge_query::ChallengeQuery;
 use actix_web::{
     get,
     web::{Data, ReqData},
@@ -13,35 +13,35 @@ use sea_orm::DbConn;
 
 #[tracing::instrument(name = "Listing user's mission memos.", skip(db, user))]
 #[get("")]
-pub async fn list_mission_memos(
+pub async fn list_challenges(
     db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
 ) -> HttpResponse {
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match MissionMemoQuery::find_all_with_tags_by_user_id(&db, user.id).await {
-                Ok(mission_memos) => {
-                    let mut res: Vec<MissionMemoVisibleWithTags> = vec![];
-                    for mission_memo in mission_memos {
-                        if res.is_empty() || res.last().unwrap().id != mission_memo.id {
-                            let mut res_mission_memo = MissionMemoVisibleWithTags {
-                                id: mission_memo.id,
-                                title: mission_memo.title.clone(),
-                                text: mission_memo.text.clone(),
-                                date: mission_memo.date,
-                                archived: mission_memo.archived,
-                                accomplished_at: mission_memo.accomplished_at,
-                                created_at: mission_memo.created_at,
-                                updated_at: mission_memo.updated_at,
+            match ChallengeQuery::find_all_with_tags_by_user_id(&db, user.id).await {
+                Ok(challenges) => {
+                    let mut res: Vec<ChallengeVisibleWithTags> = vec![];
+                    for challenge in challenges {
+                        if res.is_empty() || res.last().unwrap().id != challenge.id {
+                            let mut res_challenge = ChallengeVisibleWithTags {
+                                id: challenge.id,
+                                title: challenge.title.clone(),
+                                text: challenge.text.clone(),
+                                date: challenge.date,
+                                archived: challenge.archived,
+                                accomplished_at: challenge.accomplished_at,
+                                created_at: challenge.created_at,
+                                updated_at: challenge.updated_at,
                                 tags: vec![],
                             };
-                            if let Some(tag) = get_tag(&mission_memo) {
-                                res_mission_memo.push_tag(tag);
+                            if let Some(tag) = get_tag(&challenge) {
+                                res_challenge.push_tag(tag);
                             }
-                            res.push(res_mission_memo);
+                            res.push(res_challenge);
                         } else {
-                            if let Some(tag) = get_tag(&mission_memo) {
+                            if let Some(tag) = get_tag(&challenge) {
                                 res.last_mut().unwrap().push_tag(tag);
                             }
                         }
@@ -60,34 +60,34 @@ pub async fn list_mission_memos(
     }
 }
 
-fn get_tag(mission_memo: &MissionMemoWithTagQueryResult) -> Option<TagVisible> {
-    if mission_memo.tag_id.is_none() {
+fn get_tag(challenge: &ChallengeWithTagQueryResult) -> Option<TagVisible> {
+    if challenge.tag_id.is_none() {
         return None;
     }
 
-    if let Some(name) = mission_memo.tag_ambition_name.clone() {
+    if let Some(name) = challenge.tag_ambition_name.clone() {
         Some(TagVisible {
-            id: mission_memo.tag_id.unwrap(),
+            id: challenge.tag_id.unwrap(),
             name,
             tag_type: TagType::Ambition,
-            created_at: mission_memo.tag_created_at.unwrap(),
+            created_at: challenge.tag_created_at.unwrap(),
         })
-    } else if let Some(name) = mission_memo.tag_objective_name.clone() {
+    } else if let Some(name) = challenge.tag_desired_state_name.clone() {
         Some(TagVisible {
-            id: mission_memo.tag_id.unwrap(),
+            id: challenge.tag_id.unwrap(),
             name,
-            tag_type: TagType::Objective,
-            created_at: mission_memo.tag_created_at.unwrap(),
+            tag_type: TagType::DesiredState,
+            created_at: challenge.tag_created_at.unwrap(),
         })
-    } else if let Some(name) = mission_memo.tag_action_name.clone() {
+    } else if let Some(name) = challenge.tag_action_name.clone() {
         Some(TagVisible {
-            id: mission_memo.tag_id.unwrap(),
+            id: challenge.tag_id.unwrap(),
             name,
             tag_type: TagType::Action,
-            created_at: mission_memo.tag_created_at.unwrap(),
+            created_at: challenge.tag_created_at.unwrap(),
         })
     } else {
-        unimplemented!("Tag without link to Ambition/Objective/Action is not implemented yet.");
+        unimplemented!("Tag without link to Ambition/DesiredState/Action is not implemented yet.");
     }
 }
 
@@ -112,7 +112,7 @@ mod tests {
     ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
         test::init_service(
             App::new()
-                .service(scope("/").service(list_mission_memos))
+                .service(scope("/").service(list_challenges))
                 .app_data(Data::new(db)),
         )
         .await
@@ -123,20 +123,20 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
-        let mission_memo_0 = factory::mission_memo(user.id)
-            .title("mission_memo_0".to_string())
+        let challenge_0 = factory::challenge(user.id)
+            .title("challenge_0".to_string())
             .insert(&db)
             .await?;
-        let mission_memo_1 = factory::mission_memo(user.id)
-            .title("mission_memo_1".to_string())
+        let challenge_1 = factory::challenge(user.id)
+            .title("challenge_1".to_string())
             .insert(&db)
             .await?;
         let (action, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
         let (ambition, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
-        let (objective, objective_tag) = factory::objective(user.id).insert_with_tag(&db).await?;
-        factory::link_mission_memo_tag(&db, mission_memo_0.id, ambition_tag.id).await?;
-        factory::link_mission_memo_tag(&db, mission_memo_1.id, objective_tag.id).await?;
-        factory::link_mission_memo_tag(&db, mission_memo_1.id, action_tag.id).await?;
+        let (desired_state, desired_state_tag) = factory::desired_state(user.id).insert_with_tag(&db).await?;
+        factory::link_challenge_tag(&db, challenge_0.id, ambition_tag.id).await?;
+        factory::link_challenge_tag(&db, challenge_1.id, desired_state_tag.id).await?;
+        factory::link_challenge_tag(&db, challenge_1.id, action_tag.id).await?;
 
         let req = test::TestRequest::get().uri("/").to_request();
         req.extensions_mut().insert(user.clone());
@@ -144,24 +144,24 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let body: Vec<MissionMemoVisibleWithTags> = test::read_body_json(resp).await;
+        let body: Vec<ChallengeVisibleWithTags> = test::read_body_json(resp).await;
         assert_eq!(body.len(), 2);
 
         let expected_0 = serde_json::json!({
-            "id": mission_memo_1.id,
-            "title": mission_memo_1.title.clone(),
-            "text": mission_memo_1.text.clone(),
-            "date": mission_memo_1.date,
-            "archived": mission_memo_1.archived,
-            "accomplished_at": mission_memo_1.accomplished_at,
-            "created_at": mission_memo_1.created_at,
-            "updated_at": mission_memo_1.updated_at,
+            "id": challenge_1.id,
+            "title": challenge_1.title.clone(),
+            "text": challenge_1.text.clone(),
+            "date": challenge_1.date,
+            "archived": challenge_1.archived,
+            "accomplished_at": challenge_1.accomplished_at,
+            "created_at": challenge_1.created_at,
+            "updated_at": challenge_1.updated_at,
             "tags": [
                 {
-                    "id": objective_tag.id,
-                    "name": objective.name,
-                    "tag_type": TagType::Objective,
-                    "created_at": objective_tag.created_at,
+                    "id": desired_state_tag.id,
+                    "name": desired_state.name,
+                    "tag_type": TagType::DesiredState,
+                    "created_at": desired_state_tag.created_at,
                 },
                 {
                     "id": action_tag.id,
@@ -176,14 +176,14 @@ mod tests {
         assert_eq!(expected_0, body_0);
 
         let expected_1 = serde_json::json!({
-            "id": mission_memo_0.id,
-            "title": mission_memo_0.title.clone(),
-            "text": mission_memo_0.text.clone(),
-            "date": mission_memo_0.date,
-            "archived": mission_memo_0.archived,
-            "accomplished_at": mission_memo_0.accomplished_at,
-            "created_at": mission_memo_0.created_at,
-            "updated_at": mission_memo_0.updated_at,
+            "id": challenge_0.id,
+            "title": challenge_0.title.clone(),
+            "text": challenge_0.text.clone(),
+            "date": challenge_0.date,
+            "archived": challenge_0.archived,
+            "accomplished_at": challenge_0.accomplished_at,
+            "created_at": challenge_0.created_at,
+            "updated_at": challenge_0.updated_at,
             "tags": [
                 {
                     "id": ambition_tag.id,

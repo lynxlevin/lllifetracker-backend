@@ -1,6 +1,6 @@
 use entities::user as user_entity;
 use ::types::{self, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::mission_memo_mutation::MissionMemoMutation;
+use services::challenge_mutation::ChallengeMutation;
 use actix_web::{
     delete,
     web::{Data, Path, ReqData},
@@ -10,12 +10,12 @@ use sea_orm::DbConn;
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
-    mission_memo_id: uuid::Uuid,
+    challenge_id: uuid::Uuid,
 }
 
 #[tracing::instrument(name = "Deleting a mission memo", skip(db, user, path_param))]
-#[delete("/{mission_memo_id}")]
-pub async fn delete_mission_memo(
+#[delete("/{challenge_id}")]
+pub async fn delete_challenge(
     db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
     path_param: Path<PathParam>,
@@ -23,7 +23,7 @@ pub async fn delete_mission_memo(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match MissionMemoMutation::delete(&db, path_param.mission_memo_id, user.id).await {
+            match ChallengeMutation::delete(&db, path_param.challenge_id, user.id).await {
                 Ok(_) => HttpResponse::NoContent().into(),
                 Err(e) => {
                     tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
@@ -48,7 +48,7 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use entities::{mission_memo, mission_memos_tags};
+    use entities::{challenge, challenges_tags};
     use test_utils::{self, *};
 
     use super::*;
@@ -58,7 +58,7 @@ mod tests {
     ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
         test::init_service(
             App::new()
-                .service(delete_mission_memo)
+                .service(delete_challenge)
                 .app_data(Data::new(db)),
         )
         .await
@@ -69,29 +69,29 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
-        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
+        let challenge = factory::challenge(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
-        factory::link_mission_memo_tag(&db, mission_memo.id, ambition_tag.id).await?;
+        factory::link_challenge_tag(&db, challenge.id, ambition_tag.id).await?;
 
         let req = test::TestRequest::delete()
-            .uri(&format!("/{}", mission_memo.id))
+            .uri(&format!("/{}", challenge.id))
             .to_request();
         req.extensions_mut().insert(user.clone());
 
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::NO_CONTENT);
 
-        let mission_memo_in_db = mission_memo::Entity::find_by_id(mission_memo.id)
+        let challenge_in_db = challenge::Entity::find_by_id(challenge.id)
             .one(&db)
             .await?;
-        assert!(mission_memo_in_db.is_none());
+        assert!(challenge_in_db.is_none());
 
-        let mission_memos_tags_in_db = mission_memos_tags::Entity::find()
-            .filter(mission_memos_tags::Column::MissionMemoId.eq(mission_memo.id))
-            .filter(mission_memos_tags::Column::TagId.eq(ambition_tag.id))
+        let challenges_tags_in_db = challenges_tags::Entity::find()
+            .filter(challenges_tags::Column::ChallengeId.eq(challenge.id))
+            .filter(challenges_tags::Column::TagId.eq(ambition_tag.id))
             .one(&db)
             .await?;
-        assert!(mission_memos_tags_in_db.is_none());
+        assert!(challenges_tags_in_db.is_none());
 
         Ok(())
     }
@@ -101,10 +101,10 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
-        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
+        let challenge = factory::challenge(user.id).insert(&db).await?;
 
         let req = test::TestRequest::delete()
-            .uri(&format!("/{}", mission_memo.id))
+            .uri(&format!("/{}", challenge.id))
             .to_request();
 
         let resp = test::call_service(&app, req).await;

@@ -1,6 +1,6 @@
 use entities::user as user_entity;
-use ::types::{self, CustomDbErr, MissionMemoVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::mission_memo_mutation::MissionMemoMutation;
+use ::types::{self, CustomDbErr, DesiredStateVisible, INTERNAL_SERVER_ERROR_MESSAGE};
+use services::desired_state_mutation::DesiredStateMutation;
 use actix_web::{
     put,
     web::{Data, Path, ReqData},
@@ -10,12 +10,12 @@ use sea_orm::{DbConn, DbErr};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
-    mission_memo_id: uuid::Uuid,
+    desired_state_id: uuid::Uuid,
 }
 
-#[tracing::instrument(name = "Archiving a mission memo", skip(db, user, path_param))]
-#[put("/{mission_memo_id}/archive")]
-pub async fn archive_mission_memo(
+#[tracing::instrument(name = "Archiving an desired_state", skip(db, user, path_param))]
+#[put("/{desired_state_id}/archive")]
+pub async fn archive_desired_state(
     db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
     path_param: Path<PathParam>,
@@ -23,16 +23,16 @@ pub async fn archive_mission_memo(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match MissionMemoMutation::archive(&db, path_param.mission_memo_id, user.id).await {
-                Ok(mission_memo) => {
-                    let res: MissionMemoVisible = mission_memo.into();
+            match DesiredStateMutation::archive(&db, path_param.desired_state_id, user.id).await {
+                Ok(desired_state) => {
+                    let res: DesiredStateVisible = desired_state.into();
                     HttpResponse::Ok().json(res)
                 }
                 Err(e) => match e {
                     DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
                         CustomDbErr::NotFound => {
                             HttpResponse::NotFound().json(types::ErrorResponse {
-                                error: "Mission Memo with this id was not found".to_string(),
+                                error: "DesiredState with this id was not found".to_string(),
                             })
                         }
                     },
@@ -60,22 +60,17 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use entities::mission_memo;
+    use entities::desired_state;
     use test_utils::{self, *};
 
     use super::*;
-
-    #[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
-    enum QueryAs {
-        TagId,
-    }
 
     async fn init_app(
         db: DbConn,
     ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
         test::init_service(
             App::new()
-                .service(archive_mission_memo)
+                .service(archive_desired_state)
                 .app_data(Data::new(db)),
         )
         .await
@@ -86,60 +81,39 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
-        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
+        let desired_state = factory::desired_state(user.id).insert(&db).await?;
 
         let req = test::TestRequest::put()
-            .uri(&format!("/{}/archive", mission_memo.id))
+            .uri(&format!("/{}/archive", desired_state.id))
             .to_request();
         req.extensions_mut().insert(user.clone());
 
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::OK);
 
-        let returned_mission_memo: MissionMemoVisible = test::read_body_json(res).await;
-        assert_eq!(returned_mission_memo.title, mission_memo.title.clone());
-        assert_eq!(returned_mission_memo.text, mission_memo.text.clone());
-        assert_eq!(returned_mission_memo.date, mission_memo.date);
-        assert_eq!(returned_mission_memo.archived, true);
+        let returned_desired_state: DesiredStateVisible = test::read_body_json(res).await;
+        assert_eq!(returned_desired_state.id, desired_state.id);
+        assert_eq!(returned_desired_state.name, desired_state.name.clone());
         assert_eq!(
-            returned_mission_memo.accomplished_at,
-            mission_memo.accomplished_at
+            returned_desired_state.description,
+            desired_state.description.clone()
         );
-        assert_eq!(returned_mission_memo.created_at, mission_memo.created_at);
-        assert!(returned_mission_memo.updated_at > mission_memo.updated_at);
+        assert_eq!(returned_desired_state.created_at, desired_state.created_at);
+        assert!(returned_desired_state.updated_at > desired_state.updated_at);
 
-        let updated_mission_memo = mission_memo::Entity::find_by_id(returned_mission_memo.id)
+        let archived_desired_state = desired_state::Entity::find_by_id(desired_state.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(updated_mission_memo.title, mission_memo.title.clone());
-        assert_eq!(updated_mission_memo.text, mission_memo.text.clone());
-        assert_eq!(updated_mission_memo.date, mission_memo.date);
-        assert_eq!(updated_mission_memo.archived, true);
+        assert_eq!(archived_desired_state.id, desired_state.id);
+        assert_eq!(archived_desired_state.name, desired_state.name.clone());
         assert_eq!(
-            updated_mission_memo.accomplished_at,
-            mission_memo.accomplished_at
+            archived_desired_state.description,
+            desired_state.description.clone()
         );
-        assert_eq!(updated_mission_memo.user_id, user.id);
-        assert_eq!(updated_mission_memo.created_at, mission_memo.created_at);
-        assert!(updated_mission_memo.updated_at > mission_memo.updated_at);
-
-        Ok(())
-    }
-
-    #[actix_web::test]
-    async fn not_found_if_invalid_id() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
-        let app = init_app(db.clone()).await;
-        let user = factory::user().insert(&db).await?;
-
-        let req = test::TestRequest::put()
-            .uri(&format!("/{}/archive", uuid::Uuid::new_v4()))
-            .to_request();
-        req.extensions_mut().insert(user.clone());
-
-        let res = test::call_service(&app, req).await;
-        assert_eq!(res.status(), http::StatusCode::NOT_FOUND);
+        assert_eq!(archived_desired_state.archived, true);
+        assert_eq!(archived_desired_state.created_at, desired_state.created_at);
+        assert_eq!(archived_desired_state.updated_at, returned_desired_state.updated_at);
 
         Ok(())
     }
@@ -149,10 +123,10 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
-        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
+        let desired_state = factory::desired_state(user.id).insert(&db).await?;
 
         let req = test::TestRequest::put()
-            .uri(&format!("/{}/archive", mission_memo.id))
+            .uri(&format!("/{}/archive", desired_state.id))
             .to_request();
 
         let res = test::call_service(&app, req).await;

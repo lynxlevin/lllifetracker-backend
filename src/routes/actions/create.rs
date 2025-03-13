@@ -116,7 +116,7 @@ mod tests {
             .filter(tag::Column::UserId.eq(user.id))
             .filter(tag::Column::ActionId.eq(returned_action.id))
             .filter(tag::Column::AmbitionId.is_null())
-            .filter(tag::Column::ObjectiveId.is_null())
+            .filter(tag::Column::DesiredStateId.is_null())
             .one(&db)
             .await?;
         assert!(created_tag.is_some());

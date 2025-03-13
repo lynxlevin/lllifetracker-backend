@@ -9,15 +9,15 @@ mod update;
 
 use actix_web::web::{scope, ServiceConfig};
 
-pub fn objective_routes(cfg: &mut ServiceConfig) {
+pub fn desired_state_routes(cfg: &mut ServiceConfig) {
     cfg.service(
-        scope("/objectives")
-            .service(list::list_objectives)
-            .service(get::get_objective)
-            .service(create::create_objective)
-            .service(update::update_objective)
-            .service(delete::delete_objective)
-            .service(archive::archive_objective)
+        scope("/desired_states")
+            .service(list::list_desired_states)
+            .service(get::get_desired_state)
+            .service(create::create_desired_state)
+            .service(update::update_desired_state)
+            .service(delete::delete_desired_state)
+            .service(archive::archive_desired_state)
             .service(connect::connect_action)
             .service(disconnect::disconnect_action),
         // MYMEMO: Can restrict AuthenticateUser this way.

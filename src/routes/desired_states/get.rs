@@ -1,6 +1,6 @@
 use entities::user as user_entity;
-use ::types::{self, CustomDbErr, ObjectiveVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::objective_query::ObjectiveQuery;
+use ::types::{self, CustomDbErr, DesiredStateVisible, INTERNAL_SERVER_ERROR_MESSAGE};
+use services::desired_state_query::DesiredStateQuery;
 use actix_web::{
     get,
     web::{Data, Path, ReqData},
@@ -10,12 +10,12 @@ use sea_orm::{DbConn, DbErr};
 
 #[derive(serde::Deserialize, Debug)]
 struct PathParam {
-    objective_id: uuid::Uuid,
+    desired_state_id: uuid::Uuid,
 }
 
-#[tracing::instrument(name = "Getting an objective", skip(db, user))]
-#[get("/{objective_id}")]
-pub async fn get_objective(
+#[tracing::instrument(name = "Getting an desired_state", skip(db, user))]
+#[get("/{desired_state_id}")]
+pub async fn get_desired_state(
     db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
     path_param: Path<PathParam>,
@@ -23,18 +23,18 @@ pub async fn get_objective(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ObjectiveQuery::find_by_id_and_user_id(&db, path_param.objective_id, user.id)
+            match DesiredStateQuery::find_by_id_and_user_id(&db, path_param.desired_state_id, user.id)
                 .await
             {
-                Ok(objective) => {
-                    let res: ObjectiveVisible = objective.into();
+                Ok(desired_state) => {
+                    let res: DesiredStateVisible = desired_state.into();
                     HttpResponse::Ok().json(res)
                 }
                 Err(e) => match e {
                     DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
                         CustomDbErr::NotFound => {
                             HttpResponse::NotFound().json(types::ErrorResponse {
-                                error: "Objective with this id was not found".to_string(),
+                                error: "DesiredState with this id was not found".to_string(),
                             })
                         }
                     },
@@ -67,7 +67,7 @@ mod tests {
     async fn init_app(
         db: DbConn,
     ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
-        test::init_service(App::new().service(get_objective).app_data(Data::new(db))).await
+        test::init_service(App::new().service(get_desired_state).app_data(Data::new(db))).await
     }
 
     #[actix_web::test]
@@ -75,25 +75,25 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
-        let objective = factory::objective(user.id)
-            .description(Some("Objective".to_string()))
+        let desired_state = factory::desired_state(user.id)
+            .description(Some("DesiredState".to_string()))
             .insert(&db)
             .await?;
 
         let req = test::TestRequest::get()
-            .uri(&format!("/{}", objective.id))
+            .uri(&format!("/{}", desired_state.id))
             .to_request();
         req.extensions_mut().insert(user.clone());
 
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let returned_objective: ObjectiveVisible = test::read_body_json(resp).await;
-        assert_eq!(returned_objective.id, objective.id);
-        assert_eq!(returned_objective.name, objective.name);
-        assert_eq!(returned_objective.description, objective.description);
-        assert_eq!(returned_objective.created_at, objective.created_at);
-        assert_eq!(returned_objective.updated_at, objective.updated_at);
+        let returned_desired_state: DesiredStateVisible = test::read_body_json(resp).await;
+        assert_eq!(returned_desired_state.id, desired_state.id);
+        assert_eq!(returned_desired_state.name, desired_state.name);
+        assert_eq!(returned_desired_state.description, desired_state.description);
+        assert_eq!(returned_desired_state.created_at, desired_state.created_at);
+        assert_eq!(returned_desired_state.updated_at, desired_state.updated_at);
 
         Ok(())
     }
@@ -103,10 +103,10 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
-        let objective = factory::objective(user.id).insert(&db).await?;
+        let desired_state = factory::desired_state(user.id).insert(&db).await?;
 
         let req = test::TestRequest::get()
-            .uri(&format!("/{}", objective.id))
+            .uri(&format!("/{}", desired_state.id))
             .to_request();
 
         let resp = test::call_service(&app, req).await;

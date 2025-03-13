@@ -1,6 +1,6 @@
 use entities::user as user_entity;
-use ::types::{self, BookExcerptVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::book_excerpt_mutation::{BookExcerptMutation, NewBookExcerpt};
+use ::types::{self, ReadingNoteVisible, INTERNAL_SERVER_ERROR_MESSAGE};
+use services::reading_note_mutation::{ReadingNoteMutation, NewReadingNote};
 use actix_web::{
     post,
     web::{Data, Json, ReqData},
@@ -19,7 +19,7 @@ struct RequestBody {
 
 #[tracing::instrument(name = "Creating a book excerpt", skip(db, user))]
 #[post("")]
-pub async fn create_book_excerpt(
+pub async fn create_reading_note(
     db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<RequestBody>,
@@ -27,9 +27,9 @@ pub async fn create_book_excerpt(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match BookExcerptMutation::create(
+            match ReadingNoteMutation::create(
                 &db,
-                NewBookExcerpt {
+                NewReadingNote {
                     title: req.title.clone(),
                     page_number: req.page_number,
                     text: req.text.clone(),
@@ -40,8 +40,8 @@ pub async fn create_book_excerpt(
             )
             .await
             {
-                Ok(book_excerpt) => {
-                    let res: BookExcerptVisible = book_excerpt.into();
+                Ok(reading_note) => {
+                    let res: ReadingNoteVisible = reading_note.into();
                     HttpResponse::Created().json(res)
                 }
                 Err(e) => {
@@ -67,7 +67,7 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait, QuerySelect};
 
-    use entities::{book_excerpt, book_excerpts_tags};
+    use entities::{reading_note, reading_notes_tags};
     use test_utils::{self, *};
 
     use super::*;
@@ -82,7 +82,7 @@ mod tests {
     ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
         test::init_service(
             App::new()
-                .service(scope("/").service(create_book_excerpt))
+                .service(scope("/").service(create_reading_note))
                 .app_data(Data::new(db)),
         )
         .await
@@ -102,16 +102,16 @@ mod tests {
             .insert_with_tag(&db)
             .await?;
 
-        let book_excerpt_title = "New book excerpt".to_string();
+        let reading_note_title = "New book excerpt".to_string();
         let page_number = 12;
-        let book_excerpt_text = "This is a new book excerpt for testing create method.".to_string();
+        let reading_note_text = "This is a new book excerpt for testing create method.".to_string();
         let today = chrono::Utc::now().date_naive();
         let req = test::TestRequest::post()
             .uri("/")
             .set_json(RequestBody {
-                title: book_excerpt_title.clone(),
+                title: reading_note_title.clone(),
                 page_number: page_number,
-                text: book_excerpt_text.clone(),
+                text: reading_note_text.clone(),
                 date: today,
                 tag_ids: vec![tag_0.id, tag_1.id],
             })
@@ -121,33 +121,33 @@ mod tests {
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::CREATED);
 
-        let returned_book_excerpt: BookExcerptVisible = test::read_body_json(res).await;
-        assert_eq!(returned_book_excerpt.title, book_excerpt_title.clone());
-        assert_eq!(returned_book_excerpt.page_number, page_number);
-        assert_eq!(returned_book_excerpt.text, book_excerpt_text.clone());
-        assert_eq!(returned_book_excerpt.date, today);
+        let returned_reading_note: ReadingNoteVisible = test::read_body_json(res).await;
+        assert_eq!(returned_reading_note.title, reading_note_title.clone());
+        assert_eq!(returned_reading_note.page_number, page_number);
+        assert_eq!(returned_reading_note.text, reading_note_text.clone());
+        assert_eq!(returned_reading_note.date, today);
 
-        let created_book_excerpt = book_excerpt::Entity::find_by_id(returned_book_excerpt.id)
+        let created_reading_note = reading_note::Entity::find_by_id(returned_reading_note.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(created_book_excerpt.title, book_excerpt_title.clone());
-        assert_eq!(created_book_excerpt.page_number, page_number);
-        assert_eq!(created_book_excerpt.text, book_excerpt_text.clone());
-        assert_eq!(created_book_excerpt.date, today);
-        assert_eq!(created_book_excerpt.user_id, user.id);
+        assert_eq!(created_reading_note.title, reading_note_title.clone());
+        assert_eq!(created_reading_note.page_number, page_number);
+        assert_eq!(created_reading_note.text, reading_note_text.clone());
+        assert_eq!(created_reading_note.date, today);
+        assert_eq!(created_reading_note.user_id, user.id);
         assert_eq!(
-            created_book_excerpt.created_at,
-            returned_book_excerpt.created_at
+            created_reading_note.created_at,
+            returned_reading_note.created_at
         );
         assert_eq!(
-            created_book_excerpt.updated_at,
-            returned_book_excerpt.updated_at
+            created_reading_note.updated_at,
+            returned_reading_note.updated_at
         );
 
-        let linked_tag_ids: Vec<uuid::Uuid> = book_excerpts_tags::Entity::find()
-            .column_as(book_excerpts_tags::Column::TagId, QueryAs::TagId)
-            .filter(book_excerpts_tags::Column::BookExcerptId.eq(returned_book_excerpt.id))
+        let linked_tag_ids: Vec<uuid::Uuid> = reading_notes_tags::Entity::find()
+            .column_as(reading_notes_tags::Column::TagId, QueryAs::TagId)
+            .filter(reading_notes_tags::Column::ReadingNoteId.eq(returned_reading_note.id))
             .into_values::<_, QueryAs>()
             .all(&db)
             .await?;
@@ -166,7 +166,7 @@ mod tests {
         let req = test::TestRequest::post()
             .uri("/")
             .set_json(RequestBody {
-                title: "New BookExcerpt".to_string(),
+                title: "New ReadingNote".to_string(),
                 page_number: 1,
                 text: "This is a new book excerpt for testing create method.".to_string(),
                 date: chrono::Utc::now().date_naive(),

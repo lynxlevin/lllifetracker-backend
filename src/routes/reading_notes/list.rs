@@ -1,9 +1,9 @@
 use entities::user as user_entity;
 use ::types::{
-    self, BookExcerptVisibleWithTags, BookExcerptWithTagQueryResult, TagType, TagVisible,
+    self, ReadingNoteVisibleWithTags, ReadingNoteWithTagQueryResult, TagType, TagVisible,
     INTERNAL_SERVER_ERROR_MESSAGE,
 };
-use services::book_excerpt_query::BookExcerptQuery;
+use services::reading_note_query::ReadingNoteQuery;
 use actix_web::{
     get,
     web::{Data, ReqData},
@@ -13,34 +13,34 @@ use sea_orm::DbConn;
 
 #[tracing::instrument(name = "Listing user's book excerpts.", skip(db, user))]
 #[get("")]
-pub async fn list_book_excerpts(
+pub async fn list_reading_notes(
     db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
 ) -> HttpResponse {
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match BookExcerptQuery::find_all_with_tags_by_user_id(&db, user.id).await {
-                Ok(book_excerpts) => {
-                    let mut res: Vec<BookExcerptVisibleWithTags> = vec![];
-                    for book_excerpt in book_excerpts {
-                        if res.is_empty() || res.last().unwrap().id != book_excerpt.id {
-                            let mut res_book_excerpt = BookExcerptVisibleWithTags {
-                                id: book_excerpt.id,
-                                title: book_excerpt.title.clone(),
-                                page_number: book_excerpt.page_number,
-                                text: book_excerpt.text.clone(),
-                                date: book_excerpt.date,
-                                created_at: book_excerpt.created_at,
-                                updated_at: book_excerpt.updated_at,
+            match ReadingNoteQuery::find_all_with_tags_by_user_id(&db, user.id).await {
+                Ok(reading_notes) => {
+                    let mut res: Vec<ReadingNoteVisibleWithTags> = vec![];
+                    for reading_note in reading_notes {
+                        if res.is_empty() || res.last().unwrap().id != reading_note.id {
+                            let mut res_reading_note = ReadingNoteVisibleWithTags {
+                                id: reading_note.id,
+                                title: reading_note.title.clone(),
+                                page_number: reading_note.page_number,
+                                text: reading_note.text.clone(),
+                                date: reading_note.date,
+                                created_at: reading_note.created_at,
+                                updated_at: reading_note.updated_at,
                                 tags: vec![],
                             };
-                            if let Some(tag) = get_tag(&book_excerpt) {
-                                res_book_excerpt.push_tag(tag);
+                            if let Some(tag) = get_tag(&reading_note) {
+                                res_reading_note.push_tag(tag);
                             }
-                            res.push(res_book_excerpt);
+                            res.push(res_reading_note);
                         } else {
-                            if let Some(tag) = get_tag(&book_excerpt) {
+                            if let Some(tag) = get_tag(&reading_note) {
                                 res.last_mut().unwrap().push_tag(tag);
                             }
                         }
@@ -59,34 +59,34 @@ pub async fn list_book_excerpts(
     }
 }
 
-fn get_tag(book_excerpt: &BookExcerptWithTagQueryResult) -> Option<TagVisible> {
-    if book_excerpt.tag_id.is_none() {
+fn get_tag(reading_note: &ReadingNoteWithTagQueryResult) -> Option<TagVisible> {
+    if reading_note.tag_id.is_none() {
         return None;
     }
 
-    if let Some(name) = book_excerpt.tag_ambition_name.clone() {
+    if let Some(name) = reading_note.tag_ambition_name.clone() {
         Some(TagVisible {
-            id: book_excerpt.tag_id.unwrap(),
+            id: reading_note.tag_id.unwrap(),
             name,
             tag_type: TagType::Ambition,
-            created_at: book_excerpt.tag_created_at.unwrap(),
+            created_at: reading_note.tag_created_at.unwrap(),
         })
-    } else if let Some(name) = book_excerpt.tag_objective_name.clone() {
+    } else if let Some(name) = reading_note.tag_desired_state_name.clone() {
         Some(TagVisible {
-            id: book_excerpt.tag_id.unwrap(),
+            id: reading_note.tag_id.unwrap(),
             name,
-            tag_type: TagType::Objective,
-            created_at: book_excerpt.tag_created_at.unwrap(),
+            tag_type: TagType::DesiredState,
+            created_at: reading_note.tag_created_at.unwrap(),
         })
-    } else if let Some(name) = book_excerpt.tag_action_name.clone() {
+    } else if let Some(name) = reading_note.tag_action_name.clone() {
         Some(TagVisible {
-            id: book_excerpt.tag_id.unwrap(),
+            id: reading_note.tag_id.unwrap(),
             name,
             tag_type: TagType::Action,
-            created_at: book_excerpt.tag_created_at.unwrap(),
+            created_at: reading_note.tag_created_at.unwrap(),
         })
     } else {
-        unimplemented!("Tag without link to Ambition/Objective/Action is not implemented yet.");
+        unimplemented!("Tag without link to Ambition/DesiredState/Action is not implemented yet.");
     }
 }
 
@@ -111,7 +111,7 @@ mod tests {
     ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
         test::init_service(
             App::new()
-                .service(scope("/").service(list_book_excerpts))
+                .service(scope("/").service(list_reading_notes))
                 .app_data(Data::new(db)),
         )
         .await
@@ -122,20 +122,20 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
-        let book_excerpt_0 = factory::book_excerpt(user.id)
-            .title("book_excerpt_0".to_string())
+        let reading_note_0 = factory::reading_note(user.id)
+            .title("reading_note_0".to_string())
             .insert(&db)
             .await?;
-        let book_excerpt_1 = factory::book_excerpt(user.id)
-            .title("book_excerpt_1".to_string())
+        let reading_note_1 = factory::reading_note(user.id)
+            .title("reading_note_1".to_string())
             .insert(&db)
             .await?;
         let (action, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
         let (ambition, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
-        let (objective, objective_tag) = factory::objective(user.id).insert_with_tag(&db).await?;
-        factory::link_book_excerpt_tag(&db, book_excerpt_0.id, ambition_tag.id).await?;
-        factory::link_book_excerpt_tag(&db, book_excerpt_1.id, objective_tag.id).await?;
-        factory::link_book_excerpt_tag(&db, book_excerpt_1.id, action_tag.id).await?;
+        let (desired_state, desired_state_tag) = factory::desired_state(user.id).insert_with_tag(&db).await?;
+        factory::link_reading_note_tag(&db, reading_note_0.id, ambition_tag.id).await?;
+        factory::link_reading_note_tag(&db, reading_note_1.id, desired_state_tag.id).await?;
+        factory::link_reading_note_tag(&db, reading_note_1.id, action_tag.id).await?;
 
         let req = test::TestRequest::get().uri("/").to_request();
         req.extensions_mut().insert(user.clone());
@@ -143,23 +143,23 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let body: Vec<BookExcerptVisibleWithTags> = test::read_body_json(resp).await;
+        let body: Vec<ReadingNoteVisibleWithTags> = test::read_body_json(resp).await;
         assert_eq!(body.len(), 2);
 
         let expected_0 = serde_json::json!({
-            "id": book_excerpt_1.id,
-            "title": book_excerpt_1.title.clone(),
-            "page_number": book_excerpt_1.page_number,
-            "text": book_excerpt_1.text.clone(),
-            "date": book_excerpt_1.date,
-            "created_at": book_excerpt_1.created_at,
-            "updated_at": book_excerpt_1.updated_at,
+            "id": reading_note_1.id,
+            "title": reading_note_1.title.clone(),
+            "page_number": reading_note_1.page_number,
+            "text": reading_note_1.text.clone(),
+            "date": reading_note_1.date,
+            "created_at": reading_note_1.created_at,
+            "updated_at": reading_note_1.updated_at,
             "tags": [
                 {
-                    "id": objective_tag.id,
-                    "name": objective.name,
-                    "tag_type": TagType::Objective,
-                    "created_at": objective_tag.created_at,
+                    "id": desired_state_tag.id,
+                    "name": desired_state.name,
+                    "tag_type": TagType::DesiredState,
+                    "created_at": desired_state_tag.created_at,
                 },
                 {
                     "id": action_tag.id,
@@ -174,13 +174,13 @@ mod tests {
         assert_eq!(expected_0, body_0);
 
         let expected_1 = serde_json::json!({
-            "id": book_excerpt_0.id,
-            "title": book_excerpt_0.title.clone(),
-            "page_number": book_excerpt_0.page_number,
-            "text": book_excerpt_0.text.clone(),
-            "date": book_excerpt_0.date,
-            "created_at": book_excerpt_0.created_at,
-            "updated_at": book_excerpt_0.updated_at,
+            "id": reading_note_0.id,
+            "title": reading_note_0.title.clone(),
+            "page_number": reading_note_0.page_number,
+            "text": reading_note_0.text.clone(),
+            "date": reading_note_0.date,
+            "created_at": reading_note_0.created_at,
+            "updated_at": reading_note_0.updated_at,
             "tags": [
                 {
                     "id": ambition_tag.id,

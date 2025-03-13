@@ -1,6 +1,6 @@
 use entities::user as user_entity;
-use ::types::{self, CustomDbErr, MissionMemoVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::mission_memo_mutation::{MissionMemoMutation, UpdateMissionMemo};
+use ::types::{self, CustomDbErr, ChallengeVisible, INTERNAL_SERVER_ERROR_MESSAGE};
+use services::challenge_mutation::{ChallengeMutation, UpdateChallenge};
 use actix_web::{
     put,
     web::{Data, Json, Path, ReqData},
@@ -10,7 +10,7 @@ use sea_orm::{DbConn, DbErr, TransactionError};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
-    mission_memo_id: uuid::Uuid,
+    challenge_id: uuid::Uuid,
 }
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
@@ -22,8 +22,8 @@ struct RequestBody {
 }
 
 #[tracing::instrument(name = "Updating a mission memo", skip(db, user, req, path_param))]
-#[put("/{mission_memo_id}")]
-pub async fn update_mission_memo(
+#[put("/{challenge_id}")]
+pub async fn update_challenge(
     db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<RequestBody>,
@@ -32,17 +32,17 @@ pub async fn update_mission_memo(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            let form = UpdateMissionMemo {
-                id: path_param.mission_memo_id,
+            let form = UpdateChallenge {
+                id: path_param.challenge_id,
                 title: req.title.clone(),
                 text: req.text.clone(),
                 date: req.date,
                 tag_ids: req.tag_ids.clone(),
                 user_id: user.id,
             };
-            match MissionMemoMutation::partial_update(&db, form).await {
-                Ok(mission_memo) => {
-                    let res: MissionMemoVisible = mission_memo.into();
+            match ChallengeMutation::partial_update(&db, form).await {
+                Ok(challenge) => {
+                    let res: ChallengeVisible = challenge.into();
                     HttpResponse::Ok().json(res)
                 }
                 Err(e) => match e {
@@ -79,7 +79,7 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait, QuerySelect};
 
-    use entities::{mission_memo, mission_memos_tags};
+    use entities::{challenge, challenges_tags};
     use test_utils::{self, *};
 
     use super::*;
@@ -94,7 +94,7 @@ mod tests {
     ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
         test::init_service(
             App::new()
-                .service(update_mission_memo)
+                .service(update_challenge)
                 .app_data(Data::new(db)),
         )
         .await
@@ -105,7 +105,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
-        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
+        let challenge = factory::challenge(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
 
         let form = RequestBody {
@@ -116,7 +116,7 @@ mod tests {
         };
 
         let req = test::TestRequest::put()
-            .uri(&format!("/{}", mission_memo.id))
+            .uri(&format!("/{}", challenge.id))
             .set_json(&form)
             .to_request();
         req.extensions_mut().insert(user.clone());
@@ -124,37 +124,37 @@ mod tests {
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::OK);
 
-        let returned_mission_memo: MissionMemoVisible = test::read_body_json(res).await;
-        assert_eq!(returned_mission_memo.title, form.title.clone().unwrap());
-        assert_eq!(returned_mission_memo.text, form.text.clone().unwrap());
-        assert_eq!(returned_mission_memo.date, form.date.unwrap());
-        assert_eq!(returned_mission_memo.archived, mission_memo.archived);
-        assert_eq!(returned_mission_memo.accomplished_at, mission_memo.accomplished_at);
-        assert_eq!(returned_mission_memo.created_at, mission_memo.created_at);
-        assert!(returned_mission_memo.updated_at > mission_memo.updated_at);
+        let returned_challenge: ChallengeVisible = test::read_body_json(res).await;
+        assert_eq!(returned_challenge.title, form.title.clone().unwrap());
+        assert_eq!(returned_challenge.text, form.text.clone().unwrap());
+        assert_eq!(returned_challenge.date, form.date.unwrap());
+        assert_eq!(returned_challenge.archived, challenge.archived);
+        assert_eq!(returned_challenge.accomplished_at, challenge.accomplished_at);
+        assert_eq!(returned_challenge.created_at, challenge.created_at);
+        assert!(returned_challenge.updated_at > challenge.updated_at);
 
-        let updated_mission_memo = mission_memo::Entity::find_by_id(returned_mission_memo.id)
+        let updated_challenge = challenge::Entity::find_by_id(returned_challenge.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(updated_mission_memo.title, form.title.unwrap());
-        assert_eq!(updated_mission_memo.text, form.text.unwrap());
-        assert_eq!(updated_mission_memo.date, form.date.unwrap());
-        assert_eq!(updated_mission_memo.archived, mission_memo.archived);
-        assert_eq!(updated_mission_memo.accomplished_at, mission_memo.accomplished_at);
-        assert_eq!(updated_mission_memo.user_id, user.id);
+        assert_eq!(updated_challenge.title, form.title.unwrap());
+        assert_eq!(updated_challenge.text, form.text.unwrap());
+        assert_eq!(updated_challenge.date, form.date.unwrap());
+        assert_eq!(updated_challenge.archived, challenge.archived);
+        assert_eq!(updated_challenge.accomplished_at, challenge.accomplished_at);
+        assert_eq!(updated_challenge.user_id, user.id);
         assert_eq!(
-            updated_mission_memo.created_at,
-            returned_mission_memo.created_at
+            updated_challenge.created_at,
+            returned_challenge.created_at
         );
         assert_eq!(
-            updated_mission_memo.updated_at,
-            returned_mission_memo.updated_at
+            updated_challenge.updated_at,
+            returned_challenge.updated_at
         );
 
-        let linked_tag_ids: Vec<uuid::Uuid> = mission_memos_tags::Entity::find()
-            .column_as(mission_memos_tags::Column::TagId, QueryAs::TagId)
-            .filter(mission_memos_tags::Column::MissionMemoId.eq(returned_mission_memo.id))
+        let linked_tag_ids: Vec<uuid::Uuid> = challenges_tags::Entity::find()
+            .column_as(challenges_tags::Column::TagId, QueryAs::TagId)
+            .filter(challenges_tags::Column::ChallengeId.eq(returned_challenge.id))
             .into_values::<_, QueryAs>()
             .all(&db)
             .await?;
@@ -192,10 +192,10 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
-        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
+        let challenge = factory::challenge(user.id).insert(&db).await?;
 
         let req = test::TestRequest::put()
-            .uri(&format!("/{}", mission_memo.id))
+            .uri(&format!("/{}", challenge.id))
             .set_json(RequestBody {
                 title: None,
                 text: None,

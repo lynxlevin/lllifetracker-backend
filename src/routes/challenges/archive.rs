@@ -1,6 +1,6 @@
 use entities::user as user_entity;
-use ::types::{self, CustomDbErr, MissionMemoVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::mission_memo_mutation::MissionMemoMutation;
+use ::types::{self, CustomDbErr, ChallengeVisible, INTERNAL_SERVER_ERROR_MESSAGE};
+use services::challenge_mutation::ChallengeMutation;
 use actix_web::{
     put,
     web::{Data, Path, ReqData},
@@ -10,15 +10,12 @@ use sea_orm::{DbConn, DbErr};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
-    mission_memo_id: uuid::Uuid,
+    challenge_id: uuid::Uuid,
 }
 
-#[tracing::instrument(
-    name = "Marking a mission memo as accomplished",
-    skip(db, user, path_param)
-)]
-#[put("/{mission_memo_id}/accomplish")]
-pub async fn mark_accomplished_mission_memo(
+#[tracing::instrument(name = "Archiving a mission memo", skip(db, user, path_param))]
+#[put("/{challenge_id}/archive")]
+pub async fn archive_challenge(
     db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
     path_param: Path<PathParam>,
@@ -26,11 +23,9 @@ pub async fn mark_accomplished_mission_memo(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match MissionMemoMutation::mark_accomplished(&db, path_param.mission_memo_id, user.id)
-                .await
-            {
-                Ok(mission_memo) => {
-                    let res: MissionMemoVisible = mission_memo.into();
+            match ChallengeMutation::archive(&db, path_param.challenge_id, user.id).await {
+                Ok(challenge) => {
+                    let res: ChallengeVisible = challenge.into();
                     HttpResponse::Ok().json(res)
                 }
                 Err(e) => match e {
@@ -65,7 +60,7 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use entities::mission_memo;
+    use entities::challenge;
     use test_utils::{self, *};
 
     use super::*;
@@ -80,7 +75,7 @@ mod tests {
     ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
         test::init_service(
             App::new()
-                .service(mark_accomplished_mission_memo)
+                .service(archive_challenge)
                 .app_data(Data::new(db)),
         )
         .await
@@ -91,37 +86,43 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
-        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
+        let challenge = factory::challenge(user.id).insert(&db).await?;
 
         let req = test::TestRequest::put()
-            .uri(&format!("/{}/accomplish", mission_memo.id))
+            .uri(&format!("/{}/archive", challenge.id))
             .to_request();
         req.extensions_mut().insert(user.clone());
 
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::OK);
 
-        let returned_mission_memo: MissionMemoVisible = test::read_body_json(res).await;
-        assert_eq!(returned_mission_memo.title, mission_memo.title.clone());
-        assert_eq!(returned_mission_memo.text, mission_memo.text.clone());
-        assert_eq!(returned_mission_memo.date, mission_memo.date);
-        assert_eq!(returned_mission_memo.archived, mission_memo.archived);
-        assert!(returned_mission_memo.accomplished_at.is_some());
-        assert_eq!(returned_mission_memo.created_at, mission_memo.created_at);
-        assert!(returned_mission_memo.updated_at > mission_memo.updated_at);
+        let returned_challenge: ChallengeVisible = test::read_body_json(res).await;
+        assert_eq!(returned_challenge.title, challenge.title.clone());
+        assert_eq!(returned_challenge.text, challenge.text.clone());
+        assert_eq!(returned_challenge.date, challenge.date);
+        assert_eq!(returned_challenge.archived, true);
+        assert_eq!(
+            returned_challenge.accomplished_at,
+            challenge.accomplished_at
+        );
+        assert_eq!(returned_challenge.created_at, challenge.created_at);
+        assert!(returned_challenge.updated_at > challenge.updated_at);
 
-        let updated_mission_memo = mission_memo::Entity::find_by_id(returned_mission_memo.id)
+        let updated_challenge = challenge::Entity::find_by_id(returned_challenge.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(updated_mission_memo.title, mission_memo.title.clone());
-        assert_eq!(updated_mission_memo.text, mission_memo.text.clone());
-        assert_eq!(updated_mission_memo.date, mission_memo.date);
-        assert_eq!(updated_mission_memo.archived, mission_memo.archived);
-        assert!(updated_mission_memo.accomplished_at.is_some());
-        assert_eq!(updated_mission_memo.user_id, user.id);
-        assert_eq!(updated_mission_memo.created_at, mission_memo.created_at);
-        assert!(updated_mission_memo.updated_at > mission_memo.updated_at);
+        assert_eq!(updated_challenge.title, challenge.title.clone());
+        assert_eq!(updated_challenge.text, challenge.text.clone());
+        assert_eq!(updated_challenge.date, challenge.date);
+        assert_eq!(updated_challenge.archived, true);
+        assert_eq!(
+            updated_challenge.accomplished_at,
+            challenge.accomplished_at
+        );
+        assert_eq!(updated_challenge.user_id, user.id);
+        assert_eq!(updated_challenge.created_at, challenge.created_at);
+        assert!(updated_challenge.updated_at > challenge.updated_at);
 
         Ok(())
     }
@@ -133,7 +134,7 @@ mod tests {
         let user = factory::user().insert(&db).await?;
 
         let req = test::TestRequest::put()
-            .uri(&format!("/{}/accomplish", uuid::Uuid::new_v4()))
+            .uri(&format!("/{}/archive", uuid::Uuid::new_v4()))
             .to_request();
         req.extensions_mut().insert(user.clone());
 
@@ -148,10 +149,10 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
-        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
+        let challenge = factory::challenge(user.id).insert(&db).await?;
 
         let req = test::TestRequest::put()
-            .uri(&format!("/{}/accomplish", mission_memo.id))
+            .uri(&format!("/{}/archive", challenge.id))
             .to_request();
 
         let res = test::call_service(&app, req).await;

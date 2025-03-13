@@ -18,8 +18,8 @@ pub fn ambition_routes(cfg: &mut ServiceConfig) {
             .service(update::update_ambition)
             .service(delete::delete_ambition)
             .service(archive::archive_ambition)
-            .service(connect::connect_objective)
-            .service(disconnect::disconnect_objective),
+            .service(connect::connect_desired_state)
+            .service(disconnect::disconnect_desired_state),
         // MYMEMO: Can restrict AuthenticateUser this way.
         // .service(
         //     actix_web::web::scope("")

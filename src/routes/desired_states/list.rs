@@ -1,9 +1,9 @@
 use entities::user as user_entity;
 use ::types::{
-    self, ActionVisibleForLinking, AmbitionVisible, ObjectiveVisibleWithLinks,
-    ObjectiveWithLinksQueryResult, INTERNAL_SERVER_ERROR_MESSAGE,
+    self, ActionVisibleForLinking, AmbitionVisible, DesiredStateVisibleWithLinks,
+    DesiredStateWithLinksQueryResult, INTERNAL_SERVER_ERROR_MESSAGE,
 };
-use services::objective_query::ObjectiveQuery;
+use services::desired_state_query::DesiredStateQuery;
 use actix_web::{
     get,
     web::{Data, Query, ReqData},
@@ -17,9 +17,9 @@ struct QueryParam {
     links: Option<bool>,
 }
 
-#[tracing::instrument(name = "Listing a user's objectives", skip(db, user))]
+#[tracing::instrument(name = "Listing a user's desired_states", skip(db, user))]
 #[get("")]
-pub async fn list_objectives(
+pub async fn list_desired_states(
     db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
     query: Query<QueryParam>,
@@ -28,37 +28,37 @@ pub async fn list_objectives(
         Some(user) => {
             let user = user.into_inner();
             if query.links.unwrap_or(false) {
-                match ObjectiveQuery::find_all_with_linked_by_user_id(&db, user.id).await {
-                    Ok(objectives) => {
-                        let mut res: Vec<ObjectiveVisibleWithLinks> = vec![];
-                        for objective in objectives {
-                            if res.is_empty() || res.last().unwrap().id != objective.id {
-                                let mut res_objective = ObjectiveVisibleWithLinks {
-                                    id: objective.id,
-                                    name: objective.name.clone(),
-                                    description: objective.description.clone(),
-                                    created_at: objective.created_at,
-                                    updated_at: objective.updated_at,
+                match DesiredStateQuery::find_all_with_linked_by_user_id(&db, user.id).await {
+                    Ok(desired_states) => {
+                        let mut res: Vec<DesiredStateVisibleWithLinks> = vec![];
+                        for desired_state in desired_states {
+                            if res.is_empty() || res.last().unwrap().id != desired_state.id {
+                                let mut res_desired_state = DesiredStateVisibleWithLinks {
+                                    id: desired_state.id,
+                                    name: desired_state.name.clone(),
+                                    description: desired_state.description.clone(),
+                                    created_at: desired_state.created_at,
+                                    updated_at: desired_state.updated_at,
                                     ambitions: vec![],
                                     actions: vec![],
                                 };
-                                if let Some(ambition) = get_ambition(&objective) {
-                                    res_objective.push_ambition(ambition);
+                                if let Some(ambition) = get_ambition(&desired_state) {
+                                    res_desired_state.push_ambition(ambition);
                                 }
-                                if let Some(action) = get_action(&objective) {
-                                    res_objective.push_action(action);
+                                if let Some(action) = get_action(&desired_state) {
+                                    res_desired_state.push_action(action);
                                 }
-                                res.push(res_objective);
+                                res.push(res_desired_state);
                             } else {
-                                let last_objective = res.last_mut().unwrap();
-                                if let Some(ambition) = get_ambition(&objective) {
-                                    if !last_objective.ambitions.contains(&ambition) {
-                                        last_objective.push_ambition(ambition);
+                                let last_desired_state = res.last_mut().unwrap();
+                                if let Some(ambition) = get_ambition(&desired_state) {
+                                    if !last_desired_state.ambitions.contains(&ambition) {
+                                        last_desired_state.push_ambition(ambition);
                                     }
                                 }
-                                if let Some(action) = get_action(&objective) {
-                                    if !last_objective.actions.contains(&action) {
-                                        last_objective.push_action(action);
+                                if let Some(action) = get_action(&desired_state) {
+                                    if !last_desired_state.actions.contains(&action) {
+                                        last_desired_state.push_action(action);
                                     }
                                 }
                             }
@@ -73,8 +73,8 @@ pub async fn list_objectives(
                     }
                 }
             } else {
-                match ObjectiveQuery::find_all_by_user_id(&db, user.id).await {
-                    Ok(objectives) => HttpResponse::Ok().json(objectives),
+                match DesiredStateQuery::find_all_by_user_id(&db, user.id).await {
+                    Ok(desired_states) => HttpResponse::Ok().json(desired_states),
                     Err(e) => {
                         tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
                         HttpResponse::InternalServerError().json(types::ErrorResponse {
@@ -88,29 +88,29 @@ pub async fn list_objectives(
     }
 }
 
-fn get_ambition(objective: &ObjectiveWithLinksQueryResult) -> Option<AmbitionVisible> {
-    if objective.ambition_id.is_none() {
+fn get_ambition(desired_state: &DesiredStateWithLinksQueryResult) -> Option<AmbitionVisible> {
+    if desired_state.ambition_id.is_none() {
         return None;
     }
     Some(AmbitionVisible {
-        id: objective.ambition_id.unwrap(),
-        name: objective.ambition_name.clone().unwrap(),
-        description: objective.ambition_description.clone(),
-        created_at: objective.ambition_created_at.unwrap(),
-        updated_at: objective.ambition_updated_at.unwrap(),
+        id: desired_state.ambition_id.unwrap(),
+        name: desired_state.ambition_name.clone().unwrap(),
+        description: desired_state.ambition_description.clone(),
+        created_at: desired_state.ambition_created_at.unwrap(),
+        updated_at: desired_state.ambition_updated_at.unwrap(),
     })
 }
 
-fn get_action(objective: &ObjectiveWithLinksQueryResult) -> Option<ActionVisibleForLinking> {
-    if objective.action_id.is_none() {
+fn get_action(desired_state: &DesiredStateWithLinksQueryResult) -> Option<ActionVisibleForLinking> {
+    if desired_state.action_id.is_none() {
         return None;
     }
     Some(ActionVisibleForLinking {
-        id: objective.action_id.unwrap(),
-        name: objective.action_name.clone().unwrap(),
-        description: objective.action_description.clone(),
-        created_at: objective.action_created_at.unwrap(),
-        updated_at: objective.action_updated_at.unwrap(),
+        id: desired_state.action_id.unwrap(),
+        name: desired_state.action_name.clone().unwrap(),
+        description: desired_state.action_description.clone(),
+        created_at: desired_state.action_created_at.unwrap(),
+        updated_at: desired_state.action_updated_at.unwrap(),
     })
 }
 
@@ -124,7 +124,7 @@ mod tests {
         App, HttpMessage,
     };
     use sea_orm::{entity::prelude::*, DbErr};
-    use ::types::ObjectiveVisible;
+    use ::types::DesiredStateVisible;
 
     use test_utils::{self, *};
 
@@ -135,7 +135,7 @@ mod tests {
     ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
         test::init_service(
             App::new()
-                .service(scope("/").service(list_objectives))
+                .service(scope("/").service(list_desired_states))
                 .app_data(Data::new(db)),
         )
         .await
@@ -146,15 +146,15 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
-        let objective_0 = factory::objective(user.id)
-            .name("objective_0".to_string())
+        let desired_state_0 = factory::desired_state(user.id)
+            .name("desired_state_0".to_string())
             .insert(&db)
             .await?;
-        let objective_1 = factory::objective(user.id)
-            .name("objective_1".to_string())
+        let desired_state_1 = factory::desired_state(user.id)
+            .name("desired_state_1".to_string())
             .insert(&db)
             .await?;
-        let _archived_objective = factory::objective(user.id)
+        let _archived_desired_state = factory::desired_state(user.id)
             .archived(true)
             .insert(&db)
             .await?;
@@ -165,16 +165,16 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let returned_objectives: Vec<ObjectiveVisible> = test::read_body_json(resp).await;
-        assert_eq!(returned_objectives[0].id, objective_0.id);
-        assert_eq!(returned_objectives[0].name, objective_0.name);
-        assert_eq!(returned_objectives[0].created_at, objective_0.created_at);
-        assert_eq!(returned_objectives[0].updated_at, objective_0.updated_at);
+        let returned_desired_states: Vec<DesiredStateVisible> = test::read_body_json(resp).await;
+        assert_eq!(returned_desired_states[0].id, desired_state_0.id);
+        assert_eq!(returned_desired_states[0].name, desired_state_0.name);
+        assert_eq!(returned_desired_states[0].created_at, desired_state_0.created_at);
+        assert_eq!(returned_desired_states[0].updated_at, desired_state_0.updated_at);
 
-        assert_eq!(returned_objectives[1].id, objective_1.id);
-        assert_eq!(returned_objectives[1].name, objective_1.name);
-        assert_eq!(returned_objectives[1].created_at, objective_1.created_at);
-        assert_eq!(returned_objectives[1].updated_at, objective_1.updated_at);
+        assert_eq!(returned_desired_states[1].id, desired_state_1.id);
+        assert_eq!(returned_desired_states[1].name, desired_state_1.name);
+        assert_eq!(returned_desired_states[1].created_at, desired_state_1.created_at);
+        assert_eq!(returned_desired_states[1].updated_at, desired_state_1.updated_at);
 
         Ok(())
     }
@@ -185,16 +185,16 @@ mod tests {
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
         let ambition_0 = factory::ambition(user.id).insert(&db).await?;
-        let objective_0 = factory::objective(user.id).insert(&db).await?;
+        let desired_state_0 = factory::desired_state(user.id).insert(&db).await?;
         let action_0 = factory::action(user.id).insert(&db).await?;
         let ambition_1 = factory::ambition(user.id).insert(&db).await?;
-        let objective_1 = factory::objective(user.id).insert(&db).await?;
+        let desired_state_1 = factory::desired_state(user.id).insert(&db).await?;
         let action_1 = factory::action(user.id).insert(&db).await?;
-        factory::link_ambition_objective(&db, ambition_0.id, objective_0.id).await?;
-        factory::link_ambition_objective(&db, ambition_1.id, objective_0.id).await?;
-        factory::link_objective_action(&db, objective_0.id, action_0.id).await?;
-        factory::link_objective_action(&db, objective_0.id, action_1.id).await?;
-        factory::link_objective_action(&db, objective_1.id, action_1.id).await?;
+        factory::link_ambition_desired_state(&db, ambition_0.id, desired_state_0.id).await?;
+        factory::link_ambition_desired_state(&db, ambition_1.id, desired_state_0.id).await?;
+        factory::link_desired_state_action(&db, desired_state_0.id, action_0.id).await?;
+        factory::link_desired_state_action(&db, desired_state_0.id, action_1.id).await?;
+        factory::link_desired_state_action(&db, desired_state_1.id, action_1.id).await?;
 
         let req = test::TestRequest::get().uri("/?links=true").to_request();
         req.extensions_mut().insert(user.clone());
@@ -202,15 +202,15 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let body: Vec<ObjectiveVisibleWithLinks> = test::read_body_json(resp).await;
+        let body: Vec<DesiredStateVisibleWithLinks> = test::read_body_json(resp).await;
         assert_eq!(body.len(), 2);
 
         let mut expected_0 = serde_json::json!({
-            "id": objective_0.id,
-            "name": objective_0.name,
-            "description": objective_0.description,
-            "created_at": objective_0.created_at,
-            "updated_at": objective_0.updated_at,
+            "id": desired_state_0.id,
+            "name": desired_state_0.name,
+            "description": desired_state_0.description,
+            "created_at": desired_state_0.created_at,
+            "updated_at": desired_state_0.updated_at,
             "ambitions": [
                 {
                     "id": ambition_0.id,
@@ -255,11 +255,11 @@ mod tests {
         assert_eq!(expected_0_actions, body_0_actions);
 
         let expected_1 = serde_json::json!({
-            "id": objective_1.id,
-            "name": objective_1.name,
-            "description": objective_1.description,
-            "created_at": objective_1.created_at,
-            "updated_at": objective_1.updated_at,
+            "id": desired_state_1.id,
+            "name": desired_state_1.name,
+            "description": desired_state_1.description,
+            "created_at": desired_state_1.created_at,
+            "updated_at": desired_state_1.updated_at,
             "ambitions": [],
             "actions": [
                 {
@@ -283,21 +283,21 @@ mod tests {
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
         let ambition_0 = factory::ambition(user.id).insert(&db).await?;
-        let objective_0 = factory::objective(user.id).insert(&db).await?;
+        let desired_state_0 = factory::desired_state(user.id).insert(&db).await?;
         let action_0 = factory::action(user.id).insert(&db).await?;
         let archived_ambition = factory::ambition(user.id)
             .archived(true)
             .insert(&db)
             .await?;
-        let _archived_objective = factory::objective(user.id)
+        let _archived_desired_state = factory::desired_state(user.id)
             .archived(true)
             .insert(&db)
             .await?;
         let archived_action = factory::action(user.id).archived(true).insert(&db).await?;
-        factory::link_ambition_objective(&db, ambition_0.id, objective_0.id).await?;
-        factory::link_ambition_objective(&db, archived_ambition.id, objective_0.id).await?;
-        factory::link_objective_action(&db, objective_0.id, action_0.id).await?;
-        factory::link_objective_action(&db, objective_0.id, archived_action.id).await?;
+        factory::link_ambition_desired_state(&db, ambition_0.id, desired_state_0.id).await?;
+        factory::link_ambition_desired_state(&db, archived_ambition.id, desired_state_0.id).await?;
+        factory::link_desired_state_action(&db, desired_state_0.id, action_0.id).await?;
+        factory::link_desired_state_action(&db, desired_state_0.id, archived_action.id).await?;
 
         let req = test::TestRequest::get().uri("/?links=true").to_request();
         req.extensions_mut().insert(user.clone());
@@ -305,15 +305,15 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let body: Vec<ObjectiveVisibleWithLinks> = test::read_body_json(resp).await;
+        let body: Vec<DesiredStateVisibleWithLinks> = test::read_body_json(resp).await;
         assert_eq!(body.len(), 1);
 
         let expected = serde_json::json!([{
-            "id": objective_0.id,
-            "name": objective_0.name,
-            "description": objective_0.description,
-            "created_at": objective_0.created_at,
-            "updated_at": objective_0.updated_at,
+            "id": desired_state_0.id,
+            "name": desired_state_0.name,
+            "description": desired_state_0.description,
+            "created_at": desired_state_0.created_at,
+            "updated_at": desired_state_0.updated_at,
             "ambitions": [
                 {
                     "id": ambition_0.id,
@@ -346,14 +346,14 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
-        let objective = factory::objective(user.id).insert(&db).await?;
+        let desired_state = factory::desired_state(user.id).insert(&db).await?;
         let archived_ambition = factory::ambition(user.id)
             .archived(true)
             .insert(&db)
             .await?;
         let archived_action = factory::action(user.id).archived(true).insert(&db).await?;
-        factory::link_ambition_objective(&db, archived_ambition.id, objective.id).await?;
-        factory::link_objective_action(&db, objective.id, archived_action.id).await?;
+        factory::link_ambition_desired_state(&db, archived_ambition.id, desired_state.id).await?;
+        factory::link_desired_state_action(&db, desired_state.id, archived_action.id).await?;
 
         let req = test::TestRequest::get().uri("/?links=true").to_request();
         req.extensions_mut().insert(user.clone());
@@ -361,15 +361,15 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let body: Vec<ObjectiveVisibleWithLinks> = test::read_body_json(resp).await;
+        let body: Vec<DesiredStateVisibleWithLinks> = test::read_body_json(resp).await;
         assert_eq!(body.len(), 1);
 
         let expected = serde_json::json!([{
-            "id": objective.id,
-            "name": objective.name,
-            "description": objective.description,
-            "created_at": objective.created_at,
-            "updated_at": objective.updated_at,
+            "id": desired_state.id,
+            "name": desired_state.name,
+            "description": desired_state.description,
+            "created_at": desired_state.created_at,
+            "updated_at": desired_state.updated_at,
             "ambitions": [],
             "actions": [],
         }]);
