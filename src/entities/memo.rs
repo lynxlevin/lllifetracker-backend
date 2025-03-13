@@ -20,6 +20,8 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
+    #[sea_orm(has_many = "super::memos_tags::Entity")]
+    MemosTags,
     #[sea_orm(
         belongs_to = "super::user::Entity",
         from = "Column::UserId",
@@ -30,9 +32,24 @@ pub enum Relation {
     User,
 }
 
+impl Related<super::memos_tags::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::MemosTags.def()
+    }
+}
+
 impl Related<super::user::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::User.def()
+    }
+}
+
+impl Related<super::tag::Entity> for Entity {
+    fn to() -> RelationDef {
+        super::memos_tags::Relation::Tag.def()
+    }
+    fn via() -> Option<RelationDef> {
+        Some(super::memos_tags::Relation::Memo.def().rev())
     }
 }
 
