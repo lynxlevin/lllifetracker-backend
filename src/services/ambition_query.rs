@@ -1,4 +1,4 @@
-use entities::{action, ambition, ambitions_objectives, objective, objectives_actions};
+use entities::{action, ambition, ambitions_desired_states, desired_state, desired_states_actions};
 use ::types::{AmbitionVisible, AmbitionWithLinksQueryResult, CustomDbErr};
 use migration::{Alias, IntoCondition, NullOrdering::Last};
 use sea_orm::{
@@ -28,32 +28,32 @@ impl AmbitionQuery {
         ambition::Entity::find()
             .filter(ambition::Column::UserId.eq(user_id))
             .filter(ambition::Column::Archived.eq(false))
-            .column_as(objective::Column::Id, "objective_id")
-            .column_as(objective::Column::Name, "objective_name")
-            .column_as(objective::Column::Description, "objective_description")
-            .column_as(objective::Column::CreatedAt, "objective_created_at")
-            .column_as(objective::Column::UpdatedAt, "objective_updated_at")
+            .column_as(desired_state::Column::Id, "desired_state_id")
+            .column_as(desired_state::Column::Name, "desired_state_name")
+            .column_as(desired_state::Column::Description, "desired_state_description")
+            .column_as(desired_state::Column::CreatedAt, "desired_state_created_at")
+            .column_as(desired_state::Column::UpdatedAt, "desired_state_updated_at")
             .column_as(action::Column::Id, "action_id")
             .column_as(action::Column::Name, "action_name")
             .column_as(action::Column::Description, "action_description")
             .column_as(action::Column::CreatedAt, "action_created_at")
             .column_as(action::Column::UpdatedAt, "action_updated_at")
-            .join_rev(LeftJoin, ambitions_objectives::Relation::Ambition.def())
+            .join_rev(LeftJoin, ambitions_desired_states::Relation::Ambition.def())
             .join_as(
                 LeftJoin,
-                ambitions_objectives::Relation::Objective
+                ambitions_desired_states::Relation::DesiredState
                     .def()
                     .on_condition(|_left, right| {
-                        Expr::col((right, objective::Column::Archived))
+                        Expr::col((right, desired_state::Column::Archived))
                             .eq(false)
                             .into_condition()
                     }),
-                Alias::new("objective"),
+                Alias::new("desired_state"),
             )
-            .join_rev(LeftJoin, objectives_actions::Relation::Objective.def())
+            .join_rev(LeftJoin, desired_states_actions::Relation::DesiredState.def())
             .join_as(
                 LeftJoin,
-                objectives_actions::Relation::Action
+                desired_states_actions::Relation::Action
                     .def()
                     .on_condition(|_left, right| {
                         Expr::col((right, action::Column::Archived))
@@ -63,7 +63,7 @@ impl AmbitionQuery {
                 Alias::new("action"),
             )
             .order_by_asc(ambition::Column::CreatedAt)
-            .order_by_with_nulls(objective::Column::CreatedAt, Asc, Last)
+            .order_by_with_nulls(desired_state::Column::CreatedAt, Asc, Last)
             .order_by_with_nulls(action::Column::CreatedAt, Asc, Last)
             .into_model::<AmbitionWithLinksQueryResult>()
             .all(db)
@@ -138,15 +138,15 @@ mod tests {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
         let ambition_0 = factory::ambition(user.id).insert(&db).await?;
-        let objective_0 = factory::objective(user.id).insert(&db).await?;
+        let desired_state_0 = factory::desired_state(user.id).insert(&db).await?;
         let action_0 = factory::action(user.id).insert(&db).await?;
         let ambition_1 = factory::ambition(user.id).insert(&db).await?;
-        let objective_1 = factory::objective(user.id).insert(&db).await?;
+        let desired_state_1 = factory::desired_state(user.id).insert(&db).await?;
         let action_1 = factory::action(user.id).insert(&db).await?;
-        factory::link_ambition_objective(&db, ambition_0.id, objective_0.id).await?;
-        factory::link_ambition_objective(&db, ambition_0.id, objective_1.id).await?;
-        factory::link_objective_action(&db, objective_0.id, action_0.id).await?;
-        factory::link_objective_action(&db, objective_0.id, action_1.id).await?;
+        factory::link_ambition_desired_state(&db, ambition_0.id, desired_state_0.id).await?;
+        factory::link_ambition_desired_state(&db, ambition_0.id, desired_state_1.id).await?;
+        factory::link_desired_state_action(&db, desired_state_0.id, action_0.id).await?;
+        factory::link_desired_state_action(&db, desired_state_0.id, action_1.id).await?;
 
         let res = AmbitionQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
 
@@ -154,15 +154,15 @@ mod tests {
 
         // NOTE: Check only ids for convenience.
         let res_organized = [
-            (res[0].id, res[0].objective_id, res[0].action_id),
-            (res[1].id, res[1].objective_id, res[1].action_id),
-            (res[2].id, res[2].objective_id, res[2].action_id),
-            (res[3].id, res[3].objective_id, res[3].action_id),
+            (res[0].id, res[0].desired_state_id, res[0].action_id),
+            (res[1].id, res[1].desired_state_id, res[1].action_id),
+            (res[2].id, res[2].desired_state_id, res[2].action_id),
+            (res[3].id, res[3].desired_state_id, res[3].action_id),
         ];
         let expected = [
-            (ambition_0.id, Some(objective_0.id), Some(action_0.id)),
-            (ambition_0.id, Some(objective_0.id), Some(action_1.id)),
-            (ambition_0.id, Some(objective_1.id), None),
+            (ambition_0.id, Some(desired_state_0.id), Some(action_0.id)),
+            (ambition_0.id, Some(desired_state_0.id), Some(action_1.id)),
+            (ambition_0.id, Some(desired_state_1.id), None),
             (ambition_1.id, None, None),
         ];
         assert_eq!(res_organized[0], expected[0]);
@@ -179,21 +179,21 @@ mod tests {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
         let ambition_0 = factory::ambition(user.id).insert(&db).await?;
-        let objective_0 = factory::objective(user.id).insert(&db).await?;
+        let desired_state_0 = factory::desired_state(user.id).insert(&db).await?;
         let action_0 = factory::action(user.id).insert(&db).await?;
         let _archived_ambition = factory::ambition(user.id)
             .archived(true)
             .insert(&db)
             .await?;
-        let archived_objective = factory::objective(user.id)
+        let archived_desired_state = factory::desired_state(user.id)
             .archived(true)
             .insert(&db)
             .await?;
         let archived_action = factory::action(user.id).archived(true).insert(&db).await?;
-        factory::link_ambition_objective(&db, ambition_0.id, objective_0.id).await?;
-        factory::link_ambition_objective(&db, ambition_0.id, archived_objective.id).await?;
-        factory::link_objective_action(&db, objective_0.id, action_0.id).await?;
-        factory::link_objective_action(&db, objective_0.id, archived_action.id).await?;
+        factory::link_ambition_desired_state(&db, ambition_0.id, desired_state_0.id).await?;
+        factory::link_ambition_desired_state(&db, ambition_0.id, archived_desired_state.id).await?;
+        factory::link_desired_state_action(&db, desired_state_0.id, action_0.id).await?;
+        factory::link_desired_state_action(&db, desired_state_0.id, archived_action.id).await?;
 
         let res = AmbitionQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
 
@@ -201,13 +201,13 @@ mod tests {
 
         // NOTE: Check only ids for convenience.
         let res_organized = [
-            (res[0].id, res[0].objective_id, res[0].action_id),
-            (res[1].id, res[1].objective_id, res[1].action_id),
-            (res[2].id, res[2].objective_id, res[2].action_id),
+            (res[0].id, res[0].desired_state_id, res[0].action_id),
+            (res[1].id, res[1].desired_state_id, res[1].action_id),
+            (res[2].id, res[2].desired_state_id, res[2].action_id),
         ];
         let expected = [
-            (ambition_0.id, Some(objective_0.id), Some(action_0.id)),
-            (ambition_0.id, Some(objective_0.id), None),
+            (ambition_0.id, Some(desired_state_0.id), Some(action_0.id)),
+            (ambition_0.id, Some(desired_state_0.id), None),
             (ambition_0.id, None, None),
         ];
         assert_eq!(res_organized[0], expected[0]);
@@ -223,20 +223,20 @@ mod tests {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
         let ambition = factory::ambition(user.id).insert(&db).await?;
-        let archived_objective = factory::objective(user.id)
+        let archived_desired_state = factory::desired_state(user.id)
             .archived(true)
             .insert(&db)
             .await?;
         let archived_action = factory::action(user.id).archived(true).insert(&db).await?;
-        factory::link_ambition_objective(&db, ambition.id, archived_objective.id).await?;
-        factory::link_objective_action(&db, archived_objective.id, archived_action.id).await?;
+        factory::link_ambition_desired_state(&db, ambition.id, archived_desired_state.id).await?;
+        factory::link_desired_state_action(&db, archived_desired_state.id, archived_action.id).await?;
 
         let res = AmbitionQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
 
         assert_eq!(res.len(), 1);
 
         // NOTE: Check only ids for convenience.
-        let res_organized = [(res[0].id, res[0].objective_id, res[0].action_id)];
+        let res_organized = [(res[0].id, res[0].desired_state_id, res[0].action_id)];
         let expected = [(ambition.id, None, None)];
         assert_eq!(res_organized[0], expected[0]);
 

@@ -1,11 +1,11 @@
-use entities::{book_excerpt, book_excerpts_tags};
+use entities::{reading_note, reading_notes_tags};
 use chrono::Utc;
 use sea_orm::{
     entity::prelude::*, DeriveColumn, EnumIter, QuerySelect, Set, TransactionError,
     TransactionTrait,
 };
 
-use super::book_excerpt_query::BookExcerptQuery;
+use super::reading_note_query::ReadingNoteQuery;
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
 enum QueryAs {
@@ -13,7 +13,7 @@ enum QueryAs {
 }
 
 #[derive(serde::Deserialize, Debug, serde::Serialize, Clone)]
-pub struct NewBookExcerpt {
+pub struct NewReadingNote {
     pub title: String,
     pub page_number: i16,
     pub text: String,
@@ -23,7 +23,7 @@ pub struct NewBookExcerpt {
 }
 
 #[derive(serde::Deserialize, Debug, serde::Serialize, Clone)]
-pub struct UpdateBookExcerpt {
+pub struct UpdateReadingNote {
     pub id: uuid::Uuid,
     pub title: Option<String>,
     pub page_number: Option<i16>,
@@ -33,19 +33,19 @@ pub struct UpdateBookExcerpt {
     pub user_id: uuid::Uuid,
 }
 
-pub struct BookExcerptMutation;
+pub struct ReadingNoteMutation;
 
-impl BookExcerptMutation {
+impl ReadingNoteMutation {
     pub async fn create(
         db: &DbConn,
-        form_data: NewBookExcerpt,
-    ) -> Result<book_excerpt::Model, TransactionError<DbErr>> {
-        db.transaction::<_, book_excerpt::Model, DbErr>(|txn| {
+        form_data: NewReadingNote,
+    ) -> Result<reading_note::Model, TransactionError<DbErr>> {
+        db.transaction::<_, reading_note::Model, DbErr>(|txn| {
             Box::pin(async move {
                 let now = Utc::now();
-                let book_excerpt_id = uuid::Uuid::new_v4();
-                let created_book_excerpt = book_excerpt::ActiveModel {
-                    id: Set(book_excerpt_id),
+                let reading_note_id = uuid::Uuid::new_v4();
+                let created_reading_note = reading_note::ActiveModel {
+                    id: Set(reading_note_id),
                     user_id: Set(form_data.user_id),
                     title: Set(form_data.title.to_owned()),
                     page_number: Set(form_data.page_number),
@@ -58,15 +58,15 @@ impl BookExcerptMutation {
                 .await?;
 
                 for tag_id in form_data.tag_ids {
-                    book_excerpts_tags::ActiveModel {
-                        book_excerpt_id: Set(created_book_excerpt.id),
+                    reading_notes_tags::ActiveModel {
+                        reading_note_id: Set(created_reading_note.id),
                         tag_id: Set(tag_id),
                     }
                     .insert(txn)
                     .await?;
                 }
 
-                Ok(created_book_excerpt)
+                Ok(created_reading_note)
             })
         })
         .await
@@ -74,43 +74,43 @@ impl BookExcerptMutation {
 
     pub async fn partial_update(
         db: &DbConn,
-        form: UpdateBookExcerpt,
-    ) -> Result<book_excerpt::Model, TransactionError<DbErr>> {
-        let book_excerpt_result =
-            BookExcerptQuery::find_by_id_and_user_id(db, form.id, form.user_id).await;
-        db.transaction::<_, book_excerpt::Model, DbErr>(|txn| {
+        form: UpdateReadingNote,
+    ) -> Result<reading_note::Model, TransactionError<DbErr>> {
+        let reading_note_result =
+            ReadingNoteQuery::find_by_id_and_user_id(db, form.id, form.user_id).await;
+        db.transaction::<_, reading_note::Model, DbErr>(|txn| {
             Box::pin(async move {
-                let mut book_excerpt: book_excerpt::ActiveModel = book_excerpt_result?.into();
+                let mut reading_note: reading_note::ActiveModel = reading_note_result?.into();
                 if let Some(title) = form.title {
-                    book_excerpt.title = Set(title);
+                    reading_note.title = Set(title);
                 }
                 if let Some(page_number) = form.page_number {
-                    book_excerpt.page_number = Set(page_number);
+                    reading_note.page_number = Set(page_number);
                 }
                 if let Some(text) = form.text {
-                    book_excerpt.text = Set(text);
+                    reading_note.text = Set(text);
                 }
                 if let Some(date) = form.date {
-                    book_excerpt.date = Set(date);
+                    reading_note.date = Set(date);
                 }
                 if let Some(tag_ids) = form.tag_ids {
-                    let linked_tag_ids = book_excerpts_tags::Entity::find()
-                        .column_as(book_excerpts_tags::Column::TagId, QueryAs::TagId)
-                        .filter(book_excerpts_tags::Column::BookExcerptId.eq(form.id))
+                    let linked_tag_ids = reading_notes_tags::Entity::find()
+                        .column_as(reading_notes_tags::Column::TagId, QueryAs::TagId)
+                        .filter(reading_notes_tags::Column::ReadingNoteId.eq(form.id))
                         .into_values::<uuid::Uuid, QueryAs>()
                         .all(txn)
                         .await?;
 
-                    let tag_links_to_create: Vec<book_excerpts_tags::ActiveModel> = tag_ids
+                    let tag_links_to_create: Vec<reading_notes_tags::ActiveModel> = tag_ids
                         .clone()
                         .into_iter()
                         .filter(|id| !linked_tag_ids.contains(id))
-                        .map(|tag_id| book_excerpts_tags::ActiveModel {
-                            book_excerpt_id: Set(form.id),
+                        .map(|tag_id| reading_notes_tags::ActiveModel {
+                            reading_note_id: Set(form.id),
                             tag_id: Set(tag_id),
                         })
                         .collect();
-                    book_excerpts_tags::Entity::insert_many(tag_links_to_create)
+                    reading_notes_tags::Entity::insert_many(tag_links_to_create)
                         .on_empty_do_nothing()
                         .exec(txn)
                         .await?;
@@ -120,15 +120,15 @@ impl BookExcerptMutation {
                         .filter(|linked_tag_id| !tag_ids.contains(linked_tag_id))
                         .collect();
                     if ids_to_delete.len() > 0 {
-                        book_excerpts_tags::Entity::delete_many()
-                            .filter(book_excerpts_tags::Column::BookExcerptId.eq(form.id))
-                            .filter(book_excerpts_tags::Column::TagId.is_in(ids_to_delete))
+                        reading_notes_tags::Entity::delete_many()
+                            .filter(reading_notes_tags::Column::ReadingNoteId.eq(form.id))
+                            .filter(reading_notes_tags::Column::TagId.is_in(ids_to_delete))
                             .exec(txn)
                             .await?;
                     }
                 }
-                book_excerpt.updated_at = Set(Utc::now().into());
-                book_excerpt.update(txn).await
+                reading_note.updated_at = Set(Utc::now().into());
+                reading_note.update(txn).await
             })
         })
         .await
@@ -136,10 +136,10 @@ impl BookExcerptMutation {
 
     pub async fn delete(
         db: &DbConn,
-        book_excerpt_id: uuid::Uuid,
+        reading_note_id: uuid::Uuid,
         user_id: uuid::Uuid,
     ) -> Result<(), DbErr> {
-        BookExcerptQuery::find_by_id_and_user_id(db, book_excerpt_id, user_id)
+        ReadingNoteQuery::find_by_id_and_user_id(db, reading_note_id, user_id)
             .await?
             .delete(db)
             .await?;
@@ -168,7 +168,7 @@ mod tests {
     /// created_at
     /// updated_at: actual > expected
     /// ```
-    fn assert_updated(actual: &book_excerpt::Model, expected: &book_excerpt::Model) {
+    fn assert_updated(actual: &reading_note::Model, expected: &reading_note::Model) {
         assert_eq!(actual.id, expected.id);
         assert_eq!(actual.title, expected.title);
         assert_eq!(actual.page_number, expected.page_number);
@@ -192,48 +192,48 @@ mod tests {
             .insert_with_tag(&db)
             .await?;
 
-        let book_excerpt_title = "New Book Excerpt".to_string();
+        let reading_note_title = "New Book Excerpt".to_string();
         let page_number = 13;
-        let book_excerpt_text = "This is a new Book Excerpt for testing create method.".to_string();
+        let reading_note_text = "This is a new Book Excerpt for testing create method.".to_string();
         let today = chrono::Utc::now().date_naive();
 
-        let form_data = NewBookExcerpt {
-            title: book_excerpt_title.clone(),
+        let form_data = NewReadingNote {
+            title: reading_note_title.clone(),
             page_number: page_number,
-            text: book_excerpt_text.clone(),
+            text: reading_note_text.clone(),
             date: today,
             tag_ids: vec![tag_0.id, tag_1.id],
             user_id: user.id,
         };
 
-        let returned_book_excerpt = BookExcerptMutation::create(&db, form_data).await.unwrap();
-        assert_eq!(returned_book_excerpt.title, book_excerpt_title.clone());
-        assert_eq!(returned_book_excerpt.page_number, page_number);
-        assert_eq!(returned_book_excerpt.text, book_excerpt_text.clone());
-        assert_eq!(returned_book_excerpt.date, today);
-        assert_eq!(returned_book_excerpt.user_id, user.id);
+        let returned_reading_note = ReadingNoteMutation::create(&db, form_data).await.unwrap();
+        assert_eq!(returned_reading_note.title, reading_note_title.clone());
+        assert_eq!(returned_reading_note.page_number, page_number);
+        assert_eq!(returned_reading_note.text, reading_note_text.clone());
+        assert_eq!(returned_reading_note.date, today);
+        assert_eq!(returned_reading_note.user_id, user.id);
 
-        let created_book_excerpt = book_excerpt::Entity::find_by_id(returned_book_excerpt.id)
+        let created_reading_note = reading_note::Entity::find_by_id(returned_reading_note.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(created_book_excerpt.title, book_excerpt_title.clone());
-        assert_eq!(created_book_excerpt.page_number, page_number);
-        assert_eq!(created_book_excerpt.text, book_excerpt_text.clone());
-        assert_eq!(created_book_excerpt.date, today);
-        assert_eq!(created_book_excerpt.user_id, user.id);
+        assert_eq!(created_reading_note.title, reading_note_title.clone());
+        assert_eq!(created_reading_note.page_number, page_number);
+        assert_eq!(created_reading_note.text, reading_note_text.clone());
+        assert_eq!(created_reading_note.date, today);
+        assert_eq!(created_reading_note.user_id, user.id);
         assert_eq!(
-            created_book_excerpt.created_at,
-            returned_book_excerpt.created_at
+            created_reading_note.created_at,
+            returned_reading_note.created_at
         );
         assert_eq!(
-            created_book_excerpt.updated_at,
-            returned_book_excerpt.updated_at
+            created_reading_note.updated_at,
+            returned_reading_note.updated_at
         );
 
-        let linked_tag_ids: Vec<uuid::Uuid> = book_excerpts_tags::Entity::find()
-            .column_as(book_excerpts_tags::Column::TagId, QueryAs::TagId)
-            .filter(book_excerpts_tags::Column::BookExcerptId.eq(returned_book_excerpt.id))
+        let linked_tag_ids: Vec<uuid::Uuid> = reading_notes_tags::Entity::find()
+            .column_as(reading_notes_tags::Column::TagId, QueryAs::TagId)
+            .filter(reading_notes_tags::Column::ReadingNoteId.eq(returned_reading_note.id))
             .into_values::<_, QueryAs>()
             .all(&db)
             .await?;
@@ -248,10 +248,10 @@ mod tests {
     async fn partial_update_title() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let book_excerpt = factory::book_excerpt(user.id).insert(&db).await?;
+        let reading_note = factory::reading_note(user.id).insert(&db).await?;
 
-        let form = UpdateBookExcerpt {
-            id: book_excerpt.id,
+        let form = UpdateReadingNote {
+            id: reading_note.id,
             title: Some("Updated Book Excerpt".to_string()),
             page_number: None,
             text: None,
@@ -259,19 +259,19 @@ mod tests {
             tag_ids: None,
             user_id: user.id,
         };
-        let mut expected = book_excerpt.clone();
+        let mut expected = reading_note.clone();
         expected.title = form.title.clone().unwrap();
 
-        let returned_book_excerpt = BookExcerptMutation::partial_update(&db, form.clone())
+        let returned_reading_note = ReadingNoteMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_updated(&returned_book_excerpt, &expected);
+        assert_updated(&returned_reading_note, &expected);
 
-        let updated_book_excerpt = book_excerpt::Entity::find_by_id(book_excerpt.id)
+        let updated_reading_note = reading_note::Entity::find_by_id(reading_note.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_updated(&updated_book_excerpt, &expected);
+        assert_updated(&updated_reading_note, &expected);
 
         Ok(())
     }
@@ -280,10 +280,10 @@ mod tests {
     async fn partial_update_page_number() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let book_excerpt = factory::book_excerpt(user.id).insert(&db).await?;
+        let reading_note = factory::reading_note(user.id).insert(&db).await?;
 
-        let form = UpdateBookExcerpt {
-            id: book_excerpt.id,
+        let form = UpdateReadingNote {
+            id: reading_note.id,
             title: None,
             page_number: Some(134),
             text: None,
@@ -291,19 +291,19 @@ mod tests {
             tag_ids: None,
             user_id: user.id,
         };
-        let mut expected = book_excerpt.clone();
+        let mut expected = reading_note.clone();
         expected.page_number = form.page_number.unwrap();
 
-        let returned_book_excerpt = BookExcerptMutation::partial_update(&db, form.clone())
+        let returned_reading_note = ReadingNoteMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_updated(&returned_book_excerpt, &expected);
+        assert_updated(&returned_reading_note, &expected);
 
-        let updated_book_excerpt = book_excerpt::Entity::find_by_id(book_excerpt.id)
+        let updated_reading_note = reading_note::Entity::find_by_id(reading_note.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_updated(&updated_book_excerpt, &expected);
+        assert_updated(&updated_reading_note, &expected);
 
         Ok(())
     }
@@ -312,10 +312,10 @@ mod tests {
     async fn partial_update_text() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let book_excerpt = factory::book_excerpt(user.id).insert(&db).await?;
+        let reading_note = factory::reading_note(user.id).insert(&db).await?;
 
-        let form = UpdateBookExcerpt {
-            id: book_excerpt.id,
+        let form = UpdateReadingNote {
+            id: reading_note.id,
             title: None,
             page_number: None,
             text: Some("Updated Book Excerpt content.".to_string()),
@@ -324,19 +324,19 @@ mod tests {
             user_id: user.id,
         };
 
-        let mut expected = book_excerpt.clone();
+        let mut expected = reading_note.clone();
         expected.text = form.text.clone().unwrap();
 
-        let returned_book_excerpt = BookExcerptMutation::partial_update(&db, form.clone())
+        let returned_reading_note = ReadingNoteMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_updated(&returned_book_excerpt, &expected);
+        assert_updated(&returned_reading_note, &expected);
 
-        let updated_book_excerpt = book_excerpt::Entity::find_by_id(book_excerpt.id)
+        let updated_reading_note = reading_note::Entity::find_by_id(reading_note.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_updated(&updated_book_excerpt, &expected);
+        assert_updated(&updated_reading_note, &expected);
 
         Ok(())
     }
@@ -345,10 +345,10 @@ mod tests {
     async fn partial_update_date() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let book_excerpt = factory::book_excerpt(user.id).insert(&db).await?;
+        let reading_note = factory::reading_note(user.id).insert(&db).await?;
 
-        let form = UpdateBookExcerpt {
-            id: book_excerpt.id,
+        let form = UpdateReadingNote {
+            id: reading_note.id,
             title: None,
             page_number: None,
             text: None,
@@ -357,19 +357,19 @@ mod tests {
             user_id: user.id,
         };
 
-        let mut expected = book_excerpt.clone();
+        let mut expected = reading_note.clone();
         expected.date = form.date.unwrap();
 
-        let returned_book_excerpt = BookExcerptMutation::partial_update(&db, form.clone())
+        let returned_reading_note = ReadingNoteMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_updated(&returned_book_excerpt, &expected);
+        assert_updated(&returned_reading_note, &expected);
 
-        let updated_book_excerpt = book_excerpt::Entity::find_by_id(book_excerpt.id)
+        let updated_reading_note = reading_note::Entity::find_by_id(reading_note.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_updated(&updated_book_excerpt, &expected);
+        assert_updated(&updated_reading_note, &expected);
 
         Ok(())
     }
@@ -378,11 +378,11 @@ mod tests {
     async fn partial_update_add_tags() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let book_excerpt = factory::book_excerpt(user.id).insert(&db).await?;
+        let reading_note = factory::reading_note(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
 
-        let form = UpdateBookExcerpt {
-            id: book_excerpt.id,
+        let form = UpdateReadingNote {
+            id: reading_note.id,
             title: None,
             page_number: None,
             text: None,
@@ -391,22 +391,22 @@ mod tests {
             user_id: user.id,
         };
 
-        let expected = book_excerpt.clone();
+        let expected = reading_note.clone();
 
-        let returned_book_excerpt = BookExcerptMutation::partial_update(&db, form.clone())
+        let returned_reading_note = ReadingNoteMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_updated(&returned_book_excerpt, &expected);
+        assert_updated(&returned_reading_note, &expected);
 
-        let updated_book_excerpt = book_excerpt::Entity::find_by_id(book_excerpt.id)
+        let updated_reading_note = reading_note::Entity::find_by_id(reading_note.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_updated(&updated_book_excerpt, &expected);
+        assert_updated(&updated_reading_note, &expected);
 
-        let linked_tag_ids: Vec<uuid::Uuid> = book_excerpts_tags::Entity::find()
-            .column_as(book_excerpts_tags::Column::TagId, QueryAs::TagId)
-            .filter(book_excerpts_tags::Column::BookExcerptId.eq(returned_book_excerpt.id))
+        let linked_tag_ids: Vec<uuid::Uuid> = reading_notes_tags::Entity::find()
+            .column_as(reading_notes_tags::Column::TagId, QueryAs::TagId)
+            .filter(reading_notes_tags::Column::ReadingNoteId.eq(returned_reading_note.id))
             .into_values::<_, QueryAs>()
             .all(&db)
             .await?;
@@ -420,12 +420,12 @@ mod tests {
     async fn partial_update_remove_tags() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let book_excerpt = factory::book_excerpt(user.id).insert(&db).await?;
+        let reading_note = factory::reading_note(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
-        factory::link_book_excerpt_tag(&db, book_excerpt.id, ambition_tag.id).await?;
+        factory::link_reading_note_tag(&db, reading_note.id, ambition_tag.id).await?;
 
-        let form = UpdateBookExcerpt {
-            id: book_excerpt.id,
+        let form = UpdateReadingNote {
+            id: reading_note.id,
             title: None,
             page_number: None,
             text: None,
@@ -434,22 +434,22 @@ mod tests {
             user_id: user.id,
         };
 
-        let expected = book_excerpt.clone();
+        let expected = reading_note.clone();
 
-        let returned_book_excerpt = BookExcerptMutation::partial_update(&db, form.clone())
+        let returned_reading_note = ReadingNoteMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_updated(&returned_book_excerpt, &expected);
+        assert_updated(&returned_reading_note, &expected);
 
-        let updated_book_excerpt = book_excerpt::Entity::find_by_id(book_excerpt.id)
+        let updated_reading_note = reading_note::Entity::find_by_id(reading_note.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_updated(&updated_book_excerpt, &expected);
+        assert_updated(&updated_reading_note, &expected);
 
-        let linked_tag_ids: Vec<uuid::Uuid> = book_excerpts_tags::Entity::find()
-            .column_as(book_excerpts_tags::Column::TagId, QueryAs::TagId)
-            .filter(book_excerpts_tags::Column::BookExcerptId.eq(returned_book_excerpt.id))
+        let linked_tag_ids: Vec<uuid::Uuid> = reading_notes_tags::Entity::find()
+            .column_as(reading_notes_tags::Column::TagId, QueryAs::TagId)
+            .filter(reading_notes_tags::Column::ReadingNoteId.eq(returned_reading_note.id))
             .into_values::<_, QueryAs>()
             .all(&db)
             .await?;
@@ -462,9 +462,9 @@ mod tests {
     async fn partial_update_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let book_excerpt = factory::book_excerpt(user.id).insert(&db).await?;
-        let form = UpdateBookExcerpt {
-            id: book_excerpt.id,
+        let reading_note = factory::reading_note(user.id).insert(&db).await?;
+        let form = UpdateReadingNote {
+            id: reading_note.id,
             title: None,
             page_number: None,
             text: None,
@@ -473,7 +473,7 @@ mod tests {
             user_id: uuid::Uuid::new_v4(),
         };
 
-        let error = BookExcerptMutation::partial_update(&db, form)
+        let error = ReadingNoteMutation::partial_update(&db, form)
             .await
             .unwrap_err();
         assert_eq!(
@@ -489,23 +489,23 @@ mod tests {
     async fn delete() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let book_excerpt = factory::book_excerpt(user.id).insert(&db).await?;
+        let reading_note = factory::reading_note(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
-        factory::link_book_excerpt_tag(&db, book_excerpt.id, ambition_tag.id).await?;
+        factory::link_reading_note_tag(&db, reading_note.id, ambition_tag.id).await?;
 
-        BookExcerptMutation::delete(&db, book_excerpt.id, user.id).await?;
+        ReadingNoteMutation::delete(&db, reading_note.id, user.id).await?;
 
-        let book_excerpt_in_db = book_excerpt::Entity::find_by_id(book_excerpt.id)
+        let reading_note_in_db = reading_note::Entity::find_by_id(reading_note.id)
             .one(&db)
             .await?;
-        assert!(book_excerpt_in_db.is_none());
+        assert!(reading_note_in_db.is_none());
 
-        let book_excerpts_tags_in_db = book_excerpts_tags::Entity::find()
-            .filter(book_excerpts_tags::Column::BookExcerptId.eq(book_excerpt.id))
-            .filter(book_excerpts_tags::Column::TagId.eq(ambition_tag.id))
+        let reading_notes_tags_in_db = reading_notes_tags::Entity::find()
+            .filter(reading_notes_tags::Column::ReadingNoteId.eq(reading_note.id))
+            .filter(reading_notes_tags::Column::TagId.eq(ambition_tag.id))
             .one(&db)
             .await?;
-        assert!(book_excerpts_tags_in_db.is_none());
+        assert!(reading_notes_tags_in_db.is_none());
 
         Ok(())
     }
@@ -514,9 +514,9 @@ mod tests {
     async fn delete_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let book_excerpt = factory::book_excerpt(user.id).insert(&db).await?;
+        let reading_note = factory::reading_note(user.id).insert(&db).await?;
 
-        let error = BookExcerptMutation::delete(&db, book_excerpt.id, uuid::Uuid::new_v4())
+        let error = ReadingNoteMutation::delete(&db, reading_note.id, uuid::Uuid::new_v4())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));

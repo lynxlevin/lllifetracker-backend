@@ -1,4 +1,4 @@
-use entities::{action, ambition, objective, tag};
+use entities::{action, ambition, desired_state, tag};
 use ::types::TagQueryResult;
 use migration::NullOrdering::Last;
 use sea_orm::{
@@ -21,8 +21,8 @@ impl TagQuery {
             )
             .filter(
                 Condition::any()
-                    .add(objective::Column::Archived.eq(false))
-                    .add(objective::Column::Archived.is_null()),
+                    .add(desired_state::Column::Archived.eq(false))
+                    .add(desired_state::Column::Archived.is_null()),
             )
             .filter(
                 Condition::any()
@@ -30,13 +30,13 @@ impl TagQuery {
                     .add(action::Column::Archived.is_null()),
             )
             .column_as(ambition::Column::Name, "ambition_name")
-            .column_as(objective::Column::Name, "objective_name")
+            .column_as(desired_state::Column::Name, "desired_state_name")
             .column_as(action::Column::Name, "action_name")
             .join(LeftJoin, tag::Relation::Ambition.def())
-            .join(LeftJoin, tag::Relation::Objective.def())
+            .join(LeftJoin, tag::Relation::DesiredState.def())
             .join(LeftJoin, tag::Relation::Action.def())
             .order_by_with_nulls(ambition::Column::CreatedAt, Asc, Last)
-            .order_by_with_nulls(objective::Column::CreatedAt, Asc, Last)
+            .order_by_with_nulls(desired_state::Column::CreatedAt, Asc, Last)
             .order_by_with_nulls(action::Column::CreatedAt, Asc, Last)
             .into_model::<TagQueryResult>()
             .all(db)
@@ -54,7 +54,7 @@ mod tests {
     async fn find_all_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let (_, objective_tag) = factory::objective(user.id).insert_with_tag(&db).await?;
+        let (_, desired_state_tag) = factory::desired_state(user.id).insert_with_tag(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
         let (_, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
         let _archived_action = factory::action(user.id)
@@ -65,7 +65,7 @@ mod tests {
             .archived(true)
             .insert_with_tag(&db)
             .await?;
-        let _archived_objective = factory::objective(user.id)
+        let _archived_desired_state = factory::desired_state(user.id)
             .archived(true)
             .insert_with_tag(&db)
             .await?;
@@ -76,21 +76,21 @@ mod tests {
             TagQueryResult {
                 id: ambition_tag.id,
                 ambition_name: Some("ambition".to_string()),
-                objective_name: None,
+                desired_state_name: None,
                 action_name: None,
                 created_at: ambition_tag.created_at,
             },
             TagQueryResult {
-                id: objective_tag.id,
+                id: desired_state_tag.id,
                 ambition_name: None,
-                objective_name: Some("objective".to_string()),
+                desired_state_name: Some("desired_state".to_string()),
                 action_name: None,
-                created_at: objective_tag.created_at,
+                created_at: desired_state_tag.created_at,
             },
             TagQueryResult {
                 id: action_tag.id,
                 ambition_name: None,
-                objective_name: None,
+                desired_state_name: None,
                 action_name: Some("action".to_string()),
                 created_at: action_tag.created_at,
             },

@@ -1,11 +1,11 @@
-use entities::{mission_memo, mission_memos_tags};
+use entities::{challenge, challenges_tags};
 use chrono::Utc;
 use sea_orm::{
     entity::prelude::*, DeriveColumn, EnumIter, QuerySelect, Set, TransactionError,
     TransactionTrait,
 };
 
-use super::mission_memo_query::MissionMemoQuery;
+use super::challenge_query::ChallengeQuery;
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
 enum QueryAs {
@@ -13,7 +13,7 @@ enum QueryAs {
 }
 
 #[derive(serde::Deserialize, Debug, serde::Serialize, Clone)]
-pub struct NewMissionMemo {
+pub struct NewChallenge {
     pub title: String,
     pub text: String,
     pub date: chrono::NaiveDate,
@@ -22,7 +22,7 @@ pub struct NewMissionMemo {
 }
 
 #[derive(serde::Deserialize, Debug, serde::Serialize, Clone)]
-pub struct UpdateMissionMemo {
+pub struct UpdateChallenge {
     pub id: uuid::Uuid,
     pub title: Option<String>,
     pub text: Option<String>,
@@ -31,19 +31,19 @@ pub struct UpdateMissionMemo {
     pub user_id: uuid::Uuid,
 }
 
-pub struct MissionMemoMutation;
+pub struct ChallengeMutation;
 
-impl MissionMemoMutation {
+impl ChallengeMutation {
     pub async fn create(
         db: &DbConn,
-        form_data: NewMissionMemo,
-    ) -> Result<mission_memo::Model, TransactionError<DbErr>> {
-        db.transaction::<_, mission_memo::Model, DbErr>(|txn| {
+        form_data: NewChallenge,
+    ) -> Result<challenge::Model, TransactionError<DbErr>> {
+        db.transaction::<_, challenge::Model, DbErr>(|txn| {
             Box::pin(async move {
                 let now = Utc::now();
-                let mission_memo_id = uuid::Uuid::new_v4();
-                let created_mission_memo = mission_memo::ActiveModel {
-                    id: Set(mission_memo_id),
+                let challenge_id = uuid::Uuid::new_v4();
+                let created_challenge = challenge::ActiveModel {
+                    id: Set(challenge_id),
                     user_id: Set(form_data.user_id),
                     title: Set(form_data.title.to_owned()),
                     text: Set(form_data.text.to_owned()),
@@ -57,15 +57,15 @@ impl MissionMemoMutation {
                 .await?;
 
                 for tag_id in form_data.tag_ids {
-                    mission_memos_tags::ActiveModel {
-                        mission_memo_id: Set(created_mission_memo.id),
+                    challenges_tags::ActiveModel {
+                        challenge_id: Set(created_challenge.id),
                         tag_id: Set(tag_id),
                     }
                     .insert(txn)
                     .await?;
                 }
 
-                Ok(created_mission_memo)
+                Ok(created_challenge)
             })
         })
         .await
@@ -73,40 +73,40 @@ impl MissionMemoMutation {
 
     pub async fn partial_update(
         db: &DbConn,
-        form: UpdateMissionMemo,
-    ) -> Result<mission_memo::Model, TransactionError<DbErr>> {
-        let mission_memo_result =
-            MissionMemoQuery::find_by_id_and_user_id(db, form.id, form.user_id).await;
-        db.transaction::<_, mission_memo::Model, DbErr>(|txn| {
+        form: UpdateChallenge,
+    ) -> Result<challenge::Model, TransactionError<DbErr>> {
+        let challenge_result =
+            ChallengeQuery::find_by_id_and_user_id(db, form.id, form.user_id).await;
+        db.transaction::<_, challenge::Model, DbErr>(|txn| {
             Box::pin(async move {
-                let mut mission_memo: mission_memo::ActiveModel = mission_memo_result?.into();
+                let mut challenge: challenge::ActiveModel = challenge_result?.into();
                 if let Some(title) = form.title {
-                    mission_memo.title = Set(title);
+                    challenge.title = Set(title);
                 }
                 if let Some(text) = form.text {
-                    mission_memo.text = Set(text);
+                    challenge.text = Set(text);
                 }
                 if let Some(date) = form.date {
-                    mission_memo.date = Set(date);
+                    challenge.date = Set(date);
                 }
                 if let Some(tag_ids) = form.tag_ids {
-                    let linked_tag_ids = mission_memos_tags::Entity::find()
-                        .column_as(mission_memos_tags::Column::TagId, QueryAs::TagId)
-                        .filter(mission_memos_tags::Column::MissionMemoId.eq(form.id))
+                    let linked_tag_ids = challenges_tags::Entity::find()
+                        .column_as(challenges_tags::Column::TagId, QueryAs::TagId)
+                        .filter(challenges_tags::Column::ChallengeId.eq(form.id))
                         .into_values::<uuid::Uuid, QueryAs>()
                         .all(txn)
                         .await?;
 
-                    let tag_links_to_create: Vec<mission_memos_tags::ActiveModel> = tag_ids
+                    let tag_links_to_create: Vec<challenges_tags::ActiveModel> = tag_ids
                         .clone()
                         .into_iter()
                         .filter(|id| !linked_tag_ids.contains(id))
-                        .map(|tag_id| mission_memos_tags::ActiveModel {
-                            mission_memo_id: Set(form.id),
+                        .map(|tag_id| challenges_tags::ActiveModel {
+                            challenge_id: Set(form.id),
                             tag_id: Set(tag_id),
                         })
                         .collect();
-                    mission_memos_tags::Entity::insert_many(tag_links_to_create)
+                    challenges_tags::Entity::insert_many(tag_links_to_create)
                         .on_empty_do_nothing()
                         .exec(txn)
                         .await?;
@@ -116,15 +116,15 @@ impl MissionMemoMutation {
                         .filter(|linked_tag_id| !tag_ids.contains(linked_tag_id))
                         .collect();
                     if ids_to_delete.len() > 0 {
-                        mission_memos_tags::Entity::delete_many()
-                            .filter(mission_memos_tags::Column::MissionMemoId.eq(form.id))
-                            .filter(mission_memos_tags::Column::TagId.is_in(ids_to_delete))
+                        challenges_tags::Entity::delete_many()
+                            .filter(challenges_tags::Column::ChallengeId.eq(form.id))
+                            .filter(challenges_tags::Column::TagId.is_in(ids_to_delete))
                             .exec(txn)
                             .await?;
                     }
                 }
-                mission_memo.updated_at = Set(Utc::now().into());
-                mission_memo.update(txn).await
+                challenge.updated_at = Set(Utc::now().into());
+                challenge.update(txn).await
             })
         })
         .await
@@ -132,10 +132,10 @@ impl MissionMemoMutation {
 
     pub async fn delete(
         db: &DbConn,
-        mission_memo_id: uuid::Uuid,
+        challenge_id: uuid::Uuid,
         user_id: uuid::Uuid,
     ) -> Result<(), DbErr> {
-        MissionMemoQuery::find_by_id_and_user_id(db, mission_memo_id, user_id)
+        ChallengeQuery::find_by_id_and_user_id(db, challenge_id, user_id)
             .await?
             .delete(db)
             .await?;
@@ -144,30 +144,30 @@ impl MissionMemoMutation {
 
     pub async fn archive(
         db: &DbConn,
-        mission_memo_id: uuid::Uuid,
+        challenge_id: uuid::Uuid,
         user_id: uuid::Uuid,
-    ) -> Result<mission_memo::Model, DbErr> {
-        let mut mission_memo: mission_memo::ActiveModel =
-            MissionMemoQuery::find_by_id_and_user_id(db, mission_memo_id, user_id)
+    ) -> Result<challenge::Model, DbErr> {
+        let mut challenge: challenge::ActiveModel =
+            ChallengeQuery::find_by_id_and_user_id(db, challenge_id, user_id)
                 .await?
                 .into();
-        mission_memo.archived = Set(true);
-        mission_memo.updated_at = Set(Utc::now().into());
-        mission_memo.update(db).await
+        challenge.archived = Set(true);
+        challenge.updated_at = Set(Utc::now().into());
+        challenge.update(db).await
     }
 
     pub async fn mark_accomplished(
         db: &DbConn,
-        mission_memo_id: uuid::Uuid,
+        challenge_id: uuid::Uuid,
         user_id: uuid::Uuid,
-    ) -> Result<mission_memo::Model, DbErr> {
-        let mut mission_memo: mission_memo::ActiveModel =
-            MissionMemoQuery::find_by_id_and_user_id(db, mission_memo_id, user_id)
+    ) -> Result<challenge::Model, DbErr> {
+        let mut challenge: challenge::ActiveModel =
+            ChallengeQuery::find_by_id_and_user_id(db, challenge_id, user_id)
                 .await?
                 .into();
-        mission_memo.accomplished_at = Set(Some(Utc::now().into()));
-        mission_memo.updated_at = Set(Utc::now().into());
-        mission_memo.update(db).await
+        challenge.accomplished_at = Set(Some(Utc::now().into()));
+        challenge.updated_at = Set(Utc::now().into());
+        challenge.update(db).await
     }
 }
 
@@ -194,7 +194,7 @@ mod tests {
     /// created_at
     /// updated_at: actual > expected
     /// ```
-    fn assert_updated(actual: &mission_memo::Model, expected: &mission_memo::Model) {
+    fn assert_updated(actual: &challenge::Model, expected: &challenge::Model) {
         assert_eq!(actual.id, expected.id);
         assert_eq!(actual.title, expected.title);
         assert_eq!(actual.text, expected.text);
@@ -225,48 +225,48 @@ mod tests {
             .insert_with_tag(&db)
             .await?;
 
-        let mission_memo_title = "New Mission Memo".to_string();
-        let mission_memo_text = "This is a new mission memo for testing create method.".to_string();
+        let challenge_title = "New Mission Memo".to_string();
+        let challenge_text = "This is a new mission memo for testing create method.".to_string();
         let today = chrono::Utc::now().date_naive();
 
-        let form_data = NewMissionMemo {
-            title: mission_memo_title.clone(),
-            text: mission_memo_text.clone(),
+        let form_data = NewChallenge {
+            title: challenge_title.clone(),
+            text: challenge_text.clone(),
             date: today,
             tag_ids: vec![tag_0.id, tag_1.id],
             user_id: user.id,
         };
 
-        let returned_mission_memo = MissionMemoMutation::create(&db, form_data).await.unwrap();
-        assert_eq!(returned_mission_memo.title, mission_memo_title.clone());
-        assert_eq!(returned_mission_memo.text, mission_memo_text.clone());
-        assert_eq!(returned_mission_memo.date, today);
-        assert_eq!(returned_mission_memo.archived, false);
-        assert_eq!(returned_mission_memo.accomplished_at, None);
-        assert_eq!(returned_mission_memo.user_id, user.id);
+        let returned_challenge = ChallengeMutation::create(&db, form_data).await.unwrap();
+        assert_eq!(returned_challenge.title, challenge_title.clone());
+        assert_eq!(returned_challenge.text, challenge_text.clone());
+        assert_eq!(returned_challenge.date, today);
+        assert_eq!(returned_challenge.archived, false);
+        assert_eq!(returned_challenge.accomplished_at, None);
+        assert_eq!(returned_challenge.user_id, user.id);
 
-        let created_mission_memo = mission_memo::Entity::find_by_id(returned_mission_memo.id)
+        let created_challenge = challenge::Entity::find_by_id(returned_challenge.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(created_mission_memo.title, mission_memo_title.clone());
-        assert_eq!(created_mission_memo.text, mission_memo_text.clone());
-        assert_eq!(created_mission_memo.date, today);
-        assert_eq!(created_mission_memo.archived, false);
-        assert_eq!(created_mission_memo.accomplished_at, None);
-        assert_eq!(created_mission_memo.user_id, user.id);
+        assert_eq!(created_challenge.title, challenge_title.clone());
+        assert_eq!(created_challenge.text, challenge_text.clone());
+        assert_eq!(created_challenge.date, today);
+        assert_eq!(created_challenge.archived, false);
+        assert_eq!(created_challenge.accomplished_at, None);
+        assert_eq!(created_challenge.user_id, user.id);
         assert_eq!(
-            created_mission_memo.created_at,
-            returned_mission_memo.created_at
+            created_challenge.created_at,
+            returned_challenge.created_at
         );
         assert_eq!(
-            created_mission_memo.updated_at,
-            returned_mission_memo.updated_at
+            created_challenge.updated_at,
+            returned_challenge.updated_at
         );
 
-        let linked_tag_ids: Vec<uuid::Uuid> = mission_memos_tags::Entity::find()
-            .column_as(mission_memos_tags::Column::TagId, QueryAs::TagId)
-            .filter(mission_memos_tags::Column::MissionMemoId.eq(returned_mission_memo.id))
+        let linked_tag_ids: Vec<uuid::Uuid> = challenges_tags::Entity::find()
+            .column_as(challenges_tags::Column::TagId, QueryAs::TagId)
+            .filter(challenges_tags::Column::ChallengeId.eq(returned_challenge.id))
             .into_values::<_, QueryAs>()
             .all(&db)
             .await?;
@@ -281,29 +281,29 @@ mod tests {
     async fn partial_update_title() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
+        let challenge = factory::challenge(user.id).insert(&db).await?;
 
-        let form = UpdateMissionMemo {
-            id: mission_memo.id,
+        let form = UpdateChallenge {
+            id: challenge.id,
             title: Some("Updated Mission Memo".to_string()),
             text: None,
             date: None,
             tag_ids: None,
             user_id: user.id,
         };
-        let mut expected = mission_memo.clone();
+        let mut expected = challenge.clone();
         expected.title = form.title.clone().unwrap();
 
-        let returned_mission_memo = MissionMemoMutation::partial_update(&db, form.clone())
+        let returned_challenge = ChallengeMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_updated(&returned_mission_memo, &expected);
+        assert_updated(&returned_challenge, &expected);
 
-        let updated_mission_memo = mission_memo::Entity::find_by_id(mission_memo.id)
+        let updated_challenge = challenge::Entity::find_by_id(challenge.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_updated(&updated_mission_memo, &expected);
+        assert_updated(&updated_challenge, &expected);
 
         Ok(())
     }
@@ -312,10 +312,10 @@ mod tests {
     async fn partial_update_text() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
+        let challenge = factory::challenge(user.id).insert(&db).await?;
 
-        let form = UpdateMissionMemo {
-            id: mission_memo.id,
+        let form = UpdateChallenge {
+            id: challenge.id,
             title: None,
             text: Some("Updated mission memo content.".to_string()),
             date: None,
@@ -323,19 +323,19 @@ mod tests {
             user_id: user.id,
         };
 
-        let mut expected = mission_memo.clone();
+        let mut expected = challenge.clone();
         expected.text = form.text.clone().unwrap();
 
-        let returned_mission_memo = MissionMemoMutation::partial_update(&db, form.clone())
+        let returned_challenge = ChallengeMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_updated(&returned_mission_memo, &expected);
+        assert_updated(&returned_challenge, &expected);
 
-        let updated_mission_memo = mission_memo::Entity::find_by_id(mission_memo.id)
+        let updated_challenge = challenge::Entity::find_by_id(challenge.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_updated(&updated_mission_memo, &expected);
+        assert_updated(&updated_challenge, &expected);
 
         Ok(())
     }
@@ -344,10 +344,10 @@ mod tests {
     async fn partial_update_date() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
+        let challenge = factory::challenge(user.id).insert(&db).await?;
 
-        let form = UpdateMissionMemo {
-            id: mission_memo.id,
+        let form = UpdateChallenge {
+            id: challenge.id,
             title: None,
             text: None,
             date: Some(chrono::Utc::now().with_year(1900).unwrap().date_naive()),
@@ -355,19 +355,19 @@ mod tests {
             user_id: user.id,
         };
 
-        let mut expected = mission_memo.clone();
+        let mut expected = challenge.clone();
         expected.date = form.date.unwrap();
 
-        let returned_mission_memo = MissionMemoMutation::partial_update(&db, form.clone())
+        let returned_challenge = ChallengeMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_updated(&returned_mission_memo, &expected);
+        assert_updated(&returned_challenge, &expected);
 
-        let updated_mission_memo = mission_memo::Entity::find_by_id(mission_memo.id)
+        let updated_challenge = challenge::Entity::find_by_id(challenge.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_updated(&updated_mission_memo, &expected);
+        assert_updated(&updated_challenge, &expected);
 
         Ok(())
     }
@@ -376,11 +376,11 @@ mod tests {
     async fn partial_update_add_tags() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
+        let challenge = factory::challenge(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
 
-        let form = UpdateMissionMemo {
-            id: mission_memo.id,
+        let form = UpdateChallenge {
+            id: challenge.id,
             title: None,
             text: None,
             date: None,
@@ -388,22 +388,22 @@ mod tests {
             user_id: user.id,
         };
 
-        let expected = mission_memo.clone();
+        let expected = challenge.clone();
 
-        let returned_mission_memo = MissionMemoMutation::partial_update(&db, form.clone())
+        let returned_challenge = ChallengeMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_updated(&returned_mission_memo, &expected);
+        assert_updated(&returned_challenge, &expected);
 
-        let updated_mission_memo = mission_memo::Entity::find_by_id(mission_memo.id)
+        let updated_challenge = challenge::Entity::find_by_id(challenge.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_updated(&updated_mission_memo, &expected);
+        assert_updated(&updated_challenge, &expected);
 
-        let linked_tag_ids: Vec<uuid::Uuid> = mission_memos_tags::Entity::find()
-            .column_as(mission_memos_tags::Column::TagId, QueryAs::TagId)
-            .filter(mission_memos_tags::Column::MissionMemoId.eq(returned_mission_memo.id))
+        let linked_tag_ids: Vec<uuid::Uuid> = challenges_tags::Entity::find()
+            .column_as(challenges_tags::Column::TagId, QueryAs::TagId)
+            .filter(challenges_tags::Column::ChallengeId.eq(returned_challenge.id))
             .into_values::<_, QueryAs>()
             .all(&db)
             .await?;
@@ -417,12 +417,12 @@ mod tests {
     async fn partial_update_remove_tags() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
+        let challenge = factory::challenge(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
-        factory::link_mission_memo_tag(&db, mission_memo.id, ambition_tag.id).await?;
+        factory::link_challenge_tag(&db, challenge.id, ambition_tag.id).await?;
 
-        let form = UpdateMissionMemo {
-            id: mission_memo.id,
+        let form = UpdateChallenge {
+            id: challenge.id,
             title: None,
             text: None,
             date: None,
@@ -430,22 +430,22 @@ mod tests {
             user_id: user.id,
         };
 
-        let expected = mission_memo.clone();
+        let expected = challenge.clone();
 
-        let returned_mission_memo = MissionMemoMutation::partial_update(&db, form.clone())
+        let returned_challenge = ChallengeMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_updated(&returned_mission_memo, &expected);
+        assert_updated(&returned_challenge, &expected);
 
-        let updated_mission_memo = mission_memo::Entity::find_by_id(mission_memo.id)
+        let updated_challenge = challenge::Entity::find_by_id(challenge.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_updated(&updated_mission_memo, &expected);
+        assert_updated(&updated_challenge, &expected);
 
-        let linked_tag_ids: Vec<uuid::Uuid> = mission_memos_tags::Entity::find()
-            .column_as(mission_memos_tags::Column::TagId, QueryAs::TagId)
-            .filter(mission_memos_tags::Column::MissionMemoId.eq(returned_mission_memo.id))
+        let linked_tag_ids: Vec<uuid::Uuid> = challenges_tags::Entity::find()
+            .column_as(challenges_tags::Column::TagId, QueryAs::TagId)
+            .filter(challenges_tags::Column::ChallengeId.eq(returned_challenge.id))
             .into_values::<_, QueryAs>()
             .all(&db)
             .await?;
@@ -458,9 +458,9 @@ mod tests {
     async fn partial_update_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
-        let form = UpdateMissionMemo {
-            id: mission_memo.id,
+        let challenge = factory::challenge(user.id).insert(&db).await?;
+        let form = UpdateChallenge {
+            id: challenge.id,
             title: None,
             text: None,
             date: None,
@@ -468,7 +468,7 @@ mod tests {
             user_id: uuid::Uuid::new_v4(),
         };
 
-        let error = MissionMemoMutation::partial_update(&db, form)
+        let error = ChallengeMutation::partial_update(&db, form)
             .await
             .unwrap_err();
         assert_eq!(
@@ -484,23 +484,23 @@ mod tests {
     async fn delete() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
+        let challenge = factory::challenge(user.id).insert(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
-        factory::link_mission_memo_tag(&db, mission_memo.id, ambition_tag.id).await?;
+        factory::link_challenge_tag(&db, challenge.id, ambition_tag.id).await?;
 
-        MissionMemoMutation::delete(&db, mission_memo.id, user.id).await?;
+        ChallengeMutation::delete(&db, challenge.id, user.id).await?;
 
-        let mission_memo_in_db = mission_memo::Entity::find_by_id(mission_memo.id)
+        let challenge_in_db = challenge::Entity::find_by_id(challenge.id)
             .one(&db)
             .await?;
-        assert!(mission_memo_in_db.is_none());
+        assert!(challenge_in_db.is_none());
 
-        let mission_memos_tags_in_db = mission_memos_tags::Entity::find()
-            .filter(mission_memos_tags::Column::MissionMemoId.eq(mission_memo.id))
-            .filter(mission_memos_tags::Column::TagId.eq(ambition_tag.id))
+        let challenges_tags_in_db = challenges_tags::Entity::find()
+            .filter(challenges_tags::Column::ChallengeId.eq(challenge.id))
+            .filter(challenges_tags::Column::TagId.eq(ambition_tag.id))
             .one(&db)
             .await?;
-        assert!(mission_memos_tags_in_db.is_none());
+        assert!(challenges_tags_in_db.is_none());
 
         Ok(())
     }
@@ -509,9 +509,9 @@ mod tests {
     async fn delete_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
+        let challenge = factory::challenge(user.id).insert(&db).await?;
 
-        let error = MissionMemoMutation::delete(&db, mission_memo.id, uuid::Uuid::new_v4())
+        let error = ChallengeMutation::delete(&db, challenge.id, uuid::Uuid::new_v4())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
@@ -523,21 +523,21 @@ mod tests {
     async fn archive() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
+        let challenge = factory::challenge(user.id).insert(&db).await?;
 
-        let mut expected = mission_memo.clone();
+        let mut expected = challenge.clone();
         expected.archived = true;
 
-        let returned_mission_memo = MissionMemoMutation::archive(&db, mission_memo.id, user.id)
+        let returned_challenge = ChallengeMutation::archive(&db, challenge.id, user.id)
             .await
             .unwrap();
-        assert_updated(&returned_mission_memo, &expected);
+        assert_updated(&returned_challenge, &expected);
 
-        let updated_mission_memo = mission_memo::Entity::find_by_id(mission_memo.id)
+        let updated_challenge = challenge::Entity::find_by_id(challenge.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_updated(&updated_mission_memo, &expected);
+        assert_updated(&updated_challenge, &expected);
 
         Ok(())
     }
@@ -546,9 +546,9 @@ mod tests {
     async fn archive_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
+        let challenge = factory::challenge(user.id).insert(&db).await?;
 
-        let error = MissionMemoMutation::archive(&db, mission_memo.id, uuid::Uuid::new_v4())
+        let error = ChallengeMutation::archive(&db, challenge.id, uuid::Uuid::new_v4())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
@@ -560,22 +560,22 @@ mod tests {
     async fn mark_accomplished() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
+        let challenge = factory::challenge(user.id).insert(&db).await?;
 
-        let mut expected = mission_memo.clone();
+        let mut expected = challenge.clone();
         expected.accomplished_at = Some(Utc::now().into());
 
-        let returned_mission_memo =
-            MissionMemoMutation::mark_accomplished(&db, mission_memo.id, user.id)
+        let returned_challenge =
+            ChallengeMutation::mark_accomplished(&db, challenge.id, user.id)
                 .await
                 .unwrap();
-        assert_updated(&returned_mission_memo, &expected);
+        assert_updated(&returned_challenge, &expected);
 
-        let updated_mission_memo = mission_memo::Entity::find_by_id(mission_memo.id)
+        let updated_challenge = challenge::Entity::find_by_id(challenge.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_updated(&updated_mission_memo, &expected);
+        assert_updated(&updated_challenge, &expected);
 
         Ok(())
     }
@@ -584,10 +584,10 @@ mod tests {
     async fn mark_accomplished_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let mission_memo = factory::mission_memo(user.id).insert(&db).await?;
+        let challenge = factory::challenge(user.id).insert(&db).await?;
 
         let error =
-            MissionMemoMutation::mark_accomplished(&db, mission_memo.id, uuid::Uuid::new_v4())
+            ChallengeMutation::mark_accomplished(&db, challenge.id, uuid::Uuid::new_v4())
                 .await
                 .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));

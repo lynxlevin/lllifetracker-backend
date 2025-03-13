@@ -1,26 +1,26 @@
-use entities::{action, ambition, ambitions_objectives, objective, objectives_actions};
-use ::types::{CustomDbErr, ObjectiveVisible, ObjectiveWithLinksQueryResult};
+use entities::{action, ambition, ambitions_desired_states, desired_state, desired_states_actions};
+use ::types::{CustomDbErr, DesiredStateVisible, DesiredStateWithLinksQueryResult};
 use migration::{Alias, IntoCondition, NullOrdering::Last};
 use sea_orm::{entity::prelude::*, JoinType::LeftJoin, Order::Asc, QueryOrder, QuerySelect};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize, Clone)]
-pub struct NewObjective {
+pub struct NewDesiredState {
     pub name: String,
     pub user_id: uuid::Uuid,
 }
 
-pub struct ObjectiveQuery;
+pub struct DesiredStateQuery;
 
-impl ObjectiveQuery {
+impl DesiredStateQuery {
     pub async fn find_all_by_user_id(
         db: &DbConn,
         user_id: uuid::Uuid,
-    ) -> Result<Vec<ObjectiveVisible>, DbErr> {
-        objective::Entity::find()
-            .filter(objective::Column::UserId.eq(user_id))
-            .filter(objective::Column::Archived.eq(false))
-            .order_by_asc(objective::Column::CreatedAt)
-            .into_partial_model::<ObjectiveVisible>()
+    ) -> Result<Vec<DesiredStateVisible>, DbErr> {
+        desired_state::Entity::find()
+            .filter(desired_state::Column::UserId.eq(user_id))
+            .filter(desired_state::Column::Archived.eq(false))
+            .order_by_asc(desired_state::Column::CreatedAt)
+            .into_partial_model::<DesiredStateVisible>()
             .all(db)
             .await
     }
@@ -28,10 +28,10 @@ impl ObjectiveQuery {
     pub async fn find_all_with_linked_by_user_id(
         db: &DbConn,
         user_id: uuid::Uuid,
-    ) -> Result<Vec<ObjectiveWithLinksQueryResult>, DbErr> {
-        objective::Entity::find()
-            .filter(objective::Column::UserId.eq(user_id))
-            .filter(objective::Column::Archived.eq(false))
+    ) -> Result<Vec<DesiredStateWithLinksQueryResult>, DbErr> {
+        desired_state::Entity::find()
+            .filter(desired_state::Column::UserId.eq(user_id))
+            .filter(desired_state::Column::Archived.eq(false))
             .column_as(ambition::Column::Id, "ambition_id")
             .column_as(ambition::Column::Name, "ambition_name")
             .column_as(ambition::Column::Description, "ambition_description")
@@ -42,10 +42,10 @@ impl ObjectiveQuery {
             .column_as(action::Column::Description, "action_description")
             .column_as(action::Column::CreatedAt, "action_created_at")
             .column_as(action::Column::UpdatedAt, "action_updated_at")
-            .join_rev(LeftJoin, objectives_actions::Relation::Objective.def())
+            .join_rev(LeftJoin, desired_states_actions::Relation::DesiredState.def())
             .join_as(
                 LeftJoin,
-                objectives_actions::Relation::Action
+                desired_states_actions::Relation::Action
                     .def()
                     .on_condition(|_left, right| {
                         Expr::col((right, action::Column::Archived))
@@ -54,10 +54,10 @@ impl ObjectiveQuery {
                     }),
                 Alias::new("action"),
             )
-            .join_rev(LeftJoin, ambitions_objectives::Relation::Objective.def())
+            .join_rev(LeftJoin, ambitions_desired_states::Relation::DesiredState.def())
             .join_as(
                 LeftJoin,
-                ambitions_objectives::Relation::Ambition
+                ambitions_desired_states::Relation::Ambition
                     .def()
                     .on_condition(|_left, right| {
                         Expr::col((right, ambition::Column::Archived))
@@ -66,21 +66,21 @@ impl ObjectiveQuery {
                     }),
                 Alias::new("ambition"),
             )
-            .order_by_asc(objective::Column::CreatedAt)
+            .order_by_asc(desired_state::Column::CreatedAt)
             .order_by_with_nulls(ambition::Column::CreatedAt, Asc, Last)
             .order_by_with_nulls(action::Column::CreatedAt, Asc, Last)
-            .into_model::<ObjectiveWithLinksQueryResult>()
+            .into_model::<DesiredStateWithLinksQueryResult>()
             .all(db)
             .await
     }
 
     pub async fn find_by_id_and_user_id(
         db: &DbConn,
-        objective_id: uuid::Uuid,
+        desired_state_id: uuid::Uuid,
         user_id: uuid::Uuid,
-    ) -> Result<objective::Model, DbErr> {
-        objective::Entity::find_by_id(objective_id)
-            .filter(objective::Column::UserId.eq(user_id))
+    ) -> Result<desired_state::Model, DbErr> {
+        desired_state::Entity::find_by_id(desired_state_id)
+            .filter(desired_state::Column::UserId.eq(user_id))
             .one(db)
             .await?
             .ok_or(DbErr::Custom(CustomDbErr::NotFound.to_string()))
@@ -97,36 +97,36 @@ mod tests {
     async fn find_all_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let objective_0 = factory::objective(user.id)
-            .name("objective_0".to_string())
+        let desired_state_0 = factory::desired_state(user.id)
+            .name("desired_state_0".to_string())
             .insert(&db)
             .await?;
-        let objective_1 = factory::objective(user.id)
-            .name("objective_1".to_string())
-            .description(Some("objective_1".to_string()))
+        let desired_state_1 = factory::desired_state(user.id)
+            .name("desired_state_1".to_string())
+            .description(Some("desired_state_1".to_string()))
             .insert(&db)
             .await?;
-        let _archived_objective = factory::objective(user.id)
+        let _archived_desired_state = factory::desired_state(user.id)
             .archived(true)
             .insert(&db)
             .await?;
 
-        let res = ObjectiveQuery::find_all_by_user_id(&db, user.id).await?;
+        let res = DesiredStateQuery::find_all_by_user_id(&db, user.id).await?;
 
         let expected = [
-            ObjectiveVisible {
-                id: objective_0.id,
-                name: objective_0.name,
-                description: objective_0.description,
-                created_at: objective_0.created_at,
-                updated_at: objective_0.updated_at,
+            DesiredStateVisible {
+                id: desired_state_0.id,
+                name: desired_state_0.name,
+                description: desired_state_0.description,
+                created_at: desired_state_0.created_at,
+                updated_at: desired_state_0.updated_at,
             },
-            ObjectiveVisible {
-                id: objective_1.id,
-                name: objective_1.name,
-                description: objective_1.description,
-                created_at: objective_1.created_at,
-                updated_at: objective_1.updated_at,
+            DesiredStateVisible {
+                id: desired_state_1.id,
+                name: desired_state_1.name,
+                description: desired_state_1.description,
+                created_at: desired_state_1.created_at,
+                updated_at: desired_state_1.updated_at,
             },
         ];
 
@@ -142,18 +142,18 @@ mod tests {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
         let ambition_0 = factory::ambition(user.id).insert(&db).await?;
-        let objective_0 = factory::objective(user.id).insert(&db).await?;
+        let desired_state_0 = factory::desired_state(user.id).insert(&db).await?;
         let action_0 = factory::action(user.id).insert(&db).await?;
         let ambition_1 = factory::ambition(user.id).insert(&db).await?;
-        let objective_1 = factory::objective(user.id).insert(&db).await?;
+        let desired_state_1 = factory::desired_state(user.id).insert(&db).await?;
         let action_1 = factory::action(user.id).insert(&db).await?;
-        factory::link_ambition_objective(&db, ambition_0.id, objective_0.id).await?;
-        factory::link_ambition_objective(&db, ambition_1.id, objective_0.id).await?;
-        factory::link_objective_action(&db, objective_0.id, action_0.id).await?;
-        factory::link_objective_action(&db, objective_0.id, action_1.id).await?;
-        factory::link_objective_action(&db, objective_1.id, action_1.id).await?;
+        factory::link_ambition_desired_state(&db, ambition_0.id, desired_state_0.id).await?;
+        factory::link_ambition_desired_state(&db, ambition_1.id, desired_state_0.id).await?;
+        factory::link_desired_state_action(&db, desired_state_0.id, action_0.id).await?;
+        factory::link_desired_state_action(&db, desired_state_0.id, action_1.id).await?;
+        factory::link_desired_state_action(&db, desired_state_1.id, action_1.id).await?;
 
-        let res = ObjectiveQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
+        let res = DesiredStateQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
 
         assert_eq!(res.len(), 5);
 
@@ -166,11 +166,11 @@ mod tests {
             (res[4].id, res[4].ambition_id, res[4].action_id),
         ];
         let expected = [
-            (objective_0.id, Some(ambition_0.id), Some(action_0.id)),
-            (objective_0.id, Some(ambition_0.id), Some(action_1.id)),
-            (objective_0.id, Some(ambition_1.id), Some(action_0.id)),
-            (objective_0.id, Some(ambition_1.id), Some(action_1.id)),
-            (objective_1.id, None, Some(action_1.id)),
+            (desired_state_0.id, Some(ambition_0.id), Some(action_0.id)),
+            (desired_state_0.id, Some(ambition_0.id), Some(action_1.id)),
+            (desired_state_0.id, Some(ambition_1.id), Some(action_0.id)),
+            (desired_state_0.id, Some(ambition_1.id), Some(action_1.id)),
+            (desired_state_1.id, None, Some(action_1.id)),
         ];
         assert_eq!(res_organized[0], expected[0]);
         assert_eq!(res_organized[1], expected[1]);
@@ -187,23 +187,23 @@ mod tests {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
         let ambition_0 = factory::ambition(user.id).insert(&db).await?;
-        let objective_0 = factory::objective(user.id).insert(&db).await?;
+        let desired_state_0 = factory::desired_state(user.id).insert(&db).await?;
         let action_0 = factory::action(user.id).insert(&db).await?;
         let archived_ambition = factory::ambition(user.id)
             .archived(true)
             .insert(&db)
             .await?;
-        let _archived_objective = factory::objective(user.id)
+        let _archived_desired_state = factory::desired_state(user.id)
             .archived(true)
             .insert(&db)
             .await?;
         let archived_action = factory::action(user.id).archived(true).insert(&db).await?;
-        factory::link_ambition_objective(&db, ambition_0.id, objective_0.id).await?;
-        factory::link_ambition_objective(&db, archived_ambition.id, objective_0.id).await?;
-        factory::link_objective_action(&db, objective_0.id, action_0.id).await?;
-        factory::link_objective_action(&db, objective_0.id, archived_action.id).await?;
+        factory::link_ambition_desired_state(&db, ambition_0.id, desired_state_0.id).await?;
+        factory::link_ambition_desired_state(&db, archived_ambition.id, desired_state_0.id).await?;
+        factory::link_desired_state_action(&db, desired_state_0.id, action_0.id).await?;
+        factory::link_desired_state_action(&db, desired_state_0.id, archived_action.id).await?;
 
-        let res = ObjectiveQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
+        let res = DesiredStateQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
 
         assert_eq!(res.len(), 4);
 
@@ -215,10 +215,10 @@ mod tests {
             (res[3].id, res[3].ambition_id, res[3].action_id),
         ];
         let expected = [
-            (objective_0.id, Some(ambition_0.id), Some(action_0.id)),
-            (objective_0.id, Some(ambition_0.id), None),
-            (objective_0.id, None, Some(action_0.id)),
-            (objective_0.id, None, None),
+            (desired_state_0.id, Some(ambition_0.id), Some(action_0.id)),
+            (desired_state_0.id, Some(ambition_0.id), None),
+            (desired_state_0.id, None, Some(action_0.id)),
+            (desired_state_0.id, None, None),
         ];
         assert_eq!(res_organized[0], expected[0]);
         assert_eq!(res_organized[1], expected[1]);
@@ -232,22 +232,22 @@ mod tests {
     ) -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let objective = factory::objective(user.id).insert(&db).await?;
+        let desired_state = factory::desired_state(user.id).insert(&db).await?;
         let archived_ambition = factory::ambition(user.id)
             .archived(true)
             .insert(&db)
             .await?;
         let archived_action = factory::action(user.id).archived(true).insert(&db).await?;
-        factory::link_ambition_objective(&db, archived_ambition.id, objective.id).await?;
-        factory::link_objective_action(&db, objective.id, archived_action.id).await?;
+        factory::link_ambition_desired_state(&db, archived_ambition.id, desired_state.id).await?;
+        factory::link_desired_state_action(&db, desired_state.id, archived_action.id).await?;
 
-        let res = ObjectiveQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
+        let res = DesiredStateQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
 
         assert_eq!(res.len(), 1);
 
         // NOTE: Check only ids for convenience.
         let res_organized = [(res[0].id, res[0].ambition_id, res[0].action_id)];
-        let expected = [(objective.id, None, None)];
+        let expected = [(desired_state.id, None, None)];
         assert_eq!(res_organized[0], expected[0]);
 
         Ok(())
