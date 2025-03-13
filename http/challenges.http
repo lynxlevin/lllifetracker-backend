@@ -1,4 +1,4 @@
-# MissionMemos
+# Challenges
 # Turn on debug to use these.
 ###
 # @name login
@@ -12,27 +12,27 @@ Content-Type: application/json
 
 ###
 # @name list
-GET {{endpoint}}/api/mission_memos
+GET {{endpoint}}/api/challenges
 
-@mission_memo_id=3f467525-6017-4ffe-89e0-0ddd76ca5ed8
+@challenge_id=3f467525-6017-4ffe-89e0-0ddd76ca5ed8
 @tag_0_id="8ae47c10-d248-46e2-9986-b17b1944ec70"
 @tag_1_id="73d61c99-3ab9-44b7-a732-f773c845b27d"
 
 ###
 # @name create
-POST {{endpoint}}/api/mission_memos
+POST {{endpoint}}/api/challenges
 Content-Type: application/json
 
 {
-  "title": "Second mission memo",
-  "text": "This is my second mission memo.",
+  "title": "Second challenge",
+  "text": "This is my second challenge.",
   "date": "2024-11-24",
   "tag_ids": [{{tag_0_id}}, {{tag_1_id}}]
 }
 
 ###
 # @name update
-PUT {{endpoint}}/api/mission_memos/{{mission_memo_id}}
+PUT {{endpoint}}/api/challenges/{{challenge_id}}
 Content-Type: application/json
 
 {
@@ -44,14 +44,14 @@ Content-Type: application/json
 
 ###
 # @name delete
-DELETE {{endpoint}}/api/mission_memos/{{mission_memo_id}}
+DELETE {{endpoint}}/api/challenges/{{challenge_id}}
 
 ###
 # @name archive
-PUT {{endpoint}}/api/mission_memos/{{mission_memo_id}}/archive
+PUT {{endpoint}}/api/challenges/{{challenge_id}}/archive
 Content-Type: application/json
 
 ###
 # @name mark_accomplished
-PUT {{endpoint}}/api/mission_memos/{{mission_memo_id}}/accomplish
+PUT {{endpoint}}/api/challenges/{{challenge_id}}/accomplish
 Content-Type: application/json

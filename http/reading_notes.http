@@ -1,4 +1,4 @@
-# BookExcerpts
+# ReadingNotes
 # Turn on debug to use these.
 ###
 # @name login
@@ -12,28 +12,28 @@ Content-Type: application/json
 
 ###
 # @name list
-GET {{endpoint}}/api/book_excerpts
+GET {{endpoint}}/api/reading_notes
 
-@book_excerpt_id=46b64201-f5fe-4dd2-8d09-e3f8c2071c6f
+@reading_note_id=46b64201-f5fe-4dd2-8d09-e3f8c2071c6f
 @tag_0_id="8ae47c10-d248-46e2-9986-b17b1944ec70"
 @tag_1_id="73d61c99-3ab9-44b7-a732-f773c845b27d"
 
 ###
 # @name create
-POST {{endpoint}}/api/book_excerpts
+POST {{endpoint}}/api/reading_notes
 Content-Type: application/json
 
 {
-  "title": "Second book excerpt",
+  "title": "Second reading note",
   "page_number": 99,
-  "text": "This is my second book excerpt.",
+  "text": "This is my second reading note.",
   "date": "2024-11-24",
   "tag_ids": [{{tag_0_id}}, {{tag_1_id}}]
 }
 
 ###
 # @name update
-PUT {{endpoint}}/api/book_excerpts/{{book_excerpt_id}}
+PUT {{endpoint}}/api/reading_notes/{{reading_note_id}}
 Content-Type: application/json
 
 {
@@ -46,4 +46,4 @@ Content-Type: application/json
 
 ###
 # @name delete
-DELETE {{endpoint}}/api/book_excerpts/{{book_excerpt_id}}
+DELETE {{endpoint}}/api/reading_notes/{{reading_note_id}}
