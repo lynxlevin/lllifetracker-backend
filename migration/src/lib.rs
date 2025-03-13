@@ -21,6 +21,7 @@ mod m20241227_000001_remove_records_table;
 mod m20241227_000002_create_action_tracks_table;
 mod m20250219_000001_add_ordering_trackable_to_actions_table;
 mod m20250303_000001_add_favorite_to_memos_table;
+mod m20250308_000001_rename_objectives_to_desired_states_table;
 
 pub struct Migrator;
 
@@ -49,6 +50,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20241227_000002_create_action_tracks_table::Migration),
             Box::new(m20250219_000001_add_ordering_trackable_to_actions_table::Migration),
             Box::new(m20250303_000001_add_favorite_to_memos_table::Migration),
+            Box::new(m20250308_000001_rename_objectives_to_desired_states_table::Migration),
         ]
     }
 }

@@ -3,43 +3,43 @@
 use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
-#[sea_orm(table_name = "ambitions_objectives")]
+#[sea_orm(table_name = "desired_states_actions")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub ambition_id: Uuid,
+    pub desired_state_id: Uuid,
     #[sea_orm(primary_key, auto_increment = false)]
-    pub objective_id: Uuid,
+    pub action_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::ambition::Entity",
-        from = "Column::AmbitionId",
-        to = "super::ambition::Column::Id",
+        belongs_to = "super::action::Entity",
+        from = "Column::ActionId",
+        to = "super::action::Column::Id",
         on_update = "NoAction",
         on_delete = "Cascade"
     )]
-    Ambition,
+    Action,
     #[sea_orm(
-        belongs_to = "super::objective::Entity",
-        from = "Column::ObjectiveId",
-        to = "super::objective::Column::Id",
+        belongs_to = "super::desired_state::Entity",
+        from = "Column::DesiredStateId",
+        to = "super::desired_state::Column::Id",
         on_update = "NoAction",
         on_delete = "Cascade"
     )]
-    Objective,
+    DesiredState,
 }
 
-impl Related<super::ambition::Entity> for Entity {
+impl Related<super::action::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::Ambition.def()
+        Relation::Action.def()
     }
 }
 
-impl Related<super::objective::Entity> for Entity {
+impl Related<super::desired_state::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::Objective.def()
+        Relation::DesiredState.def()
     }
 }
 

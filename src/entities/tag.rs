@@ -10,8 +10,7 @@ pub struct Model {
     pub user_id: Uuid,
     #[sea_orm(unique)]
     pub ambition_id: Option<Uuid>,
-    #[sea_orm(unique)]
-    pub objective_id: Option<Uuid>,
+    pub desired_state_id: Option<Uuid>,
     #[sea_orm(unique)]
     pub action_id: Option<Uuid>,
     pub created_at: DateTimeWithTimeZone,
@@ -37,18 +36,16 @@ pub enum Relation {
     Ambition,
     #[sea_orm(has_many = "super::book_excerpts_tags::Entity")]
     BookExcerptsTags,
-    #[sea_orm(has_many = "super::memos_tags::Entity")]
-    MemosTags,
-    #[sea_orm(has_many = "super::mission_memos_tags::Entity")]
-    MissionMemosTags,
     #[sea_orm(
-        belongs_to = "super::objective::Entity",
-        from = "Column::ObjectiveId",
-        to = "super::objective::Column::Id",
+        belongs_to = "super::desired_state::Entity",
+        from = "Column::DesiredStateId",
+        to = "super::desired_state::Column::Id",
         on_update = "NoAction",
         on_delete = "Cascade"
     )]
-    Objective,
+    DesiredState,
+    #[sea_orm(has_many = "super::mission_memos_tags::Entity")]
+    MissionMemosTags,
     #[sea_orm(
         belongs_to = "super::user::Entity",
         from = "Column::UserId",
@@ -77,21 +74,15 @@ impl Related<super::book_excerpts_tags::Entity> for Entity {
     }
 }
 
-impl Related<super::memos_tags::Entity> for Entity {
+impl Related<super::desired_state::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::MemosTags.def()
+        Relation::DesiredState.def()
     }
 }
 
 impl Related<super::mission_memos_tags::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::MissionMemosTags.def()
-    }
-}
-
-impl Related<super::objective::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Objective.def()
     }
 }
 
@@ -107,15 +98,6 @@ impl Related<super::book_excerpt::Entity> for Entity {
     }
     fn via() -> Option<RelationDef> {
         Some(super::book_excerpts_tags::Relation::Tag.def().rev())
-    }
-}
-
-impl Related<super::memo::Entity> for Entity {
-    fn to() -> RelationDef {
-        super::memos_tags::Relation::Memo.def()
-    }
-    fn via() -> Option<RelationDef> {
-        Some(super::memos_tags::Relation::Tag.def().rev())
     }
 }
 
