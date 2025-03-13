@@ -21,7 +21,7 @@ struct RequestBody {
     tag_ids: Option<Vec<uuid::Uuid>>,
 }
 
-#[tracing::instrument(name = "Updating a mission memo", skip(db, user, req, path_param))]
+#[tracing::instrument(name = "Updating a challenge", skip(db, user, req, path_param))]
 #[put("/{challenge_id}")]
 pub async fn update_challenge(
     db: Data<DbConn>,
@@ -50,7 +50,7 @@ pub async fn update_challenge(
                         match message.parse::<CustomDbErr>().unwrap() {
                             CustomDbErr::NotFound => {
                                 HttpResponse::NotFound().json(types::ErrorResponse {
-                                    error: "Mission Memo with this id was not found".to_string(),
+                                    error: "Challenge with this id was not found".to_string(),
                                 })
                             }
                         }
@@ -109,8 +109,8 @@ mod tests {
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
 
         let form = RequestBody {
-            title: Some("mission memo after update title".to_string()),
-            text: Some("mission memo after update text".to_string()),
+            title: Some("challenge after update title".to_string()),
+            text: Some("challenge after update text".to_string()),
             date: Some(chrono::NaiveDate::from_ymd_opt(2024, 11, 3).unwrap()),
             tag_ids: Some(vec![ambition_tag.id]),
         };

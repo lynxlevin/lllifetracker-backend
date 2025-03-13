@@ -16,7 +16,7 @@ struct RequestBody {
     tag_ids: Vec<uuid::Uuid>,
 }
 
-#[tracing::instrument(name = "Creating a mission memo", skip(db, user))]
+#[tracing::instrument(name = "Creating a challenge", skip(db, user))]
 #[post("")]
 pub async fn create_challenge(
     db: Data<DbConn>,
@@ -94,8 +94,8 @@ mod tests {
         let (_, tag_0) = factory::action(user.id).name("action_0".to_string()).insert_with_tag(&db).await?;
         let (_, tag_1) = factory::action(user.id).name("action_1".to_string()).insert_with_tag(&db).await?;
 
-        let challenge_title = "New Mission Memo".to_string();
-        let challenge_text = "This is a new mission memo for testing create method.".to_string();
+        let challenge_title = "New Challenge".to_string();
+        let challenge_text = "This is a new challenge for testing create method.".to_string();
         let today = chrono::Utc::now().date_naive();
         let req = test::TestRequest::post()
             .uri("/")
@@ -159,7 +159,7 @@ mod tests {
             .uri("/")
             .set_json(RequestBody {
                 title: "New Challenge".to_string(),
-                text: "This is a new mission memo for testing create method.".to_string(),
+                text: "This is a new challenge for testing create method.".to_string(),
                 date: chrono::Utc::now().date_naive(),
                 tag_ids: vec![],
             })

@@ -225,8 +225,8 @@ mod tests {
             .insert_with_tag(&db)
             .await?;
 
-        let challenge_title = "New Mission Memo".to_string();
-        let challenge_text = "This is a new mission memo for testing create method.".to_string();
+        let challenge_title = "New Challenge".to_string();
+        let challenge_text = "This is a new challenge for testing create method.".to_string();
         let today = chrono::Utc::now().date_naive();
 
         let form_data = NewChallenge {
@@ -285,7 +285,7 @@ mod tests {
 
         let form = UpdateChallenge {
             id: challenge.id,
-            title: Some("Updated Mission Memo".to_string()),
+            title: Some("Updated Challenge".to_string()),
             text: None,
             date: None,
             tag_ids: None,
@@ -317,7 +317,7 @@ mod tests {
         let form = UpdateChallenge {
             id: challenge.id,
             title: None,
-            text: Some("Updated mission memo content.".to_string()),
+            text: Some("Updated challenge content.".to_string()),
             date: None,
             tag_ids: None,
             user_id: user.id,

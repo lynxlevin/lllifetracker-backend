@@ -13,7 +13,7 @@ struct PathParam {
     challenge_id: uuid::Uuid,
 }
 
-#[tracing::instrument(name = "Archiving a mission memo", skip(db, user, path_param))]
+#[tracing::instrument(name = "Archiving a challenge", skip(db, user, path_param))]
 #[put("/{challenge_id}/archive")]
 pub async fn archive_challenge(
     db: Data<DbConn>,
@@ -32,7 +32,7 @@ pub async fn archive_challenge(
                     DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
                         CustomDbErr::NotFound => {
                             HttpResponse::NotFound().json(types::ErrorResponse {
-                                error: "Mission Memo with this id was not found".to_string(),
+                                error: "Challenge with this id was not found".to_string(),
                             })
                         }
                     },

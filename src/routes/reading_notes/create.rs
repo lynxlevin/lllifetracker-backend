@@ -17,7 +17,7 @@ struct RequestBody {
     tag_ids: Vec<uuid::Uuid>,
 }
 
-#[tracing::instrument(name = "Creating a book excerpt", skip(db, user))]
+#[tracing::instrument(name = "Creating a reading note", skip(db, user))]
 #[post("")]
 pub async fn create_reading_note(
     db: Data<DbConn>,
@@ -102,9 +102,9 @@ mod tests {
             .insert_with_tag(&db)
             .await?;
 
-        let reading_note_title = "New book excerpt".to_string();
+        let reading_note_title = "New reading note".to_string();
         let page_number = 12;
-        let reading_note_text = "This is a new book excerpt for testing create method.".to_string();
+        let reading_note_text = "This is a new reading note for testing create method.".to_string();
         let today = chrono::Utc::now().date_naive();
         let req = test::TestRequest::post()
             .uri("/")
@@ -168,7 +168,7 @@ mod tests {
             .set_json(RequestBody {
                 title: "New ReadingNote".to_string(),
                 page_number: 1,
-                text: "This is a new book excerpt for testing create method.".to_string(),
+                text: "This is a new reading note for testing create method.".to_string(),
                 date: chrono::Utc::now().date_naive(),
                 tag_ids: vec![],
             })

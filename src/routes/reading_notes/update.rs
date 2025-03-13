@@ -22,7 +22,7 @@ struct RequestBody {
     tag_ids: Option<Vec<uuid::Uuid>>,
 }
 
-#[tracing::instrument(name = "Updating a book excerpt", skip(db, user, req, path_param))]
+#[tracing::instrument(name = "Updating a reading note", skip(db, user, req, path_param))]
 #[put("/{reading_note_id}")]
 pub async fn update_reading_note(
     db: Data<DbConn>,
@@ -52,7 +52,7 @@ pub async fn update_reading_note(
                         match message.parse::<CustomDbErr>().unwrap() {
                             CustomDbErr::NotFound => {
                                 HttpResponse::NotFound().json(types::ErrorResponse {
-                                    error: "book excerpt with this id was not found".to_string(),
+                                    error: "reading note with this id was not found".to_string(),
                                 })
                             }
                         }
@@ -111,9 +111,9 @@ mod tests {
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
 
         let form = RequestBody {
-            title: Some("book excerpt after update title".to_string()),
+            title: Some("reading note after update title".to_string()),
             page_number: Some(998),
-            text: Some("book excerpt after update text".to_string()),
+            text: Some("reading note after update text".to_string()),
             date: Some(chrono::NaiveDate::from_ymd_opt(2024, 11, 3).unwrap()),
             tag_ids: Some(vec![ambition_tag.id]),
         };

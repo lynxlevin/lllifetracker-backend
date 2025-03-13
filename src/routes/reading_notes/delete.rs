@@ -13,7 +13,7 @@ struct PathParam {
     reading_note_id: uuid::Uuid,
 }
 
-#[tracing::instrument(name = "Deleting a book excerpt", skip(db, user, path_param))]
+#[tracing::instrument(name = "Deleting a reading note", skip(db, user, path_param))]
 #[delete("/{reading_note_id}")]
 pub async fn delete_reading_note(
     db: Data<DbConn>,

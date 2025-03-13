@@ -11,7 +11,7 @@ use actix_web::{
 };
 use sea_orm::DbConn;
 
-#[tracing::instrument(name = "Listing user's mission memos.", skip(db, user))]
+#[tracing::instrument(name = "Listing user's challenges.", skip(db, user))]
 #[get("")]
 pub async fn list_challenges(
     db: Data<DbConn>,

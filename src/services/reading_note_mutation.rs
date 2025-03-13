@@ -192,9 +192,9 @@ mod tests {
             .insert_with_tag(&db)
             .await?;
 
-        let reading_note_title = "New Book Excerpt".to_string();
+        let reading_note_title = "New Reading Note".to_string();
         let page_number = 13;
-        let reading_note_text = "This is a new Book Excerpt for testing create method.".to_string();
+        let reading_note_text = "This is a new Reading Note for testing create method.".to_string();
         let today = chrono::Utc::now().date_naive();
 
         let form_data = NewReadingNote {
@@ -252,7 +252,7 @@ mod tests {
 
         let form = UpdateReadingNote {
             id: reading_note.id,
-            title: Some("Updated Book Excerpt".to_string()),
+            title: Some("Updated Reading Note".to_string()),
             page_number: None,
             text: None,
             date: None,
@@ -318,7 +318,7 @@ mod tests {
             id: reading_note.id,
             title: None,
             page_number: None,
-            text: Some("Updated Book Excerpt content.".to_string()),
+            text: Some("Updated Reading Note content.".to_string()),
             date: None,
             tag_ids: None,
             user_id: user.id,

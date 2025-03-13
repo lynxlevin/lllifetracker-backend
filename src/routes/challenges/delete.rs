@@ -13,7 +13,7 @@ struct PathParam {
     challenge_id: uuid::Uuid,
 }
 
-#[tracing::instrument(name = "Deleting a mission memo", skip(db, user, path_param))]
+#[tracing::instrument(name = "Deleting a challenge", skip(db, user, path_param))]
 #[delete("/{challenge_id}")]
 pub async fn delete_challenge(
     db: Data<DbConn>,

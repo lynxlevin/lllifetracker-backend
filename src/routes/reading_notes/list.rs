@@ -11,7 +11,7 @@ use actix_web::{
 };
 use sea_orm::DbConn;
 
-#[tracing::instrument(name = "Listing user's book excerpts.", skip(db, user))]
+#[tracing::instrument(name = "Listing user's reading notes.", skip(db, user))]
 #[get("")]
 pub async fn list_reading_notes(
     db: Data<DbConn>,

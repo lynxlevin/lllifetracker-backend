@@ -14,7 +14,7 @@ struct PathParam {
 }
 
 #[tracing::instrument(
-    name = "Marking a mission memo as accomplished",
+    name = "Marking a challenge as accomplished",
     skip(db, user, path_param)
 )]
 #[put("/{challenge_id}/accomplish")]
@@ -37,7 +37,7 @@ pub async fn mark_accomplished_challenge(
                     DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
                         CustomDbErr::NotFound => {
                             HttpResponse::NotFound().json(types::ErrorResponse {
-                                error: "Mission Memo with this id was not found".to_string(),
+                                error: "Challenge with this id was not found".to_string(),
                             })
                         }
                     },
