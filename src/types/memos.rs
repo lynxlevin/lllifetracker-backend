@@ -42,7 +42,7 @@ pub struct MemoWithTagQueryResult {
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
     pub tag_id: Option<uuid::Uuid>,
     pub tag_ambition_name: Option<String>,
-    pub tag_objective_name: Option<String>,
+    pub tag_desired_state_name: Option<String>,
     pub tag_action_name: Option<String>,
     pub tag_created_at: Option<chrono::DateTime<chrono::FixedOffset>>
 }

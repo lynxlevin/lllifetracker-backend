@@ -1,13 +1,13 @@
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
 use super::{ActionVisibleForLinking, AmbitionVisible};
-use entities::{objective, prelude::Objective};
+use entities::{desired_state, prelude::DesiredState};
 
 #[derive(
     serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug,
 )]
-#[sea_orm(entity = "Objective")]
-pub struct ObjectiveVisible {
+#[sea_orm(entity = "DesiredState")]
+pub struct DesiredStateVisible {
     pub id: uuid::Uuid,
     pub name: String,
     pub description: Option<String>,
@@ -15,9 +15,9 @@ pub struct ObjectiveVisible {
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
 }
 
-impl From<objective::Model> for ObjectiveVisible {
-    fn from(item: objective::Model) -> Self {
-        ObjectiveVisible {
+impl From<desired_state::Model> for DesiredStateVisible {
+    fn from(item: desired_state::Model) -> Self {
+        DesiredStateVisible {
             id: item.id,
             name: item.name,
             description: item.description,
@@ -28,7 +28,7 @@ impl From<objective::Model> for ObjectiveVisible {
 }
 
 #[derive(FromQueryResult, Debug, serde::Serialize, serde::Deserialize)]
-pub struct ObjectiveWithLinksQueryResult {
+pub struct DesiredStateWithLinksQueryResult {
     pub id: uuid::Uuid,
     pub name: String,
     pub description: Option<String>,
@@ -47,7 +47,7 @@ pub struct ObjectiveWithLinksQueryResult {
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
-pub struct ObjectiveVisibleWithLinks {
+pub struct DesiredStateVisibleWithLinks {
     pub id: uuid::Uuid,
     pub name: String,
     pub description: Option<String>,
@@ -57,7 +57,7 @@ pub struct ObjectiveVisibleWithLinks {
     pub actions: Vec<ActionVisibleForLinking>,
 }
 
-impl ObjectiveVisibleWithLinks {
+impl DesiredStateVisibleWithLinks {
     pub fn push_ambition(&mut self, ambition: AmbitionVisible) {
         self.ambitions.push(ambition);
     }
@@ -67,7 +67,7 @@ impl ObjectiveVisibleWithLinks {
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
-pub struct ObjectiveVisibleWithActions {
+pub struct DesiredStateVisibleWithActions {
     pub id: uuid::Uuid,
     pub name: String,
     pub description: Option<String>,
@@ -76,14 +76,14 @@ pub struct ObjectiveVisibleWithActions {
     pub actions: Vec<ActionVisibleForLinking>,
 }
 
-impl ObjectiveVisibleWithActions {
+impl DesiredStateVisibleWithActions {
     pub fn push_action(&mut self, action: ActionVisibleForLinking) {
         self.actions.push(action);
     }
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
-pub struct ObjectiveVisibleWithAmbitions {
+pub struct DesiredStateVisibleWithAmbitions {
     pub id: uuid::Uuid,
     pub name: String,
     pub description: Option<String>,
@@ -92,7 +92,7 @@ pub struct ObjectiveVisibleWithAmbitions {
     pub ambitions: Vec<AmbitionVisible>,
 }
 
-impl ObjectiveVisibleWithAmbitions {
+impl DesiredStateVisibleWithAmbitions {
     pub fn push_ambition(&mut self, ambition: AmbitionVisible) {
         self.ambitions.push(ambition);
     }

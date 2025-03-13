@@ -1,7 +1,7 @@
 use entities::{action, prelude::Action};
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
-use super::{objectives::ObjectiveVisibleWithAmbitions, AmbitionVisible};
+use super::{desired_states::DesiredStateVisibleWithAmbitions, AmbitionVisible};
 
 #[derive(
     serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug,
@@ -48,11 +48,11 @@ pub struct ActionWithLinksQueryResult {
     pub description: Option<String>,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
-    pub objective_id: Option<uuid::Uuid>,
-    pub objective_name: Option<String>,
-    pub objective_description: Option<String>,
-    pub objective_created_at: Option<chrono::DateTime<chrono::FixedOffset>>,
-    pub objective_updated_at: Option<chrono::DateTime<chrono::FixedOffset>>,
+    pub desired_state_id: Option<uuid::Uuid>,
+    pub desired_state_name: Option<String>,
+    pub desired_state_description: Option<String>,
+    pub desired_state_created_at: Option<chrono::DateTime<chrono::FixedOffset>>,
+    pub desired_state_updated_at: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub ambition_id: Option<uuid::Uuid>,
     pub ambition_name: Option<String>,
     pub ambition_description: Option<String>,
@@ -67,15 +67,15 @@ pub struct ActionVisibleWithLinks {
     pub description: Option<String>,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
-    pub objectives: Vec<ObjectiveVisibleWithAmbitions>,
+    pub desired_states: Vec<DesiredStateVisibleWithAmbitions>,
 }
 
 impl ActionVisibleWithLinks {
-    pub fn push_objective(&mut self, objective: ObjectiveVisibleWithAmbitions) {
-        self.objectives.push(objective);
+    pub fn push_desired_state(&mut self, desired_state: DesiredStateVisibleWithAmbitions) {
+        self.desired_states.push(desired_state);
     }
 
     pub fn push_ambition(&mut self, ambition: AmbitionVisible) {
-        self.objectives.last_mut().unwrap().push_ambition(ambition);
+        self.desired_states.last_mut().unwrap().push_ambition(ambition);
     }
 }

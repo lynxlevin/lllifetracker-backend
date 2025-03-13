@@ -1,4 +1,4 @@
-use entities::{mission_memo, prelude::MissionMemo};
+use entities::{prelude::ReadingNote, reading_note};
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
 use super::TagVisible;
@@ -6,27 +6,25 @@ use super::TagVisible;
 #[derive(
     serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug,
 )]
-#[sea_orm(entity = "MissionMemo")]
-pub struct MissionMemoVisible {
+#[sea_orm(entity = "ReadingNote")]
+pub struct ReadingNoteVisible {
     pub id: uuid::Uuid,
     pub title: String,
+    pub page_number: i16,
     pub text: String,
     pub date: chrono::NaiveDate,
-    pub archived: bool,
-    pub accomplished_at: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
 }
 
-impl From<mission_memo::Model> for MissionMemoVisible {
-    fn from(item: mission_memo::Model) -> Self {
-        MissionMemoVisible {
+impl From<reading_note::Model> for ReadingNoteVisible {
+    fn from(item: reading_note::Model) -> Self {
+        ReadingNoteVisible {
             id: item.id,
             title: item.title,
+            page_number: item.page_number,
             text: item.text,
             date: item.date,
-            archived: item.archived,
-            accomplished_at: item.accomplished_at,
             created_at: item.created_at,
             updated_at: item.updated_at,
         }
@@ -34,36 +32,34 @@ impl From<mission_memo::Model> for MissionMemoVisible {
 }
 
 #[derive(FromQueryResult, Debug, serde::Serialize, serde::Deserialize, PartialEq)]
-pub struct MissionMemoWithTagQueryResult {
+pub struct ReadingNoteWithTagQueryResult {
     pub id: uuid::Uuid,
     pub title: String,
+    pub page_number: i16,
     pub text: String,
     pub date: chrono::NaiveDate,
-    pub archived: bool,
-    pub accomplished_at: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
     pub tag_id: Option<uuid::Uuid>,
     pub tag_ambition_name: Option<String>,
-    pub tag_objective_name: Option<String>,
+    pub tag_desired_state_name: Option<String>,
     pub tag_action_name: Option<String>,
-    pub tag_created_at: Option<chrono::DateTime<chrono::FixedOffset>>
+    pub tag_created_at: Option<chrono::DateTime<chrono::FixedOffset>>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
-pub struct MissionMemoVisibleWithTags {
+pub struct ReadingNoteVisibleWithTags {
     pub id: uuid::Uuid,
     pub title: String,
+    pub page_number: i16,
     pub text: String,
     pub date: chrono::NaiveDate,
-    pub archived: bool,
-    pub accomplished_at: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
     pub tags: Vec<TagVisible>,
 }
 
-impl MissionMemoVisibleWithTags {
+impl ReadingNoteVisibleWithTags {
     pub fn push_tag(&mut self, tag: TagVisible) {
         self.tags.push(tag);
     }

@@ -1,4 +1,4 @@
-use entities::{book_excerpt, prelude::BookExcerpt};
+use entities::{challenge, prelude::Challenge};
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
 use super::TagVisible;
@@ -6,25 +6,27 @@ use super::TagVisible;
 #[derive(
     serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug,
 )]
-#[sea_orm(entity = "BookExcerpt")]
-pub struct BookExcerptVisible {
+#[sea_orm(entity = "Challenge")]
+pub struct ChallengeVisible {
     pub id: uuid::Uuid,
     pub title: String,
-    pub page_number: i16,
     pub text: String,
     pub date: chrono::NaiveDate,
+    pub archived: bool,
+    pub accomplished_at: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
 }
 
-impl From<book_excerpt::Model> for BookExcerptVisible {
-    fn from(item: book_excerpt::Model) -> Self {
-        BookExcerptVisible {
+impl From<challenge::Model> for ChallengeVisible {
+    fn from(item: challenge::Model) -> Self {
+        ChallengeVisible {
             id: item.id,
             title: item.title,
-            page_number: item.page_number,
             text: item.text,
             date: item.date,
+            archived: item.archived,
+            accomplished_at: item.accomplished_at,
             created_at: item.created_at,
             updated_at: item.updated_at,
         }
@@ -32,34 +34,36 @@ impl From<book_excerpt::Model> for BookExcerptVisible {
 }
 
 #[derive(FromQueryResult, Debug, serde::Serialize, serde::Deserialize, PartialEq)]
-pub struct BookExcerptWithTagQueryResult {
+pub struct ChallengeWithTagQueryResult {
     pub id: uuid::Uuid,
     pub title: String,
-    pub page_number: i16,
     pub text: String,
     pub date: chrono::NaiveDate,
+    pub archived: bool,
+    pub accomplished_at: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
     pub tag_id: Option<uuid::Uuid>,
     pub tag_ambition_name: Option<String>,
-    pub tag_objective_name: Option<String>,
+    pub tag_desired_state_name: Option<String>,
     pub tag_action_name: Option<String>,
-    pub tag_created_at: Option<chrono::DateTime<chrono::FixedOffset>>,
+    pub tag_created_at: Option<chrono::DateTime<chrono::FixedOffset>>
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
-pub struct BookExcerptVisibleWithTags {
+pub struct ChallengeVisibleWithTags {
     pub id: uuid::Uuid,
     pub title: String,
-    pub page_number: i16,
     pub text: String,
     pub date: chrono::NaiveDate,
+    pub archived: bool,
+    pub accomplished_at: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
     pub tags: Vec<TagVisible>,
 }
 
-impl BookExcerptVisibleWithTags {
+impl ChallengeVisibleWithTags {
     pub fn push_tag(&mut self, tag: TagVisible) {
         self.tags.push(tag);
     }
