@@ -36,6 +36,8 @@ pub enum Relation {
     Ambition,
     #[sea_orm(has_many = "super::book_excerpts_tags::Entity")]
     BookExcerptsTags,
+    #[sea_orm(has_many = "super::challenges_tags::Entity")]
+    ChallengesTags,
     #[sea_orm(
         belongs_to = "super::desired_state::Entity",
         from = "Column::DesiredStateId",
@@ -44,8 +46,6 @@ pub enum Relation {
         on_delete = "Cascade"
     )]
     DesiredState,
-    #[sea_orm(has_many = "super::mission_memos_tags::Entity")]
-    MissionMemosTags,
     #[sea_orm(
         belongs_to = "super::user::Entity",
         from = "Column::UserId",
@@ -74,15 +74,15 @@ impl Related<super::book_excerpts_tags::Entity> for Entity {
     }
 }
 
-impl Related<super::desired_state::Entity> for Entity {
+impl Related<super::challenges_tags::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::DesiredState.def()
+        Relation::ChallengesTags.def()
     }
 }
 
-impl Related<super::mission_memos_tags::Entity> for Entity {
+impl Related<super::desired_state::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::MissionMemosTags.def()
+        Relation::DesiredState.def()
     }
 }
 
@@ -101,12 +101,12 @@ impl Related<super::book_excerpt::Entity> for Entity {
     }
 }
 
-impl Related<super::mission_memo::Entity> for Entity {
+impl Related<super::challenge::Entity> for Entity {
     fn to() -> RelationDef {
-        super::mission_memos_tags::Relation::MissionMemo.def()
+        super::challenges_tags::Relation::Challenge.def()
     }
     fn via() -> Option<RelationDef> {
-        Some(super::mission_memos_tags::Relation::Tag.def().rev())
+        Some(super::challenges_tags::Relation::Tag.def().rev())
     }
 }
 
