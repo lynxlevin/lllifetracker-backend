@@ -57,7 +57,7 @@ impl ActionFactory for action::ActiveModel {
             id: Set(uuid::Uuid::new_v4()),
             user_id: Set(action.user_id),
             ambition_id: NotSet,
-            objective_id: NotSet,
+            desired_state_id: NotSet,
             action_id: Set(Some(action.id)),
             created_at: Set(Utc::now().into()),
         }

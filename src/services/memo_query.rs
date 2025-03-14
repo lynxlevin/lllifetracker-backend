@@ -1,4 +1,4 @@
-use entities::{action, ambition, memo, memos_tags, objective, tag};
+use entities::{action, ambition, memo, memos_tags, desired_state, tag};
 use ::types::{CustomDbErr, MemoWithTagQueryResult};
 use migration::NullOrdering::Last;
 use sea_orm::entity::prelude::*;
@@ -16,18 +16,18 @@ impl MemoQuery {
             .column_as(tag::Column::Id, "tag_id")
             .column_as(tag::Column::CreatedAt, "tag_created_at")
             .column_as(ambition::Column::Name, "tag_ambition_name")
-            .column_as(objective::Column::Name, "tag_objective_name")
+            .column_as(desired_state::Column::Name, "tag_desired_state_name")
             .column_as(action::Column::Name, "tag_action_name")
             .join_rev(LeftJoin, memos_tags::Relation::Memo.def())
             .join(LeftJoin, memos_tags::Relation::Tag.def())
             .join(LeftJoin, tag::Relation::Ambition.def())
-            .join(LeftJoin, tag::Relation::Objective.def())
+            .join(LeftJoin, tag::Relation::DesiredState.def())
             .join(LeftJoin, tag::Relation::Action.def())
             .order_by_desc(memo::Column::Favorite)
             .order_by_desc(memo::Column::Date)
             .order_by_desc(memo::Column::CreatedAt)
             .order_by_with_nulls(ambition::Column::CreatedAt, Asc, Last)
-            .order_by_with_nulls(objective::Column::CreatedAt, Asc, Last)
+            .order_by_with_nulls(desired_state::Column::CreatedAt, Asc, Last)
             .order_by_with_nulls(action::Column::CreatedAt, Asc, Last)
             .into_model::<MemoWithTagQueryResult>()
             .all(db)
@@ -76,9 +76,9 @@ mod tests {
             .await?;
         let (action, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
         let (ambition, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
-        let (objective, objective_tag) = factory::objective(user.id).insert_with_tag(&db).await?;
+        let (desired_state, desired_state_tag) = factory::desired_state(user.id).insert_with_tag(&db).await?;
         factory::link_memo_tag(&db, memo_0.id, ambition_tag.id).await?;
-        factory::link_memo_tag(&db, memo_1.id, objective_tag.id).await?;
+        factory::link_memo_tag(&db, memo_1.id, desired_state_tag.id).await?;
         factory::link_memo_tag(&db, memo_1.id, action_tag.id).await?;
 
         let res: Vec<MemoWithTagQueryResult> =
@@ -95,7 +95,7 @@ mod tests {
                 updated_at: favorite_memo.updated_at,
                 tag_id: None,
                 tag_ambition_name: None,
-                tag_objective_name: None,
+                tag_desired_state_name: None,
                 tag_action_name: None,
                 tag_created_at: None,
             },
@@ -109,7 +109,7 @@ mod tests {
                 updated_at: memo_0.updated_at,
                 tag_id: Some(ambition_tag.id),
                 tag_ambition_name: Some(ambition.name),
-                tag_objective_name: None,
+                tag_desired_state_name: None,
                 tag_action_name: None,
                 tag_created_at: Some(ambition_tag.created_at),
             },
@@ -121,11 +121,11 @@ mod tests {
                 favorite: memo_1.favorite,
                 created_at: memo_1.created_at,
                 updated_at: memo_1.updated_at,
-                tag_id: Some(objective_tag.id),
+                tag_id: Some(desired_state_tag.id),
                 tag_ambition_name: None,
-                tag_objective_name: Some(objective.name),
+                tag_desired_state_name: Some(desired_state.name),
                 tag_action_name: None,
-                tag_created_at: Some(objective_tag.created_at),
+                tag_created_at: Some(desired_state_tag.created_at),
             },
             MemoWithTagQueryResult {
                 id: memo_1.id,
@@ -137,7 +137,7 @@ mod tests {
                 updated_at: memo_1.updated_at,
                 tag_id: Some(action_tag.id),
                 tag_ambition_name: None,
-                tag_objective_name: None,
+                tag_desired_state_name: None,
                 tag_action_name: Some(action.name),
                 tag_created_at: Some(action_tag.created_at),
             },

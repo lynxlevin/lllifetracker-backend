@@ -27,14 +27,14 @@ pub enum Relation {
     ActionTrack,
     #[sea_orm(has_many = "super::ambition::Entity")]
     Ambition,
-    #[sea_orm(has_many = "super::book_excerpt::Entity")]
-    BookExcerpt,
+    #[sea_orm(has_many = "super::challenge::Entity")]
+    Challenge,
+    #[sea_orm(has_many = "super::desired_state::Entity")]
+    DesiredState,
     #[sea_orm(has_many = "super::memo::Entity")]
     Memo,
-    #[sea_orm(has_many = "super::mission_memo::Entity")]
-    MissionMemo,
-    #[sea_orm(has_many = "super::objective::Entity")]
-    Objective,
+    #[sea_orm(has_many = "super::reading_note::Entity")]
+    ReadingNote,
     #[sea_orm(has_many = "super::tag::Entity")]
     Tag,
 }
@@ -57,9 +57,15 @@ impl Related<super::ambition::Entity> for Entity {
     }
 }
 
-impl Related<super::book_excerpt::Entity> for Entity {
+impl Related<super::challenge::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::BookExcerpt.def()
+        Relation::Challenge.def()
+    }
+}
+
+impl Related<super::desired_state::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::DesiredState.def()
     }
 }
 
@@ -69,15 +75,9 @@ impl Related<super::memo::Entity> for Entity {
     }
 }
 
-impl Related<super::mission_memo::Entity> for Entity {
+impl Related<super::reading_note::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::MissionMemo.def()
-    }
-}
-
-impl Related<super::objective::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Objective.def()
+        Relation::ReadingNote.def()
     }
 }
 

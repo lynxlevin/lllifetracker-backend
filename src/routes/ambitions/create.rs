@@ -113,7 +113,7 @@ mod tests {
         let created_tag = tag::Entity::find()
             .filter(tag::Column::UserId.eq(user.id))
             .filter(tag::Column::AmbitionId.eq(returned_ambition.id))
-            .filter(tag::Column::ObjectiveId.is_null())
+            .filter(tag::Column::DesiredStateId.is_null())
             .filter(tag::Column::ActionId.is_null())
             .one(&db)
             .await?;
@@ -158,7 +158,7 @@ mod tests {
         let created_tag = tag::Entity::find()
             .filter(tag::Column::UserId.eq(user.id))
             .filter(tag::Column::AmbitionId.eq(returned_ambition.id))
-            .filter(tag::Column::ObjectiveId.is_null())
+            .filter(tag::Column::DesiredStateId.is_null())
             .filter(tag::Column::ActionId.is_null())
             .one(&db)
             .await?;

@@ -8,21 +8,21 @@ use entities::user as user_entity;
 use sea_orm::{DbConn, DbErr};
 use services::{
     ambition_mutation::AmbitionMutation, ambition_query::AmbitionQuery,
-    objective_query::ObjectiveQuery,
+    desired_state_query::DesiredStateQuery,
 };
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
     ambition_id: uuid::Uuid,
-    objective_id: uuid::Uuid,
+    desired_state_id: uuid::Uuid,
 }
 
 #[tracing::instrument(
-    name = "Disconnecting an objective from an ambition",
+    name = "Disconnecting an desired_state from an ambition",
     skip(db, user, path_param)
 )]
-#[delete("/{ambition_id}/objectives/{objective_id}/connection")]
-pub async fn disconnect_objective(
+#[delete("/{ambition_id}/desired_states/{desired_state_id}/connection")]
+pub async fn disconnect_desired_state(
     db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
     path_param: Path<PathParam>,
@@ -32,17 +32,17 @@ pub async fn disconnect_objective(
             let user = user.into_inner();
             match validate_ownership(&db, user.id, &path_param).await {
                 Ok(_) => {
-                    match AmbitionMutation::disconnect_objective(
+                    match AmbitionMutation::disconnect_desired_state(
                         &db,
                         path_param.ambition_id,
-                        path_param.objective_id,
+                        path_param.desired_state_id,
                     )
                     .await
                     {
                         Ok(_) => HttpResponse::Ok().json(types::SuccessResponse {
                             message: format!(
-                                "Successfully disconnected ambition: {} with objective: {}",
-                                path_param.ambition_id, path_param.objective_id
+                                "Successfully disconnected ambition: {} with desired_state: {}",
+                                path_param.ambition_id, path_param.desired_state_id
                             ),
                         }),
                         Err(e) => {
@@ -54,7 +54,7 @@ pub async fn disconnect_objective(
                     }
                 }
                 Err(_) => HttpResponse::NotFound().json(types::ErrorResponse {
-                    error: "Ambition or objective with the requested ids were not found"
+                    error: "Ambition or desired_state with the requested ids were not found"
                         .to_string(),
                 }),
             }
@@ -71,7 +71,7 @@ async fn validate_ownership(
     path_param: &Path<PathParam>,
 ) -> Result<(), ()> {
     match AmbitionQuery::find_by_id_and_user_id(db, path_param.ambition_id, user_id).await {
-        Ok(_) => match ObjectiveQuery::find_by_id_and_user_id(db, path_param.objective_id, user_id)
+        Ok(_) => match DesiredStateQuery::find_by_id_and_user_id(db, path_param.desired_state_id, user_id)
             .await
         {
             Ok(_) => Ok(()),
@@ -106,7 +106,7 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use entities::ambitions_objectives;
+    use entities::ambitions_desired_states;
     use test_utils::{self, *};
 
     use super::*;
@@ -116,7 +116,7 @@ mod tests {
     ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
         test::init_service(
             App::new()
-                .service(disconnect_objective)
+                .service(disconnect_desired_state)
                 .app_data(Data::new(db)),
         )
         .await
@@ -128,13 +128,13 @@ mod tests {
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
         let ambition = factory::ambition(user.id).insert(&db).await?;
-        let objective = factory::objective(user.id).insert(&db).await?;
-        factory::link_ambition_objective(&db, ambition.id, objective.id).await?;
+        let desired_state = factory::desired_state(user.id).insert(&db).await?;
+        factory::link_ambition_desired_state(&db, ambition.id, desired_state.id).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!(
-                "/{}/objectives/{}/connection",
-                ambition.id, objective.id
+                "/{}/desired_states/{}/connection",
+                ambition.id, desired_state.id
             ))
             .to_request();
         req.extensions_mut().insert(user.clone());
@@ -142,9 +142,9 @@ mod tests {
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::OK);
 
-        let connection_in_db = ambitions_objectives::Entity::find()
-            .filter(ambitions_objectives::Column::AmbitionId.eq(ambition.id))
-            .filter(ambitions_objectives::Column::ObjectiveId.eq(objective.id))
+        let connection_in_db = ambitions_desired_states::Entity::find()
+            .filter(ambitions_desired_states::Column::AmbitionId.eq(ambition.id))
+            .filter(ambitions_desired_states::Column::DesiredStateId.eq(desired_state.id))
             .one(&db)
             .await?;
         assert!(connection_in_db.is_none());
@@ -159,12 +159,12 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let another_user = factory::user().insert(&db).await?;
         let ambition = factory::ambition(another_user.id).insert(&db).await?;
-        let objective = factory::objective(user.id).insert(&db).await?;
+        let desired_state = factory::desired_state(user.id).insert(&db).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!(
-                "/{}/objectives/{}/connection",
-                ambition.id, objective.id
+                "/{}/desired_states/{}/connection",
+                ambition.id, desired_state.id
             ))
             .to_request();
         req.extensions_mut().insert(user.clone());
@@ -176,18 +176,18 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn invalid_objective() -> Result<(), DbErr> {
+    async fn invalid_desired_state() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
         let another_user = factory::user().insert(&db).await?;
         let ambition = factory::ambition(user.id).insert(&db).await?;
-        let objective = factory::objective(another_user.id).insert(&db).await?;
+        let desired_state = factory::desired_state(another_user.id).insert(&db).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!(
-                "/{}/objectives/{}/connection",
-                ambition.id, objective.id
+                "/{}/desired_states/{}/connection",
+                ambition.id, desired_state.id
             ))
             .to_request();
         req.extensions_mut().insert(user.clone());
@@ -204,12 +204,12 @@ mod tests {
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
         let ambition = factory::ambition(user.id).insert(&db).await?;
-        let objective = factory::objective(user.id).insert(&db).await?;
+        let desired_state = factory::desired_state(user.id).insert(&db).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!(
-                "/{}/objectives/{}/connection",
-                ambition.id, objective.id
+                "/{}/desired_states/{}/connection",
+                ambition.id, desired_state.id
             ))
             .to_request();
 

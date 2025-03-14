@@ -71,11 +71,11 @@ fn get_tag(memo: &MemoWithTagQueryResult) -> Option<TagVisible> {
             tag_type: TagType::Ambition,
             created_at: memo.tag_created_at.unwrap(),
         })
-    } else if let Some(name) = memo.tag_objective_name.clone() {
+    } else if let Some(name) = memo.tag_desired_state_name.clone() {
         Some(TagVisible {
             id: memo.tag_id.unwrap(),
             name,
-            tag_type: TagType::Objective,
+            tag_type: TagType::DesiredState,
             created_at: memo.tag_created_at.unwrap(),
         })
     } else if let Some(name) = memo.tag_action_name.clone() {
@@ -86,7 +86,7 @@ fn get_tag(memo: &MemoWithTagQueryResult) -> Option<TagVisible> {
             created_at: memo.tag_created_at.unwrap(),
         })
     } else {
-        unimplemented!("Tag without link to Ambition/Objective/Action is not implemented yet.");
+        unimplemented!("Tag without link to Ambition/DesiredState/Action is not implemented yet.");
     }
 }
 
@@ -141,9 +141,9 @@ mod tests {
             .await?;
         let (action, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
         let (ambition, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
-        let (objective, objective_tag) = factory::objective(user.id).insert_with_tag(&db).await?;
+        let (desired_state, desired_state_tag) = factory::desired_state(user.id).insert_with_tag(&db).await?;
         factory::link_memo_tag(&db, memo_0.id, ambition_tag.id).await?;
-        factory::link_memo_tag(&db, memo_1.id, objective_tag.id).await?;
+        factory::link_memo_tag(&db, memo_1.id, desired_state_tag.id).await?;
         factory::link_memo_tag(&db, memo_1.id, action_tag.id).await?;
 
         let req = test::TestRequest::get().uri("/").to_request();
@@ -198,10 +198,10 @@ mod tests {
             "updated_at": memo_1.updated_at,
             "tags": [
                 {
-                    "id": objective_tag.id,
-                    "name": objective.name,
-                    "tag_type": TagType::Objective,
-                    "created_at": objective_tag.created_at,
+                    "id": desired_state_tag.id,
+                    "name": desired_state.name,
+                    "tag_type": TagType::DesiredState,
+                    "created_at": desired_state_tag.created_at,
                 },
                 {
                     "id": action_tag.id,

@@ -43,11 +43,11 @@ fn get_tag_visible(tag: TagQueryResult) -> TagVisible {
             tag_type: TagType::Ambition,
             created_at: tag.created_at,
         }
-    } else if let Some(name) = tag.objective_name.clone() {
+    } else if let Some(name) = tag.desired_state_name.clone() {
         TagVisible {
             id: tag.id,
             name,
-            tag_type: TagType::Objective,
+            tag_type: TagType::DesiredState,
             created_at: tag.created_at,
         }
     } else if let Some(name) = tag.action_name.clone() {
@@ -58,7 +58,7 @@ fn get_tag_visible(tag: TagQueryResult) -> TagVisible {
             created_at: tag.created_at,
         }
     } else {
-        unimplemented!("Tag without link to Ambition/Objective/Action is not implemented yet.");
+        unimplemented!("Tag without link to Ambition/DesiredState/Action is not implemented yet.");
     }
 }
 
@@ -96,7 +96,7 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let (action, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
         let (ambition, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
-        let (objective, objective_tag) = factory::objective(user.id).insert_with_tag(&db).await?;
+        let (desired_state, desired_state_tag) = factory::desired_state(user.id).insert_with_tag(&db).await?;
         let _archived_action = factory::action(user.id)
             .archived(true)
             .insert_with_tag(&db)
@@ -105,7 +105,7 @@ mod tests {
             .archived(true)
             .insert_with_tag(&db)
             .await?;
-        let _archived_objective = factory::objective(user.id)
+        let _archived_desired_state = factory::desired_state(user.id)
             .archived(true)
             .insert(&db)
             .await?;
@@ -127,10 +127,10 @@ mod tests {
                 "created_at": ambition_tag.created_at,
             },
             {
-                "id": objective_tag.id,
-                "name": objective.name.clone(),
-                "tag_type": TagType::Objective,
-                "created_at": objective_tag.created_at,
+                "id": desired_state_tag.id,
+                "name": desired_state.name.clone(),
+                "tag_type": TagType::DesiredState,
+                "created_at": desired_state_tag.created_at,
             },
             {
                 "id": action_tag.id,

@@ -1,4 +1,4 @@
-use entities::{ambition, ambitions_objectives, tag};
+use entities::{ambition, ambitions_desired_states, tag};
 use chrono::Utc;
 use sea_orm::entity::prelude::*;
 use sea_orm::ActiveValue::NotSet;
@@ -39,7 +39,7 @@ impl AmbitionMutation {
                     id: Set(uuid::Uuid::new_v4()),
                     user_id: Set(form_data.user_id),
                     ambition_id: Set(Some(ambition_id)),
-                    objective_id: NotSet,
+                    desired_state_id: NotSet,
                     action_id: NotSet,
                     created_at: Set(now.into()),
                 }
@@ -95,27 +95,27 @@ impl AmbitionMutation {
         ambition.update(db).await
     }
 
-    pub async fn connect_objective(
+    pub async fn connect_desired_state(
         db: &DbConn,
         ambition_id: uuid::Uuid,
-        objective_id: uuid::Uuid,
-    ) -> Result<ambitions_objectives::Model, DbErr> {
-        ambitions_objectives::ActiveModel {
+        desired_state_id: uuid::Uuid,
+    ) -> Result<ambitions_desired_states::Model, DbErr> {
+        ambitions_desired_states::ActiveModel {
             ambition_id: Set(ambition_id),
-            objective_id: Set(objective_id),
+            desired_state_id: Set(desired_state_id),
         }
         .insert(db)
         .await
     }
 
-    pub async fn disconnect_objective(
+    pub async fn disconnect_desired_state(
         db: &DbConn,
         ambition_id: uuid::Uuid,
-        objective_id: uuid::Uuid,
+        desired_state_id: uuid::Uuid,
     ) -> Result<(), DbErr> {
-        match ambitions_objectives::Entity::find()
-            .filter(ambitions_objectives::Column::AmbitionId.eq(ambition_id))
-            .filter(ambitions_objectives::Column::ObjectiveId.eq(objective_id))
+        match ambitions_desired_states::Entity::find()
+            .filter(ambitions_desired_states::Column::AmbitionId.eq(ambition_id))
+            .filter(ambitions_desired_states::Column::DesiredStateId.eq(desired_state_id))
             .one(db)
             .await
         {
@@ -173,7 +173,7 @@ mod tests {
         let created_tag = tag::Entity::find()
             .filter(tag::Column::UserId.eq(user.id))
             .filter(tag::Column::AmbitionId.eq(Some(returned_ambition.id)))
-            .filter(tag::Column::ObjectiveId.is_null())
+            .filter(tag::Column::DesiredStateId.is_null())
             .filter(tag::Column::ActionId.is_null())
             .one(&db)
             .await?;
@@ -319,17 +319,17 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn connect_objective() -> Result<(), DbErr> {
+    async fn connect_desired_state() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
         let ambition = factory::ambition(user.id).insert(&db).await?;
-        let objective = factory::objective(user.id).insert(&db).await?;
+        let desired_state = factory::desired_state(user.id).insert(&db).await?;
 
-        AmbitionMutation::connect_objective(&db, ambition.id, objective.id).await?;
+        AmbitionMutation::connect_desired_state(&db, ambition.id, desired_state.id).await?;
 
-        let created_connection = ambitions_objectives::Entity::find()
-            .filter(ambitions_objectives::Column::AmbitionId.eq(ambition.id))
-            .filter(ambitions_objectives::Column::ObjectiveId.eq(objective.id))
+        let created_connection = ambitions_desired_states::Entity::find()
+            .filter(ambitions_desired_states::Column::AmbitionId.eq(ambition.id))
+            .filter(ambitions_desired_states::Column::DesiredStateId.eq(desired_state.id))
             .one(&db)
             .await?;
         assert!(created_connection.is_some());
@@ -338,18 +338,18 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn disconnect_objective() -> Result<(), DbErr> {
+    async fn disconnect_desired_state() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
         let ambition = factory::ambition(user.id).insert(&db).await?;
-        let objective = factory::objective(user.id).insert(&db).await?;
-        factory::link_ambition_objective(&db, ambition.id, objective.id).await?;
+        let desired_state = factory::desired_state(user.id).insert(&db).await?;
+        factory::link_ambition_desired_state(&db, ambition.id, desired_state.id).await?;
 
-        AmbitionMutation::disconnect_objective(&db, ambition.id, objective.id).await?;
+        AmbitionMutation::disconnect_desired_state(&db, ambition.id, desired_state.id).await?;
 
-        let connection_in_db = ambitions_objectives::Entity::find()
-            .filter(ambitions_objectives::Column::AmbitionId.eq(ambition.id))
-            .filter(ambitions_objectives::Column::ObjectiveId.eq(objective.id))
+        let connection_in_db = ambitions_desired_states::Entity::find()
+            .filter(ambitions_desired_states::Column::AmbitionId.eq(ambition.id))
+            .filter(ambitions_desired_states::Column::DesiredStateId.eq(desired_state.id))
             .one(&db)
             .await?;
         assert!(connection_in_db.is_none());

@@ -21,8 +21,8 @@ pub struct Model {
 pub enum Relation {
     #[sea_orm(has_many = "super::action_track::Entity")]
     ActionTrack,
-    #[sea_orm(has_many = "super::objectives_actions::Entity")]
-    ObjectivesActions,
+    #[sea_orm(has_many = "super::desired_states_actions::Entity")]
+    DesiredStatesActions,
     #[sea_orm(has_one = "super::tag::Entity")]
     Tag,
     #[sea_orm(
@@ -41,9 +41,9 @@ impl Related<super::action_track::Entity> for Entity {
     }
 }
 
-impl Related<super::objectives_actions::Entity> for Entity {
+impl Related<super::desired_states_actions::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::ObjectivesActions.def()
+        Relation::DesiredStatesActions.def()
     }
 }
 
@@ -59,12 +59,12 @@ impl Related<super::user::Entity> for Entity {
     }
 }
 
-impl Related<super::objective::Entity> for Entity {
+impl Related<super::desired_state::Entity> for Entity {
     fn to() -> RelationDef {
-        super::objectives_actions::Relation::Objective.def()
+        super::desired_states_actions::Relation::DesiredState.def()
     }
     fn via() -> Option<RelationDef> {
-        Some(super::objectives_actions::Relation::Action.def().rev())
+        Some(super::desired_states_actions::Relation::Action.def().rev())
     }
 }
 

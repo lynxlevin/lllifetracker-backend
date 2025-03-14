@@ -9,8 +9,8 @@ use sea_orm::*;
 use std::env;
 
 use routes::{
-    action_routes, action_track_routes, ambition_routes, auth_routes, book_excerpt_routes,
-    memo_routes, mission_memo_routes, objective_routes, tag_routes,
+    action_routes, action_track_routes, ambition_routes, auth_routes, reading_note_routes,
+    memo_routes, challenge_routes, desired_state_routes, tag_routes,
 };
 use migration::{Migrator, MigratorTrait};
 use utils::auth::auth_middleware::AuthenticateUser;
@@ -107,11 +107,11 @@ async fn run(
                     .service(routes::health_check)
                     .configure(auth_routes)
                     .configure(ambition_routes)
-                    .configure(objective_routes)
+                    .configure(desired_state_routes)
                     .configure(action_routes)
                     .configure(memo_routes)
-                    .configure(mission_memo_routes)
-                    .configure(book_excerpt_routes)
+                    .configure(challenge_routes)
+                    .configure(reading_note_routes)
                     .configure(tag_routes)
                     .configure(action_track_routes),
             )

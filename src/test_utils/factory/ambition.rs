@@ -49,7 +49,7 @@ impl AmbitionFactory for ambition::ActiveModel {
             id: Set(uuid::Uuid::new_v4()),
             user_id: Set(ambition.user_id),
             ambition_id: Set(Some(ambition.id)),
-            objective_id: NotSet,
+            desired_state_id: NotSet,
             action_id: NotSet,
             created_at: Set(Utc::now().into()),
         }

@@ -42,7 +42,7 @@ impl ActionMutation {
                     id: Set(uuid::Uuid::new_v4()),
                     user_id: Set(form_data.user_id),
                     ambition_id: NotSet,
-                    objective_id: NotSet,
+                    desired_state_id: NotSet,
                     action_id: Set(Some(action_id)),
                     created_at: Set(now.into()),
                 }
@@ -173,7 +173,7 @@ mod tests {
         let created_tag = tag::Entity::find()
             .filter(tag::Column::UserId.eq(user.id))
             .filter(tag::Column::AmbitionId.is_null())
-            .filter(tag::Column::ObjectiveId.is_null())
+            .filter(tag::Column::DesiredStateId.is_null())
             .filter(tag::Column::ActionId.eq(returned_action.id))
             .one(&db)
             .await?;
