@@ -1,9 +1,7 @@
-use entities::{action, ambition, ambitions_desired_states, desired_state, desired_states_actions};
 use ::types::{AmbitionVisible, AmbitionWithLinksQueryResult, CustomDbErr};
+use entities::{action, ambition, ambitions_desired_states, desired_state, desired_states_actions};
 use migration::{Alias, IntoCondition, NullOrdering::Last};
-use sea_orm::{
-    entity::prelude::*, JoinType::LeftJoin, Order::Asc, QueryOrder, QuerySelect,
-};
+use sea_orm::{entity::prelude::*, JoinType::LeftJoin, Order::Asc, QueryOrder, QuerySelect};
 
 pub struct AmbitionQuery;
 
@@ -31,7 +29,10 @@ impl AmbitionQuery {
             .filter(ambition::Column::Archived.eq(false))
             .column_as(desired_state::Column::Id, "desired_state_id")
             .column_as(desired_state::Column::Name, "desired_state_name")
-            .column_as(desired_state::Column::Description, "desired_state_description")
+            .column_as(
+                desired_state::Column::Description,
+                "desired_state_description",
+            )
             .column_as(desired_state::Column::CreatedAt, "desired_state_created_at")
             .column_as(desired_state::Column::UpdatedAt, "desired_state_updated_at")
             .column_as(action::Column::Id, "action_id")
@@ -51,7 +52,10 @@ impl AmbitionQuery {
                     }),
                 Alias::new("desired_state"),
             )
-            .join_rev(LeftJoin, desired_states_actions::Relation::DesiredState.def())
+            .join_rev(
+                LeftJoin,
+                desired_states_actions::Relation::DesiredState.def(),
+            )
             .join_as(
                 LeftJoin,
                 desired_states_actions::Relation::Action
@@ -63,6 +67,7 @@ impl AmbitionQuery {
                     }),
                 Alias::new("action"),
             )
+            .order_by_with_nulls(ambition::Column::Ordering, Asc, Last)
             .order_by_asc(ambition::Column::CreatedAt)
             .order_by_with_nulls(desired_state::Column::CreatedAt, Asc, Last)
             .order_by_with_nulls(action::Column::CreatedAt, Asc, Last)
@@ -154,7 +159,10 @@ mod tests {
         let ambition_0 = factory::ambition(user.id).insert(&db).await?;
         let desired_state_0 = factory::desired_state(user.id).insert(&db).await?;
         let action_0 = factory::action(user.id).insert(&db).await?;
-        let ambition_1 = factory::ambition(user.id).insert(&db).await?;
+        let ambition_1 = factory::ambition(user.id)
+            .ordering(Some(1))
+            .insert(&db)
+            .await?;
         let desired_state_1 = factory::desired_state(user.id).insert(&db).await?;
         let action_1 = factory::action(user.id).insert(&db).await?;
         factory::link_ambition_desired_state(&db, ambition_0.id, desired_state_0.id).await?;
@@ -174,10 +182,10 @@ mod tests {
             (res[3].id, res[3].desired_state_id, res[3].action_id),
         ];
         let expected = [
+            (ambition_1.id, None, None),
             (ambition_0.id, Some(desired_state_0.id), Some(action_0.id)),
             (ambition_0.id, Some(desired_state_0.id), Some(action_1.id)),
             (ambition_0.id, Some(desired_state_1.id), None),
-            (ambition_1.id, None, None),
         ];
         assert_eq!(res_organized[0], expected[0]);
         assert_eq!(res_organized[1], expected[1]);
@@ -243,7 +251,8 @@ mod tests {
             .await?;
         let archived_action = factory::action(user.id).archived(true).insert(&db).await?;
         factory::link_ambition_desired_state(&db, ambition.id, archived_desired_state.id).await?;
-        factory::link_desired_state_action(&db, archived_desired_state.id, archived_action.id).await?;
+        factory::link_desired_state_action(&db, archived_desired_state.id, archived_action.id)
+            .await?;
 
         let res = AmbitionQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
 
