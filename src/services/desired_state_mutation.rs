@@ -2,7 +2,7 @@ use entities::{desired_state, desired_states_actions, tag};
 use chrono::Utc;
 use sea_orm::entity::prelude::*;
 use sea_orm::ActiveValue::NotSet;
-use sea_orm::{Set, TransactionError, TransactionTrait};
+use sea_orm::{IntoActiveModel, Set, TransactionError, TransactionTrait};
 
 use super::desired_state_query::DesiredStateQuery;
 
@@ -129,6 +129,28 @@ impl DesiredStateMutation {
             },
             Err(e) => Err(e),
         }
+    }
+
+    // FIXME: Reduce query.
+    pub async fn bulk_update_ordering(
+        db: &DbConn,
+        user_id: uuid::Uuid,
+        ordering: Vec<uuid::Uuid>,
+    ) -> Result<(), DbErr> {
+        let desired_states = desired_state::Entity::find()
+            .filter(desired_state::Column::UserId.eq(user_id))
+            .filter(desired_state::Column::Id.is_in(ordering.clone()))
+            .all(db)
+            .await?;
+        for desired_state in desired_states {
+            let order = &ordering.iter().position(|id| id == &desired_state.id);
+            if let Some(order) = order {
+                let mut desired_state = desired_state.into_active_model();
+                desired_state.ordering = Set(Some((order + 1) as i32));
+                desired_state.update(db).await?;
+            }
+        }
+        Ok(())
     }
 }
 
@@ -366,6 +388,59 @@ mod tests {
             .one(&db)
             .await?;
         assert!(connection_in_db.is_none());
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn bulk_update_ordering() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let desired_state_0 = factory::desired_state(user.id).insert(&db).await?;
+        let desired_state_1 = factory::desired_state(user.id).insert(&db).await?;
+        let desired_state_2 = factory::desired_state(user.id).insert(&db).await?;
+
+        let ordering = vec![desired_state_0.id, desired_state_1.id];
+
+        DesiredStateMutation::bulk_update_ordering(&db, user.id, ordering).await?;
+
+        let desired_state_in_db_0 = desired_state::Entity::find_by_id(desired_state_0.id)
+            .one(&db)
+            .await?
+            .unwrap();
+        assert_eq!(desired_state_in_db_0.ordering, Some(1));
+
+        let desired_state_in_db_1 = desired_state::Entity::find_by_id(desired_state_1.id)
+            .one(&db)
+            .await?
+            .unwrap();
+        assert_eq!(desired_state_in_db_1.ordering, Some(2));
+
+        let desired_state_in_db_2 = desired_state::Entity::find_by_id(desired_state_2.id)
+            .one(&db)
+            .await?
+            .unwrap();
+        assert_eq!(desired_state_in_db_2.ordering, None);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn bulk_update_ordering_no_modification_on_different_users_records() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let another_user = factory::user().insert(&db).await?;
+        let another_users_desired_state = factory::desired_state(another_user.id).insert(&db).await?;
+
+        let ordering = vec![another_users_desired_state.id];
+
+        DesiredStateMutation::bulk_update_ordering(&db, user.id, ordering).await?;
+
+        let another_users_desired_state_in_db = desired_state::Entity::find_by_id(another_users_desired_state.id)
+            .one(&db)
+            .await?
+            .unwrap();
+        assert_eq!(another_users_desired_state_in_db.ordering, None);
 
         Ok(())
     }
