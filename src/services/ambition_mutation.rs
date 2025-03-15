@@ -29,6 +29,7 @@ impl AmbitionMutation {
                     user_id: Set(form_data.user_id),
                     name: Set(form_data.name.to_owned()),
                     archived: Set(false),
+                    ordering: NotSet,
                     description: Set(form_data.description),
                     created_at: Set(now.into()),
                     updated_at: Set(now.into()),

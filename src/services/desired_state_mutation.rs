@@ -30,6 +30,7 @@ impl DesiredStateMutation {
                     name: Set(form_data.name.to_owned()),
                     description: Set(form_data.description.to_owned()),
                     archived: Set(false),
+                    ordering: NotSet,
                     created_at: Set(now.into()),
                     updated_at: Set(now.into()),
                 }
