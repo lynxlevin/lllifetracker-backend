@@ -20,8 +20,6 @@ GET {{endpoint}}/api/desired_states
 # @name list_with_links
 GET {{endpoint}}/api/desired_states?links=true
 
-@desired_state_id=4c7215d1-4f13-4c2c-8122-e3b523da2fe0
-
 ###
 # @name get
 GET {{endpoint}}/api/desired_states/{{desired_state_id}}
@@ -60,4 +58,16 @@ Content-Type: application/json
 ###
 # @name disconnect
 DELETE {{endpoint}}/api/desired_states/{{desired_state_id}}/actions/{{action_id}}/connection
+
+###
+# @name bulk_update_ordering
+PUT {{endpoint}}/api/desired_states/bulk_update_ordering
+Content-Type: application/json
+
+{
+  "ordering": [
+    "4c7215d1-4f13-4c2c-8122-e3b523da2fe0",
+    "be7974b1-0d9c-497b-a862-3d45d119de3f"
+  ]
+}
 

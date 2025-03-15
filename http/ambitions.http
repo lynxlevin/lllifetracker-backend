@@ -1,4 +1,4 @@
-# Actions
+# Ambitions
 # Turn on debug to use these.
 ###
 # @name login
@@ -57,3 +57,15 @@ Content-Type: application/json
 ###
 # @name disconnect
 DELETE {{endpoint}}/api/ambitions/{{ambition_id}}/desired_states/{{desired_state_id}}/connection
+
+###
+# @name bulk_update_ordering
+PUT {{endpoint}}/api/ambitions/bulk_update_ordering
+Content-Type: application/json
+
+{
+  "ordering": [
+    "a17c0c88-05d5-4457-86f7-d69d35d6a840",
+    "be7974b1-0d9c-497b-a862-3d45d119de3f"
+  ]
+}
