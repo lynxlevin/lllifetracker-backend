@@ -1,4 +1,5 @@
 mod archive;
+mod bulk_update_ordering;
 mod connect;
 mod create;
 mod delete;
@@ -15,6 +16,7 @@ pub fn desired_state_routes(cfg: &mut ServiceConfig) {
             .service(list::list_desired_states)
             .service(get::get_desired_state)
             .service(create::create_desired_state)
+            .service(bulk_update_ordering::bulk_update_desired_state_ordering)
             .service(update::update_desired_state)
             .service(delete::delete_desired_state)
             .service(archive::archive_desired_state)
