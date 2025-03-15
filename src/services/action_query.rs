@@ -1,5 +1,5 @@
-use entities::{action, ambition, ambitions_desired_states, desired_state, desired_states_actions};
 use ::types::{ActionVisible, ActionWithLinksQueryResult, CustomDbErr};
+use entities::{action, ambition, ambitions_desired_states, desired_state, desired_states_actions};
 use migration::{Alias, IntoCondition, NullOrdering::Last};
 use sea_orm::{entity::prelude::*, JoinType::LeftJoin, Order::Asc, QueryOrder, QuerySelect};
 
@@ -29,7 +29,10 @@ impl ActionQuery {
             .filter(action::Column::Archived.eq(false))
             .column_as(desired_state::Column::Id, "desired_state_id")
             .column_as(desired_state::Column::Name, "desired_state_name")
-            .column_as(desired_state::Column::Description, "desired_state_description")
+            .column_as(
+                desired_state::Column::Description,
+                "desired_state_description",
+            )
             .column_as(desired_state::Column::CreatedAt, "desired_state_created_at")
             .column_as(desired_state::Column::UpdatedAt, "desired_state_updated_at")
             .column_as(ambition::Column::Id, "ambition_id")
@@ -49,7 +52,10 @@ impl ActionQuery {
                     }),
                 Alias::new("desired_state"),
             )
-            .join_rev(LeftJoin, ambitions_desired_states::Relation::DesiredState.def())
+            .join_rev(
+                LeftJoin,
+                ambitions_desired_states::Relation::DesiredState.def(),
+            )
             .join_as(
                 LeftJoin,
                 ambitions_desired_states::Relation::Ambition
@@ -99,46 +105,6 @@ mod tests {
         let action_1 = factory::action(user.id)
             .name("action_1".to_string())
             .description(Some("Action_1".to_string()))
-            .insert(&db)
-            .await?;
-        let _archived_action = factory::action(user.id).archived(true).insert(&db).await?;
-
-        let res = ActionQuery::find_all_by_user_id(&db, user.id).await?;
-
-        let expected = [
-            ActionVisible {
-                id: action_0.id,
-                name: action_0.name,
-                description: action_0.description,
-                trackable: action_0.trackable,
-                created_at: action_0.created_at,
-                updated_at: action_0.updated_at,
-            },
-            ActionVisible {
-                id: action_1.id,
-                name: action_1.name,
-                description: action_1.description,
-                trackable: action_1.trackable,
-                created_at: action_1.created_at,
-                updated_at: action_1.updated_at,
-            },
-        ];
-
-        assert_eq!(res.len(), expected.len());
-        assert_eq!(res[0], expected[0]);
-        assert_eq!(res[1], expected[1]);
-
-        Ok(())
-    }
-
-    #[actix_web::test]
-    async fn find_all_by_user_id_sort_by_ordering() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
-        let user = factory::user().insert(&db).await?;
-        let action_0 = factory::action(user.id)
-            .insert(&db)
-            .await?;
-        let action_1 = factory::action(user.id)
             .ordering(Some(2))
             .insert(&db)
             .await?;
@@ -146,6 +112,7 @@ mod tests {
             .ordering(Some(1))
             .insert(&db)
             .await?;
+        let _archived_action = factory::action(user.id).archived(true).insert(&db).await?;
 
         let res = ActionQuery::find_all_by_user_id(&db, user.id).await?;
 
@@ -283,7 +250,8 @@ mod tests {
             .insert(&db)
             .await?;
         factory::link_desired_state_action(&db, archived_desired_state.id, action.id).await?;
-        factory::link_ambition_desired_state(&db, archived_ambition.id, archived_desired_state.id).await?;
+        factory::link_ambition_desired_state(&db, archived_ambition.id, archived_desired_state.id)
+            .await?;
 
         let res = ActionQuery::find_all_with_linked_by_user_id(&db, user.id).await?;
 
