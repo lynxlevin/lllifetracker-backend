@@ -69,7 +69,9 @@ impl ActionQuery {
             )
             .order_by_with_nulls(action::Column::Ordering, Asc, Last)
             .order_by_asc(action::Column::CreatedAt)
+            .order_by_with_nulls(desired_state::Column::Ordering, Asc, Last)
             .order_by_with_nulls(desired_state::Column::CreatedAt, Asc, Last)
+            .order_by_with_nulls(ambition::Column::Ordering, Asc, Last)
             .order_by_with_nulls(ambition::Column::CreatedAt, Asc, Last)
             .into_model::<ActionWithLinksQueryResult>()
             .all(db)
@@ -159,8 +161,14 @@ mod tests {
         let ambition_0 = factory::ambition(user.id).insert(&db).await?;
         let desired_state_0 = factory::desired_state(user.id).insert(&db).await?;
         let action_0 = factory::action(user.id).insert(&db).await?;
-        let ambition_1 = factory::ambition(user.id).insert(&db).await?;
-        let desired_state_1 = factory::desired_state(user.id).insert(&db).await?;
+        let ambition_1 = factory::ambition(user.id)
+            .ordering(Some(1))
+            .insert(&db)
+            .await?;
+        let desired_state_1 = factory::desired_state(user.id)
+            .ordering(Some(1))
+            .insert(&db)
+            .await?;
         let action_1 = factory::action(user.id)
             .ordering(Some(1))
             .insert(&db)
@@ -183,9 +191,9 @@ mod tests {
         ];
         let expected = [
             (action_1.id, None, None),
-            (action_0.id, Some(desired_state_0.id), Some(ambition_0.id)),
-            (action_0.id, Some(desired_state_0.id), Some(ambition_1.id)),
             (action_0.id, Some(desired_state_1.id), None),
+            (action_0.id, Some(desired_state_0.id), Some(ambition_1.id)),
+            (action_0.id, Some(desired_state_0.id), Some(ambition_0.id)),
         ];
         assert_eq!(res_organized[0], expected[0]);
         assert_eq!(res_organized[1], expected[1]);
