@@ -67,6 +67,7 @@ impl ActionQuery {
                     }),
                 Alias::new("ambition"),
             )
+            .order_by_with_nulls(action::Column::Ordering, Asc, Last)
             .order_by_asc(action::Column::CreatedAt)
             .order_by_with_nulls(desired_state::Column::CreatedAt, Asc, Last)
             .order_by_with_nulls(ambition::Column::CreatedAt, Asc, Last)
@@ -160,7 +161,10 @@ mod tests {
         let action_0 = factory::action(user.id).insert(&db).await?;
         let ambition_1 = factory::ambition(user.id).insert(&db).await?;
         let desired_state_1 = factory::desired_state(user.id).insert(&db).await?;
-        let action_1 = factory::action(user.id).insert(&db).await?;
+        let action_1 = factory::action(user.id)
+            .ordering(Some(1))
+            .insert(&db)
+            .await?;
         factory::link_desired_state_action(&db, desired_state_0.id, action_0.id).await?;
         factory::link_desired_state_action(&db, desired_state_1.id, action_0.id).await?;
         factory::link_ambition_desired_state(&db, ambition_0.id, desired_state_0.id).await?;
@@ -178,10 +182,10 @@ mod tests {
             (res[3].id, res[3].desired_state_id, res[3].ambition_id),
         ];
         let expected = [
+            (action_1.id, None, None),
             (action_0.id, Some(desired_state_0.id), Some(ambition_0.id)),
             (action_0.id, Some(desired_state_0.id), Some(ambition_1.id)),
             (action_0.id, Some(desired_state_1.id), None),
-            (action_1.id, None, None),
         ];
         assert_eq!(res_organized[0], expected[0]);
         assert_eq!(res_organized[1], expected[1]);

@@ -15,6 +15,7 @@ impl AmbitionQuery {
         ambition::Entity::find()
             .filter(ambition::Column::UserId.eq(user_id))
             .filter(ambition::Column::Archived.eq(false))
+            .order_by_with_nulls(ambition::Column::Ordering, Asc, Last)
             .order_by_asc(ambition::Column::CreatedAt)
             .into_partial_model::<AmbitionVisible>()
             .all(db)
@@ -100,6 +101,11 @@ mod tests {
             .await?;
         let ambition_1 = factory::ambition(user.id)
             .name("ambition_1".to_string())
+            .ordering(Some(2))
+            .insert(&db)
+            .await?;
+        let ambition_2 = factory::ambition(user.id)
+            .ordering(Some(1))
             .insert(&db)
             .await?;
         let _archived_ambition = factory::ambition(user.id)
@@ -111,11 +117,11 @@ mod tests {
 
         let expected = [
             AmbitionVisible {
-                id: ambition_0.id,
-                name: ambition_0.name,
-                description: ambition_0.description,
-                created_at: ambition_0.created_at,
-                updated_at: ambition_0.updated_at,
+                id: ambition_2.id,
+                name: ambition_2.name,
+                description: ambition_2.description,
+                created_at: ambition_2.created_at,
+                updated_at: ambition_2.updated_at,
             },
             AmbitionVisible {
                 id: ambition_1.id,
@@ -124,11 +130,19 @@ mod tests {
                 created_at: ambition_1.created_at,
                 updated_at: ambition_1.updated_at,
             },
+            AmbitionVisible {
+                id: ambition_0.id,
+                name: ambition_0.name,
+                description: ambition_0.description,
+                created_at: ambition_0.created_at,
+                updated_at: ambition_0.updated_at,
+            },
         ];
 
         assert_eq!(res.len(), expected.len());
         assert_eq!(res[0], expected[0]);
         assert_eq!(res[1], expected[1]);
+        assert_eq!(res[2], expected[2]);
 
         Ok(())
     }
