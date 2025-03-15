@@ -12,6 +12,7 @@ pub fn desired_state(user_id: Uuid) -> desired_state::ActiveModel {
         name: Set("desired_state".to_string()),
         description: Set(None),
         archived: Set(false),
+        ordering: NotSet,
         created_at: Set(now.into()),
         updated_at: Set(now.into()),
     }
@@ -21,6 +22,7 @@ pub trait DesiredStateFactory {
     fn name(self, name: String) -> desired_state::ActiveModel;
     fn description(self, description: Option<String>) -> desired_state::ActiveModel;
     fn archived(self, archived: bool) -> desired_state::ActiveModel;
+    fn ordering(self, ordering: Option<i32>) -> desired_state::ActiveModel;
     fn insert_with_tag(
         self,
         db: &DbConn,
@@ -40,6 +42,11 @@ impl DesiredStateFactory for desired_state::ActiveModel {
 
     fn archived(mut self, archived: bool) -> desired_state::ActiveModel {
         self.archived = Set(archived);
+        self
+    }
+
+    fn ordering(mut self, ordering: Option<i32>) -> desired_state::ActiveModel {
+        self.ordering = Set(ordering);
         self
     }
 
