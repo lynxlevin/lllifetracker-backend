@@ -12,6 +12,7 @@ pub fn ambition(user_id: Uuid) -> ambition::ActiveModel {
         name: Set("ambition".to_string()),
         description: Set(None),
         archived: Set(false),
+        ordering: NotSet,
         created_at: Set(now.into()),
         updated_at: Set(now.into()),
     }
@@ -21,6 +22,7 @@ pub trait AmbitionFactory {
     fn name(self, name: String) -> ambition::ActiveModel;
     fn description(self, description: Option<String>) -> ambition::ActiveModel;
     fn archived(self, archived: bool) -> ambition::ActiveModel;
+    fn ordering(self, ordering: Option<i32>) -> ambition::ActiveModel;
     fn insert_with_tag(
         self,
         db: &DbConn,
@@ -40,6 +42,11 @@ impl AmbitionFactory for ambition::ActiveModel {
 
     fn archived(mut self, archived: bool) -> ambition::ActiveModel {
         self.archived = Set(archived);
+        self
+    }
+
+    fn ordering(mut self, ordering: Option<i32>) -> ambition::ActiveModel {
+        self.ordering = Set(ordering);
         self
     }
 

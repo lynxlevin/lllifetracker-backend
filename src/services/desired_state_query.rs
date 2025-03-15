@@ -1,5 +1,5 @@
-use entities::{action, ambition, ambitions_desired_states, desired_state, desired_states_actions};
 use ::types::{CustomDbErr, DesiredStateVisible, DesiredStateWithLinksQueryResult};
+use entities::{action, ambition, ambitions_desired_states, desired_state, desired_states_actions};
 use migration::{Alias, IntoCondition, NullOrdering::Last};
 use sea_orm::{entity::prelude::*, JoinType::LeftJoin, Order::Asc, QueryOrder, QuerySelect};
 
@@ -19,6 +19,7 @@ impl DesiredStateQuery {
         desired_state::Entity::find()
             .filter(desired_state::Column::UserId.eq(user_id))
             .filter(desired_state::Column::Archived.eq(false))
+            .order_by_with_nulls(desired_state::Column::Ordering, Asc, Last)
             .order_by_asc(desired_state::Column::CreatedAt)
             .into_partial_model::<DesiredStateVisible>()
             .all(db)
@@ -42,7 +43,10 @@ impl DesiredStateQuery {
             .column_as(action::Column::Description, "action_description")
             .column_as(action::Column::CreatedAt, "action_created_at")
             .column_as(action::Column::UpdatedAt, "action_updated_at")
-            .join_rev(LeftJoin, desired_states_actions::Relation::DesiredState.def())
+            .join_rev(
+                LeftJoin,
+                desired_states_actions::Relation::DesiredState.def(),
+            )
             .join_as(
                 LeftJoin,
                 desired_states_actions::Relation::Action
@@ -54,7 +58,10 @@ impl DesiredStateQuery {
                     }),
                 Alias::new("action"),
             )
-            .join_rev(LeftJoin, ambitions_desired_states::Relation::DesiredState.def())
+            .join_rev(
+                LeftJoin,
+                ambitions_desired_states::Relation::DesiredState.def(),
+            )
             .join_as(
                 LeftJoin,
                 ambitions_desired_states::Relation::Ambition
@@ -66,8 +73,11 @@ impl DesiredStateQuery {
                     }),
                 Alias::new("ambition"),
             )
+            .order_by_with_nulls(desired_state::Column::Ordering, Asc, Last)
             .order_by_asc(desired_state::Column::CreatedAt)
+            .order_by_with_nulls(ambition::Column::Ordering, Asc, Last)
             .order_by_with_nulls(ambition::Column::CreatedAt, Asc, Last)
+            .order_by_with_nulls(action::Column::Ordering, Asc, Last)
             .order_by_with_nulls(action::Column::CreatedAt, Asc, Last)
             .into_model::<DesiredStateWithLinksQueryResult>()
             .all(db)
@@ -104,6 +114,11 @@ mod tests {
         let desired_state_1 = factory::desired_state(user.id)
             .name("desired_state_1".to_string())
             .description(Some("desired_state_1".to_string()))
+            .ordering(Some(2))
+            .insert(&db)
+            .await?;
+        let desired_state_2 = factory::desired_state(user.id)
+            .ordering(Some(1))
             .insert(&db)
             .await?;
         let _archived_desired_state = factory::desired_state(user.id)
@@ -115,11 +130,11 @@ mod tests {
 
         let expected = [
             DesiredStateVisible {
-                id: desired_state_0.id,
-                name: desired_state_0.name,
-                description: desired_state_0.description,
-                created_at: desired_state_0.created_at,
-                updated_at: desired_state_0.updated_at,
+                id: desired_state_2.id,
+                name: desired_state_2.name,
+                description: desired_state_2.description,
+                created_at: desired_state_2.created_at,
+                updated_at: desired_state_2.updated_at,
             },
             DesiredStateVisible {
                 id: desired_state_1.id,
@@ -128,11 +143,19 @@ mod tests {
                 created_at: desired_state_1.created_at,
                 updated_at: desired_state_1.updated_at,
             },
+            DesiredStateVisible {
+                id: desired_state_0.id,
+                name: desired_state_0.name,
+                description: desired_state_0.description,
+                created_at: desired_state_0.created_at,
+                updated_at: desired_state_0.updated_at,
+            },
         ];
 
         assert_eq!(res.len(), expected.len());
         assert_eq!(res[0], expected[0]);
         assert_eq!(res[1], expected[1]);
+        assert_eq!(res[2], expected[2]);
 
         Ok(())
     }
@@ -144,9 +167,18 @@ mod tests {
         let ambition_0 = factory::ambition(user.id).insert(&db).await?;
         let desired_state_0 = factory::desired_state(user.id).insert(&db).await?;
         let action_0 = factory::action(user.id).insert(&db).await?;
-        let ambition_1 = factory::ambition(user.id).insert(&db).await?;
-        let desired_state_1 = factory::desired_state(user.id).insert(&db).await?;
-        let action_1 = factory::action(user.id).insert(&db).await?;
+        let ambition_1 = factory::ambition(user.id)
+            .ordering(Some(1))
+            .insert(&db)
+            .await?;
+        let desired_state_1 = factory::desired_state(user.id)
+            .ordering(Some(1))
+            .insert(&db)
+            .await?;
+        let action_1 = factory::action(user.id)
+            .ordering(Some(1))
+            .insert(&db)
+            .await?;
         factory::link_ambition_desired_state(&db, ambition_0.id, desired_state_0.id).await?;
         factory::link_ambition_desired_state(&db, ambition_1.id, desired_state_0.id).await?;
         factory::link_desired_state_action(&db, desired_state_0.id, action_0.id).await?;
@@ -166,11 +198,11 @@ mod tests {
             (res[4].id, res[4].ambition_id, res[4].action_id),
         ];
         let expected = [
-            (desired_state_0.id, Some(ambition_0.id), Some(action_0.id)),
-            (desired_state_0.id, Some(ambition_0.id), Some(action_1.id)),
-            (desired_state_0.id, Some(ambition_1.id), Some(action_0.id)),
-            (desired_state_0.id, Some(ambition_1.id), Some(action_1.id)),
             (desired_state_1.id, None, Some(action_1.id)),
+            (desired_state_0.id, Some(ambition_1.id), Some(action_1.id)),
+            (desired_state_0.id, Some(ambition_1.id), Some(action_0.id)),
+            (desired_state_0.id, Some(ambition_0.id), Some(action_1.id)),
+            (desired_state_0.id, Some(ambition_0.id), Some(action_0.id)),
         ];
         assert_eq!(res_organized[0], expected[0]);
         assert_eq!(res_organized[1], expected[1]);

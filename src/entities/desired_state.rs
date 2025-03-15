@@ -13,6 +13,7 @@ pub struct Model {
     pub updated_at: DateTimeWithTimeZone,
     pub description: Option<String>,
     pub archived: bool,
+    pub ordering: Option<i32>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

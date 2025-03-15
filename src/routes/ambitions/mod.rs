@@ -1,4 +1,5 @@
 mod archive;
+mod bulk_update_ordering;
 mod connect;
 mod create;
 mod delete;
@@ -15,6 +16,7 @@ pub fn ambition_routes(cfg: &mut ServiceConfig) {
             .service(list::list_ambitions)
             .service(get::get_ambition)
             .service(create::create_ambition)
+            .service(bulk_update_ordering::bulk_update_ambition_ordering)
             .service(update::update_ambition)
             .service(delete::delete_ambition)
             .service(archive::archive_ambition)

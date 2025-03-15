@@ -298,8 +298,6 @@ mod tests {
         let action_0 = factory::action(user.id).insert(&db).await?;
         let action_1 = factory::action(user.id).insert(&db).await?;
         let action_2 = factory::action(user.id).insert(&db).await?;
-        let another_user = factory::user().insert(&db).await?;
-        let another_users_action = factory::action(another_user.id).insert(&db).await?;
 
         let ordering = vec![action_0.id, action_1.id];
 
@@ -322,6 +320,20 @@ mod tests {
             .await?
             .unwrap();
         assert_eq!(action_in_db_2.ordering, None);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn bulk_update_ordering_no_modification_on_different_users_records() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let another_user = factory::user().insert(&db).await?;
+        let another_users_action = factory::action(another_user.id).insert(&db).await?;
+
+        let ordering = vec![another_users_action.id];
+
+        ActionMutation::bulk_update_ordering(&db, user.id, ordering).await?;
 
         let another_users_action_in_db = action::Entity::find_by_id(another_users_action.id)
             .one(&db)

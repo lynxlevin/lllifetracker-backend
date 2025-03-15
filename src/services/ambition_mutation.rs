@@ -2,7 +2,7 @@ use entities::{ambition, ambitions_desired_states, tag};
 use chrono::Utc;
 use sea_orm::entity::prelude::*;
 use sea_orm::ActiveValue::NotSet;
-use sea_orm::{Set, TransactionError, TransactionTrait};
+use sea_orm::{IntoActiveModel, Set, TransactionError, TransactionTrait};
 
 use super::ambition_query::AmbitionQuery;
 
@@ -29,6 +29,7 @@ impl AmbitionMutation {
                     user_id: Set(form_data.user_id),
                     name: Set(form_data.name.to_owned()),
                     archived: Set(false),
+                    ordering: NotSet,
                     description: Set(form_data.description),
                     created_at: Set(now.into()),
                     updated_at: Set(now.into()),
@@ -128,6 +129,28 @@ impl AmbitionMutation {
             },
             Err(e) => Err(e),
         }
+    }
+
+    // FIXME: Reduce query.
+    pub async fn bulk_update_ordering(
+        db: &DbConn,
+        user_id: uuid::Uuid,
+        ordering: Vec<uuid::Uuid>,
+    ) -> Result<(), DbErr> {
+        let ambitions = ambition::Entity::find()
+            .filter(ambition::Column::UserId.eq(user_id))
+            .filter(ambition::Column::Id.is_in(ordering.clone()))
+            .all(db)
+            .await?;
+        for ambition in ambitions {
+            let order = &ordering.iter().position(|id| id == &ambition.id);
+            if let Some(order) = order {
+                let mut ambition = ambition.into_active_model();
+                ambition.ordering = Set(Some((order + 1) as i32));
+                ambition.update(db).await?;
+            }
+        }
+        Ok(())
     }
 }
 
@@ -353,6 +376,59 @@ mod tests {
             .one(&db)
             .await?;
         assert!(connection_in_db.is_none());
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn bulk_update_ordering() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let ambition_0 = factory::ambition(user.id).insert(&db).await?;
+        let ambition_1 = factory::ambition(user.id).insert(&db).await?;
+        let ambition_2 = factory::ambition(user.id).insert(&db).await?;
+
+        let ordering = vec![ambition_0.id, ambition_1.id];
+
+        AmbitionMutation::bulk_update_ordering(&db, user.id, ordering).await?;
+
+        let ambition_in_db_0 = ambition::Entity::find_by_id(ambition_0.id)
+            .one(&db)
+            .await?
+            .unwrap();
+        assert_eq!(ambition_in_db_0.ordering, Some(1));
+
+        let ambition_in_db_1 = ambition::Entity::find_by_id(ambition_1.id)
+            .one(&db)
+            .await?
+            .unwrap();
+        assert_eq!(ambition_in_db_1.ordering, Some(2));
+
+        let ambition_in_db_2 = ambition::Entity::find_by_id(ambition_2.id)
+            .one(&db)
+            .await?
+            .unwrap();
+        assert_eq!(ambition_in_db_2.ordering, None);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn bulk_update_ordering_no_modification_on_different_users_records() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let another_user = factory::user().insert(&db).await?;
+        let another_users_ambition = factory::ambition(another_user.id).insert(&db).await?;
+
+        let ordering = vec![another_users_ambition.id];
+
+        AmbitionMutation::bulk_update_ordering(&db, user.id, ordering).await?;
+
+        let another_users_ambition_in_db = ambition::Entity::find_by_id(another_users_ambition.id)
+            .one(&db)
+            .await?
+            .unwrap();
+        assert_eq!(another_users_ambition_in_db.ordering, None);
 
         Ok(())
     }
