@@ -8,6 +8,7 @@ pub mod challenge_mutation;
 pub mod challenge_query;
 pub mod desired_state_mutation;
 pub mod desired_state_query;
+pub mod diary_mutation;
 pub mod diary_query;
 pub mod memo_mutation;
 pub mod memo_query;

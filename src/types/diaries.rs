@@ -12,7 +12,7 @@ pub struct DiaryVisible {
     pub positive_text: Option<String>,
     pub negative_text: Option<String>,
     pub date: chrono::NaiveDate,
-    pub score: i16,
+    pub score: Option<i16>,
 }
 
 impl From<diary::Model> for DiaryVisible {
@@ -33,7 +33,7 @@ pub struct DiaryWithTagQueryResult {
     pub positive_text: Option<String>,
     pub negative_text: Option<String>,
     pub date: chrono::NaiveDate,
-    pub score: i16,
+    pub score: Option<i16>,
     pub tag_id: Option<uuid::Uuid>,
     pub tag_ambition_name: Option<String>,
     pub tag_desired_state_name: Option<String>,
@@ -47,7 +47,7 @@ pub struct DiaryVisibleWithTags {
     pub positive_text: Option<String>,
     pub negative_text: Option<String>,
     pub date: chrono::NaiveDate,
-    pub score: i16,
+    pub score: Option<i16>,
     pub tags: Vec<TagVisible>,
 }
 

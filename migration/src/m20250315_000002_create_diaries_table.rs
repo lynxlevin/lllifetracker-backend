@@ -22,7 +22,7 @@ impl MigrationTrait for Migration {
                     .col(text_null(Diary::NegativeText))
                     .col(date(Diary::Date))
                     .col(
-                        tiny_unsigned(Diary::Score)
+                        tiny_unsigned_null(Diary::Score)
                             .check(Expr::col(Diary::Score).gte(1))
                             .check(Expr::col(Diary::Score).lte(10)),
                     )

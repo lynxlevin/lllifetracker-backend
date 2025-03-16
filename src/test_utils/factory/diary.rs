@@ -9,7 +9,7 @@ pub fn diary(user_id: Uuid) -> diary::ActiveModel {
         positive_text: Set(Some("diary".to_string())),
         negative_text: Set(Some("text".to_string())),
         date: Set(Utc::now().date_naive()),
-        score: Set(8),
+        score: Set(Some(8)),
         user_id: Set(user_id),
     }
 }
