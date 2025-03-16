@@ -15,10 +15,16 @@ pub fn diary(user_id: Uuid) -> diary::ActiveModel {
 }
 
 pub trait DiaryFactory {
+    fn positive_text(self, text: Option<String>) -> diary::ActiveModel;
     fn date(self, date: NaiveDate) -> diary::ActiveModel;
 }
 
 impl DiaryFactory for diary::ActiveModel {
+    fn positive_text(mut self, text: Option<String>) -> diary::ActiveModel {
+        self.positive_text = Set(text);
+        self
+    }
+
     fn date(mut self, date: NaiveDate) -> diary::ActiveModel {
         self.date = Set(date);
         self

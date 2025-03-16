@@ -1,7 +1,7 @@
 use entities::{
     action, action_track, ambition, ambitions_desired_states, challenge, challenges_tags,
-    desired_state, desired_states_actions, memo, memos_tags, reading_note, reading_notes_tags, tag,
-    user,
+    desired_state, desired_states_actions, diary, diaries_tags, memo, memos_tags, reading_note,
+    reading_notes_tags, tag, user,
 };
 
 use sea_orm::{
@@ -33,6 +33,8 @@ pub async fn init_db() -> Result<DbConn, DbErr> {
     stmts.push(schema.create_table_from_entity(reading_note::Entity));
     stmts.push(schema.create_table_from_entity(reading_notes_tags::Entity));
     stmts.push(schema.create_table_from_entity(action_track::Entity));
+    stmts.push(schema.create_table_from_entity(diary::Entity));
+    stmts.push(schema.create_table_from_entity(diaries_tags::Entity));
 
     for stmt in stmts {
         let _ = &db.execute(db.get_database_backend().build(&stmt)).await?;
