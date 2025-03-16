@@ -4,6 +4,7 @@ mod ambitions;
 mod challenges;
 mod db;
 mod desired_states;
+mod diaries;
 mod general;
 mod memos;
 mod reading_notes;
@@ -17,6 +18,7 @@ pub use ambitions::*;
 pub use challenges::*;
 pub use db::CustomDbErr;
 pub use desired_states::*;
+pub use diaries::*;
 pub use general::{
     ErrorResponse, SuccessResponse, INTERNAL_SERVER_ERROR_MESSAGE, USER_EMAIL_KEY, USER_ID_KEY,
 };
