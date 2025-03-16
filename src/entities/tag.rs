@@ -44,6 +44,8 @@ pub enum Relation {
         on_delete = "Cascade"
     )]
     DesiredState,
+    #[sea_orm(has_many = "super::diaries_tags::Entity")]
+    DiariesTags,
     #[sea_orm(has_many = "super::memos_tags::Entity")]
     MemosTags,
     #[sea_orm(has_many = "super::reading_notes_tags::Entity")]
@@ -82,6 +84,12 @@ impl Related<super::desired_state::Entity> for Entity {
     }
 }
 
+impl Related<super::diaries_tags::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::DiariesTags.def()
+    }
+}
+
 impl Related<super::memos_tags::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::MemosTags.def()
@@ -106,6 +114,15 @@ impl Related<super::challenge::Entity> for Entity {
     }
     fn via() -> Option<RelationDef> {
         Some(super::challenges_tags::Relation::Tag.def().rev())
+    }
+}
+
+impl Related<super::diary::Entity> for Entity {
+    fn to() -> RelationDef {
+        super::diaries_tags::Relation::Diary.def()
+    }
+    fn via() -> Option<RelationDef> {
+        Some(super::diaries_tags::Relation::Tag.def().rev())
     }
 }
 
