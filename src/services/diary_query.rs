@@ -48,7 +48,7 @@ impl DiaryQuery {
 #[cfg(test)]
 mod tests {
     use chrono::{Duration, Utc};
-    use test_utils::{self, factory::DiaryFactory, *};
+    use test_utils::{self, *};
 
     use super::*;
 
@@ -58,11 +58,11 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let now = Utc::now();
         let diary_0 = factory::diary(user.id)
-            .positive_text(Some("diary_0".to_string()))
+            .text(Some("diary_0".to_string()))
             .insert(&db)
             .await?;
         let diary_1 = factory::diary(user.id)
-            .positive_text(Some("diary_1".to_string()))
+            .text(Some("diary_1".to_string()))
             .date((now - Duration::days(1)).date_naive())
             .insert(&db)
             .await?;
@@ -80,8 +80,7 @@ mod tests {
         let expected = vec![
             DiaryWithTagQueryResult {
                 id: diary_0.id,
-                positive_text: diary_0.positive_text.clone(),
-                negative_text: diary_0.negative_text.clone(),
+                text: diary_0.text.clone(),
                 date: diary_0.date,
                 score: diary_0.score,
                 tag_id: Some(ambition_tag.id),
@@ -92,8 +91,7 @@ mod tests {
             },
             DiaryWithTagQueryResult {
                 id: diary_1.id,
-                positive_text: diary_1.positive_text.clone(),
-                negative_text: diary_1.negative_text.clone(),
+                text: diary_1.text.clone(),
                 date: diary_1.date,
                 score: diary_1.score,
                 tag_id: Some(desired_state_tag.id),
@@ -104,8 +102,7 @@ mod tests {
             },
             DiaryWithTagQueryResult {
                 id: diary_1.id,
-                positive_text: diary_1.positive_text.clone(),
-                negative_text: diary_1.negative_text.clone(),
+                text: diary_1.text.clone(),
                 date: diary_1.date,
                 score: diary_1.score,
                 tag_id: Some(action_tag.id),

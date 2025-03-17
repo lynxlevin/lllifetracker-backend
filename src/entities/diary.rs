@@ -9,9 +9,7 @@ pub struct Model {
     pub id: Uuid,
     pub user_id: Uuid,
     #[sea_orm(column_type = "Text", nullable)]
-    pub positive_text: Option<String>,
-    #[sea_orm(column_type = "Text", nullable)]
-    pub negative_text: Option<String>,
+    pub text: Option<String>,
     pub date: Date,
     pub score: Option<i16>,
 }

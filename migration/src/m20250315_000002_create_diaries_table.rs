@@ -18,8 +18,7 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(uuid(Diary::Id).primary_key())
                     .col(uuid(Diary::UserId))
-                    .col(text_null(Diary::PositiveText))
-                    .col(text_null(Diary::NegativeText))
+                    .col(text_null(Diary::Text))
                     .col(date(Diary::Date))
                     .col(
                         tiny_unsigned_null(Diary::Score)
@@ -78,8 +77,7 @@ pub enum Diary {
     Table,
     Id,
     UserId,
-    PositiveText,
-    NegativeText,
+    Text,
     Date,
     Score,
 }

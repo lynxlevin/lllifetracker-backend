@@ -1,6 +1,6 @@
 use entities::{
     action, action_track, ambition, ambitions_desired_states, challenge, challenges_tags,
-    desired_state, desired_states_actions, diary, diaries_tags, memo, memos_tags, reading_note,
+    desired_state, desired_states_actions, diaries_tags, diary, memo, memos_tags, reading_note,
     reading_notes_tags, tag, user,
 };
 
@@ -12,7 +12,7 @@ pub mod factory;
 
 pub use factory::{
     ActionFactory, ActionTrackFactory, AmbitionFactory, ChallengeFactory, DesiredStateFactory,
-    MemoFactory, ReadingNoteFactory, UserFactory,
+    DiaryFactory, MemoFactory, ReadingNoteFactory, UserFactory,
 };
 
 pub async fn init_db() -> Result<DbConn, DbErr> {

@@ -9,8 +9,7 @@ use super::TagVisible;
 #[sea_orm(entity = "Diary")]
 pub struct DiaryVisible {
     pub id: uuid::Uuid,
-    pub positive_text: Option<String>,
-    pub negative_text: Option<String>,
+    pub text: Option<String>,
     pub date: chrono::NaiveDate,
     pub score: Option<i16>,
 }
@@ -19,8 +18,7 @@ impl From<diary::Model> for DiaryVisible {
     fn from(item: diary::Model) -> Self {
         DiaryVisible {
             id: item.id,
-            positive_text: item.positive_text,
-            negative_text: item.negative_text,
+            text: item.text,
             date: item.date,
             score: item.score,
         }
@@ -30,8 +28,7 @@ impl From<diary::Model> for DiaryVisible {
 #[derive(FromQueryResult, Debug, serde::Serialize, serde::Deserialize, PartialEq)]
 pub struct DiaryWithTagQueryResult {
     pub id: uuid::Uuid,
-    pub positive_text: Option<String>,
-    pub negative_text: Option<String>,
+    pub text: Option<String>,
     pub date: chrono::NaiveDate,
     pub score: Option<i16>,
     pub tag_id: Option<uuid::Uuid>,
@@ -44,8 +41,7 @@ pub struct DiaryWithTagQueryResult {
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct DiaryVisibleWithTags {
     pub id: uuid::Uuid,
-    pub positive_text: Option<String>,
-    pub negative_text: Option<String>,
+    pub text: Option<String>,
     pub date: chrono::NaiveDate,
     pub score: Option<i16>,
     pub tags: Vec<TagVisible>,
