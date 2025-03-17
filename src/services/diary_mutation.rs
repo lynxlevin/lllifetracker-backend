@@ -131,17 +131,17 @@ impl DiaryMutation {
         .await
     }
 
-    // pub async fn delete(
-    //     db: &DbConn,
-    //     diary_id: uuid::Uuid,
-    //     user_id: uuid::Uuid,
-    // ) -> Result<(), DbErr> {
-    //     DiaryQuery::find_by_id_and_user_id(db, diary_id, user_id)
-    //         .await?
-    //         .delete(db)
-    //         .await?;
-    //     Ok(())
-    // }
+    pub async fn delete(
+        db: &DbConn,
+        diary_id: uuid::Uuid,
+        user_id: uuid::Uuid,
+    ) -> Result<(), DbErr> {
+        DiaryQuery::find_by_id_and_user_id(db, diary_id, user_id)
+            .await?
+            .delete(db)
+            .await?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -434,40 +434,40 @@ mod tests {
         Ok(())
     }
 
-    // #[actix_web::test]
-    // async fn delete() -> Result<(), DbErr> {
-    //     let db = test_utils::init_db().await?;
-    //     let user = factory::user().insert(&db).await?;
-    //     let diary = factory::diary(user.id).insert(&db).await?;
-    //     let (_, tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
-    //     factory::link_diary_tag(&db, diary.id, tag.id).await?;
+    #[actix_web::test]
+    async fn delete() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let diary = factory::diary(user.id).insert(&db).await?;
+        let (_, tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
+        factory::link_diary_tag(&db, diary.id, tag.id).await?;
 
-    //     DiaryMutation::delete(&db, diary.id, user.id).await?;
+        DiaryMutation::delete(&db, diary.id, user.id).await?;
 
-    //     let diary_in_db = diary::Entity::find_by_id(diary.id).one(&db).await?;
-    //     assert!(diary_in_db.is_none());
+        let diary_in_db = diary::Entity::find_by_id(diary.id).one(&db).await?;
+        assert!(diary_in_db.is_none());
 
-    //     let diaries_tags_in_db = diaries_tags::Entity::find()
-    //         .filter(diaries_tags::Column::DiaryId.eq(diary.id))
-    //         .filter(diaries_tags::Column::TagId.eq(tag.id))
-    //         .one(&db)
-    //         .await?;
-    //     assert!(diaries_tags_in_db.is_none());
+        let diaries_tags_in_db = diaries_tags::Entity::find()
+            .filter(diaries_tags::Column::DiaryId.eq(diary.id))
+            .filter(diaries_tags::Column::TagId.eq(tag.id))
+            .one(&db)
+            .await?;
+        assert!(diaries_tags_in_db.is_none());
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 
-    // #[actix_web::test]
-    // async fn delete_unauthorized() -> Result<(), DbErr> {
-    //     let db = test_utils::init_db().await?;
-    //     let user = factory::user().insert(&db).await?;
-    //     let diary = factory::diary(user.id).insert(&db).await?;
+    #[actix_web::test]
+    async fn delete_unauthorized() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let diary = factory::diary(user.id).insert(&db).await?;
 
-    //     let error = DiaryMutation::delete(&db, diary.id, uuid::Uuid::new_v4())
-    //         .await
-    //         .unwrap_err();
-    //     assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
+        let error = DiaryMutation::delete(&db, diary.id, uuid::Uuid::new_v4())
+            .await
+            .unwrap_err();
+        assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 }
