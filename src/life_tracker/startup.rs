@@ -8,11 +8,11 @@ use actix_web::{
 use sea_orm::*;
 use std::env;
 
-use routes::{
-    action_routes, action_track_routes, ambition_routes, auth_routes, reading_note_routes,
-    memo_routes, challenge_routes, desired_state_routes, tag_routes,
-};
 use migration::{Migrator, MigratorTrait};
+use routes::{
+    action_routes, action_track_routes, ambition_routes, auth_routes, challenge_routes,
+    desired_state_routes, diary_routes, memo_routes, reading_note_routes, tag_routes,
+};
 use utils::auth::auth_middleware::AuthenticateUser;
 pub struct Application {
     port: u16,
@@ -113,7 +113,8 @@ async fn run(
                     .configure(challenge_routes)
                     .configure(reading_note_routes)
                     .configure(tag_routes)
-                    .configure(action_track_routes),
+                    .configure(action_track_routes)
+                    .configure(diary_routes),
             )
             .app_data(Data::new(db.clone()))
             .app_data(Data::new(redis_pool.clone()))

@@ -1,0 +1,49 @@
+# Diaries
+# Turn on debug to use these.
+###
+# @name login
+POST {{endpoint}}/api/users/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "password"
+}
+
+###
+# @name list
+GET {{endpoint}}/api/diaries
+
+@diary_id=c76d8f03-7660-4da8-97ee-3e575eb1c408
+@tag_0_id="9c9a0c62-14ac-4635-8696-d6b6230b658e"
+@tag_1_id="1b8e6f8e-a72b-4c97-af76-43ab3f452faa"
+
+###
+# @name create
+POST {{endpoint}}/api/diaries
+Content-Type: application/json
+
+{
+  "text": "This is my second diary.",
+  "date": "2025-03-03",
+  "score": 7,
+  "tag_ids": [{{tag_0_id}}, {{tag_1_id}}]
+}
+
+###
+# @name update
+PUT {{endpoint}}/api/diaries/{{diary_id}}
+Content-Type: application/json
+
+{
+  "text": "This is my first diary.",
+  "date": "2025-03-16",
+  "score": null,
+  "tag_ids": [],
+  "update_keys": ["Score"]
+}
+
+###
+# @name delete
+DELETE {{endpoint}}/api/diaries/{{diary_id}}
+
