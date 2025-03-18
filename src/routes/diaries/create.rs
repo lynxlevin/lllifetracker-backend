@@ -102,7 +102,7 @@ mod tests {
 
         let diary_text = Some("This is a new diary for testing create method.".to_string());
         let today = chrono::Utc::now().date_naive();
-        let diary_score = Some(4);
+        let diary_score = Some(2);
         let req = test::TestRequest::post()
             .uri("/")
             .set_json(RequestBody {

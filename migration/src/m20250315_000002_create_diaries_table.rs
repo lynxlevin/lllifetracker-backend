@@ -23,7 +23,7 @@ impl MigrationTrait for Migration {
                     .col(
                         tiny_unsigned_null(Diary::Score)
                             .check(Expr::col(Diary::Score).gte(1))
-                            .check(Expr::col(Diary::Score).lte(10)),
+                            .check(Expr::col(Diary::Score).lte(5)),
                     )
                     .foreign_key(
                         ForeignKey::create()

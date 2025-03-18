@@ -168,7 +168,7 @@ mod tests {
 
         let diary_text = "This is a new diary for testing create method.".to_string();
         let today = chrono::Utc::now().date_naive();
-        let diary_score = 6;
+        let diary_score = 3;
 
         let form_data = NewDiary {
             text: Some(diary_text.clone()),
