@@ -3837,7 +3837,9 @@ name = "test_utils"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "dotenvy",
  "entities",
+ "migration",
  "sea-orm",
  "uuid",
 ]
