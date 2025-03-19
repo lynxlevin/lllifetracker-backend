@@ -1,11 +1,8 @@
-use entities::{
-    action, action_track, ambition, ambitions_desired_states, challenge, challenges_tags,
-    desired_state, desired_states_actions, memo, memos_tags, reading_note, reading_notes_tags, tag,
-    user,
-};
+use std::env;
 
+use migration::{Migrator, MigratorTrait};
 use sea_orm::{
-    sea_query::TableCreateStatement, ConnectionTrait, Database, DbBackend, DbConn, DbErr, Schema,
+    ConnectionTrait, Database, DbBackend, DbConn, DbErr,
 };
 
 pub mod factory;
@@ -16,26 +13,26 @@ pub use factory::{
 };
 
 pub async fn init_db() -> Result<DbConn, DbErr> {
-    let db = Database::connect("sqlite::memory:").await?;
-    let schema = Schema::new(DbBackend::Sqlite);
-    let mut stmts: Vec<TableCreateStatement> = vec![];
-    stmts.push(schema.create_table_from_entity(user::Entity));
-    stmts.push(schema.create_table_from_entity(ambition::Entity));
-    stmts.push(schema.create_table_from_entity(desired_state::Entity));
-    stmts.push(schema.create_table_from_entity(action::Entity));
-    stmts.push(schema.create_table_from_entity(ambitions_desired_states::Entity));
-    stmts.push(schema.create_table_from_entity(desired_states_actions::Entity));
-    stmts.push(schema.create_table_from_entity(tag::Entity));
-    stmts.push(schema.create_table_from_entity(memo::Entity));
-    stmts.push(schema.create_table_from_entity(memos_tags::Entity));
-    stmts.push(schema.create_table_from_entity(challenge::Entity));
-    stmts.push(schema.create_table_from_entity(challenges_tags::Entity));
-    stmts.push(schema.create_table_from_entity(reading_note::Entity));
-    stmts.push(schema.create_table_from_entity(reading_notes_tags::Entity));
-    stmts.push(schema.create_table_from_entity(action_track::Entity));
-
-    for stmt in stmts {
-        let _ = &db.execute(db.get_database_backend().build(&stmt)).await?;
-    }
-    Ok(db)
+    dotenvy::from_filename(".env.testing").ok();
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let db = Database::connect(&database_url)
+        .await
+        .expect("Failed to open DB connection.");
+    let db_conn = match db.get_database_backend() {
+        DbBackend::MySql => {
+            let url = format!("{}", &database_url);
+            Database::connect(&url)
+                .await
+                .expect("Failed to open DB connection.")
+        }
+        DbBackend::Postgres => {
+            let url = format!("{}", &database_url);
+            Database::connect(&url)
+                .await
+                .expect("Failed to open DB connection.")
+        }
+        DbBackend::Sqlite => db,
+    };
+    Migrator::up(&db_conn, None).await.unwrap();
+    Ok(db_conn)
 }
