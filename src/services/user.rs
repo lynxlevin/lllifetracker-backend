@@ -102,7 +102,7 @@ mod mutation_tests {
     async fn create_user() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let form_data = NewUser {
-            email: "test@test.com".to_string(),
+            email: format!("{}@test.com", uuid::Uuid::new_v4().to_string()),
             password: "password".to_string(),
             first_name: "Lynx".to_string(),
             last_name: "Levin".to_string(),
