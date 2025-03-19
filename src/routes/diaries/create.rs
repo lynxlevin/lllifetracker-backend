@@ -1,12 +1,17 @@
-use entities::user as user_entity;
 use ::types::{self, DiaryVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::diary_mutation::{DiaryMutation, NewDiary};
 use actix_web::{
     post,
     web::{Data, Json, ReqData},
     HttpResponse,
 };
-use sea_orm::DbConn;
+use entities::user as user_entity;
+use sea_orm::{
+    sqlx::error::{Error::Database, ErrorKind},
+    DbConn, DbErr,
+    RuntimeErr::SqlxError,
+    TransactionError,
+};
+use services::diary_mutation::{DiaryMutation, NewDiary};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {
@@ -43,6 +48,21 @@ pub async fn create_diary(
                     HttpResponse::Created().json(res)
                 }
                 Err(e) => {
+                    match &e {
+                        TransactionError::Transaction(DbErr::Query(SqlxError(Database(e)))) => {
+                            match e.kind() {
+                                ErrorKind::UniqueViolation => {
+                                    return HttpResponse::Conflict().json(types::ErrorResponse {
+                                        error:
+                                            "Another diary record for the same date already exists."
+                                                .to_string(),
+                                    })
+                                }
+                                _ => {}
+                            }
+                        }
+                        _ => {}
+                    }
                     tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
                     HttpResponse::InternalServerError().json(types::ErrorResponse {
                         error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
@@ -65,7 +85,7 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait, QuerySelect};
 
-    use entities::{diary, diaries_tags};
+    use entities::{diaries_tags, diary};
     use test_utils::{self, *};
 
     use super::*;
@@ -161,6 +181,33 @@ mod tests {
 
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::UNAUTHORIZED);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn conflict_if_duplicate_exists() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = factory::user().insert(&db).await?;
+        let _existing_diary = factory::diary(user.id)
+            .date(chrono::NaiveDate::from_ymd_opt(2025, 3, 19).unwrap())
+            .insert(&db)
+            .await?;
+
+        let req = test::TestRequest::post()
+            .uri("/")
+            .set_json(RequestBody {
+                text: None,
+                date: chrono::NaiveDate::from_ymd_opt(2025, 3, 19).unwrap(),
+                score: None,
+                tag_ids: vec![],
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::CONFLICT);
 
         Ok(())
     }
