@@ -20,7 +20,7 @@ pub struct NewDiary {
 }
 
 #[derive(serde::Deserialize, Debug, serde::Serialize, Clone, PartialEq)]
-pub enum DiaryKeys {
+pub enum DiaryKey {
     Text,
     Date,
     Score,
@@ -35,7 +35,7 @@ pub struct UpdateDiary {
     pub score: Option<i16>,
     pub tag_ids: Vec<uuid::Uuid>,
     pub user_id: uuid::Uuid,
-    pub update_keys: Vec<DiaryKeys>,
+    pub update_keys: Vec<DiaryKey>,
 }
 
 pub struct DiaryMutation;
@@ -81,16 +81,16 @@ impl DiaryMutation {
         db.transaction::<_, diary::Model, DbErr>(|txn| {
             Box::pin(async move {
                 let mut diary = diary_result?.into_active_model();
-                if form.update_keys.contains(&DiaryKeys::Text) {
+                if form.update_keys.contains(&DiaryKey::Text) {
                     diary.text = Set(form.text);
                 }
-                if form.update_keys.contains(&DiaryKeys::Date) {
+                if form.update_keys.contains(&DiaryKey::Date) {
                     diary.date = Set(form.date);
                 }
-                if form.update_keys.contains(&DiaryKeys::Score) {
+                if form.update_keys.contains(&DiaryKey::Score) {
                     diary.score = Set(form.score);
                 }
-                if form.update_keys.contains(&DiaryKeys::TagIds) {
+                if form.update_keys.contains(&DiaryKey::TagIds) {
                     let tag_ids = form.tag_ids;
                     let linked_tag_ids = diaries_tags::Entity::find()
                         .column_as(diaries_tags::Column::TagId, QueryAs::TagId)
@@ -216,7 +216,7 @@ mod tests {
             score: None,
             tag_ids: vec![tag.id],
             user_id: user.id,
-            update_keys: vec![DiaryKeys::Text],
+            update_keys: vec![DiaryKey::Text],
         };
 
         let returned_diary = DiaryMutation::partial_update(&db, form.clone())
@@ -257,7 +257,7 @@ mod tests {
             score: None,
             tag_ids: vec![tag.id],
             user_id: user.id,
-            update_keys: vec![DiaryKeys::Date],
+            update_keys: vec![DiaryKey::Date],
         };
 
         let returned_diary = DiaryMutation::partial_update(&db, form.clone())
@@ -298,7 +298,7 @@ mod tests {
             score: None,
             tag_ids: vec![tag.id],
             user_id: user.id,
-            update_keys: vec![DiaryKeys::Score],
+            update_keys: vec![DiaryKey::Score],
         };
 
         let returned_diary = DiaryMutation::partial_update(&db, form.clone())
@@ -339,7 +339,7 @@ mod tests {
             score: None,
             tag_ids: vec![tag.id],
             user_id: user.id,
-            update_keys: vec![DiaryKeys::TagIds],
+            update_keys: vec![DiaryKey::TagIds],
         };
 
         let returned_diary = DiaryMutation::partial_update(&db, form.clone())
@@ -382,7 +382,7 @@ mod tests {
             score: None,
             tag_ids: vec![],
             user_id: user.id,
-            update_keys: vec![DiaryKeys::TagIds],
+            update_keys: vec![DiaryKey::TagIds],
         };
 
         let returned_diary = DiaryMutation::partial_update(&db, form.clone())

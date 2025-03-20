@@ -5,8 +5,13 @@ use actix_web::{
     HttpResponse,
 };
 use entities::user as user_entity;
-use sea_orm::{DbConn, DbErr, TransactionError};
-use services::diary_mutation::{DiaryKeys, DiaryMutation, UpdateDiary};
+use sea_orm::{
+    sqlx::error::{Error::Database, ErrorKind},
+    DbConn, DbErr,
+    RuntimeErr::SqlxError,
+    TransactionError,
+};
+use services::diary_mutation::{DiaryKey, DiaryMutation, UpdateDiary};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -19,7 +24,7 @@ struct RequestBody {
     pub date: chrono::NaiveDate,
     pub score: Option<i16>,
     pub tag_ids: Vec<uuid::Uuid>,
-    pub update_keys: Vec<DiaryKeys>,
+    pub update_keys: Vec<DiaryKey>,
 }
 
 #[tracing::instrument(name = "Updating a diary", skip(db, user, req, path_param))]
@@ -47,23 +52,35 @@ pub async fn update_diary(
                     let res: DiaryVisible = diary.into();
                     HttpResponse::Ok().json(res)
                 }
-                Err(e) => match e {
-                    TransactionError::Transaction(DbErr::Custom(message)) => {
-                        match message.parse::<CustomDbErr>().unwrap() {
-                            CustomDbErr::NotFound => {
-                                HttpResponse::NotFound().json(types::ErrorResponse {
-                                    error: "Diary with this id was not found".to_string(),
-                                })
-                            }
-                        }
+                Err(e) => {
+                    match &e {
+                        TransactionError::Transaction(e) => match e {
+                            DbErr::Query(SqlxError(Database(e))) => match e.kind() {
+                                ErrorKind::UniqueViolation => {
+                                    return HttpResponse::Conflict().json(types::ErrorResponse {
+                                        error:
+                                            "Another diary record for the same date already exists."
+                                                .to_string(),
+                                    })
+                                }
+                                _ => {}
+                            },
+                            DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
+                                CustomDbErr::NotFound => {
+                                    return HttpResponse::NotFound().json(types::ErrorResponse {
+                                        error: "Diary with this id was not found".to_string(),
+                                    })
+                                }
+                            },
+                            _ => {}
+                        },
+                        _ => {}
                     }
-                    e => {
-                        tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                        HttpResponse::InternalServerError().json(types::ErrorResponse {
-                            error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                        })
-                    }
-                },
+                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
+                    HttpResponse::InternalServerError().json(types::ErrorResponse {
+                        error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
+                    })
+                }
             }
         }
         None => HttpResponse::Unauthorized().json(types::ErrorResponse {
@@ -110,10 +127,10 @@ mod tests {
             score: None,
             tag_ids: vec![tag.id],
             update_keys: vec![
-                DiaryKeys::Text,
-                DiaryKeys::Date,
-                DiaryKeys::Score,
-                DiaryKeys::TagIds,
+                DiaryKey::Text,
+                DiaryKey::Date,
+                DiaryKey::Score,
+                DiaryKey::TagIds,
             ],
         };
 
@@ -196,6 +213,35 @@ mod tests {
 
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::UNAUTHORIZED);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn conflict_if_duplicate_exists() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = factory::user().insert(&db).await?;
+        let diary = factory::diary(user.id).insert(&db).await?;
+        let _existing_diary = factory::diary(user.id)
+            .date(chrono::NaiveDate::from_ymd_opt(2025, 3, 19).unwrap())
+            .insert(&db)
+            .await?;
+
+        let req = test::TestRequest::put()
+            .uri(&format!("/{}", diary.id))
+            .set_json(RequestBody {
+                text: None,
+                date: chrono::NaiveDate::from_ymd_opt(2025, 3, 19).unwrap(),
+                score: None,
+                tag_ids: vec![],
+                update_keys: vec![DiaryKey::Date],
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::CONFLICT);
 
         Ok(())
     }
