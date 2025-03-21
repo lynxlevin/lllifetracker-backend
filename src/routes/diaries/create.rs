@@ -6,7 +6,7 @@ use actix_web::{
 };
 use entities::user as user_entity;
 use sea_orm::{
-    sqlx::error::{Error::Database, ErrorKind},
+    sqlx::error::Error::Database,
     DbConn, DbErr,
     RuntimeErr::SqlxError,
     TransactionError,
@@ -50,13 +50,21 @@ pub async fn create_diary(
                 Err(e) => {
                     match &e {
                         TransactionError::Transaction(DbErr::Query(SqlxError(Database(e)))) => {
-                            match e.kind() {
-                                ErrorKind::UniqueViolation => {
-                                    return HttpResponse::Conflict().json(types::ErrorResponse {
-                                        error:
-                                            "Another diary record for the same date already exists."
-                                                .to_string(),
-                                    })
+                            match e.constraint() {
+                                Some("diaries_user_id_date_unique_index") => {
+                                        return HttpResponse::Conflict().json(types::ErrorResponse {
+                                            error:
+                                                "Another diary record for the same date already exists."
+                                                    .to_string(),
+                                        })
+                                }
+                                Some("fk-diaries_tags-tag_id") => {
+                                        return HttpResponse::NotFound().json(types::ErrorResponse {
+                                            error:
+                                                "One or more of the tag_ids do not exist."
+                                                    .to_string(),
+                                        })
+
                                 }
                                 _ => {}
                             }
@@ -211,4 +219,64 @@ mod tests {
 
         Ok(())
     }
+
+    // FIXME: Add more validation like invalid UUID after moving to integration test.
+    #[actix_web::test]
+    async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = factory::user().insert(&db).await?;
+        let today = chrono::Utc::now().date_naive();
+
+        let non_existent_tag_req = test::TestRequest::post()
+            .uri("/")
+            .set_json(RequestBody {
+                text: None,
+                date: today,
+                score: None,
+                tag_ids: vec![uuid::Uuid::new_v4()],
+            })
+            .to_request();
+        non_existent_tag_req.extensions_mut().insert(user.clone());
+        let res = test::call_service(&app, non_existent_tag_req).await;
+        assert_eq!(res.status(), http::StatusCode::NOT_FOUND);
+
+        Ok(())
+    }
+
+    // #[actix_web::test]
+    // async fn validation_errors() -> Result<(), DbErr> {
+    //     let db = test_utils::init_db().await?;
+    //     let app = init_app(db.clone()).await;
+    //     let user = factory::user().insert(&db).await?;
+    //     let today = chrono::Utc::now().date_naive();
+
+    //     let score_too_large_req = test::TestRequest::post()
+    //         .uri("/")
+    //         .set_json(RequestBody {
+    //             text: None,
+    //             date: today,
+    //             score: Some(6),
+    //             tag_ids: vec![],
+    //         })
+    //         .to_request();
+    //     score_too_large_req.extensions_mut().insert(user.clone());
+    //     let res = test::call_service(&app, score_too_large_req).await;
+    //     assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
+
+    //     let score_too_small_req = test::TestRequest::post()
+    //         .uri("/")
+    //         .set_json(RequestBody {
+    //             text: None,
+    //             date: today,
+    //             score: Some(0),
+    //             tag_ids: vec![],
+    //         })
+    //         .to_request();
+    //     score_too_small_req.extensions_mut().insert(user.clone());
+    //     let res = test::call_service(&app, score_too_small_req).await;
+    //     assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
+
+    //     Ok(())
+    // }
 }
