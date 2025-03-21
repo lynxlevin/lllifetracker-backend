@@ -1,12 +1,12 @@
-use entities::user as user_entity;
 use ::types::{self, CustomDbErr, MemoVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::memo_mutation::{MemoMutation, UpdateMemo};
 use actix_web::{
     put,
     web::{Data, Json, Path, ReqData},
     HttpResponse,
 };
+use entities::user as user_entity;
 use sea_orm::{DbConn, DbErr, TransactionError};
+use services::memo_mutation::{MemoMutation, UpdateMemo};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -47,23 +47,25 @@ pub async fn update_memo(
                     let res: MemoVisible = memo.into();
                     HttpResponse::Ok().json(res)
                 }
-                Err(e) => match e {
-                    TransactionError::Transaction(DbErr::Custom(message)) => {
-                        match message.parse::<CustomDbErr>().unwrap() {
-                            CustomDbErr::NotFound => {
-                                HttpResponse::NotFound().json(types::ErrorResponse {
-                                    error: "Memo with this id was not found".to_string(),
-                                })
+                Err(e) => {
+                    match &e {
+                        TransactionError::Transaction(DbErr::Custom(message)) => {
+                            match message.parse::<CustomDbErr>().unwrap() {
+                                CustomDbErr::NotFound => {
+                                    return HttpResponse::NotFound().json(types::ErrorResponse {
+                                        error: "Memo with this id was not found".to_string(),
+                                    })
+                                }
+                                _ => {}
                             }
                         }
+                        _ => {}
                     }
-                    e => {
-                        tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                        HttpResponse::InternalServerError().json(types::ErrorResponse {
-                            error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                        })
-                    }
-                },
+                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
+                    HttpResponse::InternalServerError().json(types::ErrorResponse {
+                        error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
+                    })
+                }
             }
         }
         None => HttpResponse::Unauthorized().json(types::ErrorResponse {
