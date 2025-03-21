@@ -1,12 +1,12 @@
-use entities::user as user_entity;
 use ::types::{self, CustomDbErr, DesiredStateVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::desired_state_query::DesiredStateQuery;
 use actix_web::{
     get,
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use entities::user as user_entity;
 use sea_orm::{DbConn, DbErr};
+use services::desired_state_query::DesiredStateQuery;
 
 #[derive(serde::Deserialize, Debug)]
 struct PathParam {
@@ -23,28 +23,34 @@ pub async fn get_desired_state(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match DesiredStateQuery::find_by_id_and_user_id(&db, path_param.desired_state_id, user.id)
-                .await
+            match DesiredStateQuery::find_by_id_and_user_id(
+                &db,
+                path_param.desired_state_id,
+                user.id,
+            )
+            .await
             {
                 Ok(desired_state) => {
                     let res: DesiredStateVisible = desired_state.into();
                     HttpResponse::Ok().json(res)
                 }
-                Err(e) => match e {
-                    DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
-                        CustomDbErr::NotFound => {
-                            HttpResponse::NotFound().json(types::ErrorResponse {
-                                error: "DesiredState with this id was not found".to_string(),
-                            })
-                        }
-                    },
-                    e => {
-                        tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                        HttpResponse::InternalServerError().json(types::ErrorResponse {
-                            error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                        })
+                Err(e) => {
+                    match &e {
+                        DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
+                            CustomDbErr::NotFound => {
+                                return HttpResponse::NotFound().json(types::ErrorResponse {
+                                    error: "DesiredState with this id was not found".to_string(),
+                                })
+                            }
+                            _ => {}
+                        },
+                        _ => {}
                     }
-                },
+                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
+                    HttpResponse::InternalServerError().json(types::ErrorResponse {
+                        error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
+                    })
+                }
             }
         }
         None => HttpResponse::Unauthorized().json("You are not logged in."),
@@ -67,7 +73,12 @@ mod tests {
     async fn init_app(
         db: DbConn,
     ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
-        test::init_service(App::new().service(get_desired_state).app_data(Data::new(db))).await
+        test::init_service(
+            App::new()
+                .service(get_desired_state)
+                .app_data(Data::new(db)),
+        )
+        .await
     }
 
     #[actix_web::test]
@@ -91,7 +102,10 @@ mod tests {
         let returned_desired_state: DesiredStateVisible = test::read_body_json(resp).await;
         assert_eq!(returned_desired_state.id, desired_state.id);
         assert_eq!(returned_desired_state.name, desired_state.name);
-        assert_eq!(returned_desired_state.description, desired_state.description);
+        assert_eq!(
+            returned_desired_state.description,
+            desired_state.description
+        );
         assert_eq!(returned_desired_state.created_at, desired_state.created_at);
         assert_eq!(returned_desired_state.updated_at, desired_state.updated_at);
 
