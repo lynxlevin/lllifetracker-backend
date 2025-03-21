@@ -6,10 +6,7 @@ use actix_web::{
 };
 use entities::user as user_entity;
 use sea_orm::{
-    sqlx::error::{Error::Database, ErrorKind},
-    DbConn, DbErr,
-    RuntimeErr::SqlxError,
-    TransactionError,
+    sqlx::error::Error::Database, DbConn, DbErr, RuntimeErr::SqlxError, TransactionError,
 };
 use services::diary_mutation::{DiaryKey, DiaryMutation, UpdateDiary};
 
@@ -55,12 +52,21 @@ pub async fn update_diary(
                 Err(e) => {
                     match &e {
                         TransactionError::Transaction(e) => match e {
-                            DbErr::Query(SqlxError(Database(e))) => match e.kind() {
-                                ErrorKind::UniqueViolation => {
+                            DbErr::Query(SqlxError(Database(e))) => match e.constraint() {
+                                Some("diaries_user_id_date_unique_index") => {
                                     return HttpResponse::Conflict().json(types::ErrorResponse {
                                         error:
                                             "Another diary record for the same date already exists."
                                                 .to_string(),
+                                    })
+                                }
+                                _ => {}
+                            },
+                            DbErr::Exec(SqlxError(Database(e))) => match e.constraint() {
+                                Some("fk-diaries_tags-tag_id") => {
+                                    return HttpResponse::NotFound().json(types::ErrorResponse {
+                                        error: "One or more of the tag_ids do not exist."
+                                            .to_string(),
                                     })
                                 }
                                 _ => {}
@@ -243,6 +249,31 @@ mod tests {
 
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::CONFLICT);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = factory::user().insert(&db).await?;
+        let diary = factory::diary(user.id).insert(&db).await?;
+
+        let req = test::TestRequest::put()
+            .uri(&format!("/{}", diary.id))
+            .set_json(RequestBody {
+                text: None,
+                date: diary.date,
+                score: None,
+                tag_ids: vec![uuid::Uuid::new_v4()],
+                update_keys: vec![DiaryKey::TagIds],
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::NOT_FOUND);
 
         Ok(())
     }
