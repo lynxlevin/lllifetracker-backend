@@ -46,8 +46,8 @@ pub async fn create_diary(
                 }
                 Err(e) => {
                     match &e {
-                        TransactionError::Transaction(DbErr::Query(SqlxError(Database(e)))) => {
-                            match e.constraint() {
+                        TransactionError::Transaction(e) => match e {
+                            DbErr::Query(SqlxError(Database(e))) => match e.constraint() {
                                 Some("diaries_user_id_date_unique_index") => {
                                     return HttpResponse::Conflict().json(types::ErrorResponse {
                                         error:
@@ -55,6 +55,9 @@ pub async fn create_diary(
                                                 .to_string(),
                                     })
                                 }
+                                _ => {}
+                            },
+                            DbErr::Exec(SqlxError(Database(e))) => match e.constraint() {
                                 Some("fk-diaries_tags-tag_id") => {
                                     return HttpResponse::NotFound().json(types::ErrorResponse {
                                         error: "One or more of the tag_ids do not exist."
@@ -62,8 +65,9 @@ pub async fn create_diary(
                                     })
                                 }
                                 _ => {}
-                            }
-                        }
+                            },
+                            _ => {}
+                        },
                         _ => {}
                     }
                     tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
@@ -238,39 +242,39 @@ mod tests {
         Ok(())
     }
 
-    // #[actix_web::test]
-    // async fn validation_errors() -> Result<(), DbErr> {
-    //     let db = test_utils::init_db().await?;
-    //     let app = init_app(db.clone()).await;
-    //     let user = factory::user().insert(&db).await?;
-    //     let today = chrono::Utc::now().date_naive();
+    #[actix_web::test]
+    async fn validation_errors() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = factory::user().insert(&db).await?;
+        let today = chrono::Utc::now().date_naive();
 
-    //     let score_too_large_req = test::TestRequest::post()
-    //         .uri("/")
-    //         .set_json(RequestBody {
-    //             text: None,
-    //             date: today,
-    //             score: Some(6),
-    //             tag_ids: vec![],
-    //         })
-    //         .to_request();
-    //     score_too_large_req.extensions_mut().insert(user.clone());
-    //     let res = test::call_service(&app, score_too_large_req).await;
-    //     assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
+        let score_too_large_req = test::TestRequest::post()
+            .uri("/")
+            .set_json(RequestBody {
+                text: None,
+                date: today,
+                score: Some(6),
+                tag_ids: vec![],
+            })
+            .to_request();
+        score_too_large_req.extensions_mut().insert(user.clone());
+        let res = test::call_service(&app, score_too_large_req).await;
+        assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
 
-    //     let score_too_small_req = test::TestRequest::post()
-    //         .uri("/")
-    //         .set_json(RequestBody {
-    //             text: None,
-    //             date: today,
-    //             score: Some(0),
-    //             tag_ids: vec![],
-    //         })
-    //         .to_request();
-    //     score_too_small_req.extensions_mut().insert(user.clone());
-    //     let res = test::call_service(&app, score_too_small_req).await;
-    //     assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
+        let score_too_small_req = test::TestRequest::post()
+            .uri("/")
+            .set_json(RequestBody {
+                text: None,
+                date: today,
+                score: Some(0),
+                tag_ids: vec![],
+            })
+            .to_request();
+        score_too_small_req.extensions_mut().insert(user.clone());
+        let res = test::call_service(&app, score_too_small_req).await;
+        assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 }

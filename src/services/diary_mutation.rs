@@ -58,14 +58,18 @@ impl DiaryMutation {
                 .insert(txn)
                 .await?;
 
-                for tag_id in form_data.tag_ids {
-                    diaries_tags::ActiveModel {
+                let tag_links_to_create: Vec<diaries_tags::ActiveModel> = form_data.tag_ids
+                    .clone()
+                    .into_iter()
+                    .map(|tag_id| diaries_tags::ActiveModel {
                         diary_id: Set(created_diary.id),
                         tag_id: Set(tag_id),
-                    }
-                    .insert(txn)
+                    })
+                    .collect();
+                diaries_tags::Entity::insert_many(tag_links_to_create)
+                    .on_empty_do_nothing()
+                    .exec(txn)
                     .await?;
-                }
 
                 Ok(created_diary)
             })
