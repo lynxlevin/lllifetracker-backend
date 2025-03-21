@@ -71,6 +71,7 @@ pub async fn update_diary(
                                         error: "Diary with this id was not found".to_string(),
                                     })
                                 }
+                                _ => {}
                             },
                             _ => {}
                         },

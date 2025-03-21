@@ -6,10 +6,7 @@ use actix_web::{
 };
 use entities::user as user_entity;
 use sea_orm::{
-    sqlx::error::Error::Database,
-    DbConn, DbErr,
-    RuntimeErr::SqlxError,
-    TransactionError,
+    sqlx::error::Error::Database, DbConn, DbErr, RuntimeErr::SqlxError, TransactionError,
 };
 use services::diary_mutation::{DiaryMutation, NewDiary};
 
@@ -52,19 +49,17 @@ pub async fn create_diary(
                         TransactionError::Transaction(DbErr::Query(SqlxError(Database(e)))) => {
                             match e.constraint() {
                                 Some("diaries_user_id_date_unique_index") => {
-                                        return HttpResponse::Conflict().json(types::ErrorResponse {
-                                            error:
-                                                "Another diary record for the same date already exists."
-                                                    .to_string(),
-                                        })
+                                    return HttpResponse::Conflict().json(types::ErrorResponse {
+                                        error:
+                                            "Another diary record for the same date already exists."
+                                                .to_string(),
+                                    })
                                 }
                                 Some("fk-diaries_tags-tag_id") => {
-                                        return HttpResponse::NotFound().json(types::ErrorResponse {
-                                            error:
-                                                "One or more of the tag_ids do not exist."
-                                                    .to_string(),
-                                        })
-
+                                    return HttpResponse::NotFound().json(types::ErrorResponse {
+                                        error: "One or more of the tag_ids do not exist."
+                                            .to_string(),
+                                    })
                                 }
                                 _ => {}
                             }
@@ -220,7 +215,6 @@ mod tests {
         Ok(())
     }
 
-    // FIXME: Add more validation like invalid UUID after moving to integration test.
     #[actix_web::test]
     async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;

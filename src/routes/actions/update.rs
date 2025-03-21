@@ -55,7 +55,7 @@ pub async fn update_action(
                             }
                             _ => {}
                         },
-                        e => {}
+                        _ => {}
                     }
                     tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
                     HttpResponse::InternalServerError().json(types::ErrorResponse {
