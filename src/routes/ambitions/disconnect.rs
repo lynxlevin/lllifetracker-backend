@@ -70,31 +70,38 @@ async fn validate_ownership(
     user_id: uuid::Uuid,
     path_param: &Path<PathParam>,
 ) -> Result<(), ()> {
-    match AmbitionQuery::find_by_id_and_user_id(db, path_param.ambition_id, user_id).await {
-        Ok(_) => match DesiredStateQuery::find_by_id_and_user_id(db, path_param.desired_state_id, user_id)
-            .await
-        {
-            Ok(_) => Ok(()),
-            Err(e) => match e {
-                DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
-                    CustomDbErr::NotFound => Err(()),
-                },
-                e => {
-                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                    Err(())
-                }
-            },
-        },
-        Err(e) => match e {
+    if let Err(e) = AmbitionQuery::find_by_id_and_user_id(db, path_param.ambition_id, user_id).await
+    {
+        match &e {
             DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
-                CustomDbErr::NotFound => Err(()),
+                CustomDbErr::NotFound => {}
+                _ => {
+                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
+                }
             },
             e => {
                 tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                Err(())
             }
-        },
+        }
+        return Err(());
     }
+    if let Err(e) =
+        DesiredStateQuery::find_by_id_and_user_id(db, path_param.desired_state_id, user_id).await
+    {
+        match &e {
+            DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
+                CustomDbErr::NotFound => {}
+                _ => {
+                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
+                }
+            },
+            e => {
+                tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
+            }
+        }
+        return Err(());
+    }
+    Ok(())
 }
 
 #[cfg(test)]

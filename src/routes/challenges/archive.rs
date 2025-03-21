@@ -1,12 +1,12 @@
-use entities::user as user_entity;
-use ::types::{self, CustomDbErr, ChallengeVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::challenge_mutation::ChallengeMutation;
+use ::types::{self, ChallengeVisible, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE};
 use actix_web::{
     put,
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use entities::user as user_entity;
 use sea_orm::{DbConn, DbErr};
+use services::challenge_mutation::ChallengeMutation;
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -28,21 +28,23 @@ pub async fn archive_challenge(
                     let res: ChallengeVisible = challenge.into();
                     HttpResponse::Ok().json(res)
                 }
-                Err(e) => match e {
-                    DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
-                        CustomDbErr::NotFound => {
-                            HttpResponse::NotFound().json(types::ErrorResponse {
-                                error: "Challenge with this id was not found".to_string(),
-                            })
-                        }
-                    },
-                    e => {
-                        tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                        HttpResponse::InternalServerError().json(types::ErrorResponse {
-                            error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                        })
+                Err(e) => {
+                    match &e {
+                        DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
+                            CustomDbErr::NotFound => {
+                                return HttpResponse::NotFound().json(types::ErrorResponse {
+                                    error: "Challenge with this id was not found".to_string(),
+                                })
+                            }
+                            _ => {}
+                        },
+                        _ => {}
                     }
-                },
+                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
+                    HttpResponse::InternalServerError().json(types::ErrorResponse {
+                        error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
+                    })
+                }
             }
         }
         None => HttpResponse::Unauthorized().json(types::ErrorResponse {
@@ -116,10 +118,7 @@ mod tests {
         assert_eq!(updated_challenge.text, challenge.text.clone());
         assert_eq!(updated_challenge.date, challenge.date);
         assert_eq!(updated_challenge.archived, true);
-        assert_eq!(
-            updated_challenge.accomplished_at,
-            challenge.accomplished_at
-        );
+        assert_eq!(updated_challenge.accomplished_at, challenge.accomplished_at);
         assert_eq!(updated_challenge.user_id, user.id);
         assert_eq!(updated_challenge.created_at, challenge.created_at);
         assert!(updated_challenge.updated_at > challenge.updated_at);

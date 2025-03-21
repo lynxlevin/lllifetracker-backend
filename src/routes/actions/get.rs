@@ -1,12 +1,12 @@
-use entities::user as user_entity;
 use ::types::{self, ActionVisible, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::action_query::ActionQuery;
 use actix_web::{
     get,
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use entities::user as user_entity;
 use sea_orm::{DbConn, DbErr};
+use services::action_query::ActionQuery;
 
 #[derive(serde::Deserialize, Debug)]
 struct PathParam {
@@ -28,21 +28,23 @@ pub async fn get_action(
                     let res: ActionVisible = action.into();
                     HttpResponse::Ok().json(res)
                 }
-                Err(e) => match e {
-                    DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
-                        CustomDbErr::NotFound => {
-                            HttpResponse::NotFound().json(types::ErrorResponse {
-                                error: "Action with this id was not found".to_string(),
-                            })
-                        }
-                    },
-                    e => {
-                        tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                        HttpResponse::InternalServerError().json(types::ErrorResponse {
-                            error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                        })
+                Err(e) => {
+                    match &e {
+                        DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
+                            CustomDbErr::NotFound => {
+                                return HttpResponse::NotFound().json(types::ErrorResponse {
+                                    error: "Action with this id was not found".to_string(),
+                                })
+                            }
+                            _ => {}
+                        },
+                        _ => {}
                     }
-                },
+                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
+                    HttpResponse::InternalServerError().json(types::ErrorResponse {
+                        error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
+                    })
+                }
             }
         }
         None => HttpResponse::Unauthorized().json("You are not logged in."),

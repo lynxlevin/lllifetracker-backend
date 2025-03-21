@@ -54,7 +54,8 @@ pub async fn disconnect_action(
                     }
                 }
                 Err(_) => HttpResponse::NotFound().json(types::ErrorResponse {
-                    error: "DesiredState or action with the requested ids were not found".to_string(),
+                    error: "DesiredState or action with the requested ids were not found"
+                        .to_string(),
                 }),
             }
         }
@@ -69,30 +70,37 @@ async fn validate_ownership(
     user_id: uuid::Uuid,
     path_param: &Path<PathParam>,
 ) -> Result<(), ()> {
-    match DesiredStateQuery::find_by_id_and_user_id(db, path_param.desired_state_id, user_id).await {
-        Ok(_) => match ActionQuery::find_by_id_and_user_id(db, path_param.action_id, user_id).await
-        {
-            Ok(_) => Ok(()),
-            Err(e) => match e {
-                DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
-                    CustomDbErr::NotFound => Err(()),
-                },
-                e => {
+    if let Err(e) =
+        DesiredStateQuery::find_by_id_and_user_id(db, path_param.desired_state_id, user_id).await
+    {
+        match e {
+            DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
+                CustomDbErr::NotFound => {}
+                _ => {
                     tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                    Err(())
                 }
             },
-        },
-        Err(e) => match e {
-            DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
-                CustomDbErr::NotFound => Err(()),
-            },
-            e => {
+            _ => {
                 tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                Err(())
             }
-        },
+        }
+        return Err(());
     }
+    if let Err(e) = ActionQuery::find_by_id_and_user_id(db, path_param.action_id, user_id).await {
+        match e {
+            DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
+                CustomDbErr::NotFound => {}
+                _ => {
+                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
+                }
+            },
+            _ => {
+                tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
+            }
+        }
+        return Err(());
+    }
+    Ok(())
 }
 
 #[cfg(test)]

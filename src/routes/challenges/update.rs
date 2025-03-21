@@ -1,12 +1,12 @@
-use entities::user as user_entity;
-use ::types::{self, CustomDbErr, ChallengeVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::challenge_mutation::{ChallengeMutation, UpdateChallenge};
+use ::types::{self, ChallengeVisible, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE};
 use actix_web::{
     put,
     web::{Data, Json, Path, ReqData},
     HttpResponse,
 };
+use entities::user as user_entity;
 use sea_orm::{DbConn, DbErr, TransactionError};
+use services::challenge_mutation::{ChallengeMutation, UpdateChallenge};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -45,23 +45,25 @@ pub async fn update_challenge(
                     let res: ChallengeVisible = challenge.into();
                     HttpResponse::Ok().json(res)
                 }
-                Err(e) => match e {
-                    TransactionError::Transaction(DbErr::Custom(message)) => {
-                        match message.parse::<CustomDbErr>().unwrap() {
-                            CustomDbErr::NotFound => {
-                                HttpResponse::NotFound().json(types::ErrorResponse {
-                                    error: "Challenge with this id was not found".to_string(),
-                                })
+                Err(e) => {
+                    match &e {
+                        TransactionError::Transaction(DbErr::Custom(message)) => {
+                            match message.parse::<CustomDbErr>().unwrap() {
+                                CustomDbErr::NotFound => {
+                                    return HttpResponse::NotFound().json(types::ErrorResponse {
+                                        error: "Challenge with this id was not found".to_string(),
+                                    })
+                                }
+                                _ => {}
                             }
                         }
+                        _ => {}
                     }
-                    e => {
-                        tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                        HttpResponse::InternalServerError().json(types::ErrorResponse {
-                            error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                        })
-                    }
-                },
+                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
+                    HttpResponse::InternalServerError().json(types::ErrorResponse {
+                        error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
+                    })
+                }
             }
         }
         None => HttpResponse::Unauthorized().json(types::ErrorResponse {
@@ -92,12 +94,7 @@ mod tests {
     async fn init_app(
         db: DbConn,
     ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
-        test::init_service(
-            App::new()
-                .service(update_challenge)
-                .app_data(Data::new(db)),
-        )
-        .await
+        test::init_service(App::new().service(update_challenge).app_data(Data::new(db))).await
     }
 
     #[actix_web::test]
@@ -129,7 +126,10 @@ mod tests {
         assert_eq!(returned_challenge.text, form.text.clone().unwrap());
         assert_eq!(returned_challenge.date, form.date.unwrap());
         assert_eq!(returned_challenge.archived, challenge.archived);
-        assert_eq!(returned_challenge.accomplished_at, challenge.accomplished_at);
+        assert_eq!(
+            returned_challenge.accomplished_at,
+            challenge.accomplished_at
+        );
         assert_eq!(returned_challenge.created_at, challenge.created_at);
         assert!(returned_challenge.updated_at > challenge.updated_at);
 
@@ -143,14 +143,8 @@ mod tests {
         assert_eq!(updated_challenge.archived, challenge.archived);
         assert_eq!(updated_challenge.accomplished_at, challenge.accomplished_at);
         assert_eq!(updated_challenge.user_id, user.id);
-        assert_eq!(
-            updated_challenge.created_at,
-            returned_challenge.created_at
-        );
-        assert_eq!(
-            updated_challenge.updated_at,
-            returned_challenge.updated_at
-        );
+        assert_eq!(updated_challenge.created_at, returned_challenge.created_at);
+        assert_eq!(updated_challenge.updated_at, returned_challenge.updated_at);
 
         let linked_tag_ids: Vec<uuid::Uuid> = challenges_tags::Entity::find()
             .column_as(challenges_tags::Column::TagId, QueryAs::TagId)
