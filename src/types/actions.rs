@@ -12,6 +12,7 @@ pub struct ActionVisible {
     pub name: String,
     pub description: Option<String>,
     pub trackable: bool,
+    pub color: String,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
 }
@@ -23,6 +24,7 @@ impl From<action::Model> for ActionVisible {
             name: item.name,
             description: item.description,
             trackable: item.trackable,
+            color: item.color,
             created_at: item.created_at,
             updated_at: item.updated_at,
         }

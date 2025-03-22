@@ -1,5 +1,5 @@
 use entities::{action, action_track};
-use ::types::{ActionTrackVisible, ActionTrackWithActionName, CustomDbErr};
+use ::types::{ActionTrackVisible, ActionTrackWithAction, CustomDbErr};
 use chrono::{DateTime, FixedOffset};
 use sea_orm::{entity::prelude::*, JoinType::LeftJoin, QueryOrder, QuerySelect};
 
@@ -61,7 +61,7 @@ impl ActionTrackQuery {
         db: &DbConn,
         user_id: uuid::Uuid,
         active_only: bool,
-    ) -> Result<Vec<ActionTrackWithActionName>, DbErr> {
+    ) -> Result<Vec<ActionTrackWithAction>, DbErr> {
         let query = match active_only {
             true => action_track::Entity::find().filter(action_track::Column::EndedAt.is_null()),
             false => action_track::Entity::find(),
@@ -69,9 +69,10 @@ impl ActionTrackQuery {
         query
             .filter(action_track::Column::UserId.eq(user_id))
             .column_as(action::Column::Name, "action_name")
+            .column_as(action::Column::Color, "action_color")
             .join(LeftJoin, action_track::Relation::Action.def())
             .order_by_desc(action_track::Column::StartedAt)
-            .into_model::<ActionTrackWithActionName>()
+            .into_model::<ActionTrackWithAction>()
             .all(db)
             .await
     }
@@ -181,18 +182,20 @@ mod tests {
         let res = ActionTrackQuery::find_all_by_user_id(&db, user.id, false).await?;
 
         let expected = vec![
-            ActionTrackWithActionName {
+            ActionTrackWithAction {
                 id: action_track_1.id,
                 action_id: Some(action.id),
                 action_name: Some(action.name),
+                action_color: Some(action.color),
                 started_at: action_track_1.started_at,
                 ended_at: action_track_1.ended_at,
                 duration: action_track_1.duration,
             },
-            ActionTrackWithActionName {
+            ActionTrackWithAction {
                 id: action_track_0.id,
                 action_id: None,
                 action_name: None,
+                action_color: None,
                 started_at: action_track_0.started_at,
                 ended_at: action_track_0.ended_at,
                 duration: action_track_0.duration,
@@ -222,10 +225,11 @@ mod tests {
 
         let res = ActionTrackQuery::find_all_by_user_id(&db, user.id, true).await?;
 
-        let expected = vec![ActionTrackWithActionName {
+        let expected = vec![ActionTrackWithAction {
             id: active_action_track.id,
             action_id: Some(action.id),
             action_name: Some(action.name),
+            action_color: Some(action.color),
             started_at: active_action_track.started_at,
             ended_at: active_action_track.ended_at,
             duration: active_action_track.duration,

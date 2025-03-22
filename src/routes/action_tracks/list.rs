@@ -1,13 +1,13 @@
-use entities::user as user_entity;
 use ::types::{self, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::action_track_query::ActionTrackQuery;
 use actix_web::{
     get,
     web::{Data, Query, ReqData},
     HttpResponse,
 };
+use entities::user as user_entity;
 use sea_orm::DbConn;
 use serde::Deserialize;
+use services::action_track_query::ActionTrackQuery;
 
 #[derive(Deserialize, Debug)]
 struct QueryParam {
@@ -46,6 +46,7 @@ pub async fn list_action_tracks(
 
 #[cfg(test)]
 mod tests {
+    use ::types::ActionTrackWithAction;
     use actix_http::Request;
     use actix_web::{
         dev::{Service, ServiceResponse},
@@ -54,7 +55,6 @@ mod tests {
         App, HttpMessage,
     };
     use sea_orm::{entity::prelude::*, DbErr};
-    use ::types::ActionTrackWithActionName;
 
     use test_utils::{self, *};
 
@@ -93,22 +93,23 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let returned_action_tracks: Vec<ActionTrackWithActionName> =
-            test::read_body_json(resp).await;
+        let returned_action_tracks: Vec<ActionTrackWithAction> = test::read_body_json(resp).await;
 
         let expected = vec![
-            ActionTrackWithActionName {
+            ActionTrackWithAction {
                 id: action_track_1.id,
                 action_id: Some(action.id),
                 action_name: Some(action.name),
+                action_color: Some(action.color),
                 started_at: action_track_1.started_at,
                 ended_at: action_track_1.ended_at,
                 duration: action_track_1.duration,
             },
-            ActionTrackWithActionName {
+            ActionTrackWithAction {
                 id: action_track_0.id,
                 action_id: None,
                 action_name: None,
+                action_color: None,
                 started_at: action_track_0.started_at,
                 ended_at: action_track_0.ended_at,
                 duration: action_track_0.duration,
@@ -145,13 +146,13 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let returned_action_tracks: Vec<ActionTrackWithActionName> =
-            test::read_body_json(resp).await;
+        let returned_action_tracks: Vec<ActionTrackWithAction> = test::read_body_json(resp).await;
 
-        let expected = vec![ActionTrackWithActionName {
+        let expected = vec![ActionTrackWithAction {
             id: active_action_track.id,
             action_id: Some(action.id),
             action_name: Some(action.name),
+            action_color: Some(action.color),
             started_at: active_action_track.started_at,
             ended_at: active_action_track.ended_at,
             duration: active_action_track.duration,

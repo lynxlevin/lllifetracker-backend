@@ -14,6 +14,7 @@ pub fn action(user_id: Uuid) -> action::ActiveModel {
         archived: Set(false),
         ordering: NotSet,
         trackable: Set(true),
+        color: Set("#212121".to_string()),
         created_at: Set(now.into()),
         updated_at: Set(now.into()),
     }

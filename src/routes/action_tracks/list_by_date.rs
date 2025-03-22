@@ -1,13 +1,13 @@
-use entities::{sea_orm_active_enums::TimezoneEnum, user as user_entity};
-use ::types::{self, ActionTrackWithActionName, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::action_track_query::ActionTrackQuery;
+use ::types::{self, ActionTrackWithAction, INTERNAL_SERVER_ERROR_MESSAGE};
 use actix_web::{
     get,
     web::{Data, ReqData},
     HttpResponse,
 };
 use chrono::{FixedOffset, TimeZone};
+use entities::{sea_orm_active_enums::TimezoneEnum, user as user_entity};
 use sea_orm::DbConn;
+use services::action_track_query::ActionTrackQuery;
 
 #[tracing::instrument(name = "Listing a user's action tracks by date", skip(db, user))]
 #[get("/by_date")]
@@ -20,7 +20,7 @@ pub async fn list_action_tracks_by_date(
             let user = user.into_inner();
             match ActionTrackQuery::find_all_by_user_id(&db, user.id, false).await {
                 Ok(action_tracks) => {
-                    let mut res: Vec<Vec<ActionTrackWithActionName>> = vec![];
+                    let mut res: Vec<Vec<ActionTrackWithAction>> = vec![];
                     let user_offset = match user.timezone {
                         TimezoneEnum::Utc => FixedOffset::east_opt(0).unwrap(),
                         TimezoneEnum::AsiaTokyo => FixedOffset::east_opt(9 * 3600).unwrap(),
@@ -53,8 +53,8 @@ pub async fn list_action_tracks_by_date(
 }
 
 fn started_on_same_day<Tz2: TimeZone>(
-    date_1: &ActionTrackWithActionName,
-    date_2: &ActionTrackWithActionName,
+    date_1: &ActionTrackWithAction,
+    date_2: &ActionTrackWithAction,
     user_timezone: &Tz2,
 ) -> bool {
     date_1.started_at.with_timezone(user_timezone).date_naive()
@@ -63,6 +63,7 @@ fn started_on_same_day<Tz2: TimeZone>(
 
 #[cfg(test)]
 mod tests {
+    use ::types::ActionTrackWithAction;
     use actix_http::Request;
     use actix_web::{
         dev::{Service, ServiceResponse},
@@ -70,7 +71,6 @@ mod tests {
     };
     use chrono::{Duration, Utc};
     use sea_orm::{entity::prelude::*, DbErr};
-    use ::types::ActionTrackWithActionName;
 
     use test_utils::{self, *};
 
@@ -115,32 +115,35 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let returned_action_tracks: Vec<Vec<ActionTrackWithActionName>> =
+        let returned_action_tracks: Vec<Vec<ActionTrackWithAction>> =
             test::read_body_json(resp).await;
 
         let expected = vec![
             vec![
-                ActionTrackWithActionName {
+                ActionTrackWithAction {
                     id: action_track_1.id,
                     action_id: None,
                     action_name: None,
+                    action_color: None,
                     started_at: action_track_1.started_at,
                     ended_at: action_track_1.ended_at,
                     duration: action_track_1.duration,
                 },
-                ActionTrackWithActionName {
+                ActionTrackWithAction {
                     id: action_track_0.id,
                     action_id: None,
                     action_name: None,
+                    action_color: None,
                     started_at: action_track_0.started_at,
                     ended_at: action_track_0.ended_at,
                     duration: action_track_0.duration,
                 },
             ],
-            vec![ActionTrackWithActionName {
+            vec![ActionTrackWithAction {
                 id: action_track_2.id,
                 action_id: Some(action.id),
                 action_name: Some(action.name),
+                action_color: Some(action.color),
                 started_at: action_track_2.started_at,
                 ended_at: action_track_2.ended_at,
                 duration: action_track_2.duration,

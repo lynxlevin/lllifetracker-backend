@@ -18,7 +18,7 @@ GET {{endpoint}}/api/actions
 # @name list_with_links
 GET {{endpoint}}/api/actions?links=true
 
-@action_id=04306801-2318-4ffa-b5cc-9dab41e817d7
+@action_id=9420a11f-a1fa-46e2-82fe-a5a79bd79a75
 
 ###
 # @name get
@@ -42,7 +42,8 @@ Content-Type: application/json
 {
   "name": "My action edited",
   "description": "Description added",
-  "trackable": false
+  "trackable": null,
+  "color": "#adfadf"
 }
 
 ###
