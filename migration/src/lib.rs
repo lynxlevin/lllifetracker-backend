@@ -25,6 +25,8 @@ mod m20250308_000001_rename_objectives_to_desired_states_table;
 mod m20250313_000001_rename_mission_memos_to_challenges_table;
 mod m20250313_000002_rename_book_excerpts_to_reading_notes_table;
 mod m20250315_000001_add_ordering_to_ambitions_and_desired_states_table;
+mod m20250315_000002_create_diaries_table;
+mod m20250316_000001_create_diaries_tags_table;
 
 pub struct Migrator;
 
@@ -57,6 +59,8 @@ impl MigratorTrait for Migrator {
             Box::new(m20250313_000001_rename_mission_memos_to_challenges_table::Migration),
             Box::new(m20250313_000002_rename_book_excerpts_to_reading_notes_table::Migration),
             Box::new(m20250315_000001_add_ordering_to_ambitions_and_desired_states_table::Migration),
+            Box::new(m20250315_000002_create_diaries_table::Migration),
+            Box::new(m20250316_000001_create_diaries_tags_table::Migration),
         ]
     }
 }

@@ -8,6 +8,8 @@ pub use super::challenge::Entity as Challenge;
 pub use super::challenges_tags::Entity as ChallengesTags;
 pub use super::desired_state::Entity as DesiredState;
 pub use super::desired_states_actions::Entity as DesiredStatesActions;
+pub use super::diaries_tags::Entity as DiariesTags;
+pub use super::diary::Entity as Diary;
 pub use super::memo::Entity as Memo;
 pub use super::memos_tags::Entity as MemosTags;
 pub use super::reading_note::Entity as ReadingNote;

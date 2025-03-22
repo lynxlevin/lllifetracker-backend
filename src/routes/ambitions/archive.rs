@@ -38,7 +38,7 @@ pub async fn archive_ambition(
                             }
                             _ => {}
                         },
-                        e => {}
+                        _ => {}
                     }
                     tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
                     HttpResponse::InternalServerError().json(types::ErrorResponse {

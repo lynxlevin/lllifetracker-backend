@@ -10,6 +10,8 @@ pub mod challenge;
 pub mod challenges_tags;
 pub mod desired_state;
 pub mod desired_states_actions;
+pub mod diaries_tags;
+pub mod diary;
 pub mod memo;
 pub mod memos_tags;
 pub mod reading_note;

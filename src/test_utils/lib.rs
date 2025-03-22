@@ -9,7 +9,7 @@ pub mod factory;
 
 pub use factory::{
     ActionFactory, ActionTrackFactory, AmbitionFactory, ChallengeFactory, DesiredStateFactory,
-    MemoFactory, ReadingNoteFactory, UserFactory,
+    DiaryFactory, MemoFactory, ReadingNoteFactory, UserFactory,
 };
 
 pub async fn init_db() -> Result<DbConn, DbErr> {
