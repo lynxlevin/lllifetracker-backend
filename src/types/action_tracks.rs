@@ -26,10 +26,11 @@ impl From<action_track::Model> for ActionTrackVisible {
 }
 
 #[derive(serde::Serialize, serde::Deserialize, PartialEq, FromQueryResult, Debug)]
-pub struct ActionTrackWithActionName {
+pub struct ActionTrackWithAction {
     pub id: uuid::Uuid,
     pub action_id: Option<uuid::Uuid>,
     pub action_name: Option<String>,
+    pub action_color: Option<String>,
     pub started_at: chrono::DateTime<chrono::FixedOffset>,
     pub ended_at: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub duration: Option<i64>,
