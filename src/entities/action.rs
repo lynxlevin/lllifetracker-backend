@@ -15,6 +15,7 @@ pub struct Model {
     pub archived: bool,
     pub ordering: Option<i32>,
     pub trackable: bool,
+    pub color: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

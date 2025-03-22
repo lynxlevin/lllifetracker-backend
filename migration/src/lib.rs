@@ -8,7 +8,6 @@ mod m20240927_000004_create_ambitions_objectives_table;
 mod m20240927_000005_create_objectives_actions_table;
 mod m20240927_000006_create_tags_table;
 mod m20240927_000007_create_records_table;
-mod m_seed_data;
 mod m20241124_000001_create_memos_table;
 mod m20241124_000002_create_memos_tags_table;
 mod m20241201_000001_add_description_to_objective_action_tables;
@@ -27,6 +26,8 @@ mod m20250313_000002_rename_book_excerpts_to_reading_notes_table;
 mod m20250315_000001_add_ordering_to_ambitions_and_desired_states_table;
 mod m20250315_000002_create_diaries_table;
 mod m20250316_000001_create_diaries_tags_table;
+mod m20250322_000001_add_color_to_actions_table;
+mod m_seed_data;
 
 pub struct Migrator;
 
@@ -58,9 +59,12 @@ impl MigratorTrait for Migrator {
             Box::new(m20250308_000001_rename_objectives_to_desired_states_table::Migration),
             Box::new(m20250313_000001_rename_mission_memos_to_challenges_table::Migration),
             Box::new(m20250313_000002_rename_book_excerpts_to_reading_notes_table::Migration),
-            Box::new(m20250315_000001_add_ordering_to_ambitions_and_desired_states_table::Migration),
+            Box::new(
+                m20250315_000001_add_ordering_to_ambitions_and_desired_states_table::Migration,
+            ),
             Box::new(m20250315_000002_create_diaries_table::Migration),
             Box::new(m20250316_000001_create_diaries_tags_table::Migration),
+            Box::new(m20250322_000001_add_color_to_actions_table::Migration),
         ]
     }
 }
