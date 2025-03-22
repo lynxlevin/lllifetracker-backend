@@ -1,5 +1,5 @@
-use entities::{action, tag};
 use chrono::Utc;
+use entities::{action, tag};
 use sea_orm::{
     entity::prelude::*, ActiveValue::NotSet, IntoActiveModel, Set, TransactionError,
     TransactionTrait,
@@ -59,6 +59,7 @@ impl ActionMutation {
         name: String,
         description: Option<String>,
         trackable: Option<bool>,
+        color: Option<String>,
     ) -> Result<action::Model, DbErr> {
         let mut action: action::ActiveModel =
             ActionQuery::find_by_id_and_user_id(db, action_id, user_id)
@@ -68,6 +69,9 @@ impl ActionMutation {
         action.description = Set(description);
         if let Some(trackable) = trackable {
             action.trackable = Set(trackable);
+        }
+        if let Some(color) = color {
+            action.color = Set(color);
         }
         action.updated_at = Set(Utc::now().into());
         action.update(db).await
@@ -126,9 +130,9 @@ impl ActionMutation {
 mod tests {
     use sea_orm::DbErr;
 
+    use ::types::CustomDbErr;
     use entities::tag;
     use test_utils::{self, *};
-    use ::types::CustomDbErr;
 
     use super::*;
 
@@ -188,6 +192,7 @@ mod tests {
         let new_name = "action_after_update".to_string();
         let new_description = "Action after update.".to_string();
         let new_trackable = false;
+        let new_color = "#ffffff".to_string();
 
         let returned_action = ActionMutation::update(
             &db,
@@ -196,6 +201,7 @@ mod tests {
             new_name.clone(),
             Some(new_description.clone()),
             Some(new_trackable),
+            Some(new_color.clone()),
         )
         .await?;
         assert_eq!(returned_action.id, action.id);
@@ -203,6 +209,7 @@ mod tests {
         assert_eq!(returned_action.description, Some(new_description.clone()));
         assert_eq!(returned_action.archived, action.archived);
         assert_eq!(returned_action.trackable, new_trackable);
+        assert_eq!(returned_action.color, new_color.clone());
         assert_eq!(returned_action.user_id, user.id);
         assert_eq!(returned_action.created_at, action.created_at);
         assert!(returned_action.updated_at > action.updated_at);
@@ -216,6 +223,7 @@ mod tests {
         assert_eq!(updated_action.description, Some(new_description.clone()));
         assert_eq!(updated_action.archived, action.archived);
         assert_eq!(updated_action.trackable, new_trackable);
+        assert_eq!(updated_action.color, new_color.clone());
         assert_eq!(updated_action.user_id, user.id);
         assert_eq!(updated_action.created_at, action.created_at);
         assert_eq!(updated_action.updated_at, returned_action.updated_at);
@@ -231,10 +239,17 @@ mod tests {
 
         let new_name = "action_after_update_unauthorized".to_string();
 
-        let error =
-            ActionMutation::update(&db, action.id, uuid::Uuid::new_v4(), new_name.clone(), None, None)
-                .await
-                .unwrap_err();
+        let error = ActionMutation::update(
+            &db,
+            action.id,
+            uuid::Uuid::new_v4(),
+            new_name.clone(),
+            None,
+            None,
+            None,
+        )
+        .await
+        .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
 
         Ok(())
@@ -322,7 +337,8 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn bulk_update_ordering_no_modification_on_different_users_records() -> Result<(), DbErr> {
+    async fn bulk_update_ordering_no_modification_on_different_users_records() -> Result<(), DbErr>
+    {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
         let another_user = factory::user().insert(&db).await?;
