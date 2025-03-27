@@ -1,6 +1,6 @@
-use entities::{action, action_track};
 use ::types::{ActionTrackVisible, ActionTrackWithAction, CustomDbErr};
 use chrono::{DateTime, FixedOffset};
+use entities::{action, action_track};
 use sea_orm::{entity::prelude::*, JoinType::LeftJoin, QueryOrder, QuerySelect};
 
 pub struct ActionTrackQueryFilters {
@@ -61,10 +61,15 @@ impl ActionTrackQuery {
         db: &DbConn,
         user_id: uuid::Uuid,
         active_only: bool,
+        started_at_gte: Option<chrono::DateTime<chrono::FixedOffset>>,
     ) -> Result<Vec<ActionTrackWithAction>, DbErr> {
         let query = match active_only {
             true => action_track::Entity::find().filter(action_track::Column::EndedAt.is_null()),
             false => action_track::Entity::find(),
+        };
+        let query = match started_at_gte {
+            Some(started_at_gte) => query.filter(action_track::Column::StartedAt.gte(started_at_gte)),
+            None => query
         };
         query
             .filter(action_track::Column::UserId.eq(user_id))
@@ -179,7 +184,7 @@ mod tests {
             .insert(&db)
             .await?;
 
-        let res = ActionTrackQuery::find_all_by_user_id(&db, user.id, false).await?;
+        let res = ActionTrackQuery::find_all_by_user_id(&db, user.id, false, None).await?;
 
         let expected = vec![
             ActionTrackWithAction {
@@ -223,7 +228,7 @@ mod tests {
             .insert(&db)
             .await?;
 
-        let res = ActionTrackQuery::find_all_by_user_id(&db, user.id, true).await?;
+        let res = ActionTrackQuery::find_all_by_user_id(&db, user.id, true, None).await?;
 
         let expected = vec![ActionTrackWithAction {
             id: active_action_track.id,
@@ -233,6 +238,41 @@ mod tests {
             started_at: active_action_track.started_at,
             ended_at: active_action_track.ended_at,
             duration: active_action_track.duration,
+        }];
+
+        assert_eq!(res.len(), expected.len());
+        assert_eq!(res[0], expected[0]);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn find_all_by_user_id_started_at_gte() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let started_at_gte: DateTime<FixedOffset> =
+            DateTime::parse_from_rfc3339("2025-03-27T00:00:00Z").unwrap();
+        let action_track = factory::action_track(user.id)
+            .started_at(started_at_gte)
+            .duration(Some(120))
+            .insert(&db)
+            .await?;
+        let _old_action_track = factory::action_track(user.id)
+            .started_at(started_at_gte - Duration::seconds(1))
+            .duration(Some(120))
+            .insert(&db)
+            .await?;
+
+        let res = ActionTrackQuery::find_all_by_user_id(&db, user.id, false, Some(started_at_gte)).await?;
+
+        let expected = vec![ActionTrackWithAction {
+            id: action_track.id,
+            action_id: None,
+            action_name: None,
+            action_color: None,
+            started_at: action_track.started_at,
+            ended_at: action_track.ended_at,
+            duration: action_track.duration,
         }];
 
         assert_eq!(res.len(), expected.len());

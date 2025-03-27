@@ -12,6 +12,7 @@ use services::action_track_query::ActionTrackQuery;
 #[derive(Deserialize, Debug)]
 struct QueryParam {
     active_only: Option<bool>,
+    started_at_gte: Option<chrono::DateTime<chrono::FixedOffset>>,
 }
 
 #[tracing::instrument(name = "Listing a user's action tracks", skip(db, user))]
@@ -28,6 +29,7 @@ pub async fn list_action_tracks(
                 &db,
                 user.id,
                 query.active_only.unwrap_or(false),
+                query.started_at_gte,
             )
             .await
             {
@@ -54,6 +56,7 @@ mod tests {
         web::scope,
         App, HttpMessage,
     };
+    use chrono::{DateTime, Duration, FixedOffset};
     use sea_orm::{entity::prelude::*, DbErr};
 
     use test_utils::{self, *};
@@ -156,6 +159,50 @@ mod tests {
             started_at: active_action_track.started_at,
             ended_at: active_action_track.ended_at,
             duration: active_action_track.duration,
+        }];
+
+        assert_eq!(returned_action_tracks.len(), expected.len());
+        assert_eq!(returned_action_tracks[0], expected[0]);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn happy_path_started_at_gte() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = factory::user().insert(&db).await?;
+        let started_at_gte: DateTime<FixedOffset> =
+            DateTime::parse_from_rfc3339("2025-03-27T00:00:00Z").unwrap();
+        let action_track = factory::action_track(user.id)
+            .started_at(started_at_gte)
+            .duration(Some(120))
+            .insert(&db)
+            .await?;
+        let _old_action_track = factory::action_track(user.id)
+            .started_at(started_at_gte - Duration::seconds(1))
+            .duration(Some(120))
+            .insert(&db)
+            .await?;
+
+        let req = test::TestRequest::get()
+            .uri(&format!("/?started_at_gte={}", started_at_gte.format("%Y-%m-%dT%H:%M:%SZ")))
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), http::StatusCode::OK);
+
+        let returned_action_tracks: Vec<ActionTrackWithAction> = test::read_body_json(resp).await;
+
+        let expected = vec![ActionTrackWithAction {
+            id: action_track.id,
+            action_id: None,
+            action_name: None,
+            action_color: None,
+            started_at: action_track.started_at,
+            ended_at: action_track.ended_at,
+            duration: action_track.duration,
         }];
 
         assert_eq!(returned_action_tracks.len(), expected.len());
