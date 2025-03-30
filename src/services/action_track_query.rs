@@ -6,8 +6,8 @@ use sea_orm::{entity::prelude::*, JoinType::LeftJoin, QueryOrder, QuerySelect};
 pub struct ActionTrackQueryFilters {
     pub started_at_gte: Option<DateTime<FixedOffset>>,
     pub started_at_lte: Option<DateTime<FixedOffset>>,
-    pub inactive_only: bool,
-    pub with_action_id: bool,
+    pub show_active: bool,
+    pub show_inactive: bool,
 }
 
 pub struct ActionTrackQuery;
@@ -17,8 +17,8 @@ impl ActionTrackQuery {
         ActionTrackQueryFilters {
             started_at_gte: None,
             started_at_lte: None,
-            inactive_only: false,
-            with_action_id: true,
+            show_active: true,
+            show_inactive: true,
         }
     }
 
@@ -38,15 +38,15 @@ impl ActionTrackQuery {
         } else {
             query
         };
-        let query = if filters.inactive_only {
-            query.filter(action_track::Column::EndedAt.is_not_null())
-        } else {
+        let query = if filters.show_active {
             query
-        };
-        let query = if filters.with_action_id {
-            query.filter(action_track::Column::ActionId.is_not_null())
         } else {
-            query.filter(action_track::Column::ActionId.is_null())
+            query.filter(action_track::Column::EndedAt.is_not_null())
+        };
+        let query = if filters.show_inactive {
+            query
+        } else {
+            query.filter(action_track::Column::EndedAt.is_null())
         };
         query
             .filter(action_track::Column::UserId.eq(user_id))
@@ -140,7 +140,7 @@ mod tests {
         let mut filters = ActionTrackQuery::get_default_filters();
         filters.started_at_gte = Some(query_started_at_gte);
         filters.started_at_lte = Some(query_started_at_lte);
-        filters.inactive_only = true;
+        filters.show_active = false;
 
         let res = ActionTrackQuery::find_by_user_id_with_filters(&db, user.id, filters).await?;
         dbg!(&res);
