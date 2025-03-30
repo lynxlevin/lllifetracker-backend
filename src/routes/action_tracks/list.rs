@@ -25,14 +25,10 @@ pub async fn list_action_tracks(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ActionTrackQuery::find_all_by_user_id(
-                &db,
-                user.id,
-                query.active_only.unwrap_or(false),
-                query.started_at_gte,
-            )
-            .await
-            {
+            let mut filters = ActionTrackQuery::get_default_filters();
+            filters.show_inactive = !query.active_only.unwrap_or(false);
+            filters.started_at_gte = query.started_at_gte;
+            match ActionTrackQuery::find_by_user_id_with_filters(&db, user.id, filters).await {
                 Ok(action_tracks) => HttpResponse::Ok().json(action_tracks),
                 Err(e) => {
                     tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
@@ -186,7 +182,10 @@ mod tests {
             .await?;
 
         let req = test::TestRequest::get()
-            .uri(&format!("/?started_at_gte={}", started_at_gte.format("%Y-%m-%dT%H:%M:%SZ")))
+            .uri(&format!(
+                "/?started_at_gte={}",
+                started_at_gte.format("%Y-%m-%dT%H:%M:%SZ")
+            ))
             .to_request();
         req.extensions_mut().insert(user.clone());
 

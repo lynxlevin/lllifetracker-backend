@@ -18,7 +18,13 @@ pub async fn list_action_tracks_by_date(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ActionTrackQuery::find_all_by_user_id(&db, user.id, false, None).await {
+            match ActionTrackQuery::find_by_user_id_with_filters(
+                &db,
+                user.id,
+                ActionTrackQuery::get_default_filters(),
+            )
+            .await
+            {
                 Ok(action_tracks) => {
                     let mut res: Vec<Vec<ActionTrackWithAction>> = vec![];
                     let user_offset = match user.timezone {
