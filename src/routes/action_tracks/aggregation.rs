@@ -30,7 +30,7 @@ pub async fn aggregate_action_tracks(
             let mut filters = ActionTrackQuery::get_default_filters();
             filters.started_at_gte = query.started_at_gte;
             filters.started_at_lte = query.started_at_lte;
-            filters.inactive_only = true;
+            filters.show_active = false;
             match ActionTrackQuery::find_by_user_id_with_filters(&db, user.id, filters).await {
                 Ok(action_tracks) => {
                     let mut res: Vec<ActionTrackAggregationDuration> = vec![];
