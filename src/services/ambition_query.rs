@@ -9,10 +9,15 @@ impl AmbitionQuery {
     pub async fn find_all_by_user_id(
         db: &DbConn,
         user_id: uuid::Uuid,
+        show_only_archived: bool,
     ) -> Result<Vec<AmbitionVisible>, DbErr> {
-        ambition::Entity::find()
-            .filter(ambition::Column::UserId.eq(user_id))
-            .filter(ambition::Column::Archived.eq(false))
+        let query = ambition::Entity::find().filter(ambition::Column::UserId.eq(user_id));
+        let query = match show_only_archived {
+            true => query.filter(ambition::Column::Archived.eq(true)),
+            false => query.filter(ambition::Column::Archived.eq(false)),
+        };
+
+        query
             .order_by_with_nulls(ambition::Column::Ordering, Asc, Last)
             .order_by_asc(ambition::Column::CreatedAt)
             .into_partial_model::<AmbitionVisible>()
@@ -120,7 +125,7 @@ mod tests {
             .insert(&db)
             .await?;
 
-        let res = AmbitionQuery::find_all_by_user_id(&db, user.id).await?;
+        let res = AmbitionQuery::find_all_by_user_id(&db, user.id, false).await?;
 
         let expected = [
             AmbitionVisible {
@@ -155,6 +160,32 @@ mod tests {
     }
 
     #[actix_web::test]
+    async fn find_all_by_user_id_show_archived_only() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let _ambition = factory::ambition(user.id).insert(&db).await?;
+        let archived_ambition = factory::ambition(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
+
+        let res = AmbitionQuery::find_all_by_user_id(&db, user.id, true).await?;
+
+        let expected = [AmbitionVisible {
+            id: archived_ambition.id,
+            name: archived_ambition.name,
+            description: archived_ambition.description,
+            created_at: archived_ambition.created_at,
+            updated_at: archived_ambition.updated_at,
+        }];
+
+        assert_eq!(res.len(), expected.len());
+        assert_eq!(res[0], expected[0]);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
     async fn find_all_with_linked_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
@@ -165,8 +196,14 @@ mod tests {
             .ordering(Some(1))
             .insert(&db)
             .await?;
-        let desired_state_1 = factory::desired_state(user.id).ordering(Some(1)).insert(&db).await?;
-        let action_1 = factory::action(user.id).ordering(Some(1)).insert(&db).await?;
+        let desired_state_1 = factory::desired_state(user.id)
+            .ordering(Some(1))
+            .insert(&db)
+            .await?;
+        let action_1 = factory::action(user.id)
+            .ordering(Some(1))
+            .insert(&db)
+            .await?;
         factory::link_ambition_desired_state(&db, ambition_0.id, desired_state_0.id).await?;
         factory::link_ambition_desired_state(&db, ambition_0.id, desired_state_1.id).await?;
         factory::link_desired_state_action(&db, desired_state_0.id, action_0.id).await?;

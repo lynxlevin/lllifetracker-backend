@@ -16,6 +16,7 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug)]
 struct QueryParam {
     links: Option<bool>,
+    show_archived_only: Option<bool>,
 }
 
 #[tracing::instrument(name = "Listing a user's ambitions", skip(db, user))]
@@ -72,7 +73,7 @@ pub async fn list_ambitions(
                     }
                 }
             } else {
-                match AmbitionQuery::find_all_by_user_id(&db, user.id).await {
+                match AmbitionQuery::find_all_by_user_id(&db, user.id, query.show_archived_only.unwrap_or(false)).await {
                     Ok(ambitions) => HttpResponse::Ok().json(ambitions),
                     Err(e) => {
                         tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
@@ -375,6 +376,40 @@ mod tests {
             "created_at": ambition.created_at,
             "updated_at": ambition.updated_at,
             "desired_states": [],
+        }]);
+
+        let body = serde_json::to_value(&body).unwrap();
+        assert_eq!(expected, body);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn happy_path_show_archived_only() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = factory::user().insert(&db).await?;
+        let _ambition = factory::ambition(user.id).insert(&db).await?;
+        let archived_ambition = factory::ambition(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
+
+        let req = test::TestRequest::get().uri("/?show_archived_only=true").to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), http::StatusCode::OK);
+
+        let body: Vec<AmbitionVisible> = test::read_body_json(resp).await;
+        assert_eq!(body.len(), 1);
+
+        let expected = serde_json::json!([{
+            "id": archived_ambition.id,
+            "name": archived_ambition.name,
+            "description": archived_ambition.description,
+            "created_at": archived_ambition.created_at,
+            "updated_at": archived_ambition.updated_at,
         }]);
 
         let body = serde_json::to_value(&body).unwrap();
