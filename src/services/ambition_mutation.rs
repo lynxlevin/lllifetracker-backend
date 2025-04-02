@@ -96,6 +96,20 @@ impl AmbitionMutation {
         ambition.update(db).await
     }
 
+    pub async fn unarchive(
+        db: &DbConn,
+        ambition_id: uuid::Uuid,
+        user_id: uuid::Uuid,
+    ) -> Result<ambition::Model, DbErr> {
+        let mut ambition: ambition::ActiveModel =
+            AmbitionQuery::find_by_id_and_user_id(db, ambition_id, user_id)
+                .await?
+                .into();
+        ambition.archived = Set(false);
+        ambition.updated_at = Set(Utc::now().into());
+        ambition.update(db).await
+    }
+
     pub async fn connect_desired_state(
         db: &DbConn,
         ambition_id: uuid::Uuid,
@@ -334,6 +348,49 @@ mod tests {
         let ambition = factory::ambition(user.id).insert(&db).await?;
 
         let error = AmbitionMutation::archive(&db, ambition.id, uuid::Uuid::new_v4())
+            .await
+            .unwrap_err();
+        assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn unarchive() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let ambition = factory::ambition(user.id).archived(true).insert(&db).await?;
+
+        let returned_ambition = AmbitionMutation::unarchive(&db, ambition.id, user.id).await?;
+        assert_eq!(returned_ambition.id, ambition.id);
+        assert_eq!(returned_ambition.name, ambition.name.clone());
+        assert_eq!(returned_ambition.description, ambition.description.clone());
+        assert_eq!(returned_ambition.archived, false);
+        assert_eq!(returned_ambition.user_id, user.id);
+        assert_eq!(returned_ambition.created_at, ambition.created_at);
+        assert!(returned_ambition.updated_at > ambition.updated_at);
+
+        let updated_ambition = ambition::Entity::find_by_id(returned_ambition.id)
+            .one(&db)
+            .await?
+            .unwrap();
+        assert_eq!(updated_ambition.name, returned_ambition.name);
+        assert_eq!(updated_ambition.description, returned_ambition.description);
+        assert_eq!(updated_ambition.archived, false);
+        assert_eq!(updated_ambition.user_id, returned_ambition.user_id);
+        assert_eq!(updated_ambition.created_at, returned_ambition.created_at);
+        assert_eq!(updated_ambition.updated_at, returned_ambition.updated_at);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn unarchive_unauthorized() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let ambition = factory::ambition(user.id).archived(true).insert(&db).await?;
+
+        let error = AmbitionMutation::unarchive(&db, ambition.id, uuid::Uuid::new_v4())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
