@@ -103,6 +103,20 @@ impl ActionMutation {
         action.update(db).await
     }
 
+    pub async fn unarchive(
+        db: &DbConn,
+        action_id: uuid::Uuid,
+        user_id: uuid::Uuid,
+    ) -> Result<action::Model, DbErr> {
+        let mut action: action::ActiveModel =
+            ActionQuery::find_by_id_and_user_id(db, action_id, user_id)
+                .await?
+                .into();
+        action.archived = Set(false);
+        action.updated_at = Set(Utc::now().into());
+        action.update(db).await
+    }
+
     // FIXME: Reduce query.
     pub async fn bulk_update_ordering(
         db: &DbConn,
@@ -299,6 +313,51 @@ mod tests {
             .await?
             .unwrap();
         assert!(action_in_db.archived);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn archive_unauthorized() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
+
+        let error = ActionMutation::archive(&db, action.id, uuid::Uuid::new_v4())
+            .await
+            .unwrap_err();
+        assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn unarchive() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).archived(true).insert(&db).await?;
+
+        ActionMutation::unarchive(&db, action.id, user.id).await?;
+
+        let action_in_db = action::Entity::find_by_id(action.id)
+            .one(&db)
+            .await?
+            .unwrap();
+        assert!(!action_in_db.archived);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn unarchive_unauthorized() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).archived(true).insert(&db).await?;
+
+        let error = ActionMutation::unarchive(&db, action.id, uuid::Uuid::new_v4())
+            .await
+            .unwrap_err();
+        assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
 
         Ok(())
     }

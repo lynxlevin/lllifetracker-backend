@@ -1,4 +1,4 @@
-use ::types::{self, AmbitionVisible, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE};
+use ::types::{self, ActionVisible, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE};
 use actix_web::{
     put,
     web::{Data, Path, ReqData},
@@ -6,19 +6,16 @@ use actix_web::{
 };
 use entities::user as user_entity;
 use sea_orm::{DbConn, DbErr};
-use services::ambition_mutation::AmbitionMutation;
+use services::action_mutation::ActionMutation;
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
-    ambition_id: uuid::Uuid,
+    action_id: uuid::Uuid,
 }
 
-#[tracing::instrument(
-    name = "Restoring an ambition from archive",
-    skip(db, user, path_param)
-)]
-#[put("/{ambition_id}/unarchive")]
-pub async fn unarchive_ambition(
+#[tracing::instrument(name = "Restoring an action from archive", skip(db, user, path_param))]
+#[put("/{action_id}/unarchive")]
+pub async fn unarchive_action(
     db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
     path_param: Path<PathParam>,
@@ -26,17 +23,17 @@ pub async fn unarchive_ambition(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match AmbitionMutation::unarchive(&db, path_param.ambition_id, user.id).await {
-                Ok(ambition) => {
-                    let res: AmbitionVisible = ambition.into();
+            match ActionMutation::unarchive(&db, path_param.action_id, user.id).await {
+                Ok(action) => {
+                    let res: ActionVisible = action.into();
                     HttpResponse::Ok().json(res)
                 }
                 Err(e) => {
                     match &e {
-                        DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
+                        DbErr::Custom(message) => match message.parse::<CustomDbErr>().unwrap() {
                             CustomDbErr::NotFound => {
                                 return HttpResponse::NotFound().json(types::ErrorResponse {
-                                    error: "Ambition with this id was not found".to_string(),
+                                    error: "Action with this id was not found".to_string(),
                                 })
                             }
                             _ => {}
@@ -65,7 +62,7 @@ mod tests {
     };
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use entities::ambition;
+    use entities::action;
     use test_utils::{self, *};
 
     use super::*;
@@ -73,12 +70,7 @@ mod tests {
     async fn init_app(
         db: DbConn,
     ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
-        test::init_service(
-            App::new()
-                .service(unarchive_ambition)
-                .app_data(Data::new(db)),
-        )
-        .await
+        test::init_service(App::new().service(unarchive_action).app_data(Data::new(db))).await
     }
 
     #[actix_web::test]
@@ -86,36 +78,33 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
-        let ambition = factory::ambition(user.id)
-            .archived(true)
-            .insert(&db)
-            .await?;
+        let action = factory::action(user.id).archived(true).insert(&db).await?;
 
         let req = test::TestRequest::put()
-            .uri(&format!("/{}/unarchive", ambition.id))
+            .uri(&format!("/{}/unarchive", action.id))
             .to_request();
         req.extensions_mut().insert(user.clone());
 
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::OK);
 
-        let returned_ambition: AmbitionVisible = test::read_body_json(res).await;
-        assert_eq!(returned_ambition.id, ambition.id);
-        assert_eq!(returned_ambition.name, ambition.name.clone());
-        assert_eq!(returned_ambition.description, ambition.description.clone());
-        assert_eq!(returned_ambition.created_at, ambition.created_at);
-        assert!(returned_ambition.updated_at > ambition.updated_at);
+        let returned_action: ActionVisible = test::read_body_json(res).await;
+        assert_eq!(returned_action.id, action.id);
+        assert_eq!(returned_action.name, action.name.clone());
+        assert_eq!(returned_action.description, action.description.clone());
+        assert_eq!(returned_action.created_at, action.created_at);
+        assert!(returned_action.updated_at > action.updated_at);
 
-        let restored_ambition = ambition::Entity::find_by_id(ambition.id)
+        let restored_action = action::Entity::find_by_id(action.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(restored_ambition.id, ambition.id);
-        assert_eq!(restored_ambition.name, ambition.name.clone());
-        assert_eq!(restored_ambition.description, ambition.description.clone());
-        assert_eq!(restored_ambition.archived, false);
-        assert_eq!(restored_ambition.created_at, ambition.created_at);
-        assert_eq!(restored_ambition.updated_at, returned_ambition.updated_at);
+        assert_eq!(restored_action.name, action.name.clone());
+        assert_eq!(restored_action.description, action.description.clone());
+        assert_eq!(restored_action.archived, false);
+        assert_eq!(restored_action.user_id, user.id);
+        assert_eq!(restored_action.created_at, returned_action.created_at);
+        assert_eq!(restored_action.updated_at, returned_action.updated_at);
 
         Ok(())
     }
@@ -125,13 +114,10 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
-        let ambition = factory::ambition(user.id)
-            .archived(true)
-            .insert(&db)
-            .await?;
+        let action = factory::action(user.id).archived(true).insert(&db).await?;
 
         let req = test::TestRequest::put()
-            .uri(&format!("/{}/unarchive", ambition.id))
+            .uri(&format!("/{}/unarchive", action.id))
             .to_request();
 
         let res = test::call_service(&app, req).await;
