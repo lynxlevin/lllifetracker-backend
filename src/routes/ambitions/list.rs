@@ -1,17 +1,18 @@
 use std::vec;
 
-use entities::user as user_entity;
 use ::types::{
-    self, ActionVisibleForLinking, AmbitionVisibleWithLinks, AmbitionWithLinksQueryResult, DesiredStateVisibleWithActions, INTERNAL_SERVER_ERROR_MESSAGE
+    self, ActionVisibleForLinking, AmbitionVisibleWithLinks, AmbitionWithLinksQueryResult,
+    DesiredStateVisibleWithActions, INTERNAL_SERVER_ERROR_MESSAGE,
 };
-use services::ambition_query::AmbitionQuery;
 use actix_web::{
     get,
     web::{self, Data, ReqData},
     HttpResponse,
 };
+use entities::user as user_entity;
 use sea_orm::DbConn;
 use serde::Deserialize;
+use services::ambition_query::AmbitionQuery;
 
 #[derive(Deserialize, Debug)]
 struct QueryParam {
@@ -54,7 +55,9 @@ pub async fn list_ambitions(
                             } else {
                                 if let Some(desired_state) = get_desired_state(&ambition) {
                                     let last_ambition = res.last_mut().unwrap();
-                                    if desired_state.id != last_ambition.desired_states.last().unwrap().id {
+                                    if desired_state.id
+                                        != last_ambition.desired_states.last().unwrap().id
+                                    {
                                         last_ambition.push_desired_state(desired_state);
                                     }
                                     if let Some(action) = get_action(&ambition) {
@@ -73,7 +76,13 @@ pub async fn list_ambitions(
                     }
                 }
             } else {
-                match AmbitionQuery::find_all_by_user_id(&db, user.id, query.show_archived_only.unwrap_or(false)).await {
+                match AmbitionQuery::find_all_by_user_id(
+                    &db,
+                    user.id,
+                    query.show_archived_only.unwrap_or(false),
+                )
+                .await
+                {
                     Ok(ambitions) => HttpResponse::Ok().json(ambitions),
                     Err(e) => {
                         tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
@@ -88,7 +97,9 @@ pub async fn list_ambitions(
     }
 }
 
-fn get_desired_state(ambition: &AmbitionWithLinksQueryResult) -> Option<DesiredStateVisibleWithActions> {
+fn get_desired_state(
+    ambition: &AmbitionWithLinksQueryResult,
+) -> Option<DesiredStateVisibleWithActions> {
     if ambition.desired_state_id.is_none() {
         return None;
     }
@@ -117,6 +128,7 @@ fn get_action(ambition: &AmbitionWithLinksQueryResult) -> Option<ActionVisibleFo
 
 #[cfg(test)]
 mod tests {
+    use ::types::{AmbitionVisible, AmbitionVisibleWithLinks};
     use actix_http::Request;
     use actix_web::{
         dev::{Service, ServiceResponse},
@@ -125,7 +137,6 @@ mod tests {
         App, HttpMessage,
     };
     use sea_orm::{entity::prelude::*, DbErr};
-    use ::types::{AmbitionVisible, AmbitionVisibleWithLinks};
 
     use test_utils::{self, *};
 
@@ -358,7 +369,8 @@ mod tests {
             .await?;
         let archived_action = factory::action(user.id).archived(true).insert(&db).await?;
         factory::link_ambition_desired_state(&db, ambition.id, archived_desired_state.id).await?;
-        factory::link_desired_state_action(&db, archived_desired_state.id, archived_action.id).await?;
+        factory::link_desired_state_action(&db, archived_desired_state.id, archived_action.id)
+            .await?;
 
         let req = test::TestRequest::get().uri("/?links=true").to_request();
         req.extensions_mut().insert(user.clone());
@@ -395,7 +407,9 @@ mod tests {
             .insert(&db)
             .await?;
 
-        let req = test::TestRequest::get().uri("/?show_archived_only=true").to_request();
+        let req = test::TestRequest::get()
+            .uri("/?show_archived_only=true")
+            .to_request();
         req.extensions_mut().insert(user.clone());
 
         let resp = test::call_service(&app, req).await;

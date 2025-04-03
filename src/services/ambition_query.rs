@@ -9,15 +9,11 @@ impl AmbitionQuery {
     pub async fn find_all_by_user_id(
         db: &DbConn,
         user_id: uuid::Uuid,
-        show_only_archived: bool,
+        show_archived_only: bool,
     ) -> Result<Vec<AmbitionVisible>, DbErr> {
-        let query = ambition::Entity::find().filter(ambition::Column::UserId.eq(user_id));
-        let query = match show_only_archived {
-            true => query.filter(ambition::Column::Archived.eq(true)),
-            false => query.filter(ambition::Column::Archived.eq(false)),
-        };
-
-        query
+        ambition::Entity::find()
+            .filter(ambition::Column::UserId.eq(user_id))
+            .filter(ambition::Column::Archived.eq(show_archived_only))
             .order_by_with_nulls(ambition::Column::Ordering, Asc, Last)
             .order_by_asc(ambition::Column::CreatedAt)
             .into_partial_model::<AmbitionVisible>()
