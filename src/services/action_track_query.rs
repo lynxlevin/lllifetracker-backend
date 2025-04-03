@@ -11,6 +11,7 @@ pub struct ActionTrackQueryFilters {
     pub started_at_lte: Option<DateTime<FixedOffset>>,
     pub show_active: bool,
     pub show_inactive: bool,
+    pub for_daily_aggregation: bool,
 }
 
 pub struct ActionTrackQuery;
@@ -22,6 +23,7 @@ impl ActionTrackQuery {
             started_at_lte: None,
             show_active: true,
             show_inactive: true,
+            for_daily_aggregation: false,
         }
     }
 
@@ -48,11 +50,16 @@ impl ActionTrackQuery {
             false => query.filter(Column::EndedAt.is_null()),
         };
 
-        query
+        let query = query
             .filter(Column::UserId.eq(user_id))
             .column_as(action::Column::Name, "action_name")
             .column_as(action::Column::Color, "action_color")
-            .join(LeftJoin, action_track::Relation::Action.def())
+            .join(LeftJoin, action_track::Relation::Action.def());
+        let query = match filters.for_daily_aggregation {
+            true => query.order_by_asc(action_track::Column::ActionId),
+            false => query,
+        };
+        query
             .order_by_desc(Column::StartedAt)
             .into_model::<ActionTrackWithAction>()
             .all(db)
