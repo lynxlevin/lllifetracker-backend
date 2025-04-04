@@ -4,6 +4,7 @@ use actix_web::{
     dev::Server,
     web::{scope, Data},
     App, HttpServer,
+    middleware::Compress,
 };
 use sea_orm::*;
 use std::env;
@@ -84,6 +85,7 @@ async fn run(
         .expect("Cannot unwrap redis session.");
     let server = HttpServer::new(move || {
         App::new()
+            .wrap(Compress::default())
             .wrap(AuthenticateUser)
             .wrap(if settings.debug {
                 SessionMiddleware::builder(redis_store.clone(), secret_key.clone())
