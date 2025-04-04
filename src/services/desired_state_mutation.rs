@@ -1,5 +1,5 @@
-use entities::{desired_state, desired_states_actions, tag};
 use chrono::Utc;
+use entities::{desired_state, desired_states_actions, tag};
 use sea_orm::entity::prelude::*;
 use sea_orm::ActiveValue::NotSet;
 use sea_orm::{IntoActiveModel, Set, TransactionError, TransactionTrait};
@@ -96,6 +96,20 @@ impl DesiredStateMutation {
         desired_state.update(db).await
     }
 
+    pub async fn unarchive(
+        db: &DbConn,
+        desired_state_id: uuid::Uuid,
+        user_id: uuid::Uuid,
+    ) -> Result<desired_state::Model, DbErr> {
+        let mut desired_state: desired_state::ActiveModel =
+            DesiredStateQuery::find_by_id_and_user_id(db, desired_state_id, user_id)
+                .await?
+                .into();
+        desired_state.archived = Set(false);
+        desired_state.updated_at = Set(Utc::now().into());
+        desired_state.update(db).await
+    }
+
     pub async fn connect_action(
         db: &DbConn,
         desired_state_id: uuid::Uuid,
@@ -177,7 +191,10 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(returned_desired_state.name, name.clone());
-        assert_eq!(returned_desired_state.description, Some(description.clone()));
+        assert_eq!(
+            returned_desired_state.description,
+            Some(description.clone())
+        );
         assert_eq!(returned_desired_state.archived, false);
         assert_eq!(returned_desired_state.user_id, user.id);
 
@@ -191,9 +208,18 @@ mod tests {
             returned_desired_state.description
         );
         assert_eq!(created_desired_state.archived, false);
-        assert_eq!(created_desired_state.user_id, returned_desired_state.user_id);
-        assert_eq!(created_desired_state.created_at, returned_desired_state.created_at);
-        assert_eq!(created_desired_state.updated_at, returned_desired_state.updated_at);
+        assert_eq!(
+            created_desired_state.user_id,
+            returned_desired_state.user_id
+        );
+        assert_eq!(
+            created_desired_state.created_at,
+            returned_desired_state.created_at
+        );
+        assert_eq!(
+            created_desired_state.updated_at,
+            returned_desired_state.updated_at
+        );
 
         let created_tag = tag::Entity::find()
             .filter(tag::Column::AmbitionId.is_null())
@@ -240,11 +266,17 @@ mod tests {
             .await?
             .unwrap();
         assert_eq!(updated_desired_state.name, new_name.clone());
-        assert_eq!(updated_desired_state.description, Some(new_description.clone()));
+        assert_eq!(
+            updated_desired_state.description,
+            Some(new_description.clone())
+        );
         assert_eq!(updated_desired_state.archived, desired_state.archived);
         assert_eq!(updated_desired_state.user_id, user.id);
         assert_eq!(updated_desired_state.created_at, desired_state.created_at);
-        assert_eq!(updated_desired_state.updated_at, returned_desired_state.updated_at);
+        assert_eq!(
+            updated_desired_state.updated_at,
+            returned_desired_state.updated_at
+        );
 
         Ok(())
     }
@@ -279,7 +311,9 @@ mod tests {
 
         DesiredStateMutation::delete(&db, desired_state.id, user.id).await?;
 
-        let desired_state_in_db = desired_state::Entity::find_by_id(desired_state.id).one(&db).await?;
+        let desired_state_in_db = desired_state::Entity::find_by_id(desired_state.id)
+            .one(&db)
+            .await?;
         assert!(desired_state_in_db.is_none());
 
         let tag_in_db = tag::Entity::find_by_id(tag.id).one(&db).await?;
@@ -308,7 +342,8 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let desired_state = factory::desired_state(user.id).insert(&db).await?;
 
-        let returned_desired_state = DesiredStateMutation::archive(&db, desired_state.id, user.id).await?;
+        let returned_desired_state =
+            DesiredStateMutation::archive(&db, desired_state.id, user.id).await?;
         assert_eq!(returned_desired_state.id, desired_state.id);
         assert_eq!(returned_desired_state.name, desired_state.name.clone());
         assert_eq!(
@@ -332,7 +367,10 @@ mod tests {
         assert_eq!(archived_desired_state.archived, true);
         assert_eq!(archived_desired_state.user_id, user.id);
         assert_eq!(archived_desired_state.created_at, desired_state.created_at);
-        assert_eq!(archived_desired_state.updated_at, returned_desired_state.updated_at);
+        assert_eq!(
+            archived_desired_state.updated_at,
+            returned_desired_state.updated_at
+        );
 
         Ok(())
     }
@@ -342,6 +380,65 @@ mod tests {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
         let desired_state = factory::desired_state(user.id).insert(&db).await?;
+
+        let error = DesiredStateMutation::archive(&db, desired_state.id, uuid::Uuid::new_v4())
+            .await
+            .unwrap_err();
+        assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn unarchive() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let desired_state = factory::desired_state(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
+
+        let returned_desired_state =
+            DesiredStateMutation::unarchive(&db, desired_state.id, user.id).await?;
+        assert_eq!(returned_desired_state.id, desired_state.id);
+        assert_eq!(returned_desired_state.name, desired_state.name.clone());
+        assert_eq!(
+            returned_desired_state.description,
+            desired_state.description.clone()
+        );
+        assert_eq!(returned_desired_state.archived, false);
+        assert_eq!(returned_desired_state.user_id, user.id);
+        assert_eq!(returned_desired_state.created_at, desired_state.created_at);
+        assert!(returned_desired_state.updated_at > desired_state.updated_at);
+
+        let restored_desired_state = desired_state::Entity::find_by_id(desired_state.id)
+            .one(&db)
+            .await?
+            .unwrap();
+        assert_eq!(restored_desired_state.name, desired_state.name.clone());
+        assert_eq!(
+            restored_desired_state.description,
+            desired_state.description.clone()
+        );
+        assert_eq!(restored_desired_state.archived, false);
+        assert_eq!(restored_desired_state.user_id, user.id);
+        assert_eq!(restored_desired_state.created_at, desired_state.created_at);
+        assert_eq!(
+            restored_desired_state.updated_at,
+            returned_desired_state.updated_at
+        );
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn unarchive_unauthorized() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let desired_state = factory::desired_state(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
 
         let error = DesiredStateMutation::archive(&db, desired_state.id, uuid::Uuid::new_v4())
             .await
@@ -375,9 +472,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
-        let desired_state = factory::desired_state(user.id)
-            .insert(&db)
-            .await?;
+        let desired_state = factory::desired_state(user.id).insert(&db).await?;
         factory::link_desired_state_action(&db, desired_state.id, action.id).await?;
 
         DesiredStateMutation::disconnect_action(&db, desired_state.id, action.id).await?;
@@ -426,20 +521,23 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn bulk_update_ordering_no_modification_on_different_users_records() -> Result<(), DbErr> {
+    async fn bulk_update_ordering_no_modification_on_different_users_records() -> Result<(), DbErr>
+    {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
         let another_user = factory::user().insert(&db).await?;
-        let another_users_desired_state = factory::desired_state(another_user.id).insert(&db).await?;
+        let another_users_desired_state =
+            factory::desired_state(another_user.id).insert(&db).await?;
 
         let ordering = vec![another_users_desired_state.id];
 
         DesiredStateMutation::bulk_update_ordering(&db, user.id, ordering).await?;
 
-        let another_users_desired_state_in_db = desired_state::Entity::find_by_id(another_users_desired_state.id)
-            .one(&db)
-            .await?
-            .unwrap();
+        let another_users_desired_state_in_db =
+            desired_state::Entity::find_by_id(another_users_desired_state.id)
+                .one(&db)
+                .await?
+                .unwrap();
         assert_eq!(another_users_desired_state_in_db.ordering, None);
 
         Ok(())

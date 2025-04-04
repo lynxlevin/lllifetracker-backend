@@ -1,20 +1,21 @@
-use entities::user as user_entity;
 use ::types::{
     self, ActionVisibleWithLinks, ActionWithLinksQueryResult, AmbitionVisible,
     DesiredStateVisibleWithAmbitions, INTERNAL_SERVER_ERROR_MESSAGE,
 };
-use services::action_query::ActionQuery;
 use actix_web::{
     get,
     web::{Data, Query, ReqData},
     HttpResponse,
 };
+use entities::user as user_entity;
 use sea_orm::DbConn;
 use serde::Deserialize;
+use services::action_query::ActionQuery;
 
 #[derive(Deserialize, Debug)]
 struct QueryParam {
     links: Option<bool>,
+    show_archived_only: Option<bool>,
 }
 
 #[tracing::instrument(name = "Listing a user's actions", skip(db, user))]
@@ -52,7 +53,9 @@ pub async fn list_actions(
                             } else {
                                 if let Some(desired_state) = get_desired_state(&action) {
                                     let last_action = res.last_mut().unwrap();
-                                    if desired_state.id != last_action.desired_states.last().unwrap().id {
+                                    if desired_state.id
+                                        != last_action.desired_states.last().unwrap().id
+                                    {
                                         last_action.push_desired_state(desired_state);
                                     }
                                     if let Some(ambition) = get_ambition(&action) {
@@ -71,7 +74,13 @@ pub async fn list_actions(
                     }
                 }
             } else {
-                match ActionQuery::find_all_by_user_id(&db, user.id).await {
+                match ActionQuery::find_all_by_user_id(
+                    &db,
+                    user.id,
+                    query.show_archived_only.unwrap_or(false),
+                )
+                .await
+                {
                     Ok(actions) => HttpResponse::Ok().json(actions),
                     Err(e) => {
                         tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
@@ -86,7 +95,9 @@ pub async fn list_actions(
     }
 }
 
-fn get_desired_state(action: &ActionWithLinksQueryResult) -> Option<DesiredStateVisibleWithAmbitions> {
+fn get_desired_state(
+    action: &ActionWithLinksQueryResult,
+) -> Option<DesiredStateVisibleWithAmbitions> {
     if action.desired_state_id.is_none() {
         return None;
     }
@@ -115,6 +126,7 @@ fn get_ambition(action: &ActionWithLinksQueryResult) -> Option<AmbitionVisible> 
 
 #[cfg(test)]
 mod tests {
+    use ::types::{ActionVisible, ActionVisibleWithLinks};
     use actix_http::Request;
     use actix_web::{
         dev::{Service, ServiceResponse},
@@ -123,7 +135,6 @@ mod tests {
         App, HttpMessage,
     };
     use sea_orm::{entity::prelude::*, DbErr};
-    use ::types::{ActionVisible, ActionVisibleWithLinks};
 
     use test_utils::{self, *};
 
@@ -332,7 +343,8 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn happy_path_with_links_item_linked_to_archived_items_should_be_returned() -> Result<(), DbErr> {
+    async fn happy_path_with_links_item_linked_to_archived_items_should_be_returned(
+    ) -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
@@ -346,7 +358,8 @@ mod tests {
             .insert(&db)
             .await?;
         factory::link_desired_state_action(&db, archived_desired_state.id, action.id).await?;
-        factory::link_ambition_desired_state(&db, archived_ambition.id, archived_desired_state.id).await?;
+        factory::link_ambition_desired_state(&db, archived_ambition.id, archived_desired_state.id)
+            .await?;
 
         let req = test::TestRequest::get().uri("/?links=true").to_request();
         req.extensions_mut().insert(user.clone());
@@ -364,6 +377,41 @@ mod tests {
             "created_at": action.created_at,
             "updated_at": action.updated_at,
             "desired_states": [],
+        }]);
+
+        let body = serde_json::to_value(&body).unwrap();
+        assert_eq!(expected, body);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn happy_path_show_archived_only() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = factory::user().insert(&db).await?;
+        let _action = factory::action(user.id).insert(&db).await?;
+        let archived_action = factory::action(user.id).archived(true).insert(&db).await?;
+
+        let req = test::TestRequest::get()
+            .uri("/?show_archived_only=true")
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), http::StatusCode::OK);
+
+        let body: Vec<ActionVisible> = test::read_body_json(resp).await;
+        assert_eq!(body.len(), 1);
+
+        let expected = serde_json::json!([{
+            "id": archived_action.id,
+            "name": archived_action.name,
+            "description": archived_action.description,
+            "color": archived_action.color,
+            "trackable": archived_action.trackable,
+            "created_at": archived_action.created_at,
+            "updated_at": archived_action.updated_at,
         }]);
 
         let body = serde_json::to_value(&body).unwrap();

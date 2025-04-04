@@ -6,6 +6,7 @@ mod delete;
 mod disconnect;
 mod get;
 mod list;
+mod unarchive;
 mod update;
 
 use actix_web::web::{scope, ServiceConfig};
@@ -20,6 +21,7 @@ pub fn ambition_routes(cfg: &mut ServiceConfig) {
             .service(update::update_ambition)
             .service(delete::delete_ambition)
             .service(archive::archive_ambition)
+            .service(unarchive::unarchive_ambition)
             .service(connect::connect_desired_state)
             .service(disconnect::disconnect_desired_state),
         // MYMEMO: Can restrict AuthenticateUser this way.
