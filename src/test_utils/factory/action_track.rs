@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 pub fn action_track(user_id: Uuid) -> action_track::ActiveModel {
     action_track::ActiveModel {
-        id: Set(Uuid::new_v4()),
+        id: Set(Uuid::now_v7()),
         user_id: Set(user_id),
         action_id: NotSet,
         started_at: Set(Utc::now().into()),

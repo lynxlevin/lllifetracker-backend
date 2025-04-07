@@ -13,7 +13,7 @@ argon2 = "0.5.3"
 async-std = { version = "1", features = ["attributes", "tokio1"] }
 chrono = { version = "0.4.38", features = ["serde"] }
 uuid = { version = "1.10.0", features = [
-  "v4",
+  "v7",
   "fast-rng",
   "macro-diagnostics",
 ] }

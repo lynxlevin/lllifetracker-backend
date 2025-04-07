@@ -6,7 +6,7 @@ use uuid::Uuid;
 pub fn memo(user_id: Uuid) -> memo::ActiveModel {
     let now = Utc::now();
     memo::ActiveModel {
-        id: Set(uuid::Uuid::new_v4()),
+        id: Set(uuid::Uuid::now_v7()),
         title: Set("memo".to_string()),
         text: Set("text".to_string()),
         date: Set(now.date_naive()),

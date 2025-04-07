@@ -175,7 +175,7 @@ mod tests {
         let user = factory::user().insert(&db).await?;
 
         let req = test::TestRequest::put()
-            .uri(&format!("/{}", uuid::Uuid::new_v4()))
+            .uri(&format!("/{}", uuid::Uuid::now_v7()))
             .set_json(RequestBody {
                 title: None,
                 page_number: None,

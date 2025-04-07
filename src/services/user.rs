@@ -19,7 +19,7 @@ impl Mutation {
     pub async fn create_user(db: &DbConn, form_data: NewUser) -> Result<user::Model, DbErr> {
         let now = Utc::now();
         user::ActiveModel {
-            id: Set(uuid::Uuid::new_v4()),
+            id: Set(uuid::Uuid::now_v7()),
             email: Set(form_data.email),
             password: Set(form_data.password),
             first_name: Set(form_data.first_name),
@@ -102,7 +102,7 @@ mod mutation_tests {
     async fn create_user() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let form_data = NewUser {
-            email: format!("{}@test.com", uuid::Uuid::new_v4().to_string()),
+            email: format!("{}@test.com", uuid::Uuid::now_v7().to_string()),
             password: "password".to_string(),
             first_name: "Lynx".to_string(),
             last_name: "Levin".to_string(),

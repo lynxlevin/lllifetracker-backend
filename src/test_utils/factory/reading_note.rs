@@ -6,7 +6,7 @@ use uuid::Uuid;
 pub fn reading_note(user_id: Uuid) -> reading_note::ActiveModel {
     let now = Utc::now();
     reading_note::ActiveModel {
-        id: Set(uuid::Uuid::new_v4()),
+        id: Set(uuid::Uuid::now_v7()),
         title: Set("reading_note".to_string()),
         page_number: Set(1),
         text: Set("book content".to_string()),

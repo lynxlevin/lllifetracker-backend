@@ -28,7 +28,7 @@ settings = { path = "../settings" }
 tracing = "^0.1.40"
 types = { path = "../types" }
 utils = { path = "../utils" }
-uuid = { version = "^1.10.0", features = ["v4", "serde"] }
+uuid = { version = "^1.10.0", features = ["v7", "serde"] }
 
 [dev-dependencies]
 actix-http = "3.*"

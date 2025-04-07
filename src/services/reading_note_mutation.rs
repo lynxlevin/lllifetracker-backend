@@ -43,7 +43,7 @@ impl ReadingNoteMutation {
         db.transaction::<_, reading_note::Model, DbErr>(|txn| {
             Box::pin(async move {
                 let now = Utc::now();
-                let reading_note_id = uuid::Uuid::new_v4();
+                let reading_note_id = uuid::Uuid::now_v7();
                 let created_reading_note = reading_note::ActiveModel {
                     id: Set(reading_note_id),
                     user_id: Set(form_data.user_id),
@@ -470,7 +470,7 @@ mod tests {
             text: None,
             date: None,
             tag_ids: None,
-            user_id: uuid::Uuid::new_v4(),
+            user_id: uuid::Uuid::now_v7(),
         };
 
         let error = ReadingNoteMutation::partial_update(&db, form)
@@ -516,7 +516,7 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let reading_note = factory::reading_note(user.id).insert(&db).await?;
 
-        let error = ReadingNoteMutation::delete(&db, reading_note.id, uuid::Uuid::new_v4())
+        let error = ReadingNoteMutation::delete(&db, reading_note.id, uuid::Uuid::now_v7())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));

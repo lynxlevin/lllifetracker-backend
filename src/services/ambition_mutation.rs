@@ -23,7 +23,7 @@ impl AmbitionMutation {
         db.transaction::<_, ambition::Model, DbErr>(|txn| {
             Box::pin(async move {
                 let now = Utc::now();
-                let ambition_id = uuid::Uuid::new_v4();
+                let ambition_id = uuid::Uuid::now_v7();
                 let created_ambition = ambition::ActiveModel {
                     id: Set(ambition_id),
                     user_id: Set(form_data.user_id),
@@ -37,7 +37,7 @@ impl AmbitionMutation {
                 .insert(txn)
                 .await?;
                 tag::ActiveModel {
-                    id: Set(uuid::Uuid::new_v4()),
+                    id: Set(uuid::Uuid::now_v7()),
                     user_id: Set(form_data.user_id),
                     ambition_id: Set(Some(ambition_id)),
                     desired_state_id: NotSet,
@@ -270,7 +270,7 @@ mod tests {
         let error = AmbitionMutation::update(
             &db,
             ambition.id,
-            uuid::Uuid::new_v4(),
+            uuid::Uuid::now_v7(),
             new_name.clone(),
             new_description.clone(),
         )
@@ -304,7 +304,7 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let ambition = factory::ambition(user.id).insert(&db).await?;
 
-        let error = AmbitionMutation::delete(&db, ambition.id, uuid::Uuid::new_v4())
+        let error = AmbitionMutation::delete(&db, ambition.id, uuid::Uuid::now_v7())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
@@ -347,7 +347,7 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let ambition = factory::ambition(user.id).insert(&db).await?;
 
-        let error = AmbitionMutation::archive(&db, ambition.id, uuid::Uuid::new_v4())
+        let error = AmbitionMutation::archive(&db, ambition.id, uuid::Uuid::now_v7())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
@@ -390,7 +390,7 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let ambition = factory::ambition(user.id).archived(true).insert(&db).await?;
 
-        let error = AmbitionMutation::unarchive(&db, ambition.id, uuid::Uuid::new_v4())
+        let error = AmbitionMutation::unarchive(&db, ambition.id, uuid::Uuid::now_v7())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));

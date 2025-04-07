@@ -22,7 +22,7 @@ impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let mut stmts: Vec<InsertStatement> = vec![];
 
-        let user_1_id = Uuid::new_v4();
+        let user_1_id = Uuid::now_v7();
         stmts.push(
             Query::insert()
                 .into_table(User::Table)
@@ -45,7 +45,7 @@ impl MigrationTrait for Migration {
                 .to_owned(),
         );
 
-        let ambition_1_id = Uuid::new_v4();
+        let ambition_1_id = Uuid::now_v7();
         stmts.push(
             Query::insert()
                 .into_table(Ambition::Table)
@@ -53,7 +53,7 @@ impl MigrationTrait for Migration {
                 .values_panic([ambition_1_id.into(), user_1_id.into(), "My ambition".into()])
                 .to_owned(),
         );
-        let ambition_1_tag_id = Uuid::new_v4();
+        let ambition_1_tag_id = Uuid::now_v7();
         stmts.push(
             Query::insert()
                 .into_table(Tag::Table)
@@ -66,7 +66,7 @@ impl MigrationTrait for Migration {
                 .to_owned(),
         );
 
-        let objective_1_id = Uuid::new_v4();
+        let objective_1_id = Uuid::now_v7();
         stmts.push(
             Query::insert()
                 .into_table(Objective::Table)
@@ -78,7 +78,7 @@ impl MigrationTrait for Migration {
                 ])
                 .to_owned(),
         );
-        let objective_1_tag_id = Uuid::new_v4();
+        let objective_1_tag_id = Uuid::now_v7();
         stmts.push(
             Query::insert()
                 .into_table(Tag::Table)
@@ -91,7 +91,7 @@ impl MigrationTrait for Migration {
                 .to_owned(),
         );
 
-        let action_1_id = Uuid::new_v4();
+        let action_1_id = Uuid::now_v7();
         stmts.push(
             Query::insert()
                 .into_table(Action::Table)
@@ -99,7 +99,7 @@ impl MigrationTrait for Migration {
                 .values_panic([action_1_id.into(), user_1_id.into(), "My action".into()])
                 .to_owned(),
         );
-        let action_1_tag_id = Uuid::new_v4();
+        let action_1_tag_id = Uuid::now_v7();
         stmts.push(
             Query::insert()
                 .into_table(Tag::Table)
@@ -126,7 +126,7 @@ impl MigrationTrait for Migration {
                 .to_owned(),
         );
 
-        let record_1_id = Uuid::new_v4();
+        let record_1_id = Uuid::now_v7();
         stmts.push(
             Query::insert()
                 .into_table(Record::Table)

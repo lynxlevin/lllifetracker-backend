@@ -26,7 +26,7 @@ impl ActionTrackMutation {
         form_data: NewActionTrack,
     ) -> Result<action_track::Model, DbErr> {
         action_track::ActiveModel {
-            id: Set(uuid::Uuid::new_v4()),
+            id: Set(uuid::Uuid::now_v7()),
             user_id: Set(form_data.user_id),
             action_id: Set(form_data.action_id),
             started_at: Set(form_data.started_at),
@@ -167,7 +167,7 @@ mod tests {
             &db,
             action_track.id,
             UpdateActionTrack {
-                user_id: uuid::Uuid::new_v4(),
+                user_id: uuid::Uuid::now_v7(),
                 action_id: None,
                 started_at: Utc::now().into(),
                 ended_at: None,
@@ -209,7 +209,7 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let action_track = factory::action_track(user.id).insert(&db).await?;
 
-        let error = ActionTrackMutation::delete(&db, action_track.id, uuid::Uuid::new_v4())
+        let error = ActionTrackMutation::delete(&db, action_track.id, uuid::Uuid::now_v7())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));

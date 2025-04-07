@@ -7,7 +7,7 @@ use uuid::Uuid;
 pub fn action(user_id: Uuid) -> action::ActiveModel {
     let now = Utc::now();
     action::ActiveModel {
-        id: Set(Uuid::new_v4()),
+        id: Set(Uuid::now_v7()),
         user_id: Set(user_id),
         name: Set("action".to_string()),
         description: Set(None),
@@ -55,7 +55,7 @@ impl ActionFactory for action::ActiveModel {
     async fn insert_with_tag(self, db: &DbConn) -> Result<(action::Model, tag::Model), DbErr> {
         let action = self.insert(db).await?;
         let tag = tag::ActiveModel {
-            id: Set(uuid::Uuid::new_v4()),
+            id: Set(uuid::Uuid::now_v7()),
             user_id: Set(action.user_id),
             ambition_id: NotSet,
             desired_state_id: NotSet,

@@ -24,7 +24,7 @@ impl ActionMutation {
         db.transaction::<_, action::Model, DbErr>(|txn| {
             Box::pin(async move {
                 let now = Utc::now();
-                let action_id = uuid::Uuid::new_v4();
+                let action_id = uuid::Uuid::now_v7();
                 let created_action = action::ActiveModel {
                     id: Set(action_id),
                     user_id: Set(form_data.user_id),
@@ -36,7 +36,7 @@ impl ActionMutation {
                 .insert(txn)
                 .await?;
                 tag::ActiveModel {
-                    id: Set(uuid::Uuid::new_v4()),
+                    id: Set(uuid::Uuid::now_v7()),
                     user_id: Set(form_data.user_id),
                     ambition_id: NotSet,
                     desired_state_id: NotSet,
@@ -256,7 +256,7 @@ mod tests {
         let error = ActionMutation::update(
             &db,
             action.id,
-            uuid::Uuid::new_v4(),
+            uuid::Uuid::now_v7(),
             new_name.clone(),
             None,
             None,
@@ -292,7 +292,7 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
 
-        let error = ActionMutation::delete(&db, action.id, uuid::Uuid::new_v4())
+        let error = ActionMutation::delete(&db, action.id, uuid::Uuid::now_v7())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
@@ -323,7 +323,7 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
 
-        let error = ActionMutation::archive(&db, action.id, uuid::Uuid::new_v4())
+        let error = ActionMutation::archive(&db, action.id, uuid::Uuid::now_v7())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
@@ -354,7 +354,7 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).archived(true).insert(&db).await?;
 
-        let error = ActionMutation::unarchive(&db, action.id, uuid::Uuid::new_v4())
+        let error = ActionMutation::unarchive(&db, action.id, uuid::Uuid::now_v7())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));

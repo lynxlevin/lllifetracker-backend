@@ -42,7 +42,7 @@ impl MemoMutation {
         db.transaction::<_, memo::Model, DbErr>(|txn| {
             Box::pin(async move {
                 let now = Utc::now();
-                let memo_id = uuid::Uuid::new_v4();
+                let memo_id = uuid::Uuid::now_v7();
                 let created_memo = memo::ActiveModel {
                     id: Set(memo_id),
                     user_id: Set(form_data.user_id),
@@ -483,7 +483,7 @@ mod tests {
             date: None,
             favorite: None,
             tag_ids: None,
-            user_id: uuid::Uuid::new_v4(),
+            user_id: uuid::Uuid::now_v7(),
         };
 
         let error = MemoMutation::partial_update(&db, form).await.unwrap_err();
@@ -525,7 +525,7 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let memo = factory::memo(user.id).insert(&db).await?;
 
-        let error = MemoMutation::delete(&db, memo.id, uuid::Uuid::new_v4())
+        let error = MemoMutation::delete(&db, memo.id, uuid::Uuid::now_v7())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));

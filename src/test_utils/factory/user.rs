@@ -7,8 +7,8 @@ pub fn user() -> user::ActiveModel {
 
     let now = Utc::now();
     user::ActiveModel {
-        id: Set(uuid::Uuid::new_v4()),
-        email: Set(format!("{}@test.com", uuid::Uuid::new_v4().to_string())),
+        id: Set(uuid::Uuid::now_v7()),
+        email: Set(format!("{}@test.com", uuid::Uuid::now_v7().to_string())),
         password: Set("password".to_string()),
         first_name: Set("Lynx".to_string()),
         last_name: Set("Levin".to_string()),
