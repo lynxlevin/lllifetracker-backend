@@ -79,7 +79,7 @@ mod tests {
         dev::{Service, ServiceResponse},
         http, test, App, HttpMessage,
     };
-    use chrono::Utc;
+    use chrono::{SubsecRound, Utc};
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
     use entities::action_track;
@@ -125,8 +125,8 @@ mod tests {
         let returned_action_track: ActionTrackVisible = test::read_body_json(res).await;
         assert_eq!(returned_action_track.id, action_track.id);
         assert_eq!(returned_action_track.action_id, Some(action.id));
-        assert_eq!(returned_action_track.started_at, started_at);
-        assert_eq!(returned_action_track.ended_at, Some(ended_at));
+        assert_eq!(returned_action_track.started_at, started_at.trunc_subsecs(0));
+        assert_eq!(returned_action_track.ended_at, Some(ended_at.trunc_subsecs(0)));
         assert_eq!(returned_action_track.duration, Some(duration));
 
         let updated_action_track = action_track::Entity::find_by_id(action_track.id)
@@ -135,8 +135,8 @@ mod tests {
             .unwrap();
         assert_eq!(updated_action_track.action_id, Some(action.id));
         assert_eq!(updated_action_track.user_id, user.id);
-        assert_eq!(updated_action_track.started_at, started_at);
-        assert_eq!(updated_action_track.ended_at, Some(ended_at));
+        assert_eq!(updated_action_track.started_at, started_at.trunc_subsecs(0));
+        assert_eq!(updated_action_track.ended_at, Some(ended_at.trunc_subsecs(0)));
         assert_eq!(updated_action_track.duration, Some(duration));
 
         Ok(())

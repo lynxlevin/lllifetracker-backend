@@ -1,3 +1,4 @@
+use chrono::SubsecRound;
 use entities::action_track;
 use sea_orm::{entity::prelude::*, ActiveValue::NotSet, Set};
 
@@ -29,7 +30,7 @@ impl ActionTrackMutation {
             id: Set(uuid::Uuid::now_v7()),
             user_id: Set(form_data.user_id),
             action_id: Set(form_data.action_id),
-            started_at: Set(form_data.started_at),
+            started_at: Set(form_data.started_at.trunc_subsecs(0)),
             ended_at: NotSet,
             duration: NotSet,
         }
@@ -47,13 +48,16 @@ impl ActionTrackMutation {
                 .await?
                 .into();
         action_track.action_id = Set(form_data.action_id);
-        action_track.started_at = Set(form_data.started_at);
-        action_track.ended_at = Set(form_data.ended_at);
+        action_track.started_at = Set(form_data.started_at.trunc_subsecs(0));
         match form_data.ended_at {
             Some(ended_at) => {
+                action_track.ended_at = Set(Some(ended_at.trunc_subsecs(0)));
                 action_track.duration = Set(Some((ended_at - form_data.started_at).num_seconds()))
             }
-            None => action_track.duration = Set(None),
+            None => {
+                action_track.ended_at = Set(None);
+                action_track.duration = Set(None)
+            }
         }
         action_track.update(db).await
     }
@@ -76,9 +80,9 @@ mod tests {
     use chrono::Utc;
     use sea_orm::DbErr;
 
+    use ::types::CustomDbErr;
     use entities::action;
     use test_utils::{self, *};
-    use ::types::CustomDbErr;
 
     use super::*;
 
@@ -99,7 +103,7 @@ mod tests {
             .unwrap();
         assert_eq!(returned_action_track.user_id, user.id);
         assert_eq!(returned_action_track.action_id, Some(action.id));
-        assert_eq!(returned_action_track.started_at, form_data.started_at);
+        assert_eq!(returned_action_track.started_at, form_data.started_at.trunc_subsecs(0));
         assert_eq!(returned_action_track.ended_at, None);
         assert_eq!(returned_action_track.duration, None);
 
@@ -109,7 +113,7 @@ mod tests {
             .unwrap();
         assert_eq!(created_action_track.user_id, user.id);
         assert_eq!(created_action_track.action_id, Some(action.id));
-        assert_eq!(created_action_track.started_at, form_data.started_at);
+        assert_eq!(created_action_track.started_at, form_data.started_at.trunc_subsecs(0));
         assert_eq!(created_action_track.ended_at, None);
         assert_eq!(created_action_track.duration, None);
 
@@ -140,8 +144,8 @@ mod tests {
         assert_eq!(returned_action.id, action_track.id);
         assert_eq!(returned_action.action_id, Some(action.id));
         assert_eq!(returned_action.user_id, user.id);
-        assert_eq!(returned_action.started_at, started_at);
-        assert_eq!(returned_action.ended_at, Some(ended_at));
+        assert_eq!(returned_action.started_at, started_at.trunc_subsecs(0));
+        assert_eq!(returned_action.ended_at, Some(ended_at.trunc_subsecs(0)));
         assert_eq!(returned_action.duration, Some(duration));
 
         let updated_action = action_track::Entity::find_by_id(action_track.id)
@@ -150,8 +154,8 @@ mod tests {
             .unwrap();
         assert_eq!(updated_action.action_id, Some(action.id));
         assert_eq!(updated_action.user_id, user.id);
-        assert_eq!(updated_action.started_at, started_at);
-        assert_eq!(updated_action.ended_at, Some(ended_at));
+        assert_eq!(updated_action.started_at, started_at.trunc_subsecs(0));
+        assert_eq!(updated_action.ended_at, Some(ended_at.trunc_subsecs(0)));
         assert_eq!(updated_action.duration, Some(duration));
 
         Ok(())
