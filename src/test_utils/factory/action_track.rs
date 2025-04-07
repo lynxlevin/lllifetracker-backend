@@ -1,5 +1,5 @@
 use entities::action_track;
-use chrono::{Duration, Utc};
+use chrono::{Duration, SubsecRound, Utc};
 use sea_orm::{ActiveValue::NotSet, Set};
 use uuid::Uuid;
 
@@ -8,7 +8,7 @@ pub fn action_track(user_id: Uuid) -> action_track::ActiveModel {
         id: Set(Uuid::now_v7()),
         user_id: Set(user_id),
         action_id: NotSet,
-        started_at: Set(Utc::now().into()),
+        started_at: Set(Utc::now().trunc_subsecs(0).into()),
         ended_at: NotSet,
         duration: NotSet,
     }

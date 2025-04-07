@@ -1,6 +1,7 @@
 use chrono::SubsecRound;
 use entities::action_track;
 use sea_orm::{entity::prelude::*, ActiveValue::NotSet, Set};
+use types::CustomDbErr;
 
 use super::action_track_query::ActionTrackQuery;
 
@@ -35,7 +36,7 @@ impl ActionTrackMutation {
             duration: NotSet,
         }
         .insert(db)
-        .await
+        .await.or(Err(DbErr::Custom(CustomDbErr::Duplicate.to_string())))
     }
 
     pub async fn update(
@@ -116,6 +117,26 @@ mod tests {
         assert_eq!(created_action_track.started_at, form_data.started_at.trunc_subsecs(0));
         assert_eq!(created_action_track.ended_at, None);
         assert_eq!(created_action_track.duration, None);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn create_duplicate_creation() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
+        let existing_action_track = factory::action_track(user.id).action_id(Some(action.id)).insert(&db).await?;
+
+        let form_data = NewActionTrack {
+            started_at: existing_action_track.started_at,
+            action_id: Some(action.id),
+            user_id: user.id,
+        };
+
+        let error = ActionTrackMutation::create(&db, form_data).await.unwrap_err();
+
+        assert_eq!(error, DbErr::Custom(CustomDbErr::Duplicate.to_string()));
 
         Ok(())
     }
