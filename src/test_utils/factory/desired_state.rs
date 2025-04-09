@@ -7,7 +7,7 @@ use uuid::Uuid;
 pub fn desired_state(user_id: Uuid) -> desired_state::ActiveModel {
     let now = Utc::now();
     desired_state::ActiveModel {
-        id: Set(Uuid::new_v4()),
+        id: Set(Uuid::now_v7()),
         user_id: Set(user_id),
         name: Set("desired_state".to_string()),
         description: Set(None),
@@ -53,7 +53,7 @@ impl DesiredStateFactory for desired_state::ActiveModel {
     async fn insert_with_tag(self, db: &DbConn) -> Result<(desired_state::Model, tag::Model), DbErr> {
         let desired_state = self.insert(db).await?;
         let tag = tag::ActiveModel {
-            id: Set(uuid::Uuid::new_v4()),
+            id: Set(uuid::Uuid::now_v7()),
             user_id: Set(desired_state.user_id),
             ambition_id: NotSet,
             desired_state_id: Set(Some(desired_state.id)),

@@ -47,7 +47,7 @@ impl DiaryMutation {
     ) -> Result<diary::Model, TransactionError<DbErr>> {
         db.transaction::<_, diary::Model, DbErr>(|txn| {
             Box::pin(async move {
-                let diary_id = uuid::Uuid::new_v4();
+                let diary_id = uuid::Uuid::now_v7();
                 let created_diary = diary::ActiveModel {
                     id: Set(diary_id),
                     user_id: Set(form_data.user_id),
@@ -424,7 +424,7 @@ mod tests {
             date: diary.date,
             score: None,
             tag_ids: vec![],
-            user_id: uuid::Uuid::new_v4(),
+            user_id: uuid::Uuid::now_v7(),
             update_keys: vec![],
         };
 
@@ -467,7 +467,7 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let diary = factory::diary(user.id).insert(&db).await?;
 
-        let error = DiaryMutation::delete(&db, diary.id, uuid::Uuid::new_v4())
+        let error = DiaryMutation::delete(&db, diary.id, uuid::Uuid::now_v7())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));

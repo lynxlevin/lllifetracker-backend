@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 pub fn diary(user_id: Uuid) -> diary::ActiveModel {
     diary::ActiveModel {
-        id: Set(uuid::Uuid::new_v4()),
+        id: Set(uuid::Uuid::now_v7()),
         text: Set(Some("diary".to_string())),
         date: Set(Utc::now().date_naive()),
         score: Set(Some(4)),

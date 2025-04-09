@@ -55,6 +55,13 @@ pub async fn update_action_track(
                                     error: "ActionTrack with this id was not found".to_string(),
                                 })
                             }
+                            CustomDbErr::Duplicate => {
+                                return HttpResponse::Conflict().json(types::ErrorResponse {
+                                    error:
+                                        "A track for the same action which starts at the same time exists."
+                                            .to_string(),
+                                })
+                            }
                             _ => {}
                         },
                         _ => {}
@@ -79,7 +86,7 @@ mod tests {
         dev::{Service, ServiceResponse},
         http, test, App, HttpMessage,
     };
-    use chrono::Utc;
+    use chrono::{SubsecRound, TimeDelta, Utc};
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
     use entities::action_track;
@@ -125,8 +132,14 @@ mod tests {
         let returned_action_track: ActionTrackVisible = test::read_body_json(res).await;
         assert_eq!(returned_action_track.id, action_track.id);
         assert_eq!(returned_action_track.action_id, Some(action.id));
-        assert_eq!(returned_action_track.started_at, started_at);
-        assert_eq!(returned_action_track.ended_at, Some(ended_at));
+        assert_eq!(
+            returned_action_track.started_at,
+            started_at.trunc_subsecs(0)
+        );
+        assert_eq!(
+            returned_action_track.ended_at,
+            Some(ended_at.trunc_subsecs(0))
+        );
         assert_eq!(returned_action_track.duration, Some(duration));
 
         let updated_action_track = action_track::Entity::find_by_id(action_track.id)
@@ -135,9 +148,44 @@ mod tests {
             .unwrap();
         assert_eq!(updated_action_track.action_id, Some(action.id));
         assert_eq!(updated_action_track.user_id, user.id);
-        assert_eq!(updated_action_track.started_at, started_at);
-        assert_eq!(updated_action_track.ended_at, Some(ended_at));
+        assert_eq!(updated_action_track.started_at, started_at.trunc_subsecs(0));
+        assert_eq!(
+            updated_action_track.ended_at,
+            Some(ended_at.trunc_subsecs(0))
+        );
         assert_eq!(updated_action_track.duration, Some(duration));
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn conflict_on_duplicate_starts_at() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let app = init_app(db.clone()).await;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
+        let action_track = factory::action_track(user.id)
+            .action_id(Some(action.id))
+            .insert(&db)
+            .await?;
+        let existing_action_track = factory::action_track(user.id)
+            .started_at(action_track.started_at + TimeDelta::seconds(1))
+            .action_id(Some(action.id))
+            .insert(&db)
+            .await?;
+
+        let req = test::TestRequest::put()
+            .uri(&format!("/{}", action_track.id))
+            .set_json(RequestBody {
+                action_id: Some(action.id),
+                started_at: existing_action_track.started_at,
+                ended_at: None,
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::CONFLICT);
 
         Ok(())
     }

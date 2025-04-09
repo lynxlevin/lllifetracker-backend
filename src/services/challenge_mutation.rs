@@ -41,7 +41,7 @@ impl ChallengeMutation {
         db.transaction::<_, challenge::Model, DbErr>(|txn| {
             Box::pin(async move {
                 let now = Utc::now();
-                let challenge_id = uuid::Uuid::new_v4();
+                let challenge_id = uuid::Uuid::now_v7();
                 let created_challenge = challenge::ActiveModel {
                     id: Set(challenge_id),
                     user_id: Set(form_data.user_id),
@@ -465,7 +465,7 @@ mod tests {
             text: None,
             date: None,
             tag_ids: None,
-            user_id: uuid::Uuid::new_v4(),
+            user_id: uuid::Uuid::now_v7(),
         };
 
         let error = ChallengeMutation::partial_update(&db, form)
@@ -511,7 +511,7 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let challenge = factory::challenge(user.id).insert(&db).await?;
 
-        let error = ChallengeMutation::delete(&db, challenge.id, uuid::Uuid::new_v4())
+        let error = ChallengeMutation::delete(&db, challenge.id, uuid::Uuid::now_v7())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
@@ -548,7 +548,7 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let challenge = factory::challenge(user.id).insert(&db).await?;
 
-        let error = ChallengeMutation::archive(&db, challenge.id, uuid::Uuid::new_v4())
+        let error = ChallengeMutation::archive(&db, challenge.id, uuid::Uuid::now_v7())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
@@ -587,7 +587,7 @@ mod tests {
         let challenge = factory::challenge(user.id).insert(&db).await?;
 
         let error =
-            ChallengeMutation::mark_accomplished(&db, challenge.id, uuid::Uuid::new_v4())
+            ChallengeMutation::mark_accomplished(&db, challenge.id, uuid::Uuid::now_v7())
                 .await
                 .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));

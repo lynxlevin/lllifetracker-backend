@@ -1,5 +1,7 @@
+use chrono::SubsecRound;
 use entities::action_track;
 use sea_orm::{entity::prelude::*, ActiveValue::NotSet, Set};
+use types::CustomDbErr;
 
 use super::action_track_query::ActionTrackQuery;
 
@@ -26,15 +28,16 @@ impl ActionTrackMutation {
         form_data: NewActionTrack,
     ) -> Result<action_track::Model, DbErr> {
         action_track::ActiveModel {
-            id: Set(uuid::Uuid::new_v4()),
+            id: Set(uuid::Uuid::now_v7()),
             user_id: Set(form_data.user_id),
             action_id: Set(form_data.action_id),
-            started_at: Set(form_data.started_at),
+            started_at: Set(form_data.started_at.trunc_subsecs(0)),
             ended_at: NotSet,
             duration: NotSet,
         }
         .insert(db)
         .await
+        .or(Err(DbErr::Custom(CustomDbErr::Duplicate.to_string())))
     }
 
     pub async fn update(
@@ -47,15 +50,21 @@ impl ActionTrackMutation {
                 .await?
                 .into();
         action_track.action_id = Set(form_data.action_id);
-        action_track.started_at = Set(form_data.started_at);
-        action_track.ended_at = Set(form_data.ended_at);
+        action_track.started_at = Set(form_data.started_at.trunc_subsecs(0));
         match form_data.ended_at {
             Some(ended_at) => {
+                action_track.ended_at = Set(Some(ended_at.trunc_subsecs(0)));
                 action_track.duration = Set(Some((ended_at - form_data.started_at).num_seconds()))
             }
-            None => action_track.duration = Set(None),
+            None => {
+                action_track.ended_at = Set(None);
+                action_track.duration = Set(None)
+            }
         }
-        action_track.update(db).await
+        action_track
+            .update(db)
+            .await
+            .or(Err(DbErr::Custom(CustomDbErr::Duplicate.to_string())))
     }
 
     pub async fn delete(
@@ -73,12 +82,12 @@ impl ActionTrackMutation {
 
 #[cfg(test)]
 mod tests {
-    use chrono::Utc;
+    use chrono::{TimeDelta, Utc};
     use sea_orm::DbErr;
 
+    use ::types::CustomDbErr;
     use entities::action;
     use test_utils::{self, *};
-    use ::types::CustomDbErr;
 
     use super::*;
 
@@ -99,7 +108,10 @@ mod tests {
             .unwrap();
         assert_eq!(returned_action_track.user_id, user.id);
         assert_eq!(returned_action_track.action_id, Some(action.id));
-        assert_eq!(returned_action_track.started_at, form_data.started_at);
+        assert_eq!(
+            returned_action_track.started_at,
+            form_data.started_at.trunc_subsecs(0)
+        );
         assert_eq!(returned_action_track.ended_at, None);
         assert_eq!(returned_action_track.duration, None);
 
@@ -109,9 +121,37 @@ mod tests {
             .unwrap();
         assert_eq!(created_action_track.user_id, user.id);
         assert_eq!(created_action_track.action_id, Some(action.id));
-        assert_eq!(created_action_track.started_at, form_data.started_at);
+        assert_eq!(
+            created_action_track.started_at,
+            form_data.started_at.trunc_subsecs(0)
+        );
         assert_eq!(created_action_track.ended_at, None);
         assert_eq!(created_action_track.duration, None);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn create_duplicate_creation() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
+        let existing_action_track = factory::action_track(user.id)
+            .action_id(Some(action.id))
+            .insert(&db)
+            .await?;
+
+        let form_data = NewActionTrack {
+            started_at: existing_action_track.started_at,
+            action_id: Some(action.id),
+            user_id: user.id,
+        };
+
+        let error = ActionTrackMutation::create(&db, form_data)
+            .await
+            .unwrap_err();
+
+        assert_eq!(error, DbErr::Custom(CustomDbErr::Duplicate.to_string()));
 
         Ok(())
     }
@@ -140,8 +180,8 @@ mod tests {
         assert_eq!(returned_action.id, action_track.id);
         assert_eq!(returned_action.action_id, Some(action.id));
         assert_eq!(returned_action.user_id, user.id);
-        assert_eq!(returned_action.started_at, started_at);
-        assert_eq!(returned_action.ended_at, Some(ended_at));
+        assert_eq!(returned_action.started_at, started_at.trunc_subsecs(0));
+        assert_eq!(returned_action.ended_at, Some(ended_at.trunc_subsecs(0)));
         assert_eq!(returned_action.duration, Some(duration));
 
         let updated_action = action_track::Entity::find_by_id(action_track.id)
@@ -150,9 +190,42 @@ mod tests {
             .unwrap();
         assert_eq!(updated_action.action_id, Some(action.id));
         assert_eq!(updated_action.user_id, user.id);
-        assert_eq!(updated_action.started_at, started_at);
-        assert_eq!(updated_action.ended_at, Some(ended_at));
+        assert_eq!(updated_action.started_at, started_at.trunc_subsecs(0));
+        assert_eq!(updated_action.ended_at, Some(ended_at.trunc_subsecs(0)));
         assert_eq!(updated_action.duration, Some(duration));
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn update_conflicting_update() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
+        let action_track = factory::action_track(user.id)
+            .action_id(Some(action.id))
+            .insert(&db)
+            .await?;
+        let existing_action_track = factory::action_track(user.id)
+            .started_at(action_track.started_at + TimeDelta::seconds(1))
+            .action_id(Some(action.id))
+            .insert(&db)
+            .await?;
+
+        let error = ActionTrackMutation::update(
+            &db,
+            action_track.id,
+            UpdateActionTrack {
+                user_id: user.id,
+                action_id: Some(action.id),
+                started_at: existing_action_track.started_at,
+                ended_at: None,
+            },
+        )
+        .await
+        .unwrap_err();
+
+        assert_eq!(error, DbErr::Custom(CustomDbErr::Duplicate.to_string()));
 
         Ok(())
     }
@@ -167,7 +240,7 @@ mod tests {
             &db,
             action_track.id,
             UpdateActionTrack {
-                user_id: uuid::Uuid::new_v4(),
+                user_id: uuid::Uuid::now_v7(),
                 action_id: None,
                 started_at: Utc::now().into(),
                 ended_at: None,
@@ -209,7 +282,7 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let action_track = factory::action_track(user.id).insert(&db).await?;
 
-        let error = ActionTrackMutation::delete(&db, action_track.id, uuid::Uuid::new_v4())
+        let error = ActionTrackMutation::delete(&db, action_track.id, uuid::Uuid::now_v7())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));

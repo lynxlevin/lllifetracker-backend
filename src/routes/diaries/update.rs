@@ -195,7 +195,7 @@ mod tests {
         let user = factory::user().insert(&db).await?;
 
         let req = test::TestRequest::put()
-            .uri(&format!("/{}", uuid::Uuid::new_v4()))
+            .uri(&format!("/{}", uuid::Uuid::now_v7()))
             .set_json(RequestBody {
                 text: None,
                 date: chrono::Utc::now().date_naive(),
@@ -278,7 +278,7 @@ mod tests {
                 text: None,
                 date: diary.date,
                 score: None,
-                tag_ids: vec![uuid::Uuid::new_v4()],
+                tag_ids: vec![uuid::Uuid::now_v7()],
                 update_keys: vec![DiaryKey::TagIds],
             })
             .to_request();

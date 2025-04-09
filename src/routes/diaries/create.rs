@@ -244,7 +244,7 @@ mod tests {
                 text: None,
                 date: today,
                 score: None,
-                tag_ids: vec![uuid::Uuid::new_v4()],
+                tag_ids: vec![uuid::Uuid::now_v7()],
             })
             .to_request();
         non_existent_tag_req.extensions_mut().insert(user.clone());

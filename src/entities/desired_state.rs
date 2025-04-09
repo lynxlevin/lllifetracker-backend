@@ -22,7 +22,7 @@ pub enum Relation {
     AmbitionsDesiredStates,
     #[sea_orm(has_many = "super::desired_states_actions::Entity")]
     DesiredStatesActions,
-    #[sea_orm(has_many = "super::tag::Entity")]
+    #[sea_orm(has_one = "super::tag::Entity")]
     Tag,
     #[sea_orm(
         belongs_to = "super::user::Entity",

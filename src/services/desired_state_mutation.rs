@@ -23,7 +23,7 @@ impl DesiredStateMutation {
         db.transaction::<_, desired_state::Model, DbErr>(|txn| {
             Box::pin(async move {
                 let now = Utc::now();
-                let desired_state_id = uuid::Uuid::new_v4();
+                let desired_state_id = uuid::Uuid::now_v7();
                 let created_desired_state = desired_state::ActiveModel {
                     id: Set(desired_state_id),
                     user_id: Set(form_data.user_id),
@@ -37,7 +37,7 @@ impl DesiredStateMutation {
                 .insert(txn)
                 .await?;
                 tag::ActiveModel {
-                    id: Set(uuid::Uuid::new_v4()),
+                    id: Set(uuid::Uuid::now_v7()),
                     user_id: Set(form_data.user_id),
                     ambition_id: NotSet,
                     desired_state_id: Set(Some(desired_state_id)),
@@ -292,7 +292,7 @@ mod tests {
         let error = DesiredStateMutation::update(
             &db,
             desired_state.id,
-            uuid::Uuid::new_v4(),
+            uuid::Uuid::now_v7(),
             new_name.clone(),
             None,
         )
@@ -328,7 +328,7 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let desired_state = factory::desired_state(user.id).insert(&db).await?;
 
-        let error = DesiredStateMutation::delete(&db, desired_state.id, uuid::Uuid::new_v4())
+        let error = DesiredStateMutation::delete(&db, desired_state.id, uuid::Uuid::now_v7())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
@@ -381,7 +381,7 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let desired_state = factory::desired_state(user.id).insert(&db).await?;
 
-        let error = DesiredStateMutation::archive(&db, desired_state.id, uuid::Uuid::new_v4())
+        let error = DesiredStateMutation::archive(&db, desired_state.id, uuid::Uuid::now_v7())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
@@ -440,7 +440,7 @@ mod tests {
             .insert(&db)
             .await?;
 
-        let error = DesiredStateMutation::archive(&db, desired_state.id, uuid::Uuid::new_v4())
+        let error = DesiredStateMutation::archive(&db, desired_state.id, uuid::Uuid::now_v7())
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));

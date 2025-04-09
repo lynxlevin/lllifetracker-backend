@@ -1,12 +1,13 @@
-use entities::user as user_entity;
 use ::types::{self, ActionTrackVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::action_track_mutation::{ActionTrackMutation, NewActionTrack};
 use actix_web::{
     post,
     web::{Data, Json, ReqData},
     HttpResponse,
 };
-use sea_orm::DbConn;
+use entities::user as user_entity;
+use sea_orm::{DbConn, DbErr};
+use services::action_track_mutation::{ActionTrackMutation, NewActionTrack};
+use types::CustomDbErr;
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {
@@ -39,6 +40,21 @@ pub async fn create_action_track(
                     HttpResponse::Created().json(res)
                 }
                 Err(e) => {
+                    match &e {
+                        DbErr::Custom(message) => {
+                            match message.parse::<CustomDbErr>().unwrap() {
+                                CustomDbErr::Duplicate => {
+                                    return HttpResponse::Conflict().json(
+                                        types::ErrorResponse {
+                                            error: "A track for the same action which starts at the same time exists.".to_string(),
+                                        }
+                                    )
+                                }
+                                _ => {}
+                            }
+                        }
+                        _ => {}
+                    }
                     tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
                     HttpResponse::InternalServerError().json(types::ErrorResponse {
                         error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
@@ -59,7 +75,7 @@ mod tests {
         web::scope,
         App, HttpMessage,
     };
-    use chrono::Utc;
+    use chrono::{SubsecRound, Utc};
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
     use entities::action_track;
@@ -101,7 +117,10 @@ mod tests {
 
         let returned_action_track: ActionTrackVisible = test::read_body_json(res).await;
         assert_eq!(returned_action_track.action_id, Some(action.id));
-        assert_eq!(returned_action_track.started_at, started_at);
+        assert_eq!(
+            returned_action_track.started_at,
+            started_at.trunc_subsecs(0)
+        );
         assert_eq!(returned_action_track.ended_at, None);
         assert_eq!(returned_action_track.duration, None);
 
@@ -111,9 +130,35 @@ mod tests {
             .unwrap();
         assert_eq!(created_action_track.user_id, user.id);
         assert_eq!(created_action_track.action_id, Some(action.id));
-        assert_eq!(created_action_track.started_at, started_at);
+        assert_eq!(created_action_track.started_at, started_at.trunc_subsecs(0));
         assert_eq!(created_action_track.ended_at, None);
         assert_eq!(created_action_track.duration, None);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn conflict_on_duplicate_creation() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
+        let existing_action_track = factory::action_track(user.id)
+            .action_id(Some(action.id))
+            .insert(&db)
+            .await?;
+        let app = init_app(db.clone()).await;
+
+        let req = test::TestRequest::post()
+            .uri("/")
+            .set_json(RequestBody {
+                started_at: existing_action_track.started_at,
+                action_id: existing_action_track.action_id,
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::CONFLICT);
 
         Ok(())
     }

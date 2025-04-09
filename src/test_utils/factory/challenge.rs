@@ -6,7 +6,7 @@ use uuid::Uuid;
 pub fn challenge(user_id: Uuid) -> challenge::ActiveModel {
     let now = Utc::now();
     challenge::ActiveModel {
-        id: Set(uuid::Uuid::new_v4()),
+        id: Set(uuid::Uuid::now_v7()),
         title: Set("challenge".to_string()),
         text: Set("text".to_string()),
         date: Set(now.date_naive()),

@@ -7,7 +7,7 @@ use uuid::Uuid;
 pub fn ambition(user_id: Uuid) -> ambition::ActiveModel {
     let now = Utc::now();
     ambition::ActiveModel {
-        id: Set(Uuid::new_v4()),
+        id: Set(Uuid::now_v7()),
         user_id: Set(user_id),
         name: Set("ambition".to_string()),
         description: Set(None),
@@ -53,7 +53,7 @@ impl AmbitionFactory for ambition::ActiveModel {
     async fn insert_with_tag(self, db: &DbConn) -> Result<(ambition::Model, tag::Model), DbErr> {
         let ambition = self.insert(db).await?;
         let tag = tag::ActiveModel {
-            id: Set(uuid::Uuid::new_v4()),
+            id: Set(uuid::Uuid::now_v7()),
             user_id: Set(ambition.user_id),
             ambition_id: Set(Some(ambition.id)),
             desired_state_id: NotSet,

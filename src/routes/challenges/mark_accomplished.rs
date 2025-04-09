@@ -134,7 +134,7 @@ mod tests {
         let user = factory::user().insert(&db).await?;
 
         let req = test::TestRequest::put()
-            .uri(&format!("/{}/accomplish", uuid::Uuid::new_v4()))
+            .uri(&format!("/{}/accomplish", uuid::Uuid::now_v7()))
             .to_request();
         req.extensions_mut().insert(user.clone());
 
