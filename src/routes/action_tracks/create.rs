@@ -1,13 +1,13 @@
-use entities::user as user_entity;
-use types::CustomDbErr;
 use ::types::{self, ActionTrackVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::action_track_mutation::{ActionTrackMutation, NewActionTrack};
 use actix_web::{
     post,
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use entities::user as user_entity;
 use sea_orm::{DbConn, DbErr};
+use services::action_track_mutation::{ActionTrackMutation, NewActionTrack};
+use types::CustomDbErr;
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {
@@ -46,7 +46,7 @@ pub async fn create_action_track(
                                 CustomDbErr::Duplicate => {
                                     return HttpResponse::Conflict().json(
                                         types::ErrorResponse {
-                                            error: "An identical track for the same action is already running".to_string(),
+                                            error: "A track for the same action which starts at the same time exists.".to_string(),
                                         }
                                     )
                                 }
@@ -117,7 +117,10 @@ mod tests {
 
         let returned_action_track: ActionTrackVisible = test::read_body_json(res).await;
         assert_eq!(returned_action_track.action_id, Some(action.id));
-        assert_eq!(returned_action_track.started_at, started_at.trunc_subsecs(0));
+        assert_eq!(
+            returned_action_track.started_at,
+            started_at.trunc_subsecs(0)
+        );
         assert_eq!(returned_action_track.ended_at, None);
         assert_eq!(returned_action_track.duration, None);
 
@@ -139,33 +142,23 @@ mod tests {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
+        let existing_action_track = factory::action_track(user.id)
+            .action_id(Some(action.id))
+            .insert(&db)
+            .await?;
         let app = init_app(db.clone()).await;
-
-        let started_at: chrono::DateTime<chrono::FixedOffset> = Utc::now().into();
 
         let req = test::TestRequest::post()
             .uri("/")
             .set_json(RequestBody {
-                started_at,
-                action_id: Some(action.id),
+                started_at: existing_action_track.started_at,
+                action_id: existing_action_track.action_id,
             })
             .to_request();
         req.extensions_mut().insert(user.clone());
 
         let res = test::call_service(&app, req).await;
-        assert_eq!(res.status(), http::StatusCode::CREATED);
-
-        let duplicate_req = test::TestRequest::post()
-            .uri("/")
-            .set_json(RequestBody {
-                started_at,
-                action_id: Some(action.id),
-            })
-            .to_request();
-        duplicate_req.extensions_mut().insert(user.clone());
-
-        let duplicate_res = test::call_service(&app, duplicate_req).await;
-        assert_eq!(duplicate_res.status(), http::StatusCode::CONFLICT);
+        assert_eq!(res.status(), http::StatusCode::CONFLICT);
 
         Ok(())
     }

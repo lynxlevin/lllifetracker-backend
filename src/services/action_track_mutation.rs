@@ -36,7 +36,8 @@ impl ActionTrackMutation {
             duration: NotSet,
         }
         .insert(db)
-        .await.or(Err(DbErr::Custom(CustomDbErr::Duplicate.to_string())))
+        .await
+        .or(Err(DbErr::Custom(CustomDbErr::Duplicate.to_string())))
     }
 
     pub async fn update(
@@ -60,7 +61,10 @@ impl ActionTrackMutation {
                 action_track.duration = Set(None)
             }
         }
-        action_track.update(db).await
+        action_track
+            .update(db)
+            .await
+            .or(Err(DbErr::Custom(CustomDbErr::Duplicate.to_string())))
     }
 
     pub async fn delete(
@@ -78,7 +82,7 @@ impl ActionTrackMutation {
 
 #[cfg(test)]
 mod tests {
-    use chrono::Utc;
+    use chrono::{TimeDelta, Utc};
     use sea_orm::DbErr;
 
     use ::types::CustomDbErr;
@@ -104,7 +108,10 @@ mod tests {
             .unwrap();
         assert_eq!(returned_action_track.user_id, user.id);
         assert_eq!(returned_action_track.action_id, Some(action.id));
-        assert_eq!(returned_action_track.started_at, form_data.started_at.trunc_subsecs(0));
+        assert_eq!(
+            returned_action_track.started_at,
+            form_data.started_at.trunc_subsecs(0)
+        );
         assert_eq!(returned_action_track.ended_at, None);
         assert_eq!(returned_action_track.duration, None);
 
@@ -114,7 +121,10 @@ mod tests {
             .unwrap();
         assert_eq!(created_action_track.user_id, user.id);
         assert_eq!(created_action_track.action_id, Some(action.id));
-        assert_eq!(created_action_track.started_at, form_data.started_at.trunc_subsecs(0));
+        assert_eq!(
+            created_action_track.started_at,
+            form_data.started_at.trunc_subsecs(0)
+        );
         assert_eq!(created_action_track.ended_at, None);
         assert_eq!(created_action_track.duration, None);
 
@@ -126,7 +136,10 @@ mod tests {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
-        let existing_action_track = factory::action_track(user.id).action_id(Some(action.id)).insert(&db).await?;
+        let existing_action_track = factory::action_track(user.id)
+            .action_id(Some(action.id))
+            .insert(&db)
+            .await?;
 
         let form_data = NewActionTrack {
             started_at: existing_action_track.started_at,
@@ -134,7 +147,9 @@ mod tests {
             user_id: user.id,
         };
 
-        let error = ActionTrackMutation::create(&db, form_data).await.unwrap_err();
+        let error = ActionTrackMutation::create(&db, form_data)
+            .await
+            .unwrap_err();
 
         assert_eq!(error, DbErr::Custom(CustomDbErr::Duplicate.to_string()));
 
@@ -178,6 +193,39 @@ mod tests {
         assert_eq!(updated_action.started_at, started_at.trunc_subsecs(0));
         assert_eq!(updated_action.ended_at, Some(ended_at.trunc_subsecs(0)));
         assert_eq!(updated_action.duration, Some(duration));
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn update_conflicting_update() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
+        let action_track = factory::action_track(user.id)
+            .action_id(Some(action.id))
+            .insert(&db)
+            .await?;
+        let existing_action_track = factory::action_track(user.id)
+            .started_at(action_track.started_at + TimeDelta::seconds(1))
+            .action_id(Some(action.id))
+            .insert(&db)
+            .await?;
+
+        let error = ActionTrackMutation::update(
+            &db,
+            action_track.id,
+            UpdateActionTrack {
+                user_id: user.id,
+                action_id: Some(action.id),
+                started_at: existing_action_track.started_at,
+                ended_at: None,
+            },
+        )
+        .await
+        .unwrap_err();
+
+        assert_eq!(error, DbErr::Custom(CustomDbErr::Duplicate.to_string()));
 
         Ok(())
     }
