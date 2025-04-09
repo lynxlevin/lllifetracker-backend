@@ -75,7 +75,7 @@ mod tests {
         dev::{Service, ServiceResponse},
         http, test, App, HttpMessage,
     };
-    use chrono::{Duration, Utc};
+    use chrono::{Duration, TimeDelta, Utc};
     use sea_orm::{entity::prelude::*, DbErr};
 
     use test_utils::{self, *};
@@ -105,6 +105,7 @@ mod tests {
             .insert(&db)
             .await?;
         let action_track_1 = factory::action_track(user.id)
+            .started_at(action_track_0.started_at + TimeDelta::seconds(1))
             .duration(Some(120))
             .insert(&db)
             .await?;

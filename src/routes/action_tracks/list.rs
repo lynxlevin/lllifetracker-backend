@@ -52,7 +52,7 @@ mod tests {
         web::scope,
         App, HttpMessage,
     };
-    use chrono::{DateTime, Duration, FixedOffset};
+    use chrono::{DateTime, Duration, FixedOffset, TimeDelta};
     use sea_orm::{entity::prelude::*, DbErr};
 
     use test_utils::{self, *};
@@ -81,6 +81,7 @@ mod tests {
             .insert(&db)
             .await?;
         let action_track_1 = factory::action_track(user.id)
+            .started_at(action_track_0.started_at + TimeDelta::seconds(1))
             .duration(Some(180))
             .action_id(Some(action.id))
             .insert(&db)
