@@ -8,6 +8,7 @@ use super::action_track_query::ActionTrackQuery;
 #[derive(serde::Deserialize, Debug, serde::Serialize, Clone)]
 pub struct NewActionTrack {
     pub started_at: chrono::DateTime<chrono::FixedOffset>,
+    pub ended_at: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub action_id: uuid::Uuid,
     pub user_id: uuid::Uuid,
 }
@@ -27,13 +28,20 @@ impl ActionTrackMutation {
         db: &DbConn,
         form_data: NewActionTrack,
     ) -> Result<action_track::Model, DbErr> {
+        let started_at = form_data.started_at.trunc_subsecs(0);
         action_track::ActiveModel {
             id: Set(uuid::Uuid::now_v7()),
             user_id: Set(form_data.user_id),
             action_id: Set(form_data.action_id),
-            started_at: Set(form_data.started_at.trunc_subsecs(0)),
-            ended_at: NotSet,
-            duration: NotSet,
+            started_at: Set(started_at),
+            ended_at: match form_data.ended_at {
+                Some(ended_at) => Set(Some(ended_at.trunc_subsecs(0))),
+                None => NotSet,
+            },
+            duration: match form_data.ended_at {
+                Some(ended_at) => Set(Some((ended_at.trunc_subsecs(0) - started_at).num_seconds())),
+                None => NotSet,
+            },
         }
         .insert(db)
         .await
@@ -99,6 +107,7 @@ mod tests {
 
         let form_data = NewActionTrack {
             started_at: Utc::now().into(),
+            ended_at: None,
             action_id: action.id,
             user_id: user.id,
         };
@@ -143,6 +152,7 @@ mod tests {
 
         let form_data = NewActionTrack {
             started_at: existing_action_track.started_at,
+            ended_at: None,
             action_id: action.id,
             user_id: user.id,
         };

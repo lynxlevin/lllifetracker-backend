@@ -4,9 +4,12 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
-use entities::user as user_entity;
+use entities::{sea_orm_active_enums::ActionTrackType, user as user_entity};
 use sea_orm::{DbConn, DbErr};
-use services::action_track_mutation::{ActionTrackMutation, NewActionTrack};
+use services::{
+    action_query::ActionQuery,
+    action_track_mutation::{ActionTrackMutation, NewActionTrack},
+};
 use types::CustomDbErr;
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
@@ -25,34 +28,72 @@ pub async fn create_action_track(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ActionTrackMutation::create(
-                &db,
-                NewActionTrack {
-                    started_at: req.started_at,
-                    action_id: req.action_id,
-                    user_id: user.id,
-                },
-            )
-            .await
-            {
-                Ok(action_track) => {
-                    let res: ActionTrackVisible = action_track.into();
-                    HttpResponse::Created().json(res)
-                }
-                Err(e) => {
-                    match &e {
-                        DbErr::Custom(message) => {
-                            match message.parse::<CustomDbErr>().unwrap() {
-                                CustomDbErr::Duplicate => {
-                                    return HttpResponse::Conflict().json(
-                                        types::ErrorResponse {
-                                            error: "A track for the same action which starts at the same time exists.".to_string(),
+            match ActionQuery::find_by_id_and_user_id(&db, req.action_id, user.id).await {
+                Ok(action) => {
+                    let result = match action.track_type {
+                        ActionTrackType::TimeSpan => {
+                            ActionTrackMutation::create(
+                                &db,
+                                NewActionTrack {
+                                    started_at: req.started_at,
+                                    ended_at: None,
+                                    action_id: req.action_id,
+                                    user_id: user.id,
+                                },
+                            )
+                            .await
+                        }
+                        ActionTrackType::Count => {
+                            ActionTrackMutation::create(
+                                &db,
+                                NewActionTrack {
+                                    started_at: req.started_at,
+                                    ended_at: Some(req.started_at),
+                                    action_id: req.action_id,
+                                    user_id: user.id,
+                                },
+                            )
+                            .await
+                        }
+                    };
+                    match result {
+                        Ok(action_track) => {
+                            let res: ActionTrackVisible = action_track.into();
+                            HttpResponse::Created().json(res)
+                        }
+                        Err(e) => {
+                            match &e {
+                                DbErr::Custom(message) => {
+                                    match message.parse::<CustomDbErr>().unwrap() {
+                                        CustomDbErr::Duplicate => {
+                                            return HttpResponse::Conflict().json(
+                                                types::ErrorResponse {
+                                                    error: "A track for the same action which starts at the same time exists.".to_string(),
+                                                }
+                                            )
                                         }
-                                    )
+                                        _ => {}
+                                    }
                                 }
                                 _ => {}
                             }
+                            tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
+                            HttpResponse::InternalServerError().json(types::ErrorResponse {
+                                error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
+                            })
                         }
+                    }
+                }
+                Err(e) => {
+                    match &e {
+                        DbErr::Custom(message) => match message.parse::<CustomDbErr>().unwrap() {
+                            CustomDbErr::NotFound => {
+                                return HttpResponse::NotFound().json(types::ErrorResponse {
+                                    error: "An action with that id does not exist.".to_string(),
+                                })
+                            }
+                            _ => {}
+                        },
                         _ => {}
                     }
                     tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
@@ -133,6 +174,55 @@ mod tests {
         assert_eq!(created_action_track.started_at, started_at.trunc_subsecs(0));
         assert_eq!(created_action_track.ended_at, None);
         assert_eq!(created_action_track.duration, None);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn happy_path_count_type() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id)
+            .track_type(ActionTrackType::Count)
+            .insert(&db)
+            .await?;
+        let app = init_app(db.clone()).await;
+
+        let started_at: chrono::DateTime<chrono::FixedOffset> = Utc::now().into();
+
+        let req = test::TestRequest::post()
+            .uri("/")
+            .set_json(RequestBody {
+                started_at,
+                action_id: action.id,
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::CREATED);
+
+        let returned_action_track: ActionTrackVisible = test::read_body_json(res).await;
+        assert_eq!(returned_action_track.action_id, action.id);
+        assert_eq!(
+            returned_action_track.started_at,
+            started_at.trunc_subsecs(0)
+        );
+        assert_eq!(
+            returned_action_track.ended_at,
+            Some(started_at.trunc_subsecs(0))
+        );
+        assert_eq!(returned_action_track.duration, Some(0));
+
+        let created_action_track = action_track::Entity::find_by_id(returned_action_track.id)
+            .one(&db)
+            .await?
+            .unwrap();
+        assert_eq!(created_action_track.user_id, user.id);
+        assert_eq!(
+            ActionTrackVisible::from(created_action_track),
+            returned_action_track
+        );
 
         Ok(())
     }
