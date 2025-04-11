@@ -60,7 +60,7 @@ pub enum Action {
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "action_track_type")]
 enum ActionTrackType {
     #[sea_orm(string_value = "TimeSpan")]
-    TimeSpan = 10,
+    TimeSpan,
     #[sea_orm(string_value = "Count")]
-    Count = 20,
+    Count,
 }
