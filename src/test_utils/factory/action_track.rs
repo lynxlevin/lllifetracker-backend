@@ -15,7 +15,7 @@ pub fn action_track(user_id: Uuid) -> action_track::ActiveModel {
 }
 
 pub trait ActionTrackFactory {
-    fn action_id(self, action_id: Option<Uuid>) -> action_track::ActiveModel;
+    fn action_id(self, action_id: Uuid) -> action_track::ActiveModel;
     fn duration(self, duration: Option<i64>) -> action_track::ActiveModel;
     fn started_at(
         self,
@@ -24,7 +24,7 @@ pub trait ActionTrackFactory {
 }
 
 impl ActionTrackFactory for action_track::ActiveModel {
-    fn action_id(mut self, action_id: Option<Uuid>) -> action_track::ActiveModel {
+    fn action_id(mut self, action_id: Uuid) -> action_track::ActiveModel {
         self.action_id = Set(action_id);
         self
     }

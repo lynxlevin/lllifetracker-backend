@@ -12,7 +12,7 @@ use types::CustomDbErr;
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {
     started_at: chrono::DateTime<chrono::FixedOffset>,
-    action_id: Option<uuid::Uuid>,
+    action_id: uuid::Uuid,
 }
 
 #[tracing::instrument(name = "Creating an action track", skip(db, user))]
@@ -78,7 +78,7 @@ mod tests {
     use chrono::{SubsecRound, Utc};
     use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
 
-    use entities::action_track;
+    use entities::{action_track, sea_orm_active_enums::ActionTrackType};
     use test_utils::{self, *};
 
     use super::*;
@@ -95,7 +95,7 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn happy_path() -> Result<(), DbErr> {
+    async fn happy_path_time_span_type() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
@@ -107,7 +107,7 @@ mod tests {
             .uri("/")
             .set_json(RequestBody {
                 started_at,
-                action_id: Some(action.id),
+                action_id: action.id,
             })
             .to_request();
         req.extensions_mut().insert(user.clone());
@@ -116,7 +116,7 @@ mod tests {
         assert_eq!(res.status(), http::StatusCode::CREATED);
 
         let returned_action_track: ActionTrackVisible = test::read_body_json(res).await;
-        assert_eq!(returned_action_track.action_id, Some(action.id));
+        assert_eq!(returned_action_track.action_id, action.id);
         assert_eq!(
             returned_action_track.started_at,
             started_at.trunc_subsecs(0)
@@ -129,7 +129,7 @@ mod tests {
             .await?
             .unwrap();
         assert_eq!(created_action_track.user_id, user.id);
-        assert_eq!(created_action_track.action_id, Some(action.id));
+        assert_eq!(created_action_track.action_id, action.id);
         assert_eq!(created_action_track.started_at, started_at.trunc_subsecs(0));
         assert_eq!(created_action_track.ended_at, None);
         assert_eq!(created_action_track.duration, None);
@@ -143,7 +143,7 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
         let existing_action_track = factory::action_track(user.id)
-            .action_id(Some(action.id))
+            .action_id(action.id)
             .insert(&db)
             .await?;
         let app = init_app(db.clone()).await;
@@ -172,7 +172,7 @@ mod tests {
             .uri("/")
             .set_json(RequestBody {
                 started_at: Utc::now().into(),
-                action_id: None,
+                action_id: uuid::Uuid::now_v7(),
             })
             .to_request();
 

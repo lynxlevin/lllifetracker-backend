@@ -1,10 +1,9 @@
-use ::types::{ActionTrackWithAction, CustomDbErr};
+use ::types::{ActionTrackVisible, CustomDbErr};
 use chrono::{DateTime, FixedOffset};
-use entities::{
-    action,
-    action_track::{self, Column},
-};
-use sea_orm::{entity::prelude::*, JoinType::LeftJoin, QueryOrder, QuerySelect};
+use entities::
+    action_track::{self, Column}
+;
+use sea_orm::{DbConn, DbErr, EntityTrait, ColumnTrait, QueryFilter, QueryOrder};
 
 pub struct ActionTrackQueryFilters {
     pub started_at_gte: Option<DateTime<FixedOffset>>,
@@ -31,7 +30,7 @@ impl ActionTrackQuery {
         db: &DbConn,
         user_id: uuid::Uuid,
         filters: ActionTrackQueryFilters,
-    ) -> Result<Vec<ActionTrackWithAction>, DbErr> {
+    ) -> Result<Vec<ActionTrackVisible>, DbErr> {
         let query = action_track::Entity::find();
         let query = match filters.started_at_gte {
             Some(started_at_gte) => query.filter(Column::StartedAt.gte(started_at_gte)),
@@ -51,17 +50,14 @@ impl ActionTrackQuery {
         };
 
         let query = query
-            .filter(Column::UserId.eq(user_id))
-            .column_as(action::Column::Name, "action_name")
-            .column_as(action::Column::Color, "action_color")
-            .join(LeftJoin, action_track::Relation::Action.def());
+            .filter(Column::UserId.eq(user_id));
         let query = match filters.for_daily_aggregation {
             true => query.order_by_asc(action_track::Column::ActionId),
             false => query,
         };
         query
             .order_by_desc(Column::StartedAt)
-            .into_model::<ActionTrackWithAction>()
+            .into_model::<ActionTrackVisible>()
             .all(db)
             .await
     }
@@ -82,6 +78,7 @@ impl ActionTrackQuery {
 #[cfg(test)]
 mod tests {
     use chrono::Duration;
+    use sea_orm::ActiveModelTrait;
 
     use test_utils::{self, *};
 
@@ -99,25 +96,25 @@ mod tests {
         let _action_track_0 = factory::action_track(user.id)
             .started_at(query_started_at_gte - Duration::seconds(1))
             .duration(Some(120))
-            .action_id(Some(action.id))
+            .action_id(action.id)
             .insert(&db)
             .await?;
         let action_track_1 = factory::action_track(user.id)
             .started_at(query_started_at_gte)
             .duration(Some(180))
-            .action_id(Some(action.id))
+            .action_id(action.id)
             .insert(&db)
             .await?;
         let action_track_2 = factory::action_track(user.id)
             .started_at(query_started_at_lte)
             .duration(Some(350))
-            .action_id(Some(action.id))
+            .action_id(action.id)
             .insert(&db)
             .await?;
         let _action_track_3 = factory::action_track(user.id)
             .started_at(query_started_at_lte + Duration::seconds(1))
             .duration(Some(550))
-            .action_id(Some(action.id))
+            .action_id(action.id)
             .insert(&db)
             .await?;
 
@@ -130,20 +127,16 @@ mod tests {
         dbg!(&res);
 
         let expected = vec![
-            ActionTrackWithAction {
+            ActionTrackVisible {
                 id: action_track_2.id,
-                action_id: Some(action.id),
-                action_name: Some(action.name.clone()),
-                action_color: Some(action.color.clone()),
+                action_id: action.id,
                 started_at: action_track_2.started_at,
                 ended_at: action_track_2.ended_at,
                 duration: action_track_2.duration,
             },
-            ActionTrackWithAction {
+            ActionTrackVisible {
                 id: action_track_1.id,
-                action_id: Some(action.id),
-                action_name: Some(action.name.clone()),
-                action_color: Some(action.color.clone()),
+                action_id: action.id,
                 started_at: action_track_1.started_at,
                 ended_at: action_track_1.ended_at,
                 duration: action_track_1.duration,
