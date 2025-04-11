@@ -121,33 +121,9 @@ mod tests {
         let res = ActionQuery::find_all_by_user_id(&db, user.id, false).await?;
 
         let expected = [
-            ActionVisible {
-                id: action_2.id,
-                name: action_2.name,
-                description: action_2.description,
-                trackable: action_2.trackable,
-                color: action_2.color,
-                created_at: action_2.created_at,
-                updated_at: action_2.updated_at,
-            },
-            ActionVisible {
-                id: action_1.id,
-                name: action_1.name,
-                description: action_1.description,
-                trackable: action_1.trackable,
-                color: action_1.color,
-                created_at: action_1.created_at,
-                updated_at: action_1.updated_at,
-            },
-            ActionVisible {
-                id: action_0.id,
-                name: action_0.name,
-                description: action_0.description,
-                trackable: action_0.trackable,
-                color: action_0.color,
-                created_at: action_0.created_at,
-                updated_at: action_0.updated_at,
-            },
+            ActionVisible::from(action_2),
+            ActionVisible::from(action_1),
+            ActionVisible::from(action_0),
         ];
 
         assert_eq!(res.len(), expected.len());
@@ -176,6 +152,7 @@ mod tests {
             description: archived_action.description,
             trackable: archived_action.trackable,
             color: archived_action.color,
+            track_type: archived_action.track_type,
             created_at: archived_action.created_at,
             updated_at: archived_action.updated_at,
         }];

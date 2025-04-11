@@ -173,19 +173,15 @@ mod tests {
         assert_eq!(resp.status(), http::StatusCode::OK);
 
         let returned_actions: Vec<ActionVisible> = test::read_body_json(resp).await;
-        assert_eq!(returned_actions.len(), 2);
 
-        assert_eq!(returned_actions[0].id, action_0.id);
-        assert_eq!(returned_actions[0].name, action_0.name);
-        assert_eq!(returned_actions[0].description, action_0.description);
-        assert_eq!(returned_actions[0].created_at, action_0.created_at);
-        assert_eq!(returned_actions[0].updated_at, action_0.updated_at);
+        let expected = vec![
+            ActionVisible::from(action_0),
+            ActionVisible::from(action_1),
+        ];
 
-        assert_eq!(returned_actions[1].id, action_1.id);
-        assert_eq!(returned_actions[1].name, action_1.name);
-        assert_eq!(returned_actions[1].description, action_1.description);
-        assert_eq!(returned_actions[1].created_at, action_1.created_at);
-        assert_eq!(returned_actions[1].updated_at, action_1.updated_at);
+        assert_eq!(returned_actions.len(), expected.len());
+        assert_eq!(returned_actions[0], expected[0]);
+        assert_eq!(returned_actions[1], expected[1]);
 
         Ok(())
     }
@@ -401,21 +397,14 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let body: Vec<ActionVisible> = test::read_body_json(resp).await;
-        assert_eq!(body.len(), 1);
+        let res: Vec<ActionVisible> = test::read_body_json(resp).await;
 
-        let expected = serde_json::json!([{
-            "id": archived_action.id,
-            "name": archived_action.name,
-            "description": archived_action.description,
-            "color": archived_action.color,
-            "trackable": archived_action.trackable,
-            "created_at": archived_action.created_at,
-            "updated_at": archived_action.updated_at,
-        }]);
+        let expected = vec![
+            ActionVisible::from(archived_action),
+        ];
 
-        let body = serde_json::to_value(&body).unwrap();
-        assert_eq!(expected, body);
+        assert_eq!(res.len(), expected.len());
+        assert_eq!(res[0], expected[0]);
 
         Ok(())
     }
