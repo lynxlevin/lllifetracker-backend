@@ -19,10 +19,6 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(has_many = "super::ambitions_desired_states::Entity")]
-    AmbitionsDesiredStates,
-    #[sea_orm(has_many = "super::desired_states_actions::Entity")]
-    DesiredStatesActions,
     #[sea_orm(has_one = "super::tag::Entity")]
     Tag,
     #[sea_orm(
@@ -35,18 +31,6 @@ pub enum Relation {
     User,
 }
 
-impl Related<super::ambitions_desired_states::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::AmbitionsDesiredStates.def()
-    }
-}
-
-impl Related<super::desired_states_actions::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::DesiredStatesActions.def()
-    }
-}
-
 impl Related<super::tag::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Tag.def()
@@ -56,32 +40,6 @@ impl Related<super::tag::Entity> for Entity {
 impl Related<super::user::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::User.def()
-    }
-}
-
-impl Related<super::action::Entity> for Entity {
-    fn to() -> RelationDef {
-        super::desired_states_actions::Relation::Action.def()
-    }
-    fn via() -> Option<RelationDef> {
-        Some(
-            super::desired_states_actions::Relation::DesiredState
-                .def()
-                .rev(),
-        )
-    }
-}
-
-impl Related<super::ambition::Entity> for Entity {
-    fn to() -> RelationDef {
-        super::ambitions_desired_states::Relation::Ambition.def()
-    }
-    fn via() -> Option<RelationDef> {
-        Some(
-            super::ambitions_desired_states::Relation::DesiredState
-                .def()
-                .rev(),
-        )
     }
 }
 

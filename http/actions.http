@@ -14,10 +14,6 @@ Content-Type: application/json
 # @name list
 GET {{endpoint}}/api/actions
 
-###
-# @name list_with_links
-GET {{endpoint}}/api/actions?links=true
-
 @action_id=9420a11f-a1fa-46e2-82fe-a5a79bd79a75
 
 ###

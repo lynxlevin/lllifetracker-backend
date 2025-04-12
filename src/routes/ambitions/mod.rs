@@ -1,9 +1,7 @@
 mod archive;
 mod bulk_update_ordering;
-mod connect;
 mod create;
 mod delete;
-mod disconnect;
 mod get;
 mod list;
 mod unarchive;
@@ -21,9 +19,7 @@ pub fn ambition_routes(cfg: &mut ServiceConfig) {
             .service(update::update_ambition)
             .service(delete::delete_ambition)
             .service(archive::archive_ambition)
-            .service(unarchive::unarchive_ambition)
-            .service(connect::connect_desired_state)
-            .service(disconnect::disconnect_desired_state),
+            .service(unarchive::unarchive_ambition),
         // MYMEMO: Can restrict AuthenticateUser this way.
         // .service(
         //     actix_web::web::scope("")
