@@ -10,7 +10,7 @@ path = "lib.rs"
 [dependencies]
 actix-session = { version = "^0.10.0", features = ["redis-session"] }
 actix-web = "^4.8.0"
-chrono = "^0.4.38"
+chrono = "^0.4.40"
 deadpool-redis = "^0.18.0"
 entities = { path = "../entities" }
 # Features here: https://www.sea-ql.org/SeaORM/docs/install-and-config/database-and-async-runtime/#extra-features
@@ -22,13 +22,13 @@ sea-orm = { version = "~1.0", features = [
     "with-json",
     "with-uuid",
 ] }
-serde = "^1.0.204"
+serde = "^1.0.219"
 services = { path = "../services" }
 settings = { path = "../settings" }
 tracing = "^0.1.40"
 types = { path = "../types" }
 utils = { path = "../utils" }
-uuid = { version = "^1.10.0", features = ["v7", "serde"] }
+uuid = { version = "^1.16.0", features = ["v7", "serde"] }
 
 [dev-dependencies]
 actix-http = "3.*"
