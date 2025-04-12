@@ -2,17 +2,17 @@ use actix_session::{config::PersistentSession, storage, SessionMiddleware};
 use actix_web::{
     cookie,
     dev::Server,
+    middleware::Compress,
     web::{scope, Data},
     App, HttpServer,
-    middleware::Compress,
 };
 use sea_orm::*;
 use std::env;
 
 use migration::{Migrator, MigratorTrait};
 use routes::{
-    action_routes, action_track_routes, ambition_routes, auth_routes, challenge_routes,
-    desired_state_routes, diary_routes, memo_routes, reading_note_routes, tag_routes,
+    action_routes, action_track_routes, ambition_routes, auth_routes, desired_state_routes,
+    diary_routes, reading_note_routes, tag_routes,
 };
 use utils::auth::auth_middleware::AuthenticateUser;
 pub struct Application {
@@ -111,8 +111,6 @@ async fn run(
                     .configure(ambition_routes)
                     .configure(desired_state_routes)
                     .configure(action_routes)
-                    .configure(memo_routes)
-                    .configure(challenge_routes)
                     .configure(reading_note_routes)
                     .configure(tag_routes)
                     .configure(action_track_routes)

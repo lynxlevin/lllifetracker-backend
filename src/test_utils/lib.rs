@@ -1,15 +1,13 @@
 use std::env;
 
 use migration::{Migrator, MigratorTrait};
-use sea_orm::{
-    ConnectionTrait, Database, DbBackend, DbConn, DbErr,
-};
+use sea_orm::{ConnectionTrait, Database, DbBackend, DbConn, DbErr};
 
 pub mod factory;
 
 pub use factory::{
-    ActionFactory, ActionTrackFactory, AmbitionFactory, ChallengeFactory, DesiredStateFactory,
-    DiaryFactory, MemoFactory, ReadingNoteFactory, UserFactory,
+    ActionFactory, ActionTrackFactory, AmbitionFactory, DesiredStateFactory, DiaryFactory,
+    ReadingNoteFactory, UserFactory,
 };
 
 pub async fn init_db() -> Result<DbConn, DbErr> {

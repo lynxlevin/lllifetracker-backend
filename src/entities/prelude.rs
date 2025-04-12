@@ -3,13 +3,9 @@
 pub use super::action::Entity as Action;
 pub use super::action_track::Entity as ActionTrack;
 pub use super::ambition::Entity as Ambition;
-pub use super::challenge::Entity as Challenge;
-pub use super::challenges_tags::Entity as ChallengesTags;
 pub use super::desired_state::Entity as DesiredState;
 pub use super::diaries_tags::Entity as DiariesTags;
 pub use super::diary::Entity as Diary;
-pub use super::memo::Entity as Memo;
-pub use super::memos_tags::Entity as MemosTags;
 pub use super::reading_note::Entity as ReadingNote;
 pub use super::reading_notes_tags::Entity as ReadingNotesTags;
 pub use super::tag::Entity as Tag;
