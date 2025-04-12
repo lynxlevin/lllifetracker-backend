@@ -1,12 +1,12 @@
-use entities::user as user_entity;
 use ::types::{self, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::diary_mutation::DiaryMutation;
 use actix_web::{
     delete,
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use entities::user as user_entity;
 use sea_orm::DbConn;
+use services::diary_mutation::DiaryMutation;
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -46,9 +46,11 @@ mod tests {
         dev::{Service, ServiceResponse},
         http, test, App, HttpMessage,
     };
-    use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
+    use sea_orm::{
+        entity::prelude::ActiveModelTrait, ColumnTrait, DbErr, EntityTrait, QueryFilter,
+    };
 
-    use entities::{diary, diaries_tags};
+    use entities::{diaries_tags, diary};
     use test_utils::{self, *};
 
     use super::*;

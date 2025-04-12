@@ -1,6 +1,6 @@
 use chrono::Utc;
 use entities::{action, sea_orm_active_enums::ActionTrackType, tag};
-use sea_orm::{prelude::*, ActiveValue::NotSet, DbConn, DbErr, Set};
+use sea_orm::{ActiveModelTrait, ActiveValue::NotSet, DbConn, DbErr, Set};
 use std::future::Future;
 use uuid::Uuid;
 

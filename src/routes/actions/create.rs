@@ -1,12 +1,12 @@
-use entities::{sea_orm_active_enums::ActionTrackType, user as user_entity};
 use ::types::{self, ActionVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::action_mutation::{ActionMutation, NewAction};
 use actix_web::{
     post,
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use entities::{sea_orm_active_enums::ActionTrackType, user as user_entity};
 use sea_orm::DbConn;
+use services::action_mutation::{ActionMutation, NewAction};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {
@@ -61,7 +61,10 @@ mod tests {
         web::scope,
         App, HttpMessage,
     };
-    use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
+    use sea_orm::{
+        entity::prelude::{ActiveModelTrait, ColumnTrait, QueryFilter},
+        DbErr, EntityTrait,
+    };
 
     use entities::{action, tag};
     use test_utils::{self, *};

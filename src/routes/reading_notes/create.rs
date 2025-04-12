@@ -1,12 +1,12 @@
-use entities::user as user_entity;
 use ::types::{self, ReadingNoteVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::reading_note_mutation::{ReadingNoteMutation, NewReadingNote};
 use actix_web::{
     post,
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use entities::user as user_entity;
 use sea_orm::DbConn;
+use services::reading_note_mutation::{NewReadingNote, ReadingNoteMutation};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {
@@ -65,7 +65,10 @@ mod tests {
         web::scope,
         App, HttpMessage,
     };
-    use sea_orm::{entity::prelude::*, DbErr, EntityTrait, QuerySelect};
+    use sea_orm::{
+        entity::prelude::ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter,
+        QueryFilter, QuerySelect,
+    };
 
     use entities::{reading_note, reading_notes_tags};
     use test_utils::{self, *};

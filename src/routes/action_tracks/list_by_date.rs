@@ -75,7 +75,7 @@ mod tests {
         http, test, App, HttpMessage,
     };
     use chrono::{Duration, TimeDelta, Utc};
-    use sea_orm::{entity::prelude::*, DbErr};
+    use sea_orm::{entity::prelude::ActiveModelTrait, DbErr};
 
     use test_utils::{self, *};
 

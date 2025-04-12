@@ -87,7 +87,7 @@ mod tests {
         http, test, App, HttpMessage,
     };
     use chrono::{SubsecRound, TimeDelta, Utc};
-    use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
+    use sea_orm::{entity::prelude::ActiveModelTrait, DbErr, EntityTrait};
 
     use entities::action_track;
     use test_utils::{self, *};

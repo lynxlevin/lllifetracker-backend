@@ -1,8 +1,8 @@
-use entities::{action, ambition, desired_state, tag};
 use ::types::TagQueryResult;
-use migration::NullOrdering::Last;
+use entities::{action, ambition, desired_state, tag};
 use sea_orm::{
-    entity::prelude::*, Condition, JoinType::LeftJoin, Order::Asc, QueryOrder, QuerySelect,
+    sea_query::NullOrdering::Last, ColumnTrait, Condition, DbConn, DbErr, EntityTrait,
+    JoinType::LeftJoin, Order::Asc, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
 };
 
 pub struct TagQuery;
@@ -47,6 +47,7 @@ impl TagQuery {
 #[cfg(test)]
 mod tests {
     use test_utils::{self, *};
+    use sea_orm::ActiveModelTrait;
 
     use super::*;
 

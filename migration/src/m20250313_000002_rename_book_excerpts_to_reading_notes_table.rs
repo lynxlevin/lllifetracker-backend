@@ -1,4 +1,8 @@
-use sea_orm_migration::prelude::*;
+use sea_orm_migration::prelude::{
+    async_trait,
+    sea_orm::{self, DeriveIden},
+    DbErr, DeriveMigrationName, MigrationTrait, SchemaManager, Table,
+};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -25,7 +29,10 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(ReadingNotesTags::Table)
-                    .rename_column(BookExcerptsTags::BookExcerptId, ReadingNotesTags::ReadingNoteId)
+                    .rename_column(
+                        BookExcerptsTags::BookExcerptId,
+                        ReadingNotesTags::ReadingNoteId,
+                    )
                     .to_owned(),
             )
             .await?;
@@ -37,7 +44,10 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(ReadingNotesTags::Table)
-                    .rename_column(ReadingNotesTags::ReadingNoteId, BookExcerptsTags::BookExcerptId)
+                    .rename_column(
+                        ReadingNotesTags::ReadingNoteId,
+                        BookExcerptsTags::BookExcerptId,
+                    )
                     .to_owned(),
             )
             .await?;

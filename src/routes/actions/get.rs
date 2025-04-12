@@ -58,7 +58,7 @@ mod tests {
         dev::{Service, ServiceResponse},
         http, test, App, HttpMessage,
     };
-    use sea_orm::{entity::prelude::*, DbErr};
+    use sea_orm::{entity::prelude::ActiveModelTrait, DbErr};
 
     use test_utils::{self, *};
 

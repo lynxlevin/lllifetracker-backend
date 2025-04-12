@@ -1,7 +1,9 @@
 use ::types::{AmbitionVisible, CustomDbErr};
 use entities::ambition;
-use migration::NullOrdering::Last;
-use sea_orm::{entity::prelude::*, Order::Asc, QueryOrder};
+use sea_orm::{
+    sea_query::NullOrdering::Last, ColumnTrait, DbConn, DbErr, EntityTrait, Order::Asc,
+    QueryFilter, QueryOrder,
+};
 
 pub struct AmbitionQuery;
 
@@ -37,6 +39,8 @@ impl AmbitionQuery {
 #[cfg(test)]
 mod tests {
     use test_utils::{self, *};
+
+    use sea_orm::ActiveModelTrait;
 
     use super::*;
 

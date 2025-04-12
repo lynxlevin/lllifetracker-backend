@@ -1,6 +1,6 @@
-use entities::{ambition, tag};
 use chrono::Utc;
-use sea_orm::{prelude::*, ActiveValue::NotSet, DbConn, DbErr, Set};
+use entities::{ambition, tag};
+use sea_orm::{ActiveModelTrait, ActiveValue::NotSet, DbConn, DbErr, Set};
 use std::future::Future;
 use uuid::Uuid;
 

@@ -1,12 +1,12 @@
-use entities::user as user_entity;
 use ::types::{self, DesiredStateVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::desired_state_mutation::{NewDesiredState, DesiredStateMutation};
 use actix_web::{
     post,
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use entities::user as user_entity;
 use sea_orm::DbConn;
+use services::desired_state_mutation::{DesiredStateMutation, NewDesiredState};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {
@@ -63,7 +63,7 @@ mod tests {
         web::scope,
         App, Error, HttpMessage,
     };
-    use sea_orm::prelude::*;
+    use sea_orm::{ActiveModelTrait, ColumnTrait, DbErr, EntityTrait, QueryFilter};
 
     async fn init_app(
         db: DbConn,
@@ -109,8 +109,14 @@ mod tests {
             returned_desired_state.description
         );
         assert_eq!(created_desired_state.user_id, user.id);
-        assert_eq!(created_desired_state.created_at, returned_desired_state.created_at);
-        assert_eq!(created_desired_state.updated_at, returned_desired_state.updated_at);
+        assert_eq!(
+            created_desired_state.created_at,
+            returned_desired_state.created_at
+        );
+        assert_eq!(
+            created_desired_state.updated_at,
+            returned_desired_state.updated_at
+        );
 
         let created_tag = tag::Entity::find()
             .filter(tag::Column::AmbitionId.is_null())

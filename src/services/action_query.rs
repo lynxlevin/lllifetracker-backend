@@ -1,7 +1,9 @@
 use ::types::{ActionVisible, CustomDbErr};
 use entities::action;
-use migration::NullOrdering::Last;
-use sea_orm::{entity::prelude::*, Order::Asc, QueryOrder};
+use sea_orm::{
+    sea_query::NullOrdering::Last, ColumnTrait, DbConn, DbErr, EntityTrait, Order::Asc,
+    QueryFilter, QueryOrder,
+};
 
 pub struct ActionQuery;
 
@@ -37,6 +39,8 @@ impl ActionQuery {
 #[cfg(test)]
 mod tests {
     use test_utils::{self, *};
+
+    use sea_orm::ActiveModelTrait;
 
     use super::*;
 
@@ -81,10 +85,7 @@ mod tests {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
         let _action = factory::action(user.id).insert(&db).await?;
-        let archived_action = factory::action(user.id)
-            .archived(true)
-            .insert(&db)
-            .await?;
+        let archived_action = factory::action(user.id).archived(true).insert(&db).await?;
 
         let res = ActionQuery::find_all_by_user_id(&db, user.id, true).await?;
 

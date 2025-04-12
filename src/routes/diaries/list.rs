@@ -105,7 +105,7 @@ mod tests {
         App, HttpMessage,
     };
     use chrono::{Duration, Utc};
-    use sea_orm::{entity::prelude::*, DbErr};
+    use sea_orm::{entity::prelude::ActiveModelTrait, DbErr};
 
     use test_utils::{self, *};
 

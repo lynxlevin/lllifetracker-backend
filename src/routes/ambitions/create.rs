@@ -63,7 +63,7 @@ mod tests {
         web::scope,
         App, Error, HttpMessage,
     };
-    use sea_orm::{entity::prelude::*, ColumnTrait, DbErr, EntityTrait};
+    use sea_orm::{entity::prelude::ActiveModelTrait, ColumnTrait, DbErr, EntityTrait, QueryFilter};
 
     async fn init_app(
         db: DbConn,

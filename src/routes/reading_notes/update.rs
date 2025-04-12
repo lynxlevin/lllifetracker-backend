@@ -82,7 +82,10 @@ mod tests {
         dev::{Service, ServiceResponse},
         http, test, App, HttpMessage,
     };
-    use sea_orm::{entity::prelude::*, DbErr, EntityTrait, QuerySelect};
+    use sea_orm::{
+        entity::prelude::ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter,
+        QueryFilter, QuerySelect,
+    };
 
     use entities::{reading_note, reading_notes_tags};
     use test_utils::{self, *};

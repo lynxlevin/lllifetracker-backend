@@ -1,4 +1,12 @@
-use sea_orm_migration::{prelude::*, schema::*};
+use sea_orm_migration::{
+    prelude::{
+        async_trait,
+        sea_orm::{self, DeriveIden},
+        DbErr, DeriveMigrationName, ForeignKey, ForeignKeyAction, Index, MigrationTrait,
+        SchemaManager, Table,
+    },
+    schema::uuid,
+};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -7,7 +15,11 @@ pub struct Migration;
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(AmbitionsDesiredStates::Table).to_owned())
+            .drop_table(
+                Table::drop()
+                    .table(AmbitionsDesiredStates::Table)
+                    .to_owned(),
+            )
             .await?;
         manager
             .drop_table(Table::drop().table(DesiredStatesActions::Table).to_owned())
@@ -32,7 +44,10 @@ impl MigrationTrait for Migration {
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk-objectives_actions-objective_id")
-                            .from(DesiredStatesActions::Table, DesiredStatesActions::DesiredStateId)
+                            .from(
+                                DesiredStatesActions::Table,
+                                DesiredStatesActions::DesiredStateId,
+                            )
                             .to(DesiredState::Table, DesiredState::Id)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
@@ -62,14 +77,20 @@ impl MigrationTrait for Migration {
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk-ambitions_objectives-ambition_id")
-                            .from(AmbitionsDesiredStates::Table, AmbitionsDesiredStates::AmbitionId)
+                            .from(
+                                AmbitionsDesiredStates::Table,
+                                AmbitionsDesiredStates::AmbitionId,
+                            )
                             .to(Ambition::Table, Ambition::Id)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk-ambitions_objectives-objective_id")
-                            .from(AmbitionsDesiredStates::Table, AmbitionsDesiredStates::DesiredStateId)
+                            .from(
+                                AmbitionsDesiredStates::Table,
+                                AmbitionsDesiredStates::DesiredStateId,
+                            )
                             .to(DesiredState::Table, DesiredState::Id)
                             .on_delete(ForeignKeyAction::Cascade),
                     )

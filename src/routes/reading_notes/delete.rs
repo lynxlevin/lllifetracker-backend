@@ -1,12 +1,12 @@
-use entities::user as user_entity;
 use ::types::{self, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::reading_note_mutation::ReadingNoteMutation;
 use actix_web::{
     delete,
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use entities::user as user_entity;
 use sea_orm::DbConn;
+use services::reading_note_mutation::ReadingNoteMutation;
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -46,7 +46,9 @@ mod tests {
         dev::{Service, ServiceResponse},
         http, test, App, HttpMessage,
     };
-    use sea_orm::{entity::prelude::*, DbErr, EntityTrait};
+    use sea_orm::{
+        entity::prelude::ActiveModelTrait, ColumnTrait, DbErr, EntityTrait, QueryFilter,
+    };
 
     use entities::{reading_note, reading_notes_tags};
     use test_utils::{self, *};

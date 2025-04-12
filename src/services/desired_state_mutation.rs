@@ -1,8 +1,9 @@
 use chrono::Utc;
 use entities::{desired_state, tag};
-use sea_orm::entity::prelude::*;
-use sea_orm::ActiveValue::NotSet;
-use sea_orm::{IntoActiveModel, Set, TransactionError, TransactionTrait};
+use sea_orm::{
+    ActiveModelTrait, ActiveValue::NotSet, ColumnTrait, DbConn, DbErr, EntityTrait,
+    IntoActiveModel, ModelTrait, QueryFilter, Set, TransactionError, TransactionTrait,
+};
 
 use super::desired_state_query::DesiredStateQuery;
 

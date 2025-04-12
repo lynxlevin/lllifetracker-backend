@@ -1,8 +1,6 @@
-use entities::sea_orm_active_enums::TimezoneEnum;
-use entities::user;
 use chrono::Utc;
-use sea_orm::entity::prelude::*;
-use sea_orm::Set;
+use entities::{user, sea_orm_active_enums::TimezoneEnum};
+use sea_orm::{ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, QueryFilter, Set};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize, Clone)]
 pub struct NewUser {

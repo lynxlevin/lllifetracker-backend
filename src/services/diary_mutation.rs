@@ -1,6 +1,7 @@
 use entities::{diaries_tags, diary};
 use sea_orm::{
-    entity::prelude::*, DeriveColumn, EnumIter, IntoActiveModel, QuerySelect, Set, TransactionError, TransactionTrait
+    ActiveModelTrait, ColumnTrait, DbConn, DbErr, DeriveColumn, EntityTrait, EnumIter,
+    IntoActiveModel, ModelTrait, QueryFilter, QuerySelect, Set, TransactionError, TransactionTrait,
 };
 
 use super::diary_query::DiaryQuery;
@@ -58,7 +59,8 @@ impl DiaryMutation {
                 .insert(txn)
                 .await?;
 
-                let tag_links_to_create: Vec<diaries_tags::ActiveModel> = form_data.tag_ids
+                let tag_links_to_create: Vec<diaries_tags::ActiveModel> = form_data
+                    .tag_ids
                     .clone()
                     .into_iter()
                     .map(|tag_id| diaries_tags::ActiveModel {
@@ -200,8 +202,18 @@ mod tests {
         let tag_query = diaries_tags::Entity::find()
             .filter(diaries_tags::Column::DiaryId.eq(returned_diary.id));
         assert_eq!(tag_query.clone().all(&db).await?.len(), 2);
-        assert!(tag_query.clone().filter(diaries_tags::Column::TagId.eq(tag_0.id)).one(&db).await?.is_some());
-        assert!(tag_query.clone().filter(diaries_tags::Column::TagId.eq(tag_1.id)).one(&db).await?.is_some());
+        assert!(tag_query
+            .clone()
+            .filter(diaries_tags::Column::TagId.eq(tag_0.id))
+            .one(&db)
+            .await?
+            .is_some());
+        assert!(tag_query
+            .clone()
+            .filter(diaries_tags::Column::TagId.eq(tag_1.id))
+            .one(&db)
+            .await?
+            .is_some());
 
         Ok(())
     }

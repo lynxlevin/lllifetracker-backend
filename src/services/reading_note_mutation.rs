@@ -1,8 +1,8 @@
-use entities::{reading_note, reading_notes_tags};
 use chrono::Utc;
+use entities::{reading_note, reading_notes_tags};
 use sea_orm::{
-    entity::prelude::*, DeriveColumn, EnumIter, QuerySelect, Set, TransactionError,
-    TransactionTrait,
+    ActiveModelTrait, ColumnTrait, DbConn, DbErr, DeriveColumn, EntityTrait, EnumIter, ModelTrait,
+    QueryFilter, QuerySelect, Set, TransactionError, TransactionTrait,
 };
 
 use super::reading_note_query::ReadingNoteQuery;
@@ -152,8 +152,8 @@ mod tests {
     use chrono::Datelike;
     use sea_orm::DbErr;
 
-    use test_utils::{self, *};
     use ::types::CustomDbErr;
+    use test_utils::{self, *};
 
     use super::*;
 

@@ -11,7 +11,6 @@ path = "lib.rs"
 actix-web = "^4.8.0"
 chrono = "^0.4.38"
 entities = { path = "../entities" }
-migration = { path = "../../migration" }
 # Features here: https://www.sea-ql.org/SeaORM/docs/install-and-config/database-and-async-runtime/#extra-features
 sea-orm = { version = "~1.0", features = [
     "sqlx-postgres",

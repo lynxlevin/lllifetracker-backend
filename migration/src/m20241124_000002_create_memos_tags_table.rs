@@ -1,9 +1,14 @@
-use sea_orm_migration::{prelude::*, schema::*};
-
-use crate::{
-    m20240927_000006_create_tags_table::Tag,
-    m20241124_000001_create_memos_table::Memo,
+use sea_orm_migration::{
+    prelude::{
+        async_trait,
+        sea_orm::{self, DeriveIden},
+        DbErr, DeriveMigrationName, ForeignKey, ForeignKeyAction, Index, MigrationTrait,
+        SchemaManager, Table,
+    },
+    schema::uuid,
 };
+
+use crate::{m20240927_000006_create_tags_table::Tag, m20241124_000001_create_memos_table::Memo};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;

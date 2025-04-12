@@ -115,7 +115,10 @@ mod tests {
         dev::{Service, ServiceResponse},
         http, test, App, HttpMessage,
     };
-    use sea_orm::{entity::prelude::*, DbErr, EntityTrait, QuerySelect};
+    use sea_orm::{
+        entity::prelude::ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter,
+        QueryFilter, QuerySelect,
+    };
 
     use entities::{diaries_tags, diary};
     use test_utils::{self, *};

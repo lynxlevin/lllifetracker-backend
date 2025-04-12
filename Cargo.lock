@@ -3377,7 +3377,6 @@ dependencies = [
  "actix-web",
  "chrono",
  "entities",
- "migration",
  "sea-orm",
  "serde",
  "test_utils",
