@@ -44,7 +44,7 @@ pub async fn list_action_tracks(
 
 #[cfg(test)]
 mod tests {
-    use ::types::ActionTrackWithAction;
+    use ::types::ActionTrackVisible;
     use actix_http::Request;
     use actix_web::{
         dev::{Service, ServiceResponse},
@@ -78,12 +78,13 @@ mod tests {
         let action = factory::action(user.id).insert(&db).await?;
         let action_track_0 = factory::action_track(user.id)
             .duration(Some(120))
+            .action_id(action.id)
             .insert(&db)
             .await?;
         let action_track_1 = factory::action_track(user.id)
             .started_at(action_track_0.started_at + TimeDelta::seconds(1))
             .duration(Some(180))
-            .action_id(Some(action.id))
+            .action_id(action.id)
             .insert(&db)
             .await?;
 
@@ -93,27 +94,11 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let returned_action_tracks: Vec<ActionTrackWithAction> = test::read_body_json(resp).await;
+        let returned_action_tracks: Vec<ActionTrackVisible> = test::read_body_json(resp).await;
 
         let expected = vec![
-            ActionTrackWithAction {
-                id: action_track_1.id,
-                action_id: Some(action.id),
-                action_name: Some(action.name),
-                action_color: Some(action.color),
-                started_at: action_track_1.started_at,
-                ended_at: action_track_1.ended_at,
-                duration: action_track_1.duration,
-            },
-            ActionTrackWithAction {
-                id: action_track_0.id,
-                action_id: None,
-                action_name: None,
-                action_color: None,
-                started_at: action_track_0.started_at,
-                ended_at: action_track_0.ended_at,
-                duration: action_track_0.duration,
-            },
+            ActionTrackVisible::from(action_track_1),
+            ActionTrackVisible::from(action_track_0),
         ];
 
         assert_eq!(returned_action_tracks.len(), expected.len());
@@ -131,10 +116,12 @@ mod tests {
         let action = factory::action(user.id).insert(&db).await?;
         let _inactive_action_track = factory::action_track(user.id)
             .duration(Some(120))
+            .action_id(action.id)
             .insert(&db)
             .await?;
         let active_action_track = factory::action_track(user.id)
-            .action_id(Some(action.id))
+            .started_at(_inactive_action_track.started_at + TimeDelta::seconds(1))
+            .action_id(action.id)
             .insert(&db)
             .await?;
 
@@ -146,17 +133,9 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let returned_action_tracks: Vec<ActionTrackWithAction> = test::read_body_json(resp).await;
+        let returned_action_tracks: Vec<ActionTrackVisible> = test::read_body_json(resp).await;
 
-        let expected = vec![ActionTrackWithAction {
-            id: active_action_track.id,
-            action_id: Some(action.id),
-            action_name: Some(action.name),
-            action_color: Some(action.color),
-            started_at: active_action_track.started_at,
-            ended_at: active_action_track.ended_at,
-            duration: active_action_track.duration,
-        }];
+        let expected = vec![ActionTrackVisible::from(active_action_track)];
 
         assert_eq!(returned_action_tracks.len(), expected.len());
         assert_eq!(returned_action_tracks[0], expected[0]);
@@ -169,14 +148,17 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
         let started_at_gte: DateTime<FixedOffset> =
             DateTime::parse_from_rfc3339("2025-03-27T00:00:00Z").unwrap();
         let action_track = factory::action_track(user.id)
+            .action_id(action.id)
             .started_at(started_at_gte)
             .duration(Some(120))
             .insert(&db)
             .await?;
         let _old_action_track = factory::action_track(user.id)
+            .action_id(action.id)
             .started_at(started_at_gte - Duration::seconds(1))
             .duration(Some(120))
             .insert(&db)
@@ -193,17 +175,9 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let returned_action_tracks: Vec<ActionTrackWithAction> = test::read_body_json(resp).await;
+        let returned_action_tracks: Vec<ActionTrackVisible> = test::read_body_json(resp).await;
 
-        let expected = vec![ActionTrackWithAction {
-            id: action_track.id,
-            action_id: None,
-            action_name: None,
-            action_color: None,
-            started_at: action_track.started_at,
-            ended_at: action_track.ended_at,
-            duration: action_track.duration,
-        }];
+        let expected = vec![ActionTrackVisible::from(action_track)];
 
         assert_eq!(returned_action_tracks.len(), expected.len());
         assert_eq!(returned_action_tracks[0], expected[0]);

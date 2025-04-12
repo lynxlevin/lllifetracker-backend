@@ -32,6 +32,7 @@ Content-Type: application/json
 
 {
   "started_at": "2024-12-27T12:51:04.000Z",
+  "ended_at": null,
   "action_id": null
 }
 

@@ -1,6 +1,6 @@
 use chrono::SubsecRound;
 use entities::action_track;
-use sea_orm::{entity::prelude::*, ActiveValue::NotSet, Set};
+use sea_orm::{ActiveModelTrait, ActiveValue::NotSet, DbConn, DbErr, ModelTrait, Set};
 use types::CustomDbErr;
 
 use super::action_track_query::ActionTrackQuery;
@@ -8,7 +8,8 @@ use super::action_track_query::ActionTrackQuery;
 #[derive(serde::Deserialize, Debug, serde::Serialize, Clone)]
 pub struct NewActionTrack {
     pub started_at: chrono::DateTime<chrono::FixedOffset>,
-    pub action_id: Option<uuid::Uuid>,
+    pub ended_at: Option<chrono::DateTime<chrono::FixedOffset>>,
+    pub action_id: uuid::Uuid,
     pub user_id: uuid::Uuid,
 }
 
@@ -16,7 +17,7 @@ pub struct NewActionTrack {
 pub struct UpdateActionTrack {
     pub started_at: chrono::DateTime<chrono::FixedOffset>,
     pub ended_at: Option<chrono::DateTime<chrono::FixedOffset>>,
-    pub action_id: Option<uuid::Uuid>,
+    pub action_id: uuid::Uuid,
     pub user_id: uuid::Uuid,
 }
 
@@ -27,13 +28,20 @@ impl ActionTrackMutation {
         db: &DbConn,
         form_data: NewActionTrack,
     ) -> Result<action_track::Model, DbErr> {
+        let started_at = form_data.started_at.trunc_subsecs(0);
         action_track::ActiveModel {
             id: Set(uuid::Uuid::now_v7()),
             user_id: Set(form_data.user_id),
             action_id: Set(form_data.action_id),
-            started_at: Set(form_data.started_at.trunc_subsecs(0)),
-            ended_at: NotSet,
-            duration: NotSet,
+            started_at: Set(started_at),
+            ended_at: match form_data.ended_at {
+                Some(ended_at) => Set(Some(ended_at.trunc_subsecs(0))),
+                None => NotSet,
+            },
+            duration: match form_data.ended_at {
+                Some(ended_at) => Set(Some((ended_at.trunc_subsecs(0) - started_at).num_seconds())),
+                None => NotSet,
+            },
         }
         .insert(db)
         .await
@@ -83,7 +91,7 @@ impl ActionTrackMutation {
 #[cfg(test)]
 mod tests {
     use chrono::{TimeDelta, Utc};
-    use sea_orm::DbErr;
+    use sea_orm::EntityTrait;
 
     use ::types::CustomDbErr;
     use entities::action;
@@ -99,7 +107,8 @@ mod tests {
 
         let form_data = NewActionTrack {
             started_at: Utc::now().into(),
-            action_id: Some(action.id),
+            ended_at: None,
+            action_id: action.id,
             user_id: user.id,
         };
 
@@ -107,7 +116,7 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(returned_action_track.user_id, user.id);
-        assert_eq!(returned_action_track.action_id, Some(action.id));
+        assert_eq!(returned_action_track.action_id, action.id);
         assert_eq!(
             returned_action_track.started_at,
             form_data.started_at.trunc_subsecs(0)
@@ -120,7 +129,7 @@ mod tests {
             .await?
             .unwrap();
         assert_eq!(created_action_track.user_id, user.id);
-        assert_eq!(created_action_track.action_id, Some(action.id));
+        assert_eq!(created_action_track.action_id, action.id);
         assert_eq!(
             created_action_track.started_at,
             form_data.started_at.trunc_subsecs(0)
@@ -137,13 +146,14 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
         let existing_action_track = factory::action_track(user.id)
-            .action_id(Some(action.id))
+            .action_id(action.id)
             .insert(&db)
             .await?;
 
         let form_data = NewActionTrack {
             started_at: existing_action_track.started_at,
-            action_id: Some(action.id),
+            ended_at: None,
+            action_id: action.id,
             user_id: user.id,
         };
 
@@ -161,38 +171,43 @@ mod tests {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
-        let action_track = factory::action_track(user.id).insert(&db).await?;
+        let action_track = factory::action_track(user.id)
+            .action_id(action.id)
+            .insert(&db)
+            .await?;
         let ended_at: chrono::DateTime<chrono::FixedOffset> = Utc::now().into();
         let duration = 180;
         let started_at = ended_at - chrono::TimeDelta::seconds(duration.into());
 
-        let returned_action = ActionTrackMutation::update(
+        let returned_action_track = ActionTrackMutation::update(
             &db,
             action_track.id,
             UpdateActionTrack {
                 user_id: user.id,
-                action_id: Some(action.id),
+                action_id: action.id,
                 started_at: started_at,
                 ended_at: Some(ended_at),
             },
         )
         .await?;
-        assert_eq!(returned_action.id, action_track.id);
-        assert_eq!(returned_action.action_id, Some(action.id));
-        assert_eq!(returned_action.user_id, user.id);
-        assert_eq!(returned_action.started_at, started_at.trunc_subsecs(0));
-        assert_eq!(returned_action.ended_at, Some(ended_at.trunc_subsecs(0)));
-        assert_eq!(returned_action.duration, Some(duration));
+        assert_eq!(returned_action_track.id, action_track.id);
+        assert_eq!(returned_action_track.action_id, action.id);
+        assert_eq!(returned_action_track.user_id, user.id);
+        assert_eq!(
+            returned_action_track.started_at,
+            started_at.trunc_subsecs(0)
+        );
+        assert_eq!(
+            returned_action_track.ended_at,
+            Some(ended_at.trunc_subsecs(0))
+        );
+        assert_eq!(returned_action_track.duration, Some(duration));
 
-        let updated_action = action_track::Entity::find_by_id(action_track.id)
+        let updated_action_track = action_track::Entity::find_by_id(action_track.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(updated_action.action_id, Some(action.id));
-        assert_eq!(updated_action.user_id, user.id);
-        assert_eq!(updated_action.started_at, started_at.trunc_subsecs(0));
-        assert_eq!(updated_action.ended_at, Some(ended_at.trunc_subsecs(0)));
-        assert_eq!(updated_action.duration, Some(duration));
+        assert_eq!(updated_action_track, returned_action_track);
 
         Ok(())
     }
@@ -203,12 +218,12 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
         let action_track = factory::action_track(user.id)
-            .action_id(Some(action.id))
+            .action_id(action.id)
             .insert(&db)
             .await?;
         let existing_action_track = factory::action_track(user.id)
             .started_at(action_track.started_at + TimeDelta::seconds(1))
-            .action_id(Some(action.id))
+            .action_id(action.id)
             .insert(&db)
             .await?;
 
@@ -217,7 +232,7 @@ mod tests {
             action_track.id,
             UpdateActionTrack {
                 user_id: user.id,
-                action_id: Some(action.id),
+                action_id: action.id,
                 started_at: existing_action_track.started_at,
                 ended_at: None,
             },
@@ -234,14 +249,18 @@ mod tests {
     async fn update_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let action_track = factory::action_track(user.id).insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
+        let action_track = factory::action_track(user.id)
+            .action_id(action.id)
+            .insert(&db)
+            .await?;
 
         let error = ActionTrackMutation::update(
             &db,
             action_track.id,
             UpdateActionTrack {
                 user_id: uuid::Uuid::now_v7(),
-                action_id: None,
+                action_id: action.id,
                 started_at: Utc::now().into(),
                 ended_at: None,
             },
@@ -259,7 +278,7 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
         let action_track = factory::action_track(user.id)
-            .action_id(Some(action.id))
+            .action_id(action.id)
             .insert(&db)
             .await?;
 
@@ -280,7 +299,11 @@ mod tests {
     async fn delete_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let action_track = factory::action_track(user.id).insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
+        let action_track = factory::action_track(user.id)
+            .action_id(action.id)
+            .insert(&db)
+            .await?;
 
         let error = ActionTrackMutation::delete(&db, action_track.id, uuid::Uuid::now_v7())
             .await

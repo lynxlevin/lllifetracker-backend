@@ -1,5 +1,5 @@
 use chrono::Utc;
-use entities::{action, tag};
+use entities::{action, sea_orm_active_enums::ActionTrackType, tag};
 use sea_orm::{
     entity::prelude::*, ActiveValue::NotSet, IntoActiveModel, Set, TransactionError,
     TransactionTrait,
@@ -11,6 +11,7 @@ use super::action_query::ActionQuery;
 pub struct NewAction {
     pub name: String,
     pub description: Option<String>,
+    pub track_type: ActionTrackType,
     pub user_id: uuid::Uuid,
 }
 
@@ -30,7 +31,7 @@ impl ActionMutation {
                     user_id: Set(form_data.user_id),
                     name: Set(form_data.name.to_owned()),
                     description: Set(form_data.description.to_owned()),
-                    ordering: NotSet,
+                    track_type: Set(form_data.track_type),
                     ..Default::default()
                 }
                 .insert(txn)
@@ -160,6 +161,7 @@ mod tests {
         let form_data = NewAction {
             name: action_name.clone(),
             description: Some(action_description.clone()),
+            track_type: ActionTrackType::Count,
             user_id: user.id,
         };
 
@@ -171,6 +173,7 @@ mod tests {
             returned_action.description,
             Some(action_description.clone())
         );
+        assert_eq!(returned_action.track_type, ActionTrackType::Count);
         assert_eq!(returned_action.archived, false);
         assert_eq!(returned_action.user_id, user.id);
 
@@ -178,12 +181,7 @@ mod tests {
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(created_action.name, action_name.clone());
-        assert_eq!(created_action.description, Some(action_description.clone()));
-        assert_eq!(created_action.archived, false);
-        assert_eq!(created_action.user_id, user.id);
-        assert_eq!(created_action.created_at, returned_action.created_at);
-        assert_eq!(created_action.updated_at, returned_action.updated_at);
+        assert_eq!(created_action, returned_action);
 
         let created_tag = tag::Entity::find()
             .filter(tag::Column::UserId.eq(user.id))

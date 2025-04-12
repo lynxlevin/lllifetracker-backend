@@ -1,4 +1,4 @@
-use entities::user as user_entity;
+use entities::{sea_orm_active_enums::ActionTrackType, user as user_entity};
 use ::types::{self, ActionVisible, INTERNAL_SERVER_ERROR_MESSAGE};
 use services::action_mutation::{ActionMutation, NewAction};
 use actix_web::{
@@ -12,6 +12,7 @@ use sea_orm::DbConn;
 struct RequestBody {
     name: String,
     description: Option<String>,
+    track_type: ActionTrackType,
 }
 
 #[tracing::instrument(name = "Creating an action", skip(db, user))]
@@ -29,6 +30,7 @@ pub async fn create_action(
                 NewAction {
                     name: req.name.clone(),
                     description: req.description.clone(),
+                    track_type: req.track_type.clone(),
                     user_id: user.id,
                 },
             )
@@ -90,6 +92,7 @@ mod tests {
             .set_json(RequestBody {
                 name: name.clone(),
                 description: Some(description.clone()),
+                track_type: ActionTrackType::Count,
             })
             .to_request();
         req.extensions_mut().insert(user.clone());
@@ -100,17 +103,14 @@ mod tests {
         let returned_action: ActionVisible = test::read_body_json(res).await;
         assert_eq!(returned_action.name, name.clone());
         assert_eq!(returned_action.description, Some(description.clone()));
+        assert_eq!(returned_action.track_type, ActionTrackType::Count);
 
         let created_action = action::Entity::find_by_id(returned_action.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(created_action.name, name);
-        assert_eq!(created_action.description, Some(description));
-        assert_eq!(created_action.archived, false);
         assert_eq!(created_action.user_id, user.id);
-        assert_eq!(created_action.created_at, returned_action.created_at);
-        assert_eq!(created_action.updated_at, returned_action.updated_at);
+        assert_eq!(ActionVisible::from(created_action), returned_action);
 
         let created_tag = tag::Entity::find()
             .filter(tag::Column::UserId.eq(user.id))
@@ -134,6 +134,7 @@ mod tests {
             .set_json(RequestBody {
                 name: "Test create_action not logged in".to_string(),
                 description: None,
+                track_type: ActionTrackType::TimeSpan,
             })
             .to_request();
 
