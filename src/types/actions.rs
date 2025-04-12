@@ -1,4 +1,4 @@
-use entities::{action, prelude::Action};
+use entities::{action, prelude::Action, sea_orm_active_enums::ActionTrackType};
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
 use super::{desired_states::DesiredStateVisibleWithAmbitions, AmbitionVisible};
@@ -13,6 +13,7 @@ pub struct ActionVisible {
     pub description: Option<String>,
     pub trackable: bool,
     pub color: String,
+    pub track_type: ActionTrackType,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
 }
@@ -25,6 +26,7 @@ impl From<action::Model> for ActionVisible {
             description: item.description,
             trackable: item.trackable,
             color: item.color,
+            track_type: item.track_type,
             created_at: item.created_at,
             updated_at: item.updated_at,
         }

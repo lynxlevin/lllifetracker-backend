@@ -37,10 +37,10 @@ pub async fn aggregate_action_tracks(
                     let mut res: Vec<ActionTrackAggregationDuration> = vec![];
                     for action_track in action_tracks {
                         if res.is_empty()
-                            || res.last().unwrap().action_id != action_track.action_id.unwrap()
+                            || res.last().unwrap().action_id != action_track.action_id
                         {
                             res.push(ActionTrackAggregationDuration {
-                                action_id: action_track.action_id.unwrap(),
+                                action_id: action_track.action_id,
                                 duration: action_track.duration.unwrap_or(0),
                             });
                         } else {
@@ -102,31 +102,31 @@ mod tests {
         let _action_0_track_0 = factory::action_track(user.id)
             .started_at(query_started_at_gte - Duration::seconds(1))
             .duration(Some(120))
-            .action_id(Some(action_0.id))
+            .action_id(action_0.id)
             .insert(&db)
             .await?;
         let action_0_track_1 = factory::action_track(user.id)
             .started_at(query_started_at_gte)
             .duration(Some(180))
-            .action_id(Some(action_0.id))
+            .action_id(action_0.id)
             .insert(&db)
             .await?;
         let action_0_track_2 = factory::action_track(user.id)
             .started_at(query_started_at_lte)
             .duration(Some(300))
-            .action_id(Some(action_0.id))
+            .action_id(action_0.id)
             .insert(&db)
             .await?;
         let _action_0_track_3 = factory::action_track(user.id)
             .started_at(query_started_at_lte + Duration::seconds(1))
             .duration(Some(550))
-            .action_id(Some(action_0.id))
+            .action_id(action_0.id)
             .insert(&db)
             .await?;
         let action_1_track_0 = factory::action_track(user.id)
             .started_at(query_started_at_lte)
             .duration(Some(350))
-            .action_id(Some(action_1.id))
+            .action_id(action_1.id)
             .insert(&db)
             .await?;
 

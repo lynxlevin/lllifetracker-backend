@@ -28,6 +28,8 @@ mod m20250315_000002_create_diaries_table;
 mod m20250316_000001_create_diaries_tags_table;
 mod m20250322_000001_add_color_to_actions_table;
 mod m20250407_000001_add_unique_constraint_to_action_tracks_table;
+mod m20250410_000001_add_track_type_to_actions_table;
+mod m20250411_000001_modify_action_id_to_required_in_action_tracks_table;
 mod m_seed_data;
 
 pub struct Migrator;
@@ -67,6 +69,8 @@ impl MigratorTrait for Migrator {
             Box::new(m20250316_000001_create_diaries_tags_table::Migration),
             Box::new(m20250322_000001_add_color_to_actions_table::Migration),
             Box::new(m20250407_000001_add_unique_constraint_to_action_tracks_table::Migration),
+            Box::new(m20250410_000001_add_track_type_to_actions_table::Migration),
+            Box::new(m20250411_000001_modify_action_id_to_required_in_action_tracks_table::Migration),
         ]
     }
 }

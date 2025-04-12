@@ -15,7 +15,10 @@
     "pasetors",
     "rustls",
     "serde",
-    "sqlx"
+    "sqlx",
+    "Subsec",
+    "subsecs",
+    "trunc"
   ],
   "rest-client.followredirect": false
 }

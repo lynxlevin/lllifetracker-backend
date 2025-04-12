@@ -7,7 +7,7 @@ use sea_orm::{DerivePartialModel, FromQueryResult};
 #[sea_orm(entity = "ActionTrack")]
 pub struct ActionTrackVisible {
     pub id: uuid::Uuid,
-    pub action_id: Option<uuid::Uuid>,
+    pub action_id: uuid::Uuid,
     pub started_at: chrono::DateTime<chrono::FixedOffset>,
     pub ended_at: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub duration: Option<i64>,
@@ -23,17 +23,6 @@ impl From<action_track::Model> for ActionTrackVisible {
             duration: item.duration,
         }
     }
-}
-
-#[derive(serde::Serialize, serde::Deserialize, PartialEq, FromQueryResult, Debug)]
-pub struct ActionTrackWithAction {
-    pub id: uuid::Uuid,
-    pub action_id: Option<uuid::Uuid>,
-    pub action_name: Option<String>,
-    pub action_color: Option<String>,
-    pub started_at: chrono::DateTime<chrono::FixedOffset>,
-    pub ended_at: Option<chrono::DateTime<chrono::FixedOffset>>,
-    pub duration: Option<i64>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, PartialEq, Debug)]

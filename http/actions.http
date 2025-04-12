@@ -31,7 +31,8 @@ Content-Type: application/json
 
 {
   "name": "Second action",
-  "description": "Second action description"
+  "description": "Second action description",
+  "track_type": "Count"
 }
 
 ###

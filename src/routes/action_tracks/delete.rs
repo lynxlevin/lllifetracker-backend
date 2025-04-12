@@ -1,12 +1,12 @@
-use entities::user as user_entity;
 use ::types::{self, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::action_track_mutation::ActionTrackMutation;
 use actix_web::{
     delete,
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use entities::user as user_entity;
 use sea_orm::DbConn;
+use services::action_track_mutation::ActionTrackMutation;
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -71,7 +71,7 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
         let action_track = factory::action_track(user.id)
-            .action_id(Some(action.id))
+            .action_id(action.id)
             .insert(&db)
             .await?;
 
@@ -99,7 +99,11 @@ mod tests {
         let db = test_utils::init_db().await?;
         let app = init_app(db.clone()).await;
         let user = factory::user().insert(&db).await?;
-        let action_track = factory::action_track(user.id).insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
+        let action_track = factory::action_track(user.id)
+            .action_id(action.id)
+            .insert(&db)
+            .await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!("/{}", action_track.id))

@@ -16,3 +16,4 @@ sea-orm = { version = "~1.0", features = [
     "with-json",
     "with-uuid",
 ] }
+serde = "^1.0.204"

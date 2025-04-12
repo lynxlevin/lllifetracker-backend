@@ -1,5 +1,5 @@
-use entities::{action, tag};
 use chrono::Utc;
+use entities::{action, sea_orm_active_enums::ActionTrackType, tag};
 use sea_orm::{prelude::*, ActiveValue::NotSet, DbConn, DbErr, Set};
 use std::future::Future;
 use uuid::Uuid;
@@ -15,6 +15,7 @@ pub fn action(user_id: Uuid) -> action::ActiveModel {
         ordering: NotSet,
         trackable: Set(true),
         color: Set("#212121".to_string()),
+        track_type: Set(ActionTrackType::TimeSpan),
         created_at: Set(now.into()),
         updated_at: Set(now.into()),
     }
@@ -25,6 +26,7 @@ pub trait ActionFactory {
     fn description(self, description: Option<String>) -> action::ActiveModel;
     fn archived(self, archived: bool) -> action::ActiveModel;
     fn ordering(self, ordering: Option<i32>) -> action::ActiveModel;
+    fn track_type(self, track_type: ActionTrackType) -> action::ActiveModel;
     fn insert_with_tag(
         self,
         db: &DbConn,
@@ -49,6 +51,11 @@ impl ActionFactory for action::ActiveModel {
 
     fn ordering(mut self, ordering: Option<i32>) -> action::ActiveModel {
         self.ordering = Set(ordering);
+        self
+    }
+
+    fn track_type(mut self, track_type: ActionTrackType) -> action::ActiveModel {
+        self.track_type = Set(track_type);
         self
     }
 
