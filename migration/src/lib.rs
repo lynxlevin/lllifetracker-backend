@@ -30,6 +30,8 @@ mod m20250322_000001_add_color_to_actions_table;
 mod m20250407_000001_add_unique_constraint_to_action_tracks_table;
 mod m20250410_000001_add_track_type_to_actions_table;
 mod m20250411_000001_modify_action_id_to_required_in_action_tracks_table;
+mod m20250412_000001_drop_my_way_link_tables;
+mod m20250412_000002_drop_memos_and_challenges_tables;
 mod m_seed_data;
 
 pub struct Migrator;
@@ -70,7 +72,11 @@ impl MigratorTrait for Migrator {
             Box::new(m20250322_000001_add_color_to_actions_table::Migration),
             Box::new(m20250407_000001_add_unique_constraint_to_action_tracks_table::Migration),
             Box::new(m20250410_000001_add_track_type_to_actions_table::Migration),
-            Box::new(m20250411_000001_modify_action_id_to_required_in_action_tracks_table::Migration),
+            Box::new(
+                m20250411_000001_modify_action_id_to_required_in_action_tracks_table::Migration,
+            ),
+            Box::new(m20250412_000001_drop_my_way_link_tables::Migration),
+            Box::new(m20250412_000002_drop_memos_and_challenges_tables::Migration),
         ]
     }
 }

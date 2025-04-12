@@ -1,9 +1,7 @@
 mod archive;
 mod bulk_update_ordering;
-mod connect;
 mod create;
 mod delete;
-mod disconnect;
 mod get;
 mod list;
 mod unarchive;
@@ -21,9 +19,7 @@ pub fn desired_state_routes(cfg: &mut ServiceConfig) {
             .service(update::update_desired_state)
             .service(delete::delete_desired_state)
             .service(archive::archive_desired_state)
-            .service(unarchive::unarchive_desired_state)
-            .service(connect::connect_action)
-            .service(disconnect::disconnect_action),
+            .service(unarchive::unarchive_desired_state),
         // MYMEMO: Can restrict AuthenticateUser this way.
         // .service(
         //     actix_web::web::scope("")

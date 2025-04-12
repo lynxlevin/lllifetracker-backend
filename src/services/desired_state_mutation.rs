@@ -1,5 +1,5 @@
 use chrono::Utc;
-use entities::{desired_state, desired_states_actions, tag};
+use entities::{desired_state, tag};
 use sea_orm::entity::prelude::*;
 use sea_orm::ActiveValue::NotSet;
 use sea_orm::{IntoActiveModel, Set, TransactionError, TransactionTrait};
@@ -108,41 +108,6 @@ impl DesiredStateMutation {
         desired_state.archived = Set(false);
         desired_state.updated_at = Set(Utc::now().into());
         desired_state.update(db).await
-    }
-
-    pub async fn connect_action(
-        db: &DbConn,
-        desired_state_id: uuid::Uuid,
-        action_id: uuid::Uuid,
-    ) -> Result<desired_states_actions::Model, DbErr> {
-        desired_states_actions::ActiveModel {
-            desired_state_id: Set(desired_state_id),
-            action_id: Set(action_id),
-        }
-        .insert(db)
-        .await
-    }
-
-    pub async fn disconnect_action(
-        db: &DbConn,
-        desired_state_id: uuid::Uuid,
-        action_id: uuid::Uuid,
-    ) -> Result<(), DbErr> {
-        match desired_states_actions::Entity::find()
-            .filter(desired_states_actions::Column::DesiredStateId.eq(desired_state_id))
-            .filter(desired_states_actions::Column::ActionId.eq(action_id))
-            .one(db)
-            .await
-        {
-            Ok(connection) => match connection {
-                Some(connection) => {
-                    connection.delete(db).await?;
-                    Ok(())
-                }
-                None => Ok(()),
-            },
-            Err(e) => Err(e),
-        }
     }
 
     // FIXME: Reduce query.
@@ -444,45 +409,6 @@ mod tests {
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
-
-        Ok(())
-    }
-
-    #[actix_web::test]
-    async fn connect_action() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
-        let user = factory::user().insert(&db).await?;
-        let desired_state = factory::desired_state(user.id).insert(&db).await?;
-        let action = factory::action(user.id).insert(&db).await?;
-
-        DesiredStateMutation::connect_action(&db, desired_state.id, action.id).await?;
-
-        let created_connection = desired_states_actions::Entity::find()
-            .filter(desired_states_actions::Column::DesiredStateId.eq(desired_state.id))
-            .filter(desired_states_actions::Column::ActionId.eq(action.id))
-            .one(&db)
-            .await?;
-        assert!(created_connection.is_some());
-
-        Ok(())
-    }
-
-    #[actix_web::test]
-    async fn disconnect_action() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
-        let user = factory::user().insert(&db).await?;
-        let action = factory::action(user.id).insert(&db).await?;
-        let desired_state = factory::desired_state(user.id).insert(&db).await?;
-        factory::link_desired_state_action(&db, desired_state.id, action.id).await?;
-
-        DesiredStateMutation::disconnect_action(&db, desired_state.id, action.id).await?;
-
-        let connection_in_db = desired_states_actions::Entity::find()
-            .filter(desired_states_actions::Column::DesiredStateId.eq(desired_state.id))
-            .filter(desired_states_actions::Column::ActionId.eq(action.id))
-            .one(&db)
-            .await?;
-        assert!(connection_in_db.is_none());
 
         Ok(())
     }

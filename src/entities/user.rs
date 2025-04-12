@@ -28,14 +28,10 @@ pub enum Relation {
     ActionTrack,
     #[sea_orm(has_many = "super::ambition::Entity")]
     Ambition,
-    #[sea_orm(has_many = "super::challenge::Entity")]
-    Challenge,
     #[sea_orm(has_many = "super::desired_state::Entity")]
     DesiredState,
     #[sea_orm(has_many = "super::diary::Entity")]
     Diary,
-    #[sea_orm(has_many = "super::memo::Entity")]
-    Memo,
     #[sea_orm(has_many = "super::reading_note::Entity")]
     ReadingNote,
     #[sea_orm(has_many = "super::tag::Entity")]
@@ -60,12 +56,6 @@ impl Related<super::ambition::Entity> for Entity {
     }
 }
 
-impl Related<super::challenge::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Challenge.def()
-    }
-}
-
 impl Related<super::desired_state::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::DesiredState.def()
@@ -75,12 +65,6 @@ impl Related<super::desired_state::Entity> for Entity {
 impl Related<super::diary::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Diary.def()
-    }
-}
-
-impl Related<super::memo::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Memo.def()
     }
 }
 

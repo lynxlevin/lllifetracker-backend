@@ -1,4 +1,4 @@
-use entities::{ambition, ambitions_desired_states, tag};
+use entities::{ambition, tag};
 use chrono::Utc;
 use sea_orm::entity::prelude::*;
 use sea_orm::ActiveValue::NotSet;
@@ -108,41 +108,6 @@ impl AmbitionMutation {
         ambition.archived = Set(false);
         ambition.updated_at = Set(Utc::now().into());
         ambition.update(db).await
-    }
-
-    pub async fn connect_desired_state(
-        db: &DbConn,
-        ambition_id: uuid::Uuid,
-        desired_state_id: uuid::Uuid,
-    ) -> Result<ambitions_desired_states::Model, DbErr> {
-        ambitions_desired_states::ActiveModel {
-            ambition_id: Set(ambition_id),
-            desired_state_id: Set(desired_state_id),
-        }
-        .insert(db)
-        .await
-    }
-
-    pub async fn disconnect_desired_state(
-        db: &DbConn,
-        ambition_id: uuid::Uuid,
-        desired_state_id: uuid::Uuid,
-    ) -> Result<(), DbErr> {
-        match ambitions_desired_states::Entity::find()
-            .filter(ambitions_desired_states::Column::AmbitionId.eq(ambition_id))
-            .filter(ambitions_desired_states::Column::DesiredStateId.eq(desired_state_id))
-            .one(db)
-            .await
-        {
-            Ok(connection) => match connection {
-                Some(connection) => {
-                    connection.delete(db).await?;
-                    Ok(())
-                }
-                None => Ok(()),
-            },
-            Err(e) => Err(e),
-        }
     }
 
     // FIXME: Reduce query.
@@ -394,45 +359,6 @@ mod tests {
             .await
             .unwrap_err();
         assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
-
-        Ok(())
-    }
-
-    #[actix_web::test]
-    async fn connect_desired_state() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
-        let user = factory::user().insert(&db).await?;
-        let ambition = factory::ambition(user.id).insert(&db).await?;
-        let desired_state = factory::desired_state(user.id).insert(&db).await?;
-
-        AmbitionMutation::connect_desired_state(&db, ambition.id, desired_state.id).await?;
-
-        let created_connection = ambitions_desired_states::Entity::find()
-            .filter(ambitions_desired_states::Column::AmbitionId.eq(ambition.id))
-            .filter(ambitions_desired_states::Column::DesiredStateId.eq(desired_state.id))
-            .one(&db)
-            .await?;
-        assert!(created_connection.is_some());
-
-        Ok(())
-    }
-
-    #[actix_web::test]
-    async fn disconnect_desired_state() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
-        let user = factory::user().insert(&db).await?;
-        let ambition = factory::ambition(user.id).insert(&db).await?;
-        let desired_state = factory::desired_state(user.id).insert(&db).await?;
-        factory::link_ambition_desired_state(&db, ambition.id, desired_state.id).await?;
-
-        AmbitionMutation::disconnect_desired_state(&db, ambition.id, desired_state.id).await?;
-
-        let connection_in_db = ambitions_desired_states::Entity::find()
-            .filter(ambitions_desired_states::Column::AmbitionId.eq(ambition.id))
-            .filter(ambitions_desired_states::Column::DesiredStateId.eq(desired_state.id))
-            .one(&db)
-            .await?;
-        assert!(connection_in_db.is_none());
 
         Ok(())
     }
