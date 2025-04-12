@@ -1,9 +1,13 @@
 use ::types::{ActionTrackVisible, CustomDbErr};
 use chrono::{DateTime, FixedOffset};
-use entities::
-    action_track::{self, Column}
-;
-use sea_orm::{DbConn, DbErr, EntityTrait, ColumnTrait, QueryFilter, QueryOrder};
+use entities::{
+    action,
+    action_track::{self, Column},
+};
+use sea_orm::{
+    ColumnTrait, DbConn, DbErr, EntityTrait, JoinType::LeftJoin, QueryFilter, QueryOrder,
+    QuerySelect, RelationTrait,
+};
 
 pub struct ActionTrackQueryFilters {
     pub started_at_gte: Option<DateTime<FixedOffset>>,
@@ -49,13 +53,14 @@ impl ActionTrackQuery {
             false => query.filter(Column::EndedAt.is_null()),
         };
 
-        let query = query
-            .filter(Column::UserId.eq(user_id));
+        let query = query.filter(Column::UserId.eq(user_id));
         let query = match filters.for_daily_aggregation {
             true => query.order_by_asc(action_track::Column::ActionId),
             false => query,
         };
         query
+            .filter(action::Column::Archived.eq(false))
+            .join(LeftJoin, action_track::Relation::Action.def())
             .order_by_desc(Column::StartedAt)
             .into_model::<ActionTrackVisible>()
             .all(db)
@@ -93,6 +98,7 @@ mod tests {
         let query_started_at_lte: DateTime<FixedOffset> =
             DateTime::parse_from_rfc3339("2025-01-27T23:59:59Z").unwrap();
         let action = factory::action(user.id).insert(&db).await?;
+        let archived_action = factory::action(user.id).archived(true).insert(&db).await?;
         let _action_track_0 = factory::action_track(user.id)
             .started_at(query_started_at_gte - Duration::seconds(1))
             .duration(Some(120))
@@ -115,6 +121,12 @@ mod tests {
             .started_at(query_started_at_lte + Duration::seconds(1))
             .duration(Some(550))
             .action_id(action.id)
+            .insert(&db)
+            .await?;
+        let _archived_action_track = factory::action_track(user.id)
+            .started_at(query_started_at_lte)
+            .duration(Some(1))
+            .action_id(archived_action.id)
             .insert(&db)
             .await?;
 
