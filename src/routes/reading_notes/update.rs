@@ -133,35 +133,24 @@ mod tests {
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::OK);
 
-        let returned_reading_note: ReadingNoteVisible = test::read_body_json(res).await;
-        assert_eq!(returned_reading_note.title, form.title.clone().unwrap());
-        assert_eq!(returned_reading_note.page_number, form.page_number.unwrap());
-        assert_eq!(returned_reading_note.text, form.text.clone().unwrap());
-        assert_eq!(returned_reading_note.date, form.date.unwrap());
-        assert_eq!(returned_reading_note.created_at, reading_note.created_at);
-        assert!(returned_reading_note.updated_at > reading_note.updated_at);
+        let res: ReadingNoteVisible = test::read_body_json(res).await;
+        assert_eq!(res.title, form.title.clone().unwrap());
+        assert_eq!(res.page_number, form.page_number.unwrap());
+        assert_eq!(res.text, form.text.clone().unwrap());
+        assert_eq!(res.date, form.date.unwrap());
+        assert_eq!(res.created_at, reading_note.created_at);
+        assert!(res.updated_at > reading_note.updated_at);
 
-        let updated_reading_note = reading_note::Entity::find_by_id(returned_reading_note.id)
+        let reading_note_in_db = reading_note::Entity::find_by_id(res.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(updated_reading_note.title, form.title.unwrap());
-        assert_eq!(updated_reading_note.page_number, form.page_number.unwrap());
-        assert_eq!(updated_reading_note.text, form.text.unwrap());
-        assert_eq!(updated_reading_note.date, form.date.unwrap());
-        assert_eq!(updated_reading_note.user_id, user.id);
-        assert_eq!(
-            updated_reading_note.created_at,
-            returned_reading_note.created_at
-        );
-        assert_eq!(
-            updated_reading_note.updated_at,
-            returned_reading_note.updated_at
-        );
+        assert_eq!(reading_note_in_db.user_id, user.id);
+        assert_eq!(ReadingNoteVisible::from(reading_note_in_db), res);
 
         let linked_tag_ids: Vec<uuid::Uuid> = reading_notes_tags::Entity::find()
             .column_as(reading_notes_tags::Column::TagId, QueryAs::TagId)
-            .filter(reading_notes_tags::Column::ReadingNoteId.eq(returned_reading_note.id))
+            .filter(reading_notes_tags::Column::ReadingNoteId.eq(res.id))
             .into_values::<_, QueryAs>()
             .all(&db)
             .await?;

@@ -159,23 +159,18 @@ mod tests {
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::CREATED);
 
-        let returned_diary: DiaryVisible = test::read_body_json(res).await;
-        assert_eq!(returned_diary.text, diary_text.clone());
-        assert_eq!(returned_diary.date, today);
-        assert_eq!(returned_diary.score, diary_score);
+        let res: DiaryVisible = test::read_body_json(res).await;
+        assert_eq!(res.text, diary_text.clone());
+        assert_eq!(res.date, today);
+        assert_eq!(res.score, diary_score);
 
-        let created_diary = diary::Entity::find_by_id(returned_diary.id)
-            .one(&db)
-            .await?
-            .unwrap();
-        assert_eq!(created_diary.text, diary_text.clone());
-        assert_eq!(created_diary.date, today);
-        assert_eq!(created_diary.score, diary_score);
-        assert_eq!(created_diary.user_id, user.id);
+        let diary_in_db = diary::Entity::find_by_id(res.id).one(&db).await?.unwrap();
+        assert_eq!(diary_in_db.user_id, user.id);
+        assert_eq!(DiaryVisible::from(diary_in_db), res);
 
         let linked_tag_ids: Vec<uuid::Uuid> = diaries_tags::Entity::find()
             .column_as(diaries_tags::Column::TagId, QueryAs::TagId)
-            .filter(diaries_tags::Column::DiaryId.eq(returned_diary.id))
+            .filter(diaries_tags::Column::DiaryId.eq(res.id))
             .into_values::<_, QueryAs>()
             .all(&db)
             .await?;

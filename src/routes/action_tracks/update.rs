@@ -132,31 +132,19 @@ mod tests {
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::OK);
 
-        let returned_action_track: ActionTrackVisible = test::read_body_json(res).await;
-        assert_eq!(returned_action_track.id, action_track.id);
-        assert_eq!(returned_action_track.action_id, action.id);
-        assert_eq!(
-            returned_action_track.started_at,
-            started_at.trunc_subsecs(0)
-        );
-        assert_eq!(
-            returned_action_track.ended_at,
-            Some(ended_at.trunc_subsecs(0))
-        );
-        assert_eq!(returned_action_track.duration, Some(duration));
+        let res: ActionTrackVisible = test::read_body_json(res).await;
+        assert_eq!(res.id, action_track.id);
+        assert_eq!(res.action_id, action.id);
+        assert_eq!(res.started_at, started_at.trunc_subsecs(0));
+        assert_eq!(res.ended_at, Some(ended_at.trunc_subsecs(0)));
+        assert_eq!(res.duration, Some(duration));
 
-        let updated_action_track = action_track::Entity::find_by_id(action_track.id)
+        let action_track_in_db = action_track::Entity::find_by_id(action_track.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(updated_action_track.action_id, action.id);
-        assert_eq!(updated_action_track.user_id, user.id);
-        assert_eq!(updated_action_track.started_at, started_at.trunc_subsecs(0));
-        assert_eq!(
-            updated_action_track.ended_at,
-            Some(ended_at.trunc_subsecs(0))
-        );
-        assert_eq!(updated_action_track.duration, Some(duration));
+        assert_eq!(action_track_in_db.user_id, user.id);
+        assert_eq!(ActionTrackVisible::from(action_track_in_db), res);
 
         Ok(())
     }

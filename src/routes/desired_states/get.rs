@@ -99,15 +99,8 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let returned_desired_state: DesiredStateVisible = test::read_body_json(resp).await;
-        assert_eq!(returned_desired_state.id, desired_state.id);
-        assert_eq!(returned_desired_state.name, desired_state.name);
-        assert_eq!(
-            returned_desired_state.description,
-            desired_state.description
-        );
-        assert_eq!(returned_desired_state.created_at, desired_state.created_at);
-        assert_eq!(returned_desired_state.updated_at, desired_state.updated_at);
+        let res: DesiredStateVisible = test::read_body_json(resp).await;
+        assert_eq!(res, DesiredStateVisible::from(desired_state));
 
         Ok(())
     }

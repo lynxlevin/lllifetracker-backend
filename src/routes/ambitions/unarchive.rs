@@ -99,23 +99,20 @@ mod tests {
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::OK);
 
-        let returned_ambition: AmbitionVisible = test::read_body_json(res).await;
-        assert_eq!(returned_ambition.id, ambition.id);
-        assert_eq!(returned_ambition.name, ambition.name.clone());
-        assert_eq!(returned_ambition.description, ambition.description.clone());
-        assert_eq!(returned_ambition.created_at, ambition.created_at);
-        assert!(returned_ambition.updated_at > ambition.updated_at);
+        let res: AmbitionVisible = test::read_body_json(res).await;
+        assert_eq!(res.id, ambition.id);
+        assert_eq!(res.name, ambition.name.clone());
+        assert_eq!(res.description, ambition.description.clone());
+        assert_eq!(res.created_at, ambition.created_at);
+        assert!(res.updated_at > ambition.updated_at);
 
-        let restored_ambition = ambition::Entity::find_by_id(ambition.id)
+        let ambition_in_db = ambition::Entity::find_by_id(ambition.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(restored_ambition.id, ambition.id);
-        assert_eq!(restored_ambition.name, ambition.name.clone());
-        assert_eq!(restored_ambition.description, ambition.description.clone());
-        assert_eq!(restored_ambition.archived, false);
-        assert_eq!(restored_ambition.created_at, ambition.created_at);
-        assert_eq!(restored_ambition.updated_at, returned_ambition.updated_at);
+        assert_eq!(ambition_in_db.user_id, user.id);
+        assert_eq!(ambition_in_db.archived, false);
+        assert_eq!(AmbitionVisible::from(ambition_in_db), res);
 
         Ok(())
     }

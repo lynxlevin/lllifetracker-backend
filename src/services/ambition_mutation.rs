@@ -1,5 +1,5 @@
-use entities::{ambition, tag};
 use chrono::Utc;
+use entities::{ambition, tag};
 use sea_orm::{
     ActiveModelTrait, ActiveValue::NotSet, ColumnTrait, DbConn, DbErr, EntityTrait,
     IntoActiveModel, ModelTrait, QueryFilter, Set, TransactionError, TransactionTrait,
@@ -154,33 +154,28 @@ mod tests {
             user_id: user.id,
         };
 
-        let returned_ambition = AmbitionMutation::create_with_tag(&db, form_data)
+        let res = AmbitionMutation::create_with_tag(&db, form_data)
             .await
             .unwrap();
-        assert_eq!(returned_ambition.name, name);
-        assert_eq!(returned_ambition.description, description);
-        assert_eq!(returned_ambition.archived, false);
-        assert_eq!(returned_ambition.user_id, user.id);
+        assert_eq!(res.name, name);
+        assert_eq!(res.description, description);
+        assert_eq!(res.archived, false);
+        assert_eq!(res.user_id, user.id);
 
-        let created_ambition = ambition::Entity::find_by_id(returned_ambition.id)
+        let ambition_in_db = ambition::Entity::find_by_id(res.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(created_ambition.name, returned_ambition.name);
-        assert_eq!(created_ambition.description, returned_ambition.description);
-        assert_eq!(created_ambition.archived, false);
-        assert_eq!(created_ambition.user_id, returned_ambition.user_id);
-        assert_eq!(created_ambition.created_at, returned_ambition.created_at);
-        assert_eq!(created_ambition.updated_at, returned_ambition.updated_at);
+        assert_eq!(ambition_in_db, res);
 
-        let created_tag = tag::Entity::find()
+        let tag_in_db = tag::Entity::find()
             .filter(tag::Column::UserId.eq(user.id))
-            .filter(tag::Column::AmbitionId.eq(Some(returned_ambition.id)))
+            .filter(tag::Column::AmbitionId.eq(Some(res.id)))
             .filter(tag::Column::DesiredStateId.is_null())
             .filter(tag::Column::ActionId.is_null())
             .one(&db)
             .await?;
-        assert!(created_tag.is_some());
+        assert!(tag_in_db.is_some());
 
         Ok(())
     }
@@ -194,7 +189,7 @@ mod tests {
         let new_name = "Test AmbitionMutation::update_after".to_string();
         let new_description = Some("After update.".to_string());
 
-        let returned_ambition = AmbitionMutation::update(
+        let res = AmbitionMutation::update(
             &db,
             ambition.id,
             user.id,
@@ -202,24 +197,19 @@ mod tests {
             new_description.clone(),
         )
         .await?;
-        assert_eq!(returned_ambition.id, ambition.id);
-        assert_eq!(returned_ambition.name, new_name);
-        assert_eq!(returned_ambition.description, new_description);
-        assert_eq!(returned_ambition.archived, ambition.archived);
-        assert_eq!(returned_ambition.user_id, user.id);
-        assert_eq!(returned_ambition.created_at, ambition.created_at);
-        assert!(returned_ambition.updated_at > ambition.updated_at);
+        assert_eq!(res.id, ambition.id);
+        assert_eq!(res.name, new_name);
+        assert_eq!(res.description, new_description);
+        assert_eq!(res.archived, ambition.archived);
+        assert_eq!(res.user_id, user.id);
+        assert_eq!(res.created_at, ambition.created_at);
+        assert!(res.updated_at > ambition.updated_at);
 
-        let updated_ambition = ambition::Entity::find_by_id(returned_ambition.id)
+        let ambition_in_db = ambition::Entity::find_by_id(res.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(updated_ambition.name, returned_ambition.name);
-        assert_eq!(updated_ambition.description, returned_ambition.description);
-        assert_eq!(updated_ambition.archived, returned_ambition.archived);
-        assert_eq!(updated_ambition.user_id, returned_ambition.user_id);
-        assert_eq!(updated_ambition.created_at, returned_ambition.created_at);
-        assert_eq!(updated_ambition.updated_at, returned_ambition.updated_at);
+        assert_eq!(ambition_in_db, res);
 
         Ok(())
     }
@@ -284,25 +274,20 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let ambition = factory::ambition(user.id).insert(&db).await?;
 
-        let returned_ambition = AmbitionMutation::archive(&db, ambition.id, user.id).await?;
-        assert_eq!(returned_ambition.id, ambition.id);
-        assert_eq!(returned_ambition.name, ambition.name.clone());
-        assert_eq!(returned_ambition.description, ambition.description.clone());
-        assert_eq!(returned_ambition.archived, true);
-        assert_eq!(returned_ambition.user_id, user.id);
-        assert_eq!(returned_ambition.created_at, ambition.created_at);
-        assert!(returned_ambition.updated_at > ambition.updated_at);
+        let res = AmbitionMutation::archive(&db, ambition.id, user.id).await?;
+        assert_eq!(res.id, ambition.id);
+        assert_eq!(res.name, ambition.name.clone());
+        assert_eq!(res.description, ambition.description.clone());
+        assert_eq!(res.archived, true);
+        assert_eq!(res.user_id, user.id);
+        assert_eq!(res.created_at, ambition.created_at);
+        assert!(res.updated_at > ambition.updated_at);
 
-        let updated_ambition = ambition::Entity::find_by_id(returned_ambition.id)
+        let ambition_in_db = ambition::Entity::find_by_id(res.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(updated_ambition.name, returned_ambition.name);
-        assert_eq!(updated_ambition.description, returned_ambition.description);
-        assert_eq!(updated_ambition.archived, true);
-        assert_eq!(updated_ambition.user_id, returned_ambition.user_id);
-        assert_eq!(updated_ambition.created_at, returned_ambition.created_at);
-        assert_eq!(updated_ambition.updated_at, returned_ambition.updated_at);
+        assert_eq!(ambition_in_db, res);
 
         Ok(())
     }
@@ -325,27 +310,25 @@ mod tests {
     async fn unarchive() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let ambition = factory::ambition(user.id).archived(true).insert(&db).await?;
+        let ambition = factory::ambition(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
 
-        let returned_ambition = AmbitionMutation::unarchive(&db, ambition.id, user.id).await?;
-        assert_eq!(returned_ambition.id, ambition.id);
-        assert_eq!(returned_ambition.name, ambition.name.clone());
-        assert_eq!(returned_ambition.description, ambition.description.clone());
-        assert_eq!(returned_ambition.archived, false);
-        assert_eq!(returned_ambition.user_id, user.id);
-        assert_eq!(returned_ambition.created_at, ambition.created_at);
-        assert!(returned_ambition.updated_at > ambition.updated_at);
+        let res = AmbitionMutation::unarchive(&db, ambition.id, user.id).await?;
+        assert_eq!(res.id, ambition.id);
+        assert_eq!(res.name, ambition.name.clone());
+        assert_eq!(res.description, ambition.description.clone());
+        assert_eq!(res.archived, false);
+        assert_eq!(res.user_id, user.id);
+        assert_eq!(res.created_at, ambition.created_at);
+        assert!(res.updated_at > ambition.updated_at);
 
-        let updated_ambition = ambition::Entity::find_by_id(returned_ambition.id)
+        let ambition_in_db = ambition::Entity::find_by_id(res.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(updated_ambition.name, returned_ambition.name);
-        assert_eq!(updated_ambition.description, returned_ambition.description);
-        assert_eq!(updated_ambition.archived, false);
-        assert_eq!(updated_ambition.user_id, returned_ambition.user_id);
-        assert_eq!(updated_ambition.created_at, returned_ambition.created_at);
-        assert_eq!(updated_ambition.updated_at, returned_ambition.updated_at);
+        assert_eq!(ambition_in_db, res);
 
         Ok(())
     }
@@ -354,7 +337,10 @@ mod tests {
     async fn unarchive_unauthorized() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
-        let ambition = factory::ambition(user.id).archived(true).insert(&db).await?;
+        let ambition = factory::ambition(user.id)
+            .archived(true)
+            .insert(&db)
+            .await?;
 
         let error = AmbitionMutation::unarchive(&db, ambition.id, uuid::Uuid::now_v7())
             .await
@@ -398,7 +384,8 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn bulk_update_ordering_no_modification_on_different_users_records() -> Result<(), DbErr> {
+    async fn bulk_update_ordering_no_modification_on_different_users_records() -> Result<(), DbErr>
+    {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
         let another_user = factory::user().insert(&db).await?;

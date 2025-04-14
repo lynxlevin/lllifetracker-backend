@@ -85,12 +85,8 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let returned_action: ActionVisible = test::read_body_json(resp).await;
-        assert_eq!(returned_action.id, action.id);
-        assert_eq!(returned_action.name, action.name);
-        assert_eq!(returned_action.description, action.description);
-        assert_eq!(returned_action.created_at, action.created_at);
-        assert_eq!(returned_action.updated_at, action.updated_at);
+        let res: ActionVisible = test::read_body_json(resp).await;
+        assert_eq!(res, ActionVisible::from(action));
 
         Ok(())
     }

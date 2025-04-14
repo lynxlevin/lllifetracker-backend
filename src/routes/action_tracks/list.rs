@@ -94,16 +94,16 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let returned_action_tracks: Vec<ActionTrackVisible> = test::read_body_json(resp).await;
+        let res: Vec<ActionTrackVisible> = test::read_body_json(resp).await;
 
         let expected = vec![
             ActionTrackVisible::from(action_track_1),
             ActionTrackVisible::from(action_track_0),
         ];
 
-        assert_eq!(returned_action_tracks.len(), expected.len());
-        assert_eq!(returned_action_tracks[0], expected[0]);
-        assert_eq!(returned_action_tracks[1], expected[1]);
+        assert_eq!(res.len(), expected.len());
+        assert_eq!(res[0], expected[0]);
+        assert_eq!(res[1], expected[1]);
 
         Ok(())
     }
@@ -133,12 +133,12 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let returned_action_tracks: Vec<ActionTrackVisible> = test::read_body_json(resp).await;
+        let res: Vec<ActionTrackVisible> = test::read_body_json(resp).await;
 
         let expected = vec![ActionTrackVisible::from(active_action_track)];
 
-        assert_eq!(returned_action_tracks.len(), expected.len());
-        assert_eq!(returned_action_tracks[0], expected[0]);
+        assert_eq!(res.len(), expected.len());
+        assert_eq!(res[0], expected[0]);
 
         Ok(())
     }
@@ -175,12 +175,12 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let returned_action_tracks: Vec<ActionTrackVisible> = test::read_body_json(resp).await;
+        let res: Vec<ActionTrackVisible> = test::read_body_json(resp).await;
 
         let expected = vec![ActionTrackVisible::from(action_track)];
 
-        assert_eq!(returned_action_tracks.len(), expected.len());
-        assert_eq!(returned_action_tracks[0], expected[0]);
+        assert_eq!(res.len(), expected.len());
+        assert_eq!(res[0], expected[0]);
 
         Ok(())
     }

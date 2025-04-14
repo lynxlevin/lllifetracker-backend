@@ -112,30 +112,20 @@ mod tests {
             user_id: user.id,
         };
 
-        let returned_action_track = ActionTrackMutation::create(&db, form_data.clone())
+        let res = ActionTrackMutation::create(&db, form_data.clone())
             .await
             .unwrap();
-        assert_eq!(returned_action_track.user_id, user.id);
-        assert_eq!(returned_action_track.action_id, action.id);
-        assert_eq!(
-            returned_action_track.started_at,
-            form_data.started_at.trunc_subsecs(0)
-        );
-        assert_eq!(returned_action_track.ended_at, None);
-        assert_eq!(returned_action_track.duration, None);
+        assert_eq!(res.user_id, user.id);
+        assert_eq!(res.action_id, action.id);
+        assert_eq!(res.started_at, form_data.started_at.trunc_subsecs(0));
+        assert_eq!(res.ended_at, None);
+        assert_eq!(res.duration, None);
 
-        let created_action_track = action_track::Entity::find_by_id(returned_action_track.id)
+        let action_track_in_db = action_track::Entity::find_by_id(res.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(created_action_track.user_id, user.id);
-        assert_eq!(created_action_track.action_id, action.id);
-        assert_eq!(
-            created_action_track.started_at,
-            form_data.started_at.trunc_subsecs(0)
-        );
-        assert_eq!(created_action_track.ended_at, None);
-        assert_eq!(created_action_track.duration, None);
+        assert_eq!(action_track_in_db, res);
 
         Ok(())
     }
@@ -179,7 +169,7 @@ mod tests {
         let duration = 180;
         let started_at = ended_at - chrono::TimeDelta::seconds(duration.into());
 
-        let returned_action_track = ActionTrackMutation::update(
+        let res = ActionTrackMutation::update(
             &db,
             action_track.id,
             UpdateActionTrack {
@@ -190,24 +180,18 @@ mod tests {
             },
         )
         .await?;
-        assert_eq!(returned_action_track.id, action_track.id);
-        assert_eq!(returned_action_track.action_id, action.id);
-        assert_eq!(returned_action_track.user_id, user.id);
-        assert_eq!(
-            returned_action_track.started_at,
-            started_at.trunc_subsecs(0)
-        );
-        assert_eq!(
-            returned_action_track.ended_at,
-            Some(ended_at.trunc_subsecs(0))
-        );
-        assert_eq!(returned_action_track.duration, Some(duration));
+        assert_eq!(res.id, action_track.id);
+        assert_eq!(res.action_id, action.id);
+        assert_eq!(res.user_id, user.id);
+        assert_eq!(res.started_at, started_at.trunc_subsecs(0));
+        assert_eq!(res.ended_at, Some(ended_at.trunc_subsecs(0)));
+        assert_eq!(res.duration, Some(duration));
 
-        let updated_action_track = action_track::Entity::find_by_id(action_track.id)
+        let action_track_in_db = action_track::Entity::find_by_id(action_track.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(updated_action_track, returned_action_track);
+        assert_eq!(action_track_in_db, res);
 
         Ok(())
     }

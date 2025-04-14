@@ -75,7 +75,7 @@ mod tests {
         dev::{Service, ServiceResponse},
         http, test, App, HttpMessage,
     };
-    use sea_orm::{entity::prelude::ActiveModelTrait, ColumnTrait, DbErr, EntityTrait, QueryFilter};
+    use sea_orm::{entity::prelude::ActiveModelTrait, DbErr, EntityTrait};
 
     use entities::ambition;
     use test_utils::{self, *};
@@ -110,22 +110,19 @@ mod tests {
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::OK);
 
-        let returned_ambition: AmbitionVisible = test::read_body_json(res).await;
-        assert_eq!(returned_ambition.id, ambition.id);
-        assert_eq!(returned_ambition.name, new_name.clone());
-        assert_eq!(returned_ambition.description, new_description.clone());
-        assert_eq!(returned_ambition.created_at, ambition.created_at);
-        assert!(returned_ambition.updated_at > ambition.updated_at);
+        let res: AmbitionVisible = test::read_body_json(res).await;
+        assert_eq!(res.id, ambition.id);
+        assert_eq!(res.name, new_name.clone());
+        assert_eq!(res.description, new_description.clone());
+        assert_eq!(res.created_at, ambition.created_at);
+        assert!(res.updated_at > ambition.updated_at);
 
-        let updated_ambition = ambition::Entity::find_by_id(ambition.id)
-            .filter(ambition::Column::Name.eq(new_name))
-            .filter(ambition::Column::Description.eq(new_description))
-            .filter(ambition::Column::UserId.eq(user.id))
-            .filter(ambition::Column::CreatedAt.eq(returned_ambition.created_at))
-            .filter(ambition::Column::UpdatedAt.eq(returned_ambition.updated_at))
+        let ambition_in_db = ambition::Entity::find_by_id(ambition.id)
             .one(&db)
-            .await?;
-        assert!(updated_ambition.is_some());
+            .await?
+            .unwrap();
+        assert_eq!(ambition_in_db.user_id, user.id);
+        assert_eq!(AmbitionVisible::from(ambition_in_db), res);
 
         Ok(())
     }
@@ -154,22 +151,20 @@ mod tests {
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::OK);
 
-        let returned_ambition: AmbitionVisible = test::read_body_json(res).await;
-        assert_eq!(returned_ambition.id, ambition.id);
-        assert_eq!(returned_ambition.name, new_name.clone());
-        assert!(returned_ambition.description.is_none());
-        assert_eq!(returned_ambition.created_at, ambition.created_at);
-        assert!(returned_ambition.updated_at > ambition.updated_at);
+        let res: AmbitionVisible = test::read_body_json(res).await;
+        assert_eq!(res.id, ambition.id);
+        assert_eq!(res.name, new_name.clone());
+        assert!(res.description.is_none());
+        assert_eq!(res.created_at, ambition.created_at);
+        assert!(res.updated_at > ambition.updated_at);
 
-        let updated_ambition = ambition::Entity::find_by_id(ambition.id)
-            .filter(ambition::Column::Name.eq(new_name))
-            .filter(ambition::Column::Description.is_null())
-            .filter(ambition::Column::UserId.eq(user.id))
-            .filter(ambition::Column::CreatedAt.eq(returned_ambition.created_at))
-            .filter(ambition::Column::UpdatedAt.eq(returned_ambition.updated_at))
+        let ambition_in_db = ambition::Entity::find_by_id(ambition.id)
             .one(&db)
-            .await?;
-        assert!(updated_ambition.is_some());
+            .await?
+            .unwrap();
+        assert_eq!(ambition_in_db.user_id, user.id);
+        assert_eq!(ambition_in_db.archived, ambition.archived);
+        assert_eq!(AmbitionVisible::from(ambition_in_db), res);
 
         Ok(())
     }

@@ -96,36 +96,24 @@ mod tests {
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::CREATED);
 
-        let returned_desired_state: DesiredStateVisible = test::read_body_json(res).await;
-        assert_eq!(returned_desired_state.name, name);
+        let res: DesiredStateVisible = test::read_body_json(res).await;
+        assert_eq!(res.name, name);
 
-        let created_desired_state = desired_state::Entity::find_by_id(returned_desired_state.id)
+        let desired_state_in_db = desired_state::Entity::find_by_id(res.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(created_desired_state.name, returned_desired_state.name);
-        assert_eq!(
-            created_desired_state.description,
-            returned_desired_state.description
-        );
-        assert_eq!(created_desired_state.user_id, user.id);
-        assert_eq!(
-            created_desired_state.created_at,
-            returned_desired_state.created_at
-        );
-        assert_eq!(
-            created_desired_state.updated_at,
-            returned_desired_state.updated_at
-        );
+        assert_eq!(desired_state_in_db.user_id, user.id);
+        assert_eq!(DesiredStateVisible::from(desired_state_in_db), res);
 
-        let created_tag = tag::Entity::find()
+        let tag_in_db = tag::Entity::find()
             .filter(tag::Column::AmbitionId.is_null())
-            .filter(tag::Column::DesiredStateId.eq(returned_desired_state.id))
+            .filter(tag::Column::DesiredStateId.eq(res.id))
             .filter(tag::Column::ActionId.is_null())
             .filter(tag::Column::UserId.eq(user.id))
             .one(&db)
             .await?;
-        assert!(created_tag.is_some());
+        assert!(tag_in_db.is_some());
 
         Ok(())
     }

@@ -184,23 +184,17 @@ mod tests {
             user_id: user.id,
         };
 
-        let returned_diary = DiaryMutation::create(&db, form_data).await.unwrap();
-        assert_eq!(returned_diary.text, Some(diary_text.clone()));
-        assert_eq!(returned_diary.date, today);
-        assert_eq!(returned_diary.score, Some(diary_score.clone()));
-        assert_eq!(returned_diary.user_id, user.id);
+        let res = DiaryMutation::create(&db, form_data).await.unwrap();
+        assert_eq!(res.text, Some(diary_text.clone()));
+        assert_eq!(res.date, today);
+        assert_eq!(res.score, Some(diary_score.clone()));
+        assert_eq!(res.user_id, user.id);
 
-        let created_diary = diary::Entity::find_by_id(returned_diary.id)
-            .one(&db)
-            .await?
-            .unwrap();
-        assert_eq!(created_diary.text, Some(diary_text.clone()));
-        assert_eq!(created_diary.date, today);
-        assert_eq!(created_diary.score, Some(diary_score.clone()));
-        assert_eq!(created_diary.user_id, user.id);
+        let diary_in_db = diary::Entity::find_by_id(res.id).one(&db).await?.unwrap();
+        assert_eq!(diary_in_db, res);
 
-        let tag_query = diaries_tags::Entity::find()
-            .filter(diaries_tags::Column::DiaryId.eq(returned_diary.id));
+        let tag_query =
+            diaries_tags::Entity::find().filter(diaries_tags::Column::DiaryId.eq(res.id));
         assert_eq!(tag_query.clone().all(&db).await?.len(), 2);
         assert!(tag_query
             .clone()
@@ -235,20 +229,17 @@ mod tests {
             update_keys: vec![DiaryKey::Text],
         };
 
-        let returned_diary = DiaryMutation::partial_update(&db, form.clone())
+        let res = DiaryMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_eq!(returned_diary.id, diary.id);
-        assert_eq!(returned_diary.text, form.text.clone());
-        assert_eq!(returned_diary.date, diary.date);
-        assert_eq!(returned_diary.score, diary.score);
-        assert_eq!(returned_diary.user_id, user.id);
+        assert_eq!(res.id, diary.id);
+        assert_eq!(res.text, form.text.clone());
+        assert_eq!(res.date, diary.date);
+        assert_eq!(res.score, diary.score);
+        assert_eq!(res.user_id, user.id);
 
-        let updated_diary = diary::Entity::find_by_id(diary.id).one(&db).await?.unwrap();
-        assert_eq!(updated_diary.text, form.text.clone());
-        assert_eq!(updated_diary.date, diary.date);
-        assert_eq!(updated_diary.score, diary.score);
-        assert_eq!(updated_diary.user_id, user.id);
+        let diary_in_db = diary::Entity::find_by_id(diary.id).one(&db).await?.unwrap();
+        assert_eq!(diary_in_db, res);
 
         let tag_link = diaries_tags::Entity::find()
             .filter(diaries_tags::Column::DiaryId.eq(diary.id))
@@ -276,20 +267,17 @@ mod tests {
             update_keys: vec![DiaryKey::Date],
         };
 
-        let returned_diary = DiaryMutation::partial_update(&db, form.clone())
+        let res = DiaryMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_eq!(returned_diary.id, diary.id);
-        assert_eq!(returned_diary.text, diary.text);
-        assert_eq!(returned_diary.date, form.date);
-        assert_eq!(returned_diary.score, diary.score);
-        assert_eq!(returned_diary.user_id, user.id);
+        assert_eq!(res.id, diary.id);
+        assert_eq!(res.text, diary.text);
+        assert_eq!(res.date, form.date);
+        assert_eq!(res.score, diary.score);
+        assert_eq!(res.user_id, user.id);
 
-        let updated_diary = diary::Entity::find_by_id(diary.id).one(&db).await?.unwrap();
-        assert_eq!(updated_diary.text, diary.text);
-        assert_eq!(updated_diary.date, form.date);
-        assert_eq!(updated_diary.score, diary.score);
-        assert_eq!(updated_diary.user_id, user.id);
+        let diary_in_db = diary::Entity::find_by_id(diary.id).one(&db).await?.unwrap();
+        assert_eq!(diary_in_db, res);
 
         let tag_link = diaries_tags::Entity::find()
             .filter(diaries_tags::Column::DiaryId.eq(diary.id))
@@ -317,20 +305,17 @@ mod tests {
             update_keys: vec![DiaryKey::Score],
         };
 
-        let returned_diary = DiaryMutation::partial_update(&db, form.clone())
+        let res = DiaryMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_eq!(returned_diary.id, diary.id);
-        assert_eq!(returned_diary.text, diary.text);
-        assert_eq!(returned_diary.date, diary.date);
-        assert_eq!(returned_diary.score, form.score);
-        assert_eq!(returned_diary.user_id, user.id);
+        assert_eq!(res.id, diary.id);
+        assert_eq!(res.text, diary.text);
+        assert_eq!(res.date, diary.date);
+        assert_eq!(res.score, form.score);
+        assert_eq!(res.user_id, user.id);
 
-        let updated_diary = diary::Entity::find_by_id(diary.id).one(&db).await?.unwrap();
-        assert_eq!(updated_diary.text, diary.text);
-        assert_eq!(updated_diary.date, diary.date);
-        assert_eq!(updated_diary.score, form.score);
-        assert_eq!(updated_diary.user_id, user.id);
+        let diary_in_db = diary::Entity::find_by_id(diary.id).one(&db).await?.unwrap();
+        assert_eq!(diary_in_db, res);
 
         let tag_link = diaries_tags::Entity::find()
             .filter(diaries_tags::Column::DiaryId.eq(diary.id))
@@ -358,20 +343,17 @@ mod tests {
             update_keys: vec![DiaryKey::TagIds],
         };
 
-        let returned_diary = DiaryMutation::partial_update(&db, form.clone())
+        let res = DiaryMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_eq!(returned_diary.id, diary.id);
-        assert_eq!(returned_diary.text, diary.text);
-        assert_eq!(returned_diary.date, diary.date);
-        assert_eq!(returned_diary.score, diary.score);
-        assert_eq!(returned_diary.user_id, user.id);
+        assert_eq!(res.id, diary.id);
+        assert_eq!(res.text, diary.text);
+        assert_eq!(res.date, diary.date);
+        assert_eq!(res.score, diary.score);
+        assert_eq!(res.user_id, user.id);
 
-        let updated_diary = diary::Entity::find_by_id(diary.id).one(&db).await?.unwrap();
-        assert_eq!(updated_diary.text, diary.text);
-        assert_eq!(updated_diary.date, diary.date);
-        assert_eq!(updated_diary.score, diary.score);
-        assert_eq!(updated_diary.user_id, user.id);
+        let diary_in_db = diary::Entity::find_by_id(diary.id).one(&db).await?.unwrap();
+        assert_eq!(diary_in_db, res);
 
         let tag_link = diaries_tags::Entity::find()
             .filter(diaries_tags::Column::DiaryId.eq(diary.id))
@@ -401,20 +383,17 @@ mod tests {
             update_keys: vec![DiaryKey::TagIds],
         };
 
-        let returned_diary = DiaryMutation::partial_update(&db, form.clone())
+        let res = DiaryMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_eq!(returned_diary.id, diary.id);
-        assert_eq!(returned_diary.text, diary.text);
-        assert_eq!(returned_diary.date, diary.date);
-        assert_eq!(returned_diary.score, diary.score);
-        assert_eq!(returned_diary.user_id, user.id);
+        assert_eq!(res.id, diary.id);
+        assert_eq!(res.text, diary.text);
+        assert_eq!(res.date, diary.date);
+        assert_eq!(res.score, diary.score);
+        assert_eq!(res.user_id, user.id);
 
-        let updated_diary = diary::Entity::find_by_id(diary.id).one(&db).await?.unwrap();
-        assert_eq!(updated_diary.text, diary.text);
-        assert_eq!(updated_diary.date, diary.date);
-        assert_eq!(updated_diary.score, diary.score);
-        assert_eq!(updated_diary.user_id, user.id);
+        let diary_in_db = diary::Entity::find_by_id(diary.id).one(&db).await?.unwrap();
+        assert_eq!(diary_in_db, res);
 
         let tag_link = diaries_tags::Entity::find()
             .filter(diaries_tags::Column::DiaryId.eq(diary.id))

@@ -153,48 +153,28 @@ mod tests {
             description: Some(description.clone()),
             user_id: user.id,
         };
-        let returned_desired_state = DesiredStateMutation::create_with_tag(&db, form_data)
+        let res = DesiredStateMutation::create_with_tag(&db, form_data)
             .await
             .unwrap();
-        assert_eq!(returned_desired_state.name, name.clone());
-        assert_eq!(
-            returned_desired_state.description,
-            Some(description.clone())
-        );
-        assert_eq!(returned_desired_state.archived, false);
-        assert_eq!(returned_desired_state.user_id, user.id);
+        assert_eq!(res.name, name.clone());
+        assert_eq!(res.description, Some(description.clone()));
+        assert_eq!(res.archived, false);
+        assert_eq!(res.user_id, user.id);
 
-        let created_desired_state = desired_state::Entity::find_by_id(returned_desired_state.id)
+        let desired_state_in_db = desired_state::Entity::find_by_id(res.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(created_desired_state.name, returned_desired_state.name);
-        assert_eq!(
-            created_desired_state.description,
-            returned_desired_state.description
-        );
-        assert_eq!(created_desired_state.archived, false);
-        assert_eq!(
-            created_desired_state.user_id,
-            returned_desired_state.user_id
-        );
-        assert_eq!(
-            created_desired_state.created_at,
-            returned_desired_state.created_at
-        );
-        assert_eq!(
-            created_desired_state.updated_at,
-            returned_desired_state.updated_at
-        );
+        assert_eq!(desired_state_in_db, res);
 
-        let created_tag = tag::Entity::find()
+        let tag_in_db = tag::Entity::find()
             .filter(tag::Column::AmbitionId.is_null())
-            .filter(tag::Column::DesiredStateId.eq(returned_desired_state.id))
+            .filter(tag::Column::DesiredStateId.eq(res.id))
             .filter(tag::Column::ActionId.is_null())
             .filter(tag::Column::UserId.eq(user.id))
             .one(&db)
             .await?;
-        assert!(created_tag.is_some());
+        assert!(tag_in_db.is_some());
 
         Ok(())
     }
@@ -208,7 +188,7 @@ mod tests {
         let new_name = "desired_state_after_update".to_string();
         let new_description = "DesiredState after update.".to_string();
 
-        let returned_desired_state = DesiredStateMutation::update(
+        let res = DesiredStateMutation::update(
             &db,
             desired_state.id,
             user.id,
@@ -216,33 +196,19 @@ mod tests {
             Some(new_description.clone()),
         )
         .await?;
-        assert_eq!(returned_desired_state.id, desired_state.id);
-        assert_eq!(returned_desired_state.name, new_name.clone());
-        assert_eq!(
-            returned_desired_state.description,
-            Some(new_description.clone())
-        );
-        assert_eq!(returned_desired_state.archived, desired_state.archived);
-        assert_eq!(returned_desired_state.user_id, user.id);
-        assert_eq!(returned_desired_state.created_at, desired_state.created_at);
-        assert!(returned_desired_state.updated_at > desired_state.updated_at);
+        assert_eq!(res.id, desired_state.id);
+        assert_eq!(res.name, new_name.clone());
+        assert_eq!(res.description, Some(new_description.clone()));
+        assert_eq!(res.archived, desired_state.archived);
+        assert_eq!(res.user_id, user.id);
+        assert_eq!(res.created_at, desired_state.created_at);
+        assert!(res.updated_at > desired_state.updated_at);
 
-        let updated_desired_state = desired_state::Entity::find_by_id(desired_state.id)
+        let desired_state_in_db = desired_state::Entity::find_by_id(desired_state.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(updated_desired_state.name, new_name.clone());
-        assert_eq!(
-            updated_desired_state.description,
-            Some(new_description.clone())
-        );
-        assert_eq!(updated_desired_state.archived, desired_state.archived);
-        assert_eq!(updated_desired_state.user_id, user.id);
-        assert_eq!(updated_desired_state.created_at, desired_state.created_at);
-        assert_eq!(
-            updated_desired_state.updated_at,
-            returned_desired_state.updated_at
-        );
+        assert_eq!(desired_state_in_db, res);
 
         Ok(())
     }
@@ -308,35 +274,20 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let desired_state = factory::desired_state(user.id).insert(&db).await?;
 
-        let returned_desired_state =
-            DesiredStateMutation::archive(&db, desired_state.id, user.id).await?;
-        assert_eq!(returned_desired_state.id, desired_state.id);
-        assert_eq!(returned_desired_state.name, desired_state.name.clone());
-        assert_eq!(
-            returned_desired_state.description,
-            desired_state.description.clone()
-        );
-        assert_eq!(returned_desired_state.archived, true);
-        assert_eq!(returned_desired_state.user_id, user.id);
-        assert_eq!(returned_desired_state.created_at, desired_state.created_at);
-        assert!(returned_desired_state.updated_at > desired_state.updated_at);
+        let res = DesiredStateMutation::archive(&db, desired_state.id, user.id).await?;
+        assert_eq!(res.id, desired_state.id);
+        assert_eq!(res.name, desired_state.name.clone());
+        assert_eq!(res.description, desired_state.description.clone());
+        assert_eq!(res.archived, true);
+        assert_eq!(res.user_id, user.id);
+        assert_eq!(res.created_at, desired_state.created_at);
+        assert!(res.updated_at > desired_state.updated_at);
 
-        let archived_desired_state = desired_state::Entity::find_by_id(desired_state.id)
+        let desired_state_in_db = desired_state::Entity::find_by_id(desired_state.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(archived_desired_state.name, desired_state.name.clone());
-        assert_eq!(
-            archived_desired_state.description,
-            desired_state.description.clone()
-        );
-        assert_eq!(archived_desired_state.archived, true);
-        assert_eq!(archived_desired_state.user_id, user.id);
-        assert_eq!(archived_desired_state.created_at, desired_state.created_at);
-        assert_eq!(
-            archived_desired_state.updated_at,
-            returned_desired_state.updated_at
-        );
+        assert_eq!(desired_state_in_db, res);
 
         Ok(())
     }
@@ -364,35 +315,20 @@ mod tests {
             .insert(&db)
             .await?;
 
-        let returned_desired_state =
-            DesiredStateMutation::unarchive(&db, desired_state.id, user.id).await?;
-        assert_eq!(returned_desired_state.id, desired_state.id);
-        assert_eq!(returned_desired_state.name, desired_state.name.clone());
-        assert_eq!(
-            returned_desired_state.description,
-            desired_state.description.clone()
-        );
-        assert_eq!(returned_desired_state.archived, false);
-        assert_eq!(returned_desired_state.user_id, user.id);
-        assert_eq!(returned_desired_state.created_at, desired_state.created_at);
-        assert!(returned_desired_state.updated_at > desired_state.updated_at);
+        let res = DesiredStateMutation::unarchive(&db, desired_state.id, user.id).await?;
+        assert_eq!(res.id, desired_state.id);
+        assert_eq!(res.name, desired_state.name.clone());
+        assert_eq!(res.description, desired_state.description.clone());
+        assert_eq!(res.archived, false);
+        assert_eq!(res.user_id, user.id);
+        assert_eq!(res.created_at, desired_state.created_at);
+        assert!(res.updated_at > desired_state.updated_at);
 
-        let restored_desired_state = desired_state::Entity::find_by_id(desired_state.id)
+        let desired_state_in_db = desired_state::Entity::find_by_id(desired_state.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(restored_desired_state.name, desired_state.name.clone());
-        assert_eq!(
-            restored_desired_state.description,
-            desired_state.description.clone()
-        );
-        assert_eq!(restored_desired_state.archived, false);
-        assert_eq!(restored_desired_state.user_id, user.id);
-        assert_eq!(restored_desired_state.created_at, desired_state.created_at);
-        assert_eq!(
-            restored_desired_state.updated_at,
-            returned_desired_state.updated_at
-        );
+        assert_eq!(desired_state_in_db, res);
 
         Ok(())
     }

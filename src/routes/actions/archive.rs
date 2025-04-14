@@ -88,23 +88,20 @@ mod tests {
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::OK);
 
-        let returned_action: ActionVisible = test::read_body_json(res).await;
-        assert_eq!(returned_action.id, action.id);
-        assert_eq!(returned_action.name, action.name.clone());
-        assert_eq!(returned_action.description, action.description.clone());
-        assert_eq!(returned_action.created_at, action.created_at);
-        assert!(returned_action.updated_at > action.updated_at);
+        let res: ActionVisible = test::read_body_json(res).await;
+        assert_eq!(res.id, action.id);
+        assert_eq!(res.name, action.name.clone());
+        assert_eq!(res.description, action.description.clone());
+        assert_eq!(res.created_at, action.created_at);
+        assert!(res.updated_at > action.updated_at);
 
-        let archived_action = action::Entity::find_by_id(action.id)
+        let action_in_db = action::Entity::find_by_id(action.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(archived_action.name, action.name.clone());
-        assert_eq!(archived_action.description, action.description.clone());
-        assert_eq!(archived_action.archived, true);
-        assert_eq!(archived_action.user_id, user.id);
-        assert_eq!(archived_action.created_at, returned_action.created_at);
-        assert_eq!(archived_action.updated_at, returned_action.updated_at);
+        assert_eq!(action_in_db.user_id, user.id);
+        assert_eq!(action_in_db.archived, true);
+        assert_eq!(ActionVisible::from(action_in_db), res);
 
         Ok(())
     }

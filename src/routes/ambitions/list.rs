@@ -96,28 +96,15 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let returned_ambitions: Vec<AmbitionVisible> = test::read_body_json(resp).await;
-        assert_eq!(returned_ambitions.len(), 2);
-        assert_eq!(
-            serde_json::to_value(&returned_ambitions[0]).unwrap(),
-            serde_json::json!({
-                "id": ambition_0.id,
-                "name": ambition_0.name,
-                "description": ambition_0.description,
-                "created_at": ambition_0.created_at,
-                "updated_at": ambition_0.updated_at,
-            })
-        );
-        assert_eq!(
-            serde_json::to_value(&returned_ambitions[1]).unwrap(),
-            serde_json::json!({
-                "id": ambition_1.id,
-                "name": ambition_1.name,
-                "description": ambition_1.description,
-                "created_at": ambition_1.created_at,
-                "updated_at": ambition_1.updated_at,
-            })
-        );
+        let res: Vec<AmbitionVisible> = test::read_body_json(resp).await;
+        let expected = vec![
+            AmbitionVisible::from(ambition_0),
+            AmbitionVisible::from(ambition_1),
+        ];
+
+        assert_eq!(res.len(), expected.len());
+        assert_eq!(res[0], expected[0]);
+        assert_eq!(res[1], expected[1]);
 
         Ok(())
     }
@@ -142,18 +129,10 @@ mod tests {
         assert_eq!(resp.status(), http::StatusCode::OK);
 
         let body: Vec<AmbitionVisible> = test::read_body_json(resp).await;
-        assert_eq!(body.len(), 1);
+        let expected = vec![AmbitionVisible::from(archived_ambition)];
 
-        let expected = serde_json::json!([{
-            "id": archived_ambition.id,
-            "name": archived_ambition.name,
-            "description": archived_ambition.description,
-            "created_at": archived_ambition.created_at,
-            "updated_at": archived_ambition.updated_at,
-        }]);
-
-        let body = serde_json::to_value(&body).unwrap();
-        assert_eq!(expected, body);
+        assert_eq!(body.len(), expected.len());
+        assert_eq!(body[0], expected[0]);
 
         Ok(())
     }

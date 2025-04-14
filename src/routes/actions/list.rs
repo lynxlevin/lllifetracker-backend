@@ -92,13 +92,13 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let returned_actions: Vec<ActionVisible> = test::read_body_json(resp).await;
+        let res: Vec<ActionVisible> = test::read_body_json(resp).await;
 
         let expected = vec![ActionVisible::from(action_0), ActionVisible::from(action_1)];
 
-        assert_eq!(returned_actions.len(), expected.len());
-        assert_eq!(returned_actions[0], expected[0]);
-        assert_eq!(returned_actions[1], expected[1]);
+        assert_eq!(res.len(), expected.len());
+        assert_eq!(res[0], expected[0]);
+        assert_eq!(res[1], expected[1]);
 
         Ok(())
     }

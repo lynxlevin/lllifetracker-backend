@@ -89,12 +89,8 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let returned_ambition: AmbitionVisible = test::read_body_json(resp).await;
-        assert_eq!(returned_ambition.id, ambition.id);
-        assert_eq!(returned_ambition.name, ambition.name);
-        assert_eq!(returned_ambition.description, ambition.description);
-        assert_eq!(returned_ambition.created_at, ambition.created_at);
-        assert_eq!(returned_ambition.updated_at, ambition.updated_at);
+        let res: AmbitionVisible = test::read_body_json(resp).await;
+        assert_eq!(res, AmbitionVisible::from(ambition));
 
         Ok(())
     }

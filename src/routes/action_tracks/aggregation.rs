@@ -143,7 +143,7 @@ mod tests {
         dbg!(&resp.response().body());
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let returned_aggregation: ActionTrackAggregation = test::read_body_json(resp).await;
+        let res: ActionTrackAggregation = test::read_body_json(resp).await;
 
         let expected = ActionTrackAggregation {
             durations_by_action: vec![
@@ -159,7 +159,7 @@ mod tests {
             ],
         };
 
-        assert_eq!(returned_aggregation, expected);
+        assert_eq!(res, expected);
 
         Ok(())
     }

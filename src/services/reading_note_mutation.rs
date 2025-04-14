@@ -206,34 +206,22 @@ mod tests {
             user_id: user.id,
         };
 
-        let returned_reading_note = ReadingNoteMutation::create(&db, form_data).await.unwrap();
-        assert_eq!(returned_reading_note.title, reading_note_title.clone());
-        assert_eq!(returned_reading_note.page_number, page_number);
-        assert_eq!(returned_reading_note.text, reading_note_text.clone());
-        assert_eq!(returned_reading_note.date, today);
-        assert_eq!(returned_reading_note.user_id, user.id);
+        let res = ReadingNoteMutation::create(&db, form_data).await.unwrap();
+        assert_eq!(res.title, reading_note_title.clone());
+        assert_eq!(res.page_number, page_number);
+        assert_eq!(res.text, reading_note_text.clone());
+        assert_eq!(res.date, today);
+        assert_eq!(res.user_id, user.id);
 
-        let created_reading_note = reading_note::Entity::find_by_id(returned_reading_note.id)
+        let reading_note_in_db = reading_note::Entity::find_by_id(res.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(created_reading_note.title, reading_note_title.clone());
-        assert_eq!(created_reading_note.page_number, page_number);
-        assert_eq!(created_reading_note.text, reading_note_text.clone());
-        assert_eq!(created_reading_note.date, today);
-        assert_eq!(created_reading_note.user_id, user.id);
-        assert_eq!(
-            created_reading_note.created_at,
-            returned_reading_note.created_at
-        );
-        assert_eq!(
-            created_reading_note.updated_at,
-            returned_reading_note.updated_at
-        );
+        assert_eq!(reading_note_in_db, res);
 
         let linked_tag_ids: Vec<uuid::Uuid> = reading_notes_tags::Entity::find()
             .column_as(reading_notes_tags::Column::TagId, QueryAs::TagId)
-            .filter(reading_notes_tags::Column::ReadingNoteId.eq(returned_reading_note.id))
+            .filter(reading_notes_tags::Column::ReadingNoteId.eq(res.id))
             .into_values::<_, QueryAs>()
             .all(&db)
             .await?;
@@ -262,16 +250,16 @@ mod tests {
         let mut expected = reading_note.clone();
         expected.title = form.title.clone().unwrap();
 
-        let returned_reading_note = ReadingNoteMutation::partial_update(&db, form.clone())
+        let res = ReadingNoteMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_updated(&returned_reading_note, &expected);
+        assert_updated(&res, &expected);
 
-        let updated_reading_note = reading_note::Entity::find_by_id(reading_note.id)
+        let reading_note_in_db = reading_note::Entity::find_by_id(reading_note.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_updated(&updated_reading_note, &expected);
+        assert_eq!(reading_note_in_db, res);
 
         Ok(())
     }
@@ -294,16 +282,16 @@ mod tests {
         let mut expected = reading_note.clone();
         expected.page_number = form.page_number.unwrap();
 
-        let returned_reading_note = ReadingNoteMutation::partial_update(&db, form.clone())
+        let res = ReadingNoteMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_updated(&returned_reading_note, &expected);
+        assert_updated(&res, &expected);
 
-        let updated_reading_note = reading_note::Entity::find_by_id(reading_note.id)
+        let reading_note_in_db = reading_note::Entity::find_by_id(reading_note.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_updated(&updated_reading_note, &expected);
+        assert_eq!(reading_note_in_db, res);
 
         Ok(())
     }
@@ -327,16 +315,16 @@ mod tests {
         let mut expected = reading_note.clone();
         expected.text = form.text.clone().unwrap();
 
-        let returned_reading_note = ReadingNoteMutation::partial_update(&db, form.clone())
+        let res = ReadingNoteMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_updated(&returned_reading_note, &expected);
+        assert_updated(&res, &expected);
 
-        let updated_reading_note = reading_note::Entity::find_by_id(reading_note.id)
+        let reading_note_in_db = reading_note::Entity::find_by_id(reading_note.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_updated(&updated_reading_note, &expected);
+        assert_eq!(reading_note_in_db, res);
 
         Ok(())
     }
@@ -360,16 +348,16 @@ mod tests {
         let mut expected = reading_note.clone();
         expected.date = form.date.unwrap();
 
-        let returned_reading_note = ReadingNoteMutation::partial_update(&db, form.clone())
+        let res = ReadingNoteMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_updated(&returned_reading_note, &expected);
+        assert_updated(&res, &expected);
 
-        let updated_reading_note = reading_note::Entity::find_by_id(reading_note.id)
+        let reading_note_in_db = reading_note::Entity::find_by_id(reading_note.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_updated(&updated_reading_note, &expected);
+        assert_eq!(reading_note_in_db, res);
 
         Ok(())
     }
@@ -393,20 +381,20 @@ mod tests {
 
         let expected = reading_note.clone();
 
-        let returned_reading_note = ReadingNoteMutation::partial_update(&db, form.clone())
+        let res = ReadingNoteMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_updated(&returned_reading_note, &expected);
+        assert_updated(&res, &expected);
 
-        let updated_reading_note = reading_note::Entity::find_by_id(reading_note.id)
+        let reading_note_in_db = reading_note::Entity::find_by_id(reading_note.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_updated(&updated_reading_note, &expected);
+        assert_eq!(reading_note_in_db, res);
 
         let linked_tag_ids: Vec<uuid::Uuid> = reading_notes_tags::Entity::find()
             .column_as(reading_notes_tags::Column::TagId, QueryAs::TagId)
-            .filter(reading_notes_tags::Column::ReadingNoteId.eq(returned_reading_note.id))
+            .filter(reading_notes_tags::Column::ReadingNoteId.eq(res.id))
             .into_values::<_, QueryAs>()
             .all(&db)
             .await?;
@@ -436,20 +424,20 @@ mod tests {
 
         let expected = reading_note.clone();
 
-        let returned_reading_note = ReadingNoteMutation::partial_update(&db, form.clone())
+        let res = ReadingNoteMutation::partial_update(&db, form.clone())
             .await
             .unwrap();
-        assert_updated(&returned_reading_note, &expected);
+        assert_updated(&res, &expected);
 
-        let updated_reading_note = reading_note::Entity::find_by_id(reading_note.id)
+        let reading_note_in_db = reading_note::Entity::find_by_id(reading_note.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_updated(&updated_reading_note, &expected);
+        assert_eq!(reading_note_in_db, res);
 
         let linked_tag_ids: Vec<uuid::Uuid> = reading_notes_tags::Entity::find()
             .column_as(reading_notes_tags::Column::TagId, QueryAs::TagId)
-            .filter(reading_notes_tags::Column::ReadingNoteId.eq(returned_reading_note.id))
+            .filter(reading_notes_tags::Column::ReadingNoteId.eq(res.id))
             .into_values::<_, QueryAs>()
             .all(&db)
             .await?;

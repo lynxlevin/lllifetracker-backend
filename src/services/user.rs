@@ -1,5 +1,5 @@
 use chrono::Utc;
-use entities::{user, sea_orm_active_enums::TimezoneEnum};
+use entities::{sea_orm_active_enums::TimezoneEnum, user};
 use sea_orm::{ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, QueryFilter, Set};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize, Clone)]
@@ -107,24 +107,16 @@ mod mutation_tests {
             is_active: false,
         };
 
-        let returned_user = Mutation::create_user(&db, form_data.clone()).await?;
-        assert_eq!(returned_user.email, form_data.email);
-        assert_eq!(returned_user.password, form_data.password);
-        assert_eq!(returned_user.first_name, form_data.first_name);
-        assert_eq!(returned_user.last_name, form_data.last_name);
-        assert_eq!(returned_user.is_active, form_data.is_active);
+        let res = Mutation::create_user(&db, form_data.clone()).await?;
+        assert_eq!(res.email, form_data.email);
+        assert_eq!(res.password, form_data.password);
+        assert_eq!(res.first_name, form_data.first_name);
+        assert_eq!(res.last_name, form_data.last_name);
+        assert_eq!(res.is_active, form_data.is_active);
+        assert_eq!(res.timezone, TimezoneEnum::AsiaTokyo);
 
-        let created_user = user::Entity::find_by_id(returned_user.id)
-            .filter(user::Column::Email.eq(form_data.email))
-            .filter(user::Column::Password.eq(form_data.password))
-            .filter(user::Column::FirstName.eq(form_data.first_name))
-            .filter(user::Column::LastName.eq(form_data.last_name))
-            .filter(user::Column::IsActive.eq(form_data.is_active))
-            .filter(user::Column::Timezone.eq("Asia/Tokyo".to_string()))
-            .filter(user::Column::Timezone.eq(TimezoneEnum::AsiaTokyo))
-            .one(&db)
-            .await?;
-        assert!(created_user.is_some());
+        let user_in_db = user::Entity::find_by_id(res.id).one(&db).await?.unwrap();
+        assert_eq!(user_in_db, res);
 
         Ok(())
     }
@@ -134,21 +126,19 @@ mod mutation_tests {
         let db = test_utils::init_db().await?;
         let user = factory::user().is_active(false).insert(&db).await?;
 
-        let returned_user = Mutation::activate_user_by_id(&db, user.id).await?;
-        assert_eq!(returned_user.id, user.id);
-        assert_eq!(returned_user.is_active, true);
-        assert!(returned_user.updated_at > user.updated_at);
+        let res = Mutation::activate_user_by_id(&db, user.id).await?;
+        assert_eq!(res.id, user.id);
+        assert_eq!(res.email, user.email);
+        assert_eq!(res.password, user.password);
+        assert_eq!(res.first_name, user.first_name);
+        assert_eq!(res.last_name, user.last_name);
+        assert_eq!(res.is_active, true);
+        assert_eq!(res.timezone, TimezoneEnum::AsiaTokyo);
+        assert_eq!(res.created_at, user.created_at);
+        assert!(res.updated_at > user.updated_at);
 
-        let activated_user = user::Entity::find_by_id(user.id)
-            .filter(user::Column::Email.eq(user.email))
-            .filter(user::Column::Password.eq(user.password))
-            .filter(user::Column::FirstName.eq(user.first_name))
-            .filter(user::Column::LastName.eq(user.last_name))
-            .filter(user::Column::Timezone.eq(user.timezone))
-            .filter(user::Column::IsActive.eq(true))
-            .one(&db)
-            .await?;
-        assert!(activated_user.is_some());
+        let user_in_db = user::Entity::find_by_id(user.id).one(&db).await?.unwrap();
+        assert_eq!(user_in_db, res);
 
         Ok(())
     }
@@ -159,21 +149,19 @@ mod mutation_tests {
         let user = factory::user().insert(&db).await?;
         let new_password = "updated_password".to_string();
 
-        let returned_user =
-            Mutation::update_user_password(&db, user.id, new_password.clone()).await?;
-        assert_eq!(returned_user.id, user.id);
-        assert_eq!(returned_user.password, new_password);
+        let res = Mutation::update_user_password(&db, user.id, new_password.clone()).await?;
+        assert_eq!(res.id, user.id);
+        assert_eq!(res.email, user.email);
+        assert_eq!(res.password, new_password);
+        assert_eq!(res.first_name, user.first_name);
+        assert_eq!(res.last_name, user.last_name);
+        assert_eq!(res.is_active, true);
+        assert_eq!(res.timezone, TimezoneEnum::AsiaTokyo);
+        assert_eq!(res.created_at, user.created_at);
+        assert!(res.updated_at > user.updated_at);
 
-        let updated_user = user::Entity::find_by_id(user.id)
-            .filter(user::Column::Email.eq(user.email))
-            .filter(user::Column::Password.eq(returned_user.password))
-            .filter(user::Column::FirstName.eq(user.first_name))
-            .filter(user::Column::LastName.eq(user.last_name))
-            .filter(user::Column::Timezone.eq(user.timezone))
-            .filter(user::Column::IsActive.eq(user.is_active))
-            .one(&db)
-            .await?;
-        assert!(updated_user.is_some());
+        let user_in_db = user::Entity::find_by_id(user.id).one(&db).await?.unwrap();
+        assert_eq!(user_in_db, res);
 
         Ok(())
     }

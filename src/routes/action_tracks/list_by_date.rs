@@ -123,7 +123,7 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let returned_action_tracks: Vec<Vec<ActionTrackVisible>> = test::read_body_json(resp).await;
+        let res: Vec<Vec<ActionTrackVisible>> = test::read_body_json(resp).await;
 
         let expected = vec![
             vec![
@@ -133,9 +133,9 @@ mod tests {
             vec![ActionTrackVisible::from(action_track_2)],
         ];
 
-        assert_eq!(returned_action_tracks.len(), expected.len());
-        assert_eq!(returned_action_tracks[0], expected[0]);
-        assert_eq!(returned_action_tracks[1], expected[1]);
+        assert_eq!(res.len(), expected.len());
+        assert_eq!(res[0], expected[0]);
+        assert_eq!(res[1], expected[1]);
 
         Ok(())
     }

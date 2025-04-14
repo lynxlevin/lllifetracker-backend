@@ -103,26 +103,23 @@ mod tests {
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::CREATED);
 
-        let returned_action: ActionVisible = test::read_body_json(res).await;
-        assert_eq!(returned_action.name, name.clone());
-        assert_eq!(returned_action.description, Some(description.clone()));
-        assert_eq!(returned_action.track_type, ActionTrackType::Count);
+        let res: ActionVisible = test::read_body_json(res).await;
+        assert_eq!(res.name, name.clone());
+        assert_eq!(res.description, Some(description.clone()));
+        assert_eq!(res.track_type, ActionTrackType::Count);
 
-        let created_action = action::Entity::find_by_id(returned_action.id)
-            .one(&db)
-            .await?
-            .unwrap();
-        assert_eq!(created_action.user_id, user.id);
-        assert_eq!(ActionVisible::from(created_action), returned_action);
+        let action_in_db = action::Entity::find_by_id(res.id).one(&db).await?.unwrap();
+        assert_eq!(action_in_db.user_id, user.id);
+        assert_eq!(ActionVisible::from(action_in_db), res);
 
-        let created_tag = tag::Entity::find()
+        let tag_in_db = tag::Entity::find()
             .filter(tag::Column::UserId.eq(user.id))
-            .filter(tag::Column::ActionId.eq(returned_action.id))
+            .filter(tag::Column::ActionId.eq(res.id))
             .filter(tag::Column::AmbitionId.is_null())
             .filter(tag::Column::DesiredStateId.is_null())
             .one(&db)
             .await?;
-        assert!(created_tag.is_some());
+        assert!(tag_in_db.is_some());
 
         Ok(())
     }

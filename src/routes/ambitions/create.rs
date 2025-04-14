@@ -1,12 +1,12 @@
-use entities::user as user_entity;
 use ::types::{self, AmbitionVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::ambition_mutation::{AmbitionMutation, NewAmbition};
 use actix_web::{
     post,
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use entities::user as user_entity;
 use sea_orm::DbConn;
+use services::ambition_mutation::{AmbitionMutation, NewAmbition};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {
@@ -63,7 +63,9 @@ mod tests {
         web::scope,
         App, Error, HttpMessage,
     };
-    use sea_orm::{entity::prelude::ActiveModelTrait, ColumnTrait, DbErr, EntityTrait, QueryFilter};
+    use sea_orm::{
+        entity::prelude::ActiveModelTrait, ColumnTrait, DbErr, EntityTrait, QueryFilter,
+    };
 
     async fn init_app(
         db: DbConn,
@@ -96,28 +98,25 @@ mod tests {
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::CREATED);
 
-        let returned_ambition: AmbitionVisible = test::read_body_json(res).await;
-        assert_eq!(returned_ambition.name, name.clone());
-        assert_eq!(returned_ambition.description, description.clone());
+        let res: AmbitionVisible = test::read_body_json(res).await;
+        assert_eq!(res.name, name.clone());
+        assert_eq!(res.description, description.clone());
 
-        let created_ambition = ambition::Entity::find_by_id(returned_ambition.id)
-            .filter(ambition::Column::Name.eq(name))
-            .filter(ambition::Column::Description.eq(description))
-            .filter(ambition::Column::UserId.eq(user.id))
-            .filter(ambition::Column::CreatedAt.eq(returned_ambition.created_at))
-            .filter(ambition::Column::UpdatedAt.eq(returned_ambition.updated_at))
+        let ambition_in_db = ambition::Entity::find_by_id(res.id)
             .one(&db)
-            .await?;
-        assert!(created_ambition.is_some());
+            .await?
+            .unwrap();
+        assert_eq!(ambition_in_db.user_id, user.id);
+        assert_eq!(AmbitionVisible::from(ambition_in_db), res);
 
-        let created_tag = tag::Entity::find()
+        let tag_in_db = tag::Entity::find()
             .filter(tag::Column::UserId.eq(user.id))
-            .filter(tag::Column::AmbitionId.eq(returned_ambition.id))
+            .filter(tag::Column::AmbitionId.eq(res.id))
             .filter(tag::Column::DesiredStateId.is_null())
             .filter(tag::Column::ActionId.is_null())
             .one(&db)
             .await?;
-        assert!(created_tag.is_some());
+        assert!(tag_in_db.is_some());
 
         Ok(())
     }
@@ -141,28 +140,25 @@ mod tests {
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::CREATED);
 
-        let returned_ambition: AmbitionVisible = test::read_body_json(res).await;
-        assert_eq!(returned_ambition.name, name.clone());
-        assert!(returned_ambition.description.is_none());
+        let res: AmbitionVisible = test::read_body_json(res).await;
+        assert_eq!(res.name, name.clone());
+        assert!(res.description.is_none());
 
-        let created_ambition = ambition::Entity::find_by_id(returned_ambition.id)
-            .filter(ambition::Column::Name.eq(name))
-            .filter(ambition::Column::Description.is_null())
-            .filter(ambition::Column::UserId.eq(user.id))
-            .filter(ambition::Column::CreatedAt.eq(returned_ambition.created_at))
-            .filter(ambition::Column::UpdatedAt.eq(returned_ambition.updated_at))
+        let ambition_in_db = ambition::Entity::find_by_id(res.id)
             .one(&db)
-            .await?;
-        assert!(created_ambition.is_some());
+            .await?
+            .unwrap();
+        assert_eq!(ambition_in_db.user_id, user.id);
+        assert_eq!(AmbitionVisible::from(ambition_in_db), res);
 
-        let created_tag = tag::Entity::find()
+        let tag_in_db = tag::Entity::find()
             .filter(tag::Column::UserId.eq(user.id))
-            .filter(tag::Column::AmbitionId.eq(returned_ambition.id))
+            .filter(tag::Column::AmbitionId.eq(res.id))
             .filter(tag::Column::DesiredStateId.is_null())
             .filter(tag::Column::ActionId.is_null())
             .one(&db)
             .await?;
-        assert!(created_tag.is_some());
+        assert!(tag_in_db.is_some());
 
         Ok(())
     }

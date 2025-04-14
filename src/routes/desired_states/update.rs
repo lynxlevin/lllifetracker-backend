@@ -115,32 +115,20 @@ mod tests {
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::OK);
 
-        let returned_desired_state: DesiredStateVisible = test::read_body_json(res).await;
-        assert_eq!(returned_desired_state.id, desired_state.id);
-        assert_eq!(returned_desired_state.name, new_name.clone());
-        assert_eq!(
-            returned_desired_state.description,
-            Some(new_description.clone())
-        );
-        assert_eq!(returned_desired_state.created_at, desired_state.created_at);
-        assert!(returned_desired_state.updated_at > desired_state.updated_at);
+        let res: DesiredStateVisible = test::read_body_json(res).await;
+        assert_eq!(res.id, desired_state.id);
+        assert_eq!(res.name, new_name.clone());
+        assert_eq!(res.description, Some(new_description.clone()));
+        assert_eq!(res.created_at, desired_state.created_at);
+        assert!(res.updated_at > desired_state.updated_at);
 
-        let updated_desired_state = desired_state::Entity::find_by_id(desired_state.id)
+        let desired_state_in_db = desired_state::Entity::find_by_id(desired_state.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(updated_desired_state.id, desired_state.id);
-        assert_eq!(updated_desired_state.name, new_name.clone());
-        assert_eq!(
-            updated_desired_state.description,
-            Some(new_description.clone())
-        );
-        assert_eq!(updated_desired_state.archived, desired_state.archived);
-        assert_eq!(updated_desired_state.created_at, desired_state.created_at);
-        assert_eq!(
-            updated_desired_state.updated_at,
-            returned_desired_state.updated_at
-        );
+        assert_eq!(desired_state_in_db.user_id, user.id);
+        assert_eq!(desired_state_in_db.archived, desired_state.archived);
+        assert_eq!(DesiredStateVisible::from(desired_state_in_db), res);
 
         Ok(())
     }
