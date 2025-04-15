@@ -1,8 +1,8 @@
 use chrono::Utc;
 use entities::{action, sea_orm_active_enums::ActionTrackType, tag};
 use sea_orm::{
-    entity::prelude::*, ActiveValue::NotSet, IntoActiveModel, Set, TransactionError,
-    TransactionTrait,
+    ActiveModelTrait, ActiveValue::NotSet, ColumnTrait, DbConn, DbErr, EntityTrait,
+    IntoActiveModel, ModelTrait, QueryFilter, Set, TransactionError, TransactionTrait,
 };
 
 use super::action_query::ActionQuery;
@@ -165,32 +165,26 @@ mod tests {
             user_id: user.id,
         };
 
-        let returned_action = ActionMutation::create_with_tag(&db, form_data)
+        let res = ActionMutation::create_with_tag(&db, form_data)
             .await
             .unwrap();
-        assert_eq!(returned_action.name, action_name.clone());
-        assert_eq!(
-            returned_action.description,
-            Some(action_description.clone())
-        );
-        assert_eq!(returned_action.track_type, ActionTrackType::Count);
-        assert_eq!(returned_action.archived, false);
-        assert_eq!(returned_action.user_id, user.id);
+        assert_eq!(res.name, action_name.clone());
+        assert_eq!(res.description, Some(action_description.clone()));
+        assert_eq!(res.track_type, ActionTrackType::Count);
+        assert_eq!(res.archived, false);
+        assert_eq!(res.user_id, user.id);
 
-        let created_action = action::Entity::find_by_id(returned_action.id)
-            .one(&db)
-            .await?
-            .unwrap();
-        assert_eq!(created_action, returned_action);
+        let action_in_db = action::Entity::find_by_id(res.id).one(&db).await?.unwrap();
+        assert_eq!(action_in_db, res);
 
-        let created_tag = tag::Entity::find()
+        let tag_in_db = tag::Entity::find()
             .filter(tag::Column::UserId.eq(user.id))
             .filter(tag::Column::AmbitionId.is_null())
             .filter(tag::Column::DesiredStateId.is_null())
-            .filter(tag::Column::ActionId.eq(returned_action.id))
+            .filter(tag::Column::ActionId.eq(res.id))
             .one(&db)
             .await?;
-        assert!(created_tag.is_some());
+        assert!(tag_in_db.is_some());
 
         Ok(())
     }
@@ -206,7 +200,7 @@ mod tests {
         let new_trackable = false;
         let new_color = "#ffffff".to_string();
 
-        let returned_action = ActionMutation::update(
+        let res = ActionMutation::update(
             &db,
             action.id,
             user.id,
@@ -216,29 +210,21 @@ mod tests {
             Some(new_color.clone()),
         )
         .await?;
-        assert_eq!(returned_action.id, action.id);
-        assert_eq!(returned_action.name, new_name.clone());
-        assert_eq!(returned_action.description, Some(new_description.clone()));
-        assert_eq!(returned_action.archived, action.archived);
-        assert_eq!(returned_action.trackable, new_trackable);
-        assert_eq!(returned_action.color, new_color.clone());
-        assert_eq!(returned_action.user_id, user.id);
-        assert_eq!(returned_action.created_at, action.created_at);
-        assert!(returned_action.updated_at > action.updated_at);
+        assert_eq!(res.id, action.id);
+        assert_eq!(res.name, new_name.clone());
+        assert_eq!(res.description, Some(new_description.clone()));
+        assert_eq!(res.archived, action.archived);
+        assert_eq!(res.trackable, new_trackable);
+        assert_eq!(res.color, new_color.clone());
+        assert_eq!(res.user_id, user.id);
+        assert_eq!(res.created_at, action.created_at);
+        assert!(res.updated_at > action.updated_at);
 
-        let updated_action = action::Entity::find_by_id(action.id)
+        let action_in_db = action::Entity::find_by_id(action.id)
             .one(&db)
             .await?
             .unwrap();
-        assert_eq!(updated_action.id, action.id);
-        assert_eq!(updated_action.name, new_name.clone());
-        assert_eq!(updated_action.description, Some(new_description.clone()));
-        assert_eq!(updated_action.archived, action.archived);
-        assert_eq!(updated_action.trackable, new_trackable);
-        assert_eq!(updated_action.color, new_color.clone());
-        assert_eq!(updated_action.user_id, user.id);
-        assert_eq!(updated_action.created_at, action.created_at);
-        assert_eq!(updated_action.updated_at, returned_action.updated_at);
+        assert_eq!(action_in_db, res);
 
         Ok(())
     }

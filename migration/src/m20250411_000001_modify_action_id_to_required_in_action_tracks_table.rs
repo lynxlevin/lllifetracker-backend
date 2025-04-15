@@ -1,5 +1,10 @@
 use sea_orm_migration::{
-    prelude::*, schema::{uuid, uuid_null}
+    prelude::{
+        async_trait,
+        sea_orm::{self, DeriveIden},
+        DbErr, DeriveMigrationName, MigrationTrait, SchemaManager, Table,
+    },
+    schema::{uuid, uuid_null},
 };
 
 #[derive(DeriveMigrationName)]

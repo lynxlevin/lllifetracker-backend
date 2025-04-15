@@ -1,6 +1,12 @@
-use sea_orm::{EnumIter, Iterable};
-use sea_orm_migration::prelude::extension::postgres::Type;
-use sea_orm_migration::{prelude::*, schema::*};
+use sea_orm_migration::{
+    prelude::{
+        async_trait,
+        extension::postgres::Type,
+        sea_orm::{self, DeriveIden, EnumIter, Iden, Iterable},
+        Alias, DbErr, DeriveMigrationName, Expr, Index, MigrationTrait, SchemaManager, Table,
+    },
+    schema::{boolean, enumeration, string, string_uniq, timestamp_with_time_zone, uuid},
+};
 
 const INDEX_NAME: &str = "users_id_email_is_active_index";
 

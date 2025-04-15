@@ -6,7 +6,7 @@ use actix_web::{
     web::{scope, Data},
     App, HttpServer,
 };
-use sea_orm::*;
+use sea_orm::{ConnectionTrait, Database, DatabaseConnection, DbBackend};
 use std::env;
 
 use migration::{Migrator, MigratorTrait};

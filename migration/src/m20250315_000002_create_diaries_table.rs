@@ -1,4 +1,12 @@
-use sea_orm_migration::{prelude::*, schema::*};
+use sea_orm_migration::{
+    prelude::{
+        async_trait,
+        sea_orm::{self, DeriveIden},
+        DbErr, DeriveMigrationName, Expr, ForeignKey, ForeignKeyAction, Index, MigrationTrait,
+        SchemaManager, Table,
+    },
+    schema::{date, text_null, tiny_unsigned_null, uuid},
+};
 
 use crate::m20240722_000001_create_users_table::User;
 

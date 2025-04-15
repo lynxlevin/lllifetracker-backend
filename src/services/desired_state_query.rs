@@ -1,7 +1,9 @@
 use ::types::{CustomDbErr, DesiredStateVisible};
 use entities::desired_state;
-use migration::NullOrdering::Last;
-use sea_orm::{entity::prelude::*, Order::Asc, QueryOrder};
+use sea_orm::{
+    sea_query::NullOrdering::Last, ColumnTrait, DbConn, DbErr, EntityTrait, Order::Asc,
+    QueryFilter, QueryOrder,
+};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize, Clone)]
 pub struct NewDesiredState {
@@ -42,6 +44,7 @@ impl DesiredStateQuery {
 
 #[cfg(test)]
 mod tests {
+    use sea_orm::ActiveModelTrait;
     use test_utils::{self, *};
 
     use super::*;

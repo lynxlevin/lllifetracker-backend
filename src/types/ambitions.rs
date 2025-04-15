@@ -25,3 +25,20 @@ impl From<ambition::Model> for AmbitionVisible {
         }
     }
 }
+
+#[derive(serde::Deserialize, Debug, serde::Serialize)]
+pub struct AmbitionCreateRequest {
+    pub name: String,
+    pub description: Option<String>,
+}
+
+#[derive(serde::Deserialize, Debug, serde::Serialize)]
+pub struct AmbitionUpdateRequest {
+    pub name: String,
+    pub description: Option<String>,
+}
+
+#[derive(serde::Deserialize, Debug, serde::Serialize)]
+pub struct AmbitionBulkUpdateOrderingRequest {
+    pub ordering: Vec<uuid::Uuid>,
+}

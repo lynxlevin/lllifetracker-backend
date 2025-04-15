@@ -1,8 +1,9 @@
 use ::types::{CustomDbErr, DiaryWithTagQueryResult};
 use entities::{action, ambition, desired_state, diaries_tags, diary, tag};
-use migration::NullOrdering::Last;
-use sea_orm::entity::prelude::*;
-use sea_orm::{JoinType::LeftJoin, Order::Asc, QueryOrder, QuerySelect};
+use sea_orm::{
+    ColumnTrait, DbConn, DbErr, EntityTrait, JoinType::LeftJoin, Order::Asc, QueryFilter,
+    QueryOrder, QuerySelect, RelationTrait, sea_query::NullOrdering::Last,
+};
 
 pub struct DiaryQuery;
 
@@ -49,6 +50,7 @@ impl DiaryQuery {
 mod tests {
     use chrono::{Duration, Utc};
     use test_utils::{self, *};
+    use sea_orm::ActiveModelTrait;
 
     use super::*;
 

@@ -10,5 +10,6 @@ members = [
     "src/settings",
     "src/routes",
     "src/life_tracker",
+    "tests",
 ]
 default-members = ["src/life_tracker"]

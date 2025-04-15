@@ -1,8 +1,9 @@
-use entities::{action, ambition, reading_note, reading_notes_tags, desired_state, tag};
-use ::types::{ReadingNoteWithTagQueryResult, CustomDbErr};
-use migration::NullOrdering::Last;
-use sea_orm::entity::prelude::*;
-use sea_orm::{JoinType::LeftJoin, Order::Asc, QueryOrder, QuerySelect};
+use ::types::{CustomDbErr, ReadingNoteWithTagQueryResult};
+use entities::{action, ambition, desired_state, reading_note, reading_notes_tags, tag};
+use sea_orm::{
+    sea_query::NullOrdering::Last, ColumnTrait, DbConn, DbErr, EntityTrait,
+    JoinType::LeftJoin, Order::Asc, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
+};
 
 pub struct ReadingNoteQuery;
 
@@ -48,6 +49,7 @@ impl ReadingNoteQuery {
 
 #[cfg(test)]
 mod tests {
+    use sea_orm::ActiveModelTrait;
     use test_utils::{self, *};
 
     use super::*;
@@ -66,7 +68,8 @@ mod tests {
             .await?;
         let (action, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
         let (ambition, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
-        let (desired_state, desired_state_tag) = factory::desired_state(user.id).insert_with_tag(&db).await?;
+        let (desired_state, desired_state_tag) =
+            factory::desired_state(user.id).insert_with_tag(&db).await?;
         factory::link_reading_note_tag(&db, reading_note_0.id, ambition_tag.id).await?;
         factory::link_reading_note_tag(&db, reading_note_1.id, desired_state_tag.id).await?;
         factory::link_reading_note_tag(&db, reading_note_1.id, action_tag.id).await?;

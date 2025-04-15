@@ -1,6 +1,8 @@
-use sea_orm_migration::{
-    prelude::{extension::postgres::Type, *},
-    sea_orm::{ActiveEnum, DbBackend, DeriveActiveEnum, EnumIter, Schema},
+use sea_orm_migration::prelude::{
+    async_trait,
+    extension::postgres::Type,
+    sea_orm::{self, ActiveEnum, DbBackend, DeriveActiveEnum, DeriveIden, EnumIter, Schema},
+    ColumnDef, DbErr, DeriveMigrationName, MigrationTrait, SchemaManager, Table,
 };
 
 #[derive(DeriveMigrationName)]

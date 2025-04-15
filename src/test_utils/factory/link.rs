@@ -1,4 +1,4 @@
-use sea_orm::{prelude::*, DbConn, DbErr, Set};
+use sea_orm::{ActiveModelTrait, DbConn, DbErr, Set};
 use uuid::Uuid;
 
 use entities::{diaries_tags, reading_notes_tags};

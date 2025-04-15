@@ -1,4 +1,4 @@
-pub use sea_orm_migration::prelude::*;
+pub use sea_orm_migration::prelude::{async_trait, MigrationTrait, MigratorTrait};
 
 mod m20240722_000001_create_users_table;
 mod m20240927_000001_create_ambitions_table;

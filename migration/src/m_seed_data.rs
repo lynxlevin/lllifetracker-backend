@@ -2,7 +2,9 @@ use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2,
 };
-use sea_orm_migration::prelude::*;
+use sea_orm_migration::prelude::{
+    async_trait, DbErr, DeriveMigrationName, InsertStatement, MigrationTrait, Query, SchemaManager,
+};
 use uuid::Uuid;
 
 use crate::{

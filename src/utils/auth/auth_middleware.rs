@@ -106,7 +106,7 @@ mod tests {
     use super::*;
     use actix_session::SessionExt;
     use actix_web::test;
-    use sea_orm::prelude::*;
+    use sea_orm::prelude::ActiveModelTrait;
 
     use ::types::{USER_EMAIL_KEY, USER_ID_KEY};
     use entities::user;

@@ -1,6 +1,6 @@
-use entities::{desired_state, tag};
 use chrono::Utc;
-use sea_orm::{prelude::*, ActiveValue::NotSet, DbConn, DbErr, Set};
+use entities::{desired_state, tag};
+use sea_orm::{ActiveModelTrait, ActiveValue::NotSet, DbConn, DbErr, Set};
 use std::future::Future;
 use uuid::Uuid;
 
@@ -50,7 +50,10 @@ impl DesiredStateFactory for desired_state::ActiveModel {
         self
     }
 
-    async fn insert_with_tag(self, db: &DbConn) -> Result<(desired_state::Model, tag::Model), DbErr> {
+    async fn insert_with_tag(
+        self,
+        db: &DbConn,
+    ) -> Result<(desired_state::Model, tag::Model), DbErr> {
         let desired_state = self.insert(db).await?;
         let tag = tag::ActiveModel {
             id: Set(uuid::Uuid::now_v7()),
