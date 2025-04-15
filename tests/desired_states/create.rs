@@ -1,5 +1,5 @@
 use actix_web::{http, test, HttpMessage};
-use sea_orm::{entity::prelude::ActiveModelTrait, ColumnTrait, DbErr, EntityTrait, QueryFilter};
+use sea_orm::{ActiveModelTrait, ColumnTrait, DbErr, EntityTrait, QueryFilter};
 
 use super::super::utils::init_app;
 use test_utils::{self, *};

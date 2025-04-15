@@ -1,6 +1,6 @@
 use actix_web::{http, test, HttpMessage};
 use chrono::{Duration, Utc};
-use sea_orm::{entity::prelude::ActiveModelTrait, DbErr};
+use sea_orm::{ActiveModelTrait, DbErr};
 
 use super::super::utils::init_app;
 use test_utils::{self, *};

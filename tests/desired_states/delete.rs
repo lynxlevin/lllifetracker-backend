@@ -1,5 +1,5 @@
 use actix_web::{http, test, HttpMessage};
-use sea_orm::{entity::prelude::ActiveModelTrait, DbErr, EntityTrait};
+use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
 
 use super::super::utils::init_app;
 use entities::{desired_state, tag};

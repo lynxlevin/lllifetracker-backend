@@ -1,6 +1,6 @@
 use actix_web::{http, test, HttpMessage};
 use sea_orm::{
-    entity::prelude::ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter,
+    ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter,
     QueryFilter, QuerySelect,
 };
 
