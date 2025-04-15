@@ -57,7 +57,7 @@ impl From<TagQueryResult> for TagVisible {
                 created_at: item.created_at,
             }
         } else {
-            unimplemented!("Tag without name cannot be used.");
+            panic!("Tag without name should not exist.");
         }
     }
 }

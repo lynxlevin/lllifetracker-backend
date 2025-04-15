@@ -67,8 +67,14 @@ fn get_tag(diary: &DiaryWithTagQueryResult) -> Option<TagVisible> {
     if diary.tag_id.is_none() {
         return None;
     }
-
-    if let Some(name) = diary.tag_ambition_name.clone() {
+    if let Some(name) = diary.tag_name.clone() {
+        Some(TagVisible {
+            id: diary.tag_id.unwrap(),
+            name,
+            tag_type: TagType::Plain,
+            created_at: diary.tag_created_at.unwrap(),
+        })
+    } else if let Some(name) = diary.tag_ambition_name.clone() {
         Some(TagVisible {
             id: diary.tag_id.unwrap(),
             name,
@@ -90,6 +96,6 @@ fn get_tag(diary: &DiaryWithTagQueryResult) -> Option<TagVisible> {
             created_at: diary.tag_created_at.unwrap(),
         })
     } else {
-        unimplemented!("Tag without link to Ambition/DesiredState/Action is not implemented yet.");
+        panic!("Tag without name should not exist.");
     }
 }
