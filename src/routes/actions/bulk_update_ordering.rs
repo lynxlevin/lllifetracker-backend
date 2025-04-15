@@ -1,4 +1,5 @@
 use entities::user as user_entity;
+use types::ActionBulkUpdateOrderRequest;
 use ::types::{self, INTERNAL_SERVER_ERROR_MESSAGE};
 use services::action_mutation::ActionMutation;
 use actix_web::{
@@ -7,12 +8,6 @@ use actix_web::{
     HttpResponse,
 };
 use sea_orm::DbConn;
-
-
-#[derive(serde::Deserialize, Debug, serde::Serialize)]
-struct RequestBody {
-    ordering: Vec<uuid::Uuid>,
-}
 
 /// Fuzzy Ordering Design Decision
 /// Ordering doesn’t need to be correctly serialized in the backend
@@ -32,7 +27,7 @@ struct RequestBody {
 pub async fn bulk_update_action_ordering(
     db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
-    req: Json<RequestBody>,
+    req: Json<ActionBulkUpdateOrderRequest>,
 ) -> HttpResponse {
     match user {
         Some(user) => {
@@ -50,72 +45,5 @@ pub async fn bulk_update_action_ordering(
         None => HttpResponse::Unauthorized().json(types::ErrorResponse {
             error: "You are not logged in".to_string(),
         }),
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use actix_http::Request;
-    use actix_web::{
-        dev::{Service, ServiceResponse},
-        http, test, App, HttpMessage,
-    };
-    use sea_orm::{entity::prelude::ActiveModelTrait, DbErr, EntityTrait};
-
-    use entities::action;
-    use test_utils::{self, *};
-
-    use super::*;
-
-    async fn init_app(
-        db: DbConn,
-    ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
-        test::init_service(
-            App::new()
-                .service(bulk_update_action_ordering)
-                .app_data(Data::new(db)),
-        )
-        .await
-    }
-
-    #[actix_web::test]
-    async fn happy_path() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
-        let app = init_app(db.clone()).await;
-        let user = factory::user().insert(&db).await?;
-        let action_0 = factory::action(user.id).insert(&db).await?;
-        let action_1 = factory::action(user.id).insert(&db).await?;
-        let action_2 = factory::action(user.id).insert(&db).await?;
-
-        let req = test::TestRequest::put()
-            .uri("/bulk_update_ordering")
-            .set_json(RequestBody {
-                ordering: vec![action_0.id, action_1.id],
-            })
-            .to_request();
-        req.extensions_mut().insert(user.clone());
-
-        let res = test::call_service(&app, req).await;
-        assert_eq!(res.status(), http::StatusCode::OK);
-
-        let actin_in_db_0 = action::Entity::find_by_id(action_0.id)
-            .one(&db)
-            .await?
-            .unwrap();
-        assert_eq!(actin_in_db_0.ordering, Some(1));
-
-        let actin_in_db_1 = action::Entity::find_by_id(action_1.id)
-            .one(&db)
-            .await?
-            .unwrap();
-        assert_eq!(actin_in_db_1.ordering, Some(2));
-
-        let action_in_db_2 = action::Entity::find_by_id(action_2.id)
-            .one(&db)
-            .await?
-            .unwrap();
-        assert_eq!(action_in_db_2.ordering, None);
-
-        Ok(())
     }
 }

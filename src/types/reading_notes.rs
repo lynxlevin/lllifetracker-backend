@@ -64,3 +64,21 @@ impl ReadingNoteVisibleWithTags {
         self.tags.push(tag);
     }
 }
+
+#[derive(serde::Deserialize, Debug, serde::Serialize)]
+pub struct ReadingNoteCreateRequest {
+    pub title: String,
+    pub page_number: i16,
+    pub text: String,
+    pub date: chrono::NaiveDate,
+    pub tag_ids: Vec<uuid::Uuid>,
+}
+
+#[derive(serde::Deserialize, Debug, serde::Serialize)]
+pub struct ReadingNoteUpdateRequest {
+    pub title: Option<String>,
+    pub page_number: Option<i16>,
+    pub text: Option<String>,
+    pub date: Option<chrono::NaiveDate>,
+    pub tag_ids: Option<Vec<uuid::Uuid>>,
+}

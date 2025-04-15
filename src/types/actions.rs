@@ -31,3 +31,23 @@ impl From<action::Model> for ActionVisible {
         }
     }
 }
+
+#[derive(serde::Deserialize, Debug, serde::Serialize)]
+pub struct ActionCreateRequest {
+    pub name: String,
+    pub description: Option<String>,
+    pub track_type: ActionTrackType,
+}
+
+#[derive(serde::Deserialize, Debug, serde::Serialize)]
+pub struct ActionUpdateRequest {
+    pub name: String,
+    pub description: Option<String>,
+    pub trackable: Option<bool>,
+    pub color: Option<String>,
+}
+
+#[derive(serde::Deserialize, Debug, serde::Serialize)]
+pub struct ActionBulkUpdateOrderRequest {
+    pub ordering: Vec<uuid::Uuid>,
+}

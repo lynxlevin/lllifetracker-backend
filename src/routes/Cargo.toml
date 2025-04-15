@@ -32,13 +32,5 @@ uuid = { version = "^1.16.0", features = ["v7", "serde"] }
 
 [dev-dependencies]
 actix-http = "3.*"
-sea-orm = { version = "~1.0", features = [
-    "sqlx-sqlite",
-    "runtime-tokio-rustls",
-    "macros",
-    "with-chrono",
-    "with-json",
-    "with-uuid",
-] }
 serde_json = "^1.0.120"
 test_utils = { path = "../test_utils" }

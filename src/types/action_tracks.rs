@@ -36,3 +36,16 @@ pub struct ActionTrackAggregationDuration {
     pub action_id: uuid::Uuid,
     pub duration: i64,
 }
+
+#[derive(serde::Deserialize, Debug, serde::Serialize)]
+pub struct ActionTrackCreateRequest {
+    pub started_at: chrono::DateTime<chrono::FixedOffset>,
+    pub action_id: uuid::Uuid,
+}
+
+#[derive(serde::Deserialize, Debug, serde::Serialize)]
+pub struct ActionTrackUpdateRequest {
+    pub action_id: uuid::Uuid,
+    pub started_at: chrono::DateTime<chrono::FixedOffset>,
+    pub ended_at: Option<chrono::DateTime<chrono::FixedOffset>>,
+}

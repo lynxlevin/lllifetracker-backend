@@ -3893,6 +3893,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "tests"
+version = "0.1.0"
+dependencies = [
+ "actix-http",
+ "actix-session",
+ "actix-web",
+ "chrono",
+ "deadpool-redis",
+ "dotenvy",
+ "entities",
+ "life_tracker",
+ "migration",
+ "routes",
+ "sea-orm",
+ "serde",
+ "serde_json",
+ "services",
+ "settings",
+ "test_utils",
+ "tracing",
+ "types",
+ "utils",
+ "uuid",
+]
+
+[[package]]
 name = "thiserror"
 version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"

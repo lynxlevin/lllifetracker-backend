@@ -52,3 +52,28 @@ impl DiaryVisibleWithTags {
         self.tags.push(tag);
     }
 }
+
+#[derive(serde::Deserialize, Debug, serde::Serialize, Clone, PartialEq)]
+pub enum DiaryKey {
+    Text,
+    Date,
+    Score,
+    TagIds,
+}
+
+#[derive(serde::Deserialize, Debug, serde::Serialize)]
+pub struct DiaryCreateRequest {
+    pub text: Option<String>,
+    pub date: chrono::NaiveDate,
+    pub score: Option<i16>,
+    pub tag_ids: Vec<uuid::Uuid>,
+}
+
+#[derive(serde::Deserialize, Debug, serde::Serialize)]
+pub struct DiaryUpdateRequest {
+    pub text: Option<String>,
+    pub date: chrono::NaiveDate,
+    pub score: Option<i16>,
+    pub tag_ids: Vec<uuid::Uuid>,
+    pub update_keys: Vec<DiaryKey>,
+}

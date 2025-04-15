@@ -25,3 +25,20 @@ impl From<desired_state::Model> for DesiredStateVisible {
         }
     }
 }
+
+#[derive(serde::Deserialize, Debug, serde::Serialize)]
+pub struct DesiredStateCreateRequest {
+    pub name: String,
+    pub description: Option<String>,
+}
+
+#[derive(serde::Deserialize, Debug, serde::Serialize)]
+pub struct DesiredStateUpdateRequest {
+    pub name: String,
+    pub description: Option<String>,
+}
+
+#[derive(serde::Deserialize, Debug, serde::Serialize)]
+pub struct DesiredStateBulkUpdateOrderingRequest {
+    pub ordering: Vec<uuid::Uuid>,
+}

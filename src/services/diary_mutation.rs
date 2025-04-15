@@ -3,6 +3,7 @@ use sea_orm::{
     ActiveModelTrait, ColumnTrait, DbConn, DbErr, DeriveColumn, EntityTrait, EnumIter,
     IntoActiveModel, ModelTrait, QueryFilter, QuerySelect, Set, TransactionError, TransactionTrait,
 };
+use types::DiaryKey;
 
 use super::diary_query::DiaryQuery;
 
@@ -18,14 +19,6 @@ pub struct NewDiary {
     pub score: Option<i16>,
     pub tag_ids: Vec<uuid::Uuid>,
     pub user_id: uuid::Uuid,
-}
-
-#[derive(serde::Deserialize, Debug, serde::Serialize, Clone, PartialEq)]
-pub enum DiaryKey {
-    Text,
-    Date,
-    Score,
-    TagIds,
 }
 
 #[derive(serde::Deserialize, Debug, serde::Serialize, Clone)]

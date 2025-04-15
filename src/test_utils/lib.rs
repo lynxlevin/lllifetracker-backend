@@ -1,5 +1,3 @@
-use std::env;
-
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{ConnectionTrait, Database, DbBackend, DbConn, DbErr};
 
@@ -12,7 +10,7 @@ pub use factory::{
 
 pub async fn init_db() -> Result<DbConn, DbErr> {
     dotenvy::from_filename(".env.testing").ok();
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let db = Database::connect(&database_url)
         .await
         .expect("Failed to open DB connection.");
