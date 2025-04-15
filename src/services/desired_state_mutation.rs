@@ -1,8 +1,8 @@
 use chrono::Utc;
 use entities::{desired_state, tag};
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::NotSet, ColumnTrait, DbConn, DbErr, EntityTrait,
-    IntoActiveModel, ModelTrait, QueryFilter, Set, TransactionError, TransactionTrait,
+    ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel, ModelTrait,
+    QueryFilter, Set, TransactionError, TransactionTrait,
 };
 
 use super::desired_state_query::DesiredStateQuery;
@@ -23,27 +23,21 @@ impl DesiredStateMutation {
     ) -> Result<desired_state::Model, TransactionError<DbErr>> {
         db.transaction::<_, desired_state::Model, DbErr>(|txn| {
             Box::pin(async move {
-                let now = Utc::now();
                 let desired_state_id = uuid::Uuid::now_v7();
                 let created_desired_state = desired_state::ActiveModel {
                     id: Set(desired_state_id),
                     user_id: Set(form_data.user_id),
                     name: Set(form_data.name.to_owned()),
                     description: Set(form_data.description.to_owned()),
-                    archived: Set(false),
-                    ordering: NotSet,
-                    created_at: Set(now.into()),
-                    updated_at: Set(now.into()),
+                    ..Default::default()
                 }
                 .insert(txn)
                 .await?;
                 tag::ActiveModel {
                     id: Set(uuid::Uuid::now_v7()),
                     user_id: Set(form_data.user_id),
-                    ambition_id: NotSet,
                     desired_state_id: Set(Some(desired_state_id)),
-                    action_id: NotSet,
-                    created_at: Set(now.into()),
+                    ..Default::default()
                 }
                 .insert(txn)
                 .await?;

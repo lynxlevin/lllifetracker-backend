@@ -9,6 +9,7 @@ use types::*;
 async fn happy_path() -> Result<(), DbErr> {
     let (app, db) = init_app().await?;
     let user = factory::user().insert(&db).await?;
+    let plain_tag = factory::tag(user.id).insert(&db).await?;
     let (action, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
     let (ambition, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
     let (desired_state, desired_state_tag) =
@@ -33,31 +34,37 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(resp.status(), http::StatusCode::OK);
 
     let body: Vec<TagVisible> = test::read_body_json(resp).await;
-    assert_eq!(body.len(), 3);
+    let expected = vec![
+        TagVisible {
+            id: ambition_tag.id,
+            name: ambition.name.clone(),
+            tag_type: TagType::Ambition,
+            created_at: ambition_tag.created_at,
+        },
+        TagVisible {
+            id: desired_state_tag.id,
+            name: desired_state.name.clone(),
+            tag_type: TagType::DesiredState,
+            created_at: desired_state_tag.created_at,
+        },
+        TagVisible {
+            id: action_tag.id,
+            name: action.name.clone(),
+            tag_type: TagType::Action,
+            created_at: action_tag.created_at,
+        },
+        TagVisible {
+            id: plain_tag.id,
+            name: plain_tag.name.unwrap(),
+            tag_type: TagType::Plain,
+            created_at: plain_tag.created_at,
+        },
+    ];
 
-    let expected = serde_json::json!([
-        {
-            "id": ambition_tag.id,
-            "name": ambition.name.clone(),
-            "tag_type": TagType::Ambition,
-            "created_at": ambition_tag.created_at,
-        },
-        {
-            "id": desired_state_tag.id,
-            "name": desired_state.name.clone(),
-            "tag_type": TagType::DesiredState,
-            "created_at": desired_state_tag.created_at,
-        },
-        {
-            "id": action_tag.id,
-            "name": action.name.clone(),
-            "tag_type": TagType::Action,
-            "created_at": action_tag.created_at,
-        },
-    ]);
-
-    let body = serde_json::to_value(&body).unwrap();
-    assert_eq!(expected, body);
+    assert_eq!(body.len(), expected.len());
+    assert_eq!(body[0], expected[0]);
+    assert_eq!(body[1], expected[1]);
+    assert_eq!(body[2], expected[2]);
 
     Ok(())
 }

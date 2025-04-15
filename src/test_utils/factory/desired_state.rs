@@ -58,10 +58,8 @@ impl DesiredStateFactory for desired_state::ActiveModel {
         let tag = tag::ActiveModel {
             id: Set(uuid::Uuid::now_v7()),
             user_id: Set(desired_state.user_id),
-            ambition_id: NotSet,
             desired_state_id: Set(Some(desired_state.id)),
-            action_id: NotSet,
-            created_at: Set(Utc::now().into()),
+            ..Default::default()
         }
         .insert(db)
         .await?;

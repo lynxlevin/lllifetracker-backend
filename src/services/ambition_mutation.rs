@@ -1,8 +1,8 @@
 use chrono::Utc;
 use entities::{ambition, tag};
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::NotSet, ColumnTrait, DbConn, DbErr, EntityTrait,
-    IntoActiveModel, ModelTrait, QueryFilter, Set, TransactionError, TransactionTrait,
+    ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel, ModelTrait,
+    QueryFilter, Set, TransactionError, TransactionTrait,
 };
 
 use super::ambition_query::AmbitionQuery;
@@ -23,17 +23,13 @@ impl AmbitionMutation {
     ) -> Result<ambition::Model, TransactionError<DbErr>> {
         db.transaction::<_, ambition::Model, DbErr>(|txn| {
             Box::pin(async move {
-                let now = Utc::now();
                 let ambition_id = uuid::Uuid::now_v7();
                 let created_ambition = ambition::ActiveModel {
                     id: Set(ambition_id),
                     user_id: Set(form_data.user_id),
                     name: Set(form_data.name.to_owned()),
-                    archived: Set(false),
-                    ordering: NotSet,
                     description: Set(form_data.description),
-                    created_at: Set(now.into()),
-                    updated_at: Set(now.into()),
+                    ..Default::default()
                 }
                 .insert(txn)
                 .await?;
@@ -41,9 +37,7 @@ impl AmbitionMutation {
                     id: Set(uuid::Uuid::now_v7()),
                     user_id: Set(form_data.user_id),
                     ambition_id: Set(Some(ambition_id)),
-                    desired_state_id: NotSet,
-                    action_id: NotSet,
-                    created_at: Set(now.into()),
+                    ..Default::default()
                 }
                 .insert(txn)
                 .await?;

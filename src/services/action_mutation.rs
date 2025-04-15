@@ -1,8 +1,8 @@
 use chrono::Utc;
 use entities::{action, sea_orm_active_enums::ActionTrackType, tag};
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::NotSet, ColumnTrait, DbConn, DbErr, EntityTrait,
-    IntoActiveModel, ModelTrait, QueryFilter, Set, TransactionError, TransactionTrait,
+    ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel, ModelTrait,
+    QueryFilter, Set, TransactionError, TransactionTrait,
 };
 
 use super::action_query::ActionQuery;
@@ -24,7 +24,6 @@ impl ActionMutation {
     ) -> Result<action::Model, TransactionError<DbErr>> {
         db.transaction::<_, action::Model, DbErr>(|txn| {
             Box::pin(async move {
-                let now = Utc::now();
                 let action_id = uuid::Uuid::now_v7();
                 let created_action = action::ActiveModel {
                     id: Set(action_id),
@@ -39,10 +38,8 @@ impl ActionMutation {
                 tag::ActiveModel {
                     id: Set(uuid::Uuid::now_v7()),
                     user_id: Set(form_data.user_id),
-                    ambition_id: NotSet,
-                    desired_state_id: NotSet,
                     action_id: Set(Some(action_id)),
-                    created_at: Set(now.into()),
+                    ..Default::default()
                 }
                 .insert(txn)
                 .await?;

@@ -1,5 +1,5 @@
 use entities::user as user_entity;
-use ::types::{self, TagQueryResult, TagType, TagVisible, INTERNAL_SERVER_ERROR_MESSAGE};
+use ::types::{self, TagVisible, INTERNAL_SERVER_ERROR_MESSAGE};
 use services::tag_query::TagQuery;
 use actix_web::{
     get,
@@ -20,7 +20,7 @@ pub async fn list_tags(
             match TagQuery::find_all_by_user_id(&db, user.id).await {
                 Ok(tags) => {
                     let res: Vec<TagVisible> =
-                        tags.into_iter().map(|tag| get_tag_visible(tag)).collect();
+                        tags.into_iter().map(|tag| TagVisible::from(tag)).collect();
                     HttpResponse::Ok().json(res)
                 }
                 Err(e) => {
@@ -32,32 +32,5 @@ pub async fn list_tags(
             }
         }
         None => HttpResponse::Unauthorized().json("You are not logged in."),
-    }
-}
-
-fn get_tag_visible(tag: TagQueryResult) -> TagVisible {
-    if let Some(name) = tag.ambition_name.clone() {
-        TagVisible {
-            id: tag.id,
-            name,
-            tag_type: TagType::Ambition,
-            created_at: tag.created_at,
-        }
-    } else if let Some(name) = tag.desired_state_name.clone() {
-        TagVisible {
-            id: tag.id,
-            name,
-            tag_type: TagType::DesiredState,
-            created_at: tag.created_at,
-        }
-    } else if let Some(name) = tag.action_name.clone() {
-        TagVisible {
-            id: tag.id,
-            name,
-            tag_type: TagType::Action,
-            created_at: tag.created_at,
-        }
-    } else {
-        unimplemented!("Tag without link to Ambition/DesiredState/Action is not implemented yet.");
     }
 }
