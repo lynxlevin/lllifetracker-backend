@@ -11,5 +11,14 @@ Content-Type: application/json
 }
 
 ###
+# @name create
+POST {{endpoint}}/api/tags
+Content-Type: application/json
+
+{
+  "name": "Plain tag"
+}
+
+###
 # @name list
 GET {{endpoint}}/api/tags

@@ -1,6 +1,7 @@
 use sea_orm::FromQueryResult;
+use serde::{Deserialize, Serialize};
 
-#[derive(serde::Serialize, serde::Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum TagType {
     Ambition,
     DesiredState,
@@ -8,7 +9,7 @@ pub enum TagType {
     Plain,
 }
 
-#[derive(FromQueryResult, Debug, serde::Serialize, serde::Deserialize, PartialEq)]
+#[derive(FromQueryResult, Debug, Serialize, Deserialize, PartialEq)]
 pub struct TagQueryResult {
     pub id: uuid::Uuid,
     pub name: Option<String>,
@@ -18,7 +19,7 @@ pub struct TagQueryResult {
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct TagVisible {
     pub id: uuid::Uuid,
     pub name: String,
@@ -60,4 +61,9 @@ impl From<TagQueryResult> for TagVisible {
             panic!("Tag without name should not exist.");
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct TagCreateRequest {
+    pub name: String,
 }
