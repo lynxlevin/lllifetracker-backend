@@ -67,3 +67,8 @@ impl From<TagQueryResult> for TagVisible {
 pub struct TagCreateRequest {
     pub name: String,
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct TagUpdateRequest {
+    pub name: String,
+}

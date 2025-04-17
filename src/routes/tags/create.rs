@@ -10,8 +10,8 @@ use services::tag_mutation::{NewTag, TagMutation};
 use types::TagCreateRequest;
 
 #[tracing::instrument(name = "Creating a plain tag", skip(db, user))]
-#[post("")]
-pub async fn create_tag(
+#[post("/plain")]
+pub async fn create_plain_tag(
     db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<TagCreateRequest>,
@@ -19,7 +19,7 @@ pub async fn create_tag(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match TagMutation::create(
+            match TagMutation::create_plain_tag(
                 &db,
                 NewTag {
                     name: req.name.clone(),

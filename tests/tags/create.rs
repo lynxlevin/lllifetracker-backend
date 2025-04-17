@@ -17,7 +17,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
     let req = test::TestRequest::post()
         .set_json(req_body.clone())
-        .uri("/api/tags")
+        .uri("/api/tags/plain")
         .to_request();
     req.extensions_mut().insert(user.clone());
 
@@ -39,7 +39,12 @@ async fn happy_path() -> Result<(), DbErr> {
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let (app, _) = init_app().await?;
 
-    let req = test::TestRequest::get().uri("/api/tags").to_request();
+    let req = test::TestRequest::post()
+        .uri("/api/tags/plain")
+        .set_json(TagCreateRequest {
+            name: "".to_string(),
+        })
+        .to_request();
 
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), http::StatusCode::UNAUTHORIZED);

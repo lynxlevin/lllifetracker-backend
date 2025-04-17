@@ -12,7 +12,7 @@ Content-Type: application/json
 
 ###
 # @name create
-POST {{endpoint}}/api/tags
+POST {{endpoint}}/api/tags/plain
 Content-Type: application/json
 
 {
@@ -22,3 +22,14 @@ Content-Type: application/json
 ###
 # @name list
 GET {{endpoint}}/api/tags
+
+@tag_id=01963d4c-176a-7972-8a4b-a08723212141
+
+###
+# @name update
+PUT {{endpoint}}/api/tags/plain/{{tag_id}}
+Content-Type: application/json
+
+{
+  "name": "Plain tag edited"
+}

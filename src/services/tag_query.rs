@@ -1,3 +1,4 @@
+use types::CustomDbErr;
 use ::types::TagQueryResult;
 use entities::{action, ambition, desired_state, tag};
 use sea_orm::{
@@ -42,6 +43,18 @@ impl TagQuery {
             .into_model::<TagQueryResult>()
             .all(db)
             .await
+    }
+
+    pub async fn find_by_id_and_user_id(
+        db: &DbConn,
+        tag_id: uuid::Uuid,
+        user_id: uuid::Uuid,
+    ) -> Result<tag::Model, DbErr> {
+        tag::Entity::find_by_id(tag_id)
+            .filter(tag::Column::UserId.eq(user_id))
+            .one(db)
+            .await?
+            .ok_or(DbErr::Custom(CustomDbErr::NotFound.to_string()))
     }
 }
 
