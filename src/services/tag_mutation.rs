@@ -46,6 +46,12 @@ impl TagMutation {
             created_at: tag.created_at,
         })
     }
+
+    pub async fn delete(db: &DbConn, tag: tag::Model) -> Result<(), DbErr> {
+        let tag = tag.into_active_model();
+        tag.delete(db).await?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -94,6 +100,20 @@ mod tests {
         let tag_in_db = tag::Entity::find_by_id(tag.id).one(&db).await?.unwrap();
         assert_eq!(tag_in_db.name, Some(form_data.name));
         assert_eq!(tag_in_db.user_id, user.id);
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn delete_plain_tag() -> Result<(), DbErr> {
+        let db = test_utils::init_db().await?;
+        let user = factory::user().insert(&db).await?;
+        let tag = factory::tag(user.id).insert(&db).await?;
+
+        TagMutation::delete(&db, tag.clone()).await?;
+
+        let tag_in_db = tag::Entity::find_by_id(tag.id).one(&db).await?;
+        assert!(tag_in_db.is_none());
+
         Ok(())
     }
 }
