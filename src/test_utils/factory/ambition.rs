@@ -56,9 +56,7 @@ impl AmbitionFactory for ambition::ActiveModel {
             id: Set(uuid::Uuid::now_v7()),
             user_id: Set(ambition.user_id),
             ambition_id: Set(Some(ambition.id)),
-            desired_state_id: NotSet,
-            action_id: NotSet,
-            created_at: Set(Utc::now().into()),
+            ..Default::default()
         }
         .insert(db)
         .await?;

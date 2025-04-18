@@ -1,3 +1,4 @@
+use types::CustomDbErr;
 use ::types::TagQueryResult;
 use entities::{action, ambition, desired_state, tag};
 use sea_orm::{
@@ -38,9 +39,22 @@ impl TagQuery {
             .order_by_with_nulls(ambition::Column::CreatedAt, Asc, Last)
             .order_by_with_nulls(desired_state::Column::CreatedAt, Asc, Last)
             .order_by_with_nulls(action::Column::CreatedAt, Asc, Last)
+            .order_by_with_nulls(tag::Column::CreatedAt, Asc, Last)
             .into_model::<TagQueryResult>()
             .all(db)
             .await
+    }
+
+    pub async fn find_by_id_and_user_id(
+        db: &DbConn,
+        tag_id: uuid::Uuid,
+        user_id: uuid::Uuid,
+    ) -> Result<tag::Model, DbErr> {
+        tag::Entity::find_by_id(tag_id)
+            .filter(tag::Column::UserId.eq(user_id))
+            .one(db)
+            .await?
+            .ok_or(DbErr::Custom(CustomDbErr::NotFound.to_string()))
     }
 }
 
@@ -55,6 +69,7 @@ mod tests {
     async fn find_all_by_user_id() -> Result<(), DbErr> {
         let db = test_utils::init_db().await?;
         let user = factory::user().insert(&db).await?;
+        let plain_tag = factory::tag(user.id).insert(&db).await?;
         let (_, desired_state_tag) = factory::desired_state(user.id).insert_with_tag(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
         let (_, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
@@ -76,6 +91,7 @@ mod tests {
         let expected = vec![
             TagQueryResult {
                 id: ambition_tag.id,
+                name: None,
                 ambition_name: Some("ambition".to_string()),
                 desired_state_name: None,
                 action_name: None,
@@ -83,6 +99,7 @@ mod tests {
             },
             TagQueryResult {
                 id: desired_state_tag.id,
+                name: None,
                 ambition_name: None,
                 desired_state_name: Some("desired_state".to_string()),
                 action_name: None,
@@ -90,10 +107,19 @@ mod tests {
             },
             TagQueryResult {
                 id: action_tag.id,
+                name: None,
                 ambition_name: None,
                 desired_state_name: None,
                 action_name: Some("action".to_string()),
                 created_at: action_tag.created_at,
+            },
+            TagQueryResult {
+                id: plain_tag.id,
+                name: plain_tag.name,
+                ambition_name: None,
+                desired_state_name: None,
+                action_name: None,
+                created_at: plain_tag.created_at,
             },
         ];
 
@@ -101,6 +127,7 @@ mod tests {
         assert_eq!(res[0], expected[0]);
         assert_eq!(res[1], expected[1]);
         assert_eq!(res[2], expected[2]);
+        assert_eq!(res[3], expected[3]);
 
         Ok(())
     }

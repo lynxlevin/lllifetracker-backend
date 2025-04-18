@@ -64,10 +64,8 @@ impl ActionFactory for action::ActiveModel {
         let tag = tag::ActiveModel {
             id: Set(uuid::Uuid::now_v7()),
             user_id: Set(action.user_id),
-            ambition_id: NotSet,
-            desired_state_id: NotSet,
             action_id: Set(Some(action.id)),
-            created_at: Set(Utc::now().into()),
+            ..Default::default()
         }
         .insert(db)
         .await?;

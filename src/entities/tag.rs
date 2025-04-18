@@ -16,6 +16,7 @@ pub struct Model {
     #[sea_orm(unique)]
     pub action_id: Option<Uuid>,
     pub created_at: DateTimeWithTimeZone,
+    pub name: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

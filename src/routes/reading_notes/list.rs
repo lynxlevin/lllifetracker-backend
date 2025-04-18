@@ -64,7 +64,14 @@ fn get_tag(reading_note: &ReadingNoteWithTagQueryResult) -> Option<TagVisible> {
         return None;
     }
 
-    if let Some(name) = reading_note.tag_ambition_name.clone() {
+    if let Some(name) = reading_note.tag_name.clone() {
+        Some(TagVisible {
+            id: reading_note.tag_id.unwrap(),
+            name,
+            tag_type: TagType::Plain,
+            created_at: reading_note.tag_created_at.unwrap(),
+        })
+    } else if let Some(name) = reading_note.tag_ambition_name.clone() {
         Some(TagVisible {
             id: reading_note.tag_id.unwrap(),
             name,
@@ -86,6 +93,6 @@ fn get_tag(reading_note: &ReadingNoteWithTagQueryResult) -> Option<TagVisible> {
             created_at: reading_note.tag_created_at.unwrap(),
         })
     } else {
-        unimplemented!("Tag without link to Ambition/DesiredState/Action is not implemented yet.");
+        panic!("Tag without name should not exist.");
     }
 }

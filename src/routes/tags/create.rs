@@ -1,27 +1,35 @@
-use entities::user as user_entity;
-use ::types::{self, TagVisible, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::tag_query::TagQuery;
+use ::types::{self, INTERNAL_SERVER_ERROR_MESSAGE};
 use actix_web::{
-    get,
-    web::{Data, ReqData},
+    post,
+    web::{Data, Json, ReqData},
     HttpResponse,
 };
+use entities::user as user_entity;
 use sea_orm::DbConn;
+use services::tag_mutation::{NewTag, TagMutation};
+use types::TagCreateRequest;
 
-#[tracing::instrument(name = "Listing a user's tags.", skip(db, user))]
-#[get("")]
-pub async fn list_tags(
+#[tracing::instrument(name = "Creating a plain tag", skip(db, user))]
+#[post("/plain")]
+pub async fn create_plain_tag(
     db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
+    req: Json<TagCreateRequest>,
 ) -> HttpResponse {
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match TagQuery::find_all_by_user_id(&db, user.id).await {
-                Ok(tags) => {
-                    let res: Vec<TagVisible> =
-                        tags.into_iter().map(|tag| TagVisible::from(tag)).collect();
-                    HttpResponse::Ok().json(res)
+            match TagMutation::create_plain_tag(
+                &db,
+                NewTag {
+                    name: req.name.clone(),
+                    user_id: user.id,
+                },
+            )
+            .await
+            {
+                Ok(tag) => {
+                    HttpResponse::Created().json(tag)
                 }
                 Err(e) => {
                     tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);

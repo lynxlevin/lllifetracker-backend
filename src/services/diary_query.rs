@@ -15,6 +15,7 @@ impl DiaryQuery {
         diary::Entity::find()
             .filter(diary::Column::UserId.eq(user_id))
             .column_as(tag::Column::Id, "tag_id")
+            .column_as(tag::Column::Name, "tag_name")
             .column_as(tag::Column::CreatedAt, "tag_created_at")
             .column_as(ambition::Column::Name, "tag_ambition_name")
             .column_as(desired_state::Column::Name, "tag_desired_state_name")
@@ -28,6 +29,7 @@ impl DiaryQuery {
             .order_by_with_nulls(ambition::Column::CreatedAt, Asc, Last)
             .order_by_with_nulls(desired_state::Column::CreatedAt, Asc, Last)
             .order_by_with_nulls(action::Column::CreatedAt, Asc, Last)
+            .order_by_with_nulls(tag::Column::CreatedAt, Asc, Last)
             .into_model::<DiaryWithTagQueryResult>()
             .all(db)
             .await
@@ -68,10 +70,12 @@ mod tests {
             .date((now - Duration::days(1)).date_naive())
             .insert(&db)
             .await?;
+        let plain_tag = factory::tag(user.id).insert(&db).await?;
         let (action, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
         let (ambition, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
         let (desired_state, desired_state_tag) =
             factory::desired_state(user.id).insert_with_tag(&db).await?;
+        factory::link_diary_tag(&db, diary_0.id, plain_tag.id).await?;
         factory::link_diary_tag(&db, diary_0.id, ambition_tag.id).await?;
         factory::link_diary_tag(&db, diary_1.id, desired_state_tag.id).await?;
         factory::link_diary_tag(&db, diary_1.id, action_tag.id).await?;
@@ -86,10 +90,23 @@ mod tests {
                 date: diary_0.date,
                 score: diary_0.score,
                 tag_id: Some(ambition_tag.id),
+                tag_name: None,
                 tag_ambition_name: Some(ambition.name),
                 tag_desired_state_name: None,
                 tag_action_name: None,
                 tag_created_at: Some(ambition_tag.created_at),
+            },
+            DiaryWithTagQueryResult {
+                id: diary_0.id,
+                text: diary_0.text.clone(),
+                date: diary_0.date,
+                score: diary_0.score,
+                tag_id: Some(plain_tag.id),
+                tag_name: Some(plain_tag.name.unwrap()),
+                tag_ambition_name: None,
+                tag_desired_state_name: None,
+                tag_action_name: None,
+                tag_created_at: Some(plain_tag.created_at),
             },
             DiaryWithTagQueryResult {
                 id: diary_1.id,
@@ -97,6 +114,7 @@ mod tests {
                 date: diary_1.date,
                 score: diary_1.score,
                 tag_id: Some(desired_state_tag.id),
+                tag_name: None,
                 tag_ambition_name: None,
                 tag_desired_state_name: Some(desired_state.name),
                 tag_action_name: None,
@@ -108,6 +126,7 @@ mod tests {
                 date: diary_1.date,
                 score: diary_1.score,
                 tag_id: Some(action_tag.id),
+                tag_name: None,
                 tag_ambition_name: None,
                 tag_desired_state_name: None,
                 tag_action_name: Some(action.name),
@@ -116,9 +135,7 @@ mod tests {
         ];
 
         assert_eq!(res.len(), expected.len());
-        assert_eq!(res[0], expected[0]);
-        assert_eq!(res[1], expected[1]);
-        assert_eq!(res[2], expected[2]);
+        assert_eq!(res, expected);
 
         Ok(())
     }

@@ -5,6 +5,7 @@ pub mod desired_state;
 pub mod diary;
 pub mod link;
 pub mod reading_note;
+pub mod tag;
 pub mod user;
 
 pub use action::*;
@@ -14,4 +15,5 @@ pub use desired_state::*;
 pub use diary::*;
 pub use link::*;
 pub use reading_note::*;
+pub use tag::*;
 pub use user::*;
