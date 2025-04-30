@@ -1,10 +1,10 @@
-use types::CustomDbErr;
 use ::types::TagQueryResult;
-use entities::{action, ambition, desired_state, tag};
+use entities::{action, ambition, desired_state, mindset, tag};
 use sea_orm::{
     sea_query::NullOrdering::Last, ColumnTrait, Condition, DbConn, DbErr, EntityTrait,
     JoinType::LeftJoin, Order::Asc, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
 };
+use types::CustomDbErr;
 
 pub struct TagQuery;
 
@@ -27,17 +27,25 @@ impl TagQuery {
             )
             .filter(
                 Condition::any()
+                    .add(mindset::Column::Archived.eq(false))
+                    .add(mindset::Column::Archived.is_null()),
+            )
+            .filter(
+                Condition::any()
                     .add(action::Column::Archived.eq(false))
                     .add(action::Column::Archived.is_null()),
             )
             .column_as(ambition::Column::Name, "ambition_name")
             .column_as(desired_state::Column::Name, "desired_state_name")
+            .column_as(mindset::Column::Name, "mindset_name")
             .column_as(action::Column::Name, "action_name")
             .join(LeftJoin, tag::Relation::Ambition.def())
             .join(LeftJoin, tag::Relation::DesiredState.def())
+            .join(LeftJoin, tag::Relation::Mindset.def())
             .join(LeftJoin, tag::Relation::Action.def())
             .order_by_with_nulls(ambition::Column::CreatedAt, Asc, Last)
             .order_by_with_nulls(desired_state::Column::CreatedAt, Asc, Last)
+            .order_by_with_nulls(mindset::Column::CreatedAt, Asc, Last)
             .order_by_with_nulls(action::Column::CreatedAt, Asc, Last)
             .order_by_with_nulls(tag::Column::CreatedAt, Asc, Last)
             .into_model::<TagQueryResult>()
@@ -60,8 +68,8 @@ impl TagQuery {
 
 #[cfg(test)]
 mod tests {
-    use test_utils::{self, *};
     use sea_orm::ActiveModelTrait;
+    use test_utils::{self, *};
 
     use super::*;
 
@@ -73,6 +81,7 @@ mod tests {
         let (_, desired_state_tag) = factory::desired_state(user.id).insert_with_tag(&db).await?;
         let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
         let (_, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
+        let (_, mindset_tag) = factory::mindset(user.id).insert_with_tag(&db).await?;
         let _archived_action = factory::action(user.id)
             .archived(true)
             .insert_with_tag(&db)
@@ -85,6 +94,10 @@ mod tests {
             .archived(true)
             .insert_with_tag(&db)
             .await?;
+        let _archived_mindset = factory::mindset(user.id)
+            .archived(true)
+            .insert_with_tag(&db)
+            .await?;
 
         let res = TagQuery::find_all_by_user_id(&db, user.id).await?;
 
@@ -94,6 +107,7 @@ mod tests {
                 name: None,
                 ambition_name: Some("ambition".to_string()),
                 desired_state_name: None,
+                mindset_name: None,
                 action_name: None,
                 created_at: ambition_tag.created_at,
             },
@@ -102,14 +116,25 @@ mod tests {
                 name: None,
                 ambition_name: None,
                 desired_state_name: Some("desired_state".to_string()),
+                mindset_name: None,
                 action_name: None,
                 created_at: desired_state_tag.created_at,
+            },
+            TagQueryResult {
+                id: mindset_tag.id,
+                name: None,
+                ambition_name: None,
+                desired_state_name: None,
+                mindset_name: Some("mindset".to_string()),
+                action_name: None,
+                created_at: mindset_tag.created_at,
             },
             TagQueryResult {
                 id: action_tag.id,
                 name: None,
                 ambition_name: None,
                 desired_state_name: None,
+                mindset_name: None,
                 action_name: Some("action".to_string()),
                 created_at: action_tag.created_at,
             },
@@ -118,16 +143,17 @@ mod tests {
                 name: plain_tag.name,
                 ambition_name: None,
                 desired_state_name: None,
+                mindset_name: None,
                 action_name: None,
                 created_at: plain_tag.created_at,
             },
         ];
 
         assert_eq!(res.len(), expected.len());
-        assert_eq!(res[0], expected[0]);
-        assert_eq!(res[1], expected[1]);
-        assert_eq!(res[2], expected[2]);
-        assert_eq!(res[3], expected[3]);
+        for i in 0..res.len() {
+            dbg!(i);
+            assert_eq!(res[i], expected[i]);
+        }
 
         Ok(())
     }

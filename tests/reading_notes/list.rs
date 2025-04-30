@@ -22,12 +22,16 @@ async fn happy_path() -> Result<(), DbErr> {
     let (ambition, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
     let (desired_state, desired_state_tag) =
         factory::desired_state(user.id).insert_with_tag(&db).await?;
+    let (mindset, mindset_tag) = factory::mindset(user.id).insert_with_tag(&db).await?;
     factory::link_reading_note_tag(&db, reading_note_0.id, plain_tag.id).await?;
     factory::link_reading_note_tag(&db, reading_note_0.id, ambition_tag.id).await?;
     factory::link_reading_note_tag(&db, reading_note_1.id, desired_state_tag.id).await?;
     factory::link_reading_note_tag(&db, reading_note_1.id, action_tag.id).await?;
+    factory::link_reading_note_tag(&db, reading_note_1.id, mindset_tag.id).await?;
 
-    let req = test::TestRequest::get().uri("/api/reading_notes").to_request();
+    let req = test::TestRequest::get()
+        .uri("/api/reading_notes")
+        .to_request();
     req.extensions_mut().insert(user.clone());
 
     let resp = test::call_service(&app, req).await;
@@ -51,6 +55,12 @@ async fn happy_path() -> Result<(), DbErr> {
                     created_at: desired_state_tag.created_at,
                 },
                 TagVisible {
+                    id: mindset_tag.id,
+                    name: mindset.name,
+                    tag_type: TagType::Mindset,
+                    created_at: mindset_tag.created_at,
+                },
+                TagVisible {
                     id: action_tag.id,
                     name: action.name,
                     tag_type: TagType::Action,
@@ -67,25 +77,27 @@ async fn happy_path() -> Result<(), DbErr> {
             created_at: reading_note_0.created_at,
             updated_at: reading_note_0.updated_at,
             tags: vec![
-                TagVisible{
+                TagVisible {
                     id: ambition_tag.id,
                     name: ambition.name,
                     tag_type: TagType::Ambition,
                     created_at: ambition_tag.created_at,
                 },
-                TagVisible{
+                TagVisible {
                     id: plain_tag.id,
                     name: plain_tag.name.unwrap(),
                     tag_type: TagType::Plain,
                     created_at: plain_tag.created_at,
                 },
             ],
-        }
+        },
     ];
 
     assert_eq!(body.len(), expected.len());
-    assert_eq!(body[0], expected[0]);
-    assert_eq!(body[1], expected[1]);
+    for i in 0..body.len() {
+        dbg!(i);
+        assert_eq!(body[i], expected[i]);
+    }
 
     Ok(())
 }
@@ -94,7 +106,9 @@ async fn happy_path() -> Result<(), DbErr> {
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let (app, _) = init_app().await?;
 
-    let req = test::TestRequest::get().uri("/api/reading_notes").to_request();
+    let req = test::TestRequest::get()
+        .uri("/api/reading_notes")
+        .to_request();
 
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), http::StatusCode::UNAUTHORIZED);

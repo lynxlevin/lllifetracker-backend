@@ -67,35 +67,24 @@ fn get_tag(diary: &DiaryWithTagQueryResult) -> Option<TagVisible> {
     if diary.tag_id.is_none() {
         return None;
     }
-    if let Some(name) = diary.tag_name.clone() {
-        Some(TagVisible {
-            id: diary.tag_id.unwrap(),
-            name,
-            tag_type: TagType::Plain,
-            created_at: diary.tag_created_at.unwrap(),
-        })
+    let (name, tag_type) = if let Some(name) = diary.tag_name.clone() {
+        (name, TagType::Plain)
     } else if let Some(name) = diary.tag_ambition_name.clone() {
-        Some(TagVisible {
-            id: diary.tag_id.unwrap(),
-            name,
-            tag_type: TagType::Ambition,
-            created_at: diary.tag_created_at.unwrap(),
-        })
+        (name, TagType::Ambition)
     } else if let Some(name) = diary.tag_desired_state_name.clone() {
-        Some(TagVisible {
-            id: diary.tag_id.unwrap(),
-            name,
-            tag_type: TagType::DesiredState,
-            created_at: diary.tag_created_at.unwrap(),
-        })
+        (name, TagType::DesiredState)
+    } else if let Some(name) = diary.tag_mindset_name.clone() {
+        (name, TagType::Mindset)
     } else if let Some(name) = diary.tag_action_name.clone() {
-        Some(TagVisible {
-            id: diary.tag_id.unwrap(),
-            name,
-            tag_type: TagType::Action,
-            created_at: diary.tag_created_at.unwrap(),
-        })
+        (name, TagType::Action)
     } else {
         panic!("Tag without name should not exist.");
-    }
+    };
+
+    Some(TagVisible {
+        id: diary.tag_id.unwrap(),
+        name,
+        tag_type,
+        created_at: diary.tag_created_at.unwrap(),
+    })
 }

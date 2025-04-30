@@ -6,6 +6,7 @@ pub enum TagType {
     Ambition,
     DesiredState,
     Action,
+    Mindset,
     Plain,
 }
 
@@ -15,6 +16,7 @@ pub struct TagQueryResult {
     pub name: Option<String>,
     pub ambition_name: Option<String>,
     pub desired_state_name: Option<String>,
+    pub mindset_name: Option<String>,
     pub action_name: Option<String>,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
 }
@@ -29,36 +31,25 @@ pub struct TagVisible {
 
 impl From<TagQueryResult> for TagVisible {
     fn from(item: TagQueryResult) -> Self {
-        if let Some(name) = item.name {
-            TagVisible {
-                id: item.id,
-                name,
-                tag_type: TagType::Plain,
-                created_at: item.created_at,
-            }
+        let (name, tag_type) = if let Some(name) = item.name {
+            (name, TagType::Plain)
         } else if let Some(name) = item.ambition_name.clone() {
-            TagVisible {
-                id: item.id,
-                name,
-                tag_type: TagType::Ambition,
-                created_at: item.created_at,
-            }
+            (name, TagType::Ambition)
         } else if let Some(name) = item.desired_state_name.clone() {
-            TagVisible {
-                id: item.id,
-                name,
-                tag_type: TagType::DesiredState,
-                created_at: item.created_at,
-            }
+            (name, TagType::DesiredState)
+        } else if let Some(name) = item.mindset_name.clone() {
+            (name, TagType::Mindset)
         } else if let Some(name) = item.action_name.clone() {
-            TagVisible {
-                id: item.id,
-                name,
-                tag_type: TagType::Action,
-                created_at: item.created_at,
-            }
+            (name, TagType::Action)
         } else {
             panic!("Tag without name should not exist.");
+        };
+
+        TagVisible {
+            id: item.id,
+            name,
+            tag_type,
+            created_at: item.created_at,
         }
     }
 }

@@ -17,6 +17,8 @@ pub struct Model {
     pub action_id: Option<Uuid>,
     pub created_at: DateTimeWithTimeZone,
     pub name: Option<String>,
+    #[sea_orm(unique)]
+    pub mindset_id: Option<Uuid>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -47,6 +49,14 @@ pub enum Relation {
     DesiredState,
     #[sea_orm(has_many = "super::diaries_tags::Entity")]
     DiariesTags,
+    #[sea_orm(
+        belongs_to = "super::mindset::Entity",
+        from = "Column::MindsetId",
+        to = "super::mindset::Column::Id",
+        on_update = "NoAction",
+        on_delete = "Cascade"
+    )]
+    Mindset,
     #[sea_orm(has_many = "super::reading_notes_tags::Entity")]
     ReadingNotesTags,
     #[sea_orm(
@@ -80,6 +90,12 @@ impl Related<super::desired_state::Entity> for Entity {
 impl Related<super::diaries_tags::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::DiariesTags.def()
+    }
+}
+
+impl Related<super::mindset::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Mindset.def()
     }
 }
 
