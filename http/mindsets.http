@@ -1,0 +1,58 @@
+# Mindsets
+# Turn on debug to use these.
+###
+# @name login
+POST {{endpoint}}/api/users/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "password"
+}
+
+###
+# @name list
+GET {{endpoint}}/api/mindsets
+
+@mindset_id=01968531-c9c8-7421-8083-e2c29577a9e0
+
+###
+# @name get
+GET {{endpoint}}/api/mindsets/{{mindset_id}}
+
+###
+# @name create
+POST {{endpoint}}/api/mindsets
+Content-Type: application/json
+
+{
+  "name": "Second mindset"
+}
+
+###
+# @name update
+PUT {{endpoint}}/api/mindsets/{{mindset_id}}
+Content-Type: application/json
+
+{
+  "name": "My mindset edited",
+  "description": "I want to be a Super Man."
+}
+
+###
+# @name delete
+DELETE {{endpoint}}/api/mindsets/{{mindset_id}}
+
+@desired_state_id=3bea9c2e-0db8-4e77-9d91-529972f9786c
+
+###
+# @name bulk_update_ordering
+PUT {{endpoint}}/api/mindsets/bulk_update_ordering
+Content-Type: application/json
+
+{
+  "ordering": [
+    "a17c0c88-05d5-4457-86f7-d69d35d6a840",
+    "be7974b1-0d9c-497b-a862-3d45d119de3f"
+  ]
+}
