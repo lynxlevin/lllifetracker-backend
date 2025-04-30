@@ -3903,18 +3903,14 @@ dependencies = [
  "deadpool-redis",
  "dotenvy",
  "entities",
- "life_tracker",
  "migration",
  "routes",
  "sea-orm",
  "serde",
  "serde_json",
- "services",
- "settings",
  "test_utils",
  "tracing",
  "types",
- "utils",
  "uuid",
 ]
 
