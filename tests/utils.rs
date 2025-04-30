@@ -50,6 +50,7 @@ pub async fn init_app() -> Result<
                     .configure(routes::ambition_routes)
                     .configure(routes::desired_state_routes)
                     .configure(routes::action_routes)
+                    .configure(routes::mindset_routes)
                     .configure(routes::reading_note_routes)
                     .configure(routes::tag_routes)
                     .configure(routes::action_track_routes)

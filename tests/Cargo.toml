@@ -9,13 +9,9 @@ path = "lib.rs"
 
 [dependencies]
 entities = { path = "../src/entities" }
-life_tracker = { path = "../src/life_tracker" }
 routes = { path = "../src/routes" }
-services = { path = "../src/services" }
-settings = { path = "../src/settings" }
 test_utils = { path = "../src/test_utils" }
 types = { path = "../src/types" }
-utils = { path = "../src/utils" }
 migration = { path = "../migration" }
 
 actix-http = "3.*"
