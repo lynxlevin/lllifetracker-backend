@@ -11,8 +11,7 @@ use std::env;
 
 use migration::{Migrator, MigratorTrait};
 use routes::{
-    action_routes, action_track_routes, ambition_routes, auth_routes, desired_state_routes,
-    diary_routes, reading_note_routes, tag_routes,
+    action_routes, action_track_routes, ambition_routes, auth_routes, desired_state_routes, diary_routes, mindset_routes, reading_note_routes, tag_routes
 };
 use utils::auth::auth_middleware::AuthenticateUser;
 pub struct Application {
@@ -111,6 +110,7 @@ async fn run(
                     .configure(ambition_routes)
                     .configure(desired_state_routes)
                     .configure(action_routes)
+                    .configure(mindset_routes)
                     .configure(reading_note_routes)
                     .configure(tag_routes)
                     .configure(action_track_routes)
