@@ -20,5 +20,8 @@
     "subsecs",
     "trunc"
   ],
-  "rest-client.followredirect": false
+  "rest-client.followredirect": false,
+  "[rust]": {
+    "editor.formatOnSave": true,
+  }
 }
