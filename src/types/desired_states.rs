@@ -1,10 +1,9 @@
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
 use entities::{desired_state, prelude::DesiredState};
+use serde::{Deserialize, Serialize};
 
-#[derive(
-    serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug,
-)]
+#[derive(Serialize, Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug)]
 #[sea_orm(entity = "DesiredState")]
 pub struct DesiredStateVisible {
     pub id: uuid::Uuid,
@@ -26,19 +25,29 @@ impl From<desired_state::Model> for DesiredStateVisible {
     }
 }
 
-#[derive(serde::Deserialize, Debug, serde::Serialize)]
+#[derive(Deserialize, Debug, Serialize)]
 pub struct DesiredStateCreateRequest {
     pub name: String,
     pub description: Option<String>,
 }
 
-#[derive(serde::Deserialize, Debug, serde::Serialize)]
+#[derive(Deserialize, Debug, Serialize)]
 pub struct DesiredStateUpdateRequest {
     pub name: String,
     pub description: Option<String>,
 }
 
-#[derive(serde::Deserialize, Debug, serde::Serialize)]
+#[derive(Deserialize, Debug, Serialize)]
 pub struct DesiredStateBulkUpdateOrderingRequest {
     pub ordering: Vec<uuid::Uuid>,
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+pub enum DesiredStateConvertToType {
+    Mindset,
+}
+
+#[derive(Deserialize, Debug, Serialize)]
+pub struct DesiredStateConvertRequest {
+    pub convert_to: DesiredStateConvertToType,
 }
