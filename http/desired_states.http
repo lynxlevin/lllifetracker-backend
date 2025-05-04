@@ -14,7 +14,7 @@ Content-Type: application/json
 # @name list
 GET {{endpoint}}/api/desired_states
 
-@desired_state_id=4c7215d1-4f13-4c2c-8122-e3b523da2fe0
+@desired_state_id=01964df1-1a69-79a0-9af9-5ab1e311f30c
 
 ###
 # @name get
@@ -56,5 +56,14 @@ Content-Type: application/json
     "4c7215d1-4f13-4c2c-8122-e3b523da2fe0",
     "be7974b1-0d9c-497b-a862-3d45d119de3f"
   ]
+}
+
+###
+# @name convert
+PUT {{endpoint}}/api/desired_states/{{desired_state_id}}/convert
+Content-Type: application/json
+
+{
+  "convert_to": "Mindset"
 }
 
