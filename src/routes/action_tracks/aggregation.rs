@@ -1,6 +1,4 @@
-use ::types::{
-    self, ActionTrackAggregation, ActionTrackAggregationDuration, INTERNAL_SERVER_ERROR_MESSAGE,
-};
+use ::types::{ActionTrackAggregation, ActionTrackAggregationDuration};
 use actix_web::{
     get,
     web::{Data, Query, ReqData},
@@ -10,6 +8,8 @@ use entities::user as user_entity;
 use sea_orm::DbConn;
 use serde::Deserialize;
 use services::action_track_query::ActionTrackQuery;
+
+use crate::utils::{response_401, response_500};
 
 #[derive(Deserialize, Debug)]
 struct QueryParam {
@@ -36,8 +36,7 @@ pub async fn aggregate_action_tracks(
                 Ok(action_tracks) => {
                     let mut res: Vec<ActionTrackAggregationDuration> = vec![];
                     for action_track in action_tracks {
-                        if res.is_empty()
-                            || res.last().unwrap().action_id != action_track.action_id
+                        if res.is_empty() || res.last().unwrap().action_id != action_track.action_id
                         {
                             res.push(ActionTrackAggregationDuration {
                                 action_id: action_track.action_id,
@@ -51,14 +50,9 @@ pub async fn aggregate_action_tracks(
                         durations_by_action: res,
                     })
                 }
-                Err(e) => {
-                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                    HttpResponse::InternalServerError().json(types::ErrorResponse {
-                        error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                    })
-                }
+                Err(e) => response_500(e),
             }
         }
-        None => HttpResponse::Unauthorized().json("You are not logged in."),
+        None => response_401(),
     }
 }

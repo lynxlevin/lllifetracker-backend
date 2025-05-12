@@ -1,5 +1,3 @@
-use types::AmbitionCreateRequest;
-use ::types::{self, AmbitionVisible, INTERNAL_SERVER_ERROR_MESSAGE};
 use actix_web::{
     post,
     web::{Data, Json, ReqData},
@@ -8,6 +6,9 @@ use actix_web::{
 use entities::user as user_entity;
 use sea_orm::DbConn;
 use services::ambition_mutation::{AmbitionMutation, NewAmbition};
+use types::{AmbitionCreateRequest, AmbitionVisible};
+
+use crate::utils::{response_401, response_500};
 
 #[tracing::instrument(name = "Creating an ambition", skip(db, user))]
 #[post("")]
@@ -33,14 +34,9 @@ pub async fn create_ambition(
                     let res: AmbitionVisible = ambition.into();
                     HttpResponse::Created().json(res)
                 }
-                Err(e) => {
-                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                    HttpResponse::InternalServerError().json(types::ErrorResponse {
-                        error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                    })
-                }
+                Err(e) => response_500(e),
             }
         }
-        None => HttpResponse::Unauthorized().json("You are not logged in."),
+        None => response_401(),
     }
 }

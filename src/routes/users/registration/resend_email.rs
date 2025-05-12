@@ -1,5 +1,3 @@
-use utils::emails::send_multipart_email;
-use ::types::INTERNAL_SERVER_ERROR_MESSAGE;
 use actix_web::{
     post,
     web::{Data, Json},
@@ -8,6 +6,9 @@ use actix_web::{
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
 use services::user::Query as UserQuery;
+use utils::emails::send_multipart_email;
+
+use crate::utils::{response_404, response_500};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {
@@ -43,26 +44,12 @@ pub async fn resend_email(
                         tracing::event!(target: "backend", tracing::Level::INFO, "Verification email re-sent successfully.");
                         HttpResponse::Ok().json(::types::SuccessResponse { message: "Account activation link has been sent to your email address. Kindly take action before its expiration".to_string() })
                     },
-                    Err(e) => {
-                        tracing::event!(target: "backend", tracing::Level::ERROR, "{}", e);
-                        HttpResponse::InternalServerError().json(::types::ErrorResponse {
-                            error: "We cannot activate your account at the moment".to_string(),
-                        })
-                    }
+                    Err(e) => response_500(e)
                 }
             },
-            None => {
-                HttpResponse::NotFound().json(::types::ErrorResponse {
-                    error: "User with this email was not found. This happens if you have already activated this user.".to_string(),
-                })
-            }
+            None => response_404("User with this email was not found. This happens if you have already activated this user.")
         },
-        Err(e) => {
-            tracing::event!(target: "backend", tracing::Level::ERROR, "User not found : {:#?}", e);
-            HttpResponse::InternalServerError().json(::types::ErrorResponse {
-                error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-            })
-        }
+        Err(e) => response_500(e)
     }
 }
 

@@ -1,12 +1,13 @@
-use entities::user as user_entity;
-use ::types::{self, INTERNAL_SERVER_ERROR_MESSAGE};
-use services::action_mutation::ActionMutation;
 use actix_web::{
     delete,
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use entities::user as user_entity;
 use sea_orm::DbConn;
+use services::action_mutation::ActionMutation;
+
+use crate::utils::{response_401, response_500};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -25,16 +26,9 @@ pub async fn delete_action(
             let user = user.into_inner();
             match ActionMutation::delete(&db, path_param.action_id, user.id).await {
                 Ok(_) => HttpResponse::NoContent().into(),
-                Err(e) => {
-                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                    HttpResponse::InternalServerError().json(types::ErrorResponse {
-                        error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                    })
-                }
+                Err(e) => response_500(e),
             }
         }
-        None => HttpResponse::Unauthorized().json(types::ErrorResponse {
-            error: "You are not logged in".to_string(),
-        }),
+        None => response_401(),
     }
 }

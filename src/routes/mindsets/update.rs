@@ -6,9 +6,9 @@ use actix_web::{
 use entities::user as user_entity;
 use sea_orm::{DbConn, DbErr};
 use services::mindset_mutation::MindsetMutation;
-use types::{
-    self, CustomDbErr, MindsetUpdateRequest, MindsetVisible, INTERNAL_SERVER_ERROR_MESSAGE,
-};
+use types::{CustomDbErr, MindsetUpdateRequest, MindsetVisible};
+
+use crate::utils::{response_401, response_404, response_500};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -39,27 +39,15 @@ pub async fn update_mindset(
                     let res: MindsetVisible = mindset.into();
                     HttpResponse::Ok().json(res)
                 }
-                Err(e) => {
-                    match &e {
-                        DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
-                            CustomDbErr::NotFound => {
-                                return HttpResponse::NotFound().json(types::ErrorResponse {
-                                    error: "Mindset with this id was not found".to_string(),
-                                })
-                            }
-                            _ => {}
-                        },
-                        _ => {}
-                    }
-                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                    HttpResponse::InternalServerError().json(types::ErrorResponse {
-                        error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                    })
-                }
+                Err(e) => match &e {
+                    DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
+                        CustomDbErr::NotFound => response_404("Mindset with this id was not found"),
+                        _ => response_500(e),
+                    },
+                    _ => response_500(e),
+                },
             }
         }
-        None => HttpResponse::Unauthorized().json(types::ErrorResponse {
-            error: "You are not logged in".to_string(),
-        }),
+        None => response_401(),
     }
 }

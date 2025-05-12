@@ -8,7 +8,9 @@ use sea_orm::{
     sqlx::error::Error::Database, DbConn, DbErr, RuntimeErr::SqlxError, TransactionError,
 };
 use services::diary_mutation::{DiaryMutation, UpdateDiary};
-use types::{self, CustomDbErr, DiaryUpdateRequest, DiaryVisible, INTERNAL_SERVER_ERROR_MESSAGE};
+use types::{CustomDbErr, DiaryUpdateRequest, DiaryVisible};
+
+use crate::utils::{response_400, response_401, response_404, response_409, response_500};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -42,53 +44,36 @@ pub async fn update_diary(
                             let res: DiaryVisible = diary.into();
                             HttpResponse::Ok().json(res)
                         }
-                        Err(e) => {
-                            match &e {
-                                TransactionError::Transaction(e) => match e {
-                                    DbErr::Query(SqlxError(Database(e))) => match e.constraint() {
-                                        Some("diaries_user_id_date_unique_index") => {
-                                            return HttpResponse::Conflict().json(types::ErrorResponse {
-                                                error:
-                                                    "Another diary record for the same date already exists."
-                                                        .to_string(),
-                                            })
-                                        }
-                                        _ => {}
-                                    },
-                                    DbErr::Exec(SqlxError(Database(e))) => match e.constraint() {
-                                        Some("fk-diaries_tags-tag_id") => {
-                                            return HttpResponse::NotFound().json(types::ErrorResponse {
-                                                error: "One or more of the tag_ids do not exist."
-                                                    .to_string(),
-                                            })
-                                        }
-                                        _ => {}
-                                    },
-                                    DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
-                                        CustomDbErr::NotFound => {
-                                            return HttpResponse::NotFound().json(types::ErrorResponse {
-                                                error: "Diary with this id was not found".to_string(),
-                                            })
-                                        }
-                                        _ => {}
-                                    },
-                                    _ => {}
+                        Err(e) => match &e {
+                            TransactionError::Transaction(e) => match e {
+                                DbErr::Query(SqlxError(Database(e))) => match e.constraint() {
+                                    Some("diaries_user_id_date_unique_index") => response_409(
+                                        "Another diary record for the same date already exists.",
+                                    ),
+                                    _ => response_500(e),
                                 },
-                                _ => {}
-                            }
-                            tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                            HttpResponse::InternalServerError().json(types::ErrorResponse {
-                                error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                            })
-                        }
+                                DbErr::Exec(SqlxError(Database(e))) => match e.constraint() {
+                                    Some("fk-diaries_tags-tag_id") => {
+                                        response_404("One or more of the tag_ids do not exist.")
+                                    }
+                                    _ => response_500(e),
+                                },
+                                DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
+                                    CustomDbErr::NotFound => {
+                                        response_404("Diary with this id was not found")
+                                    }
+                                    _ => response_500(e),
+                                },
+                                _ => response_500(e),
+                            },
+                            _ => response_500(e),
+                        },
                     }
                 }
-                Err(e) => HttpResponse::BadRequest().json(types::ErrorResponse { error: e }),
+                Err(e) => response_400(&e),
             }
         }
-        None => HttpResponse::Unauthorized().json(types::ErrorResponse {
-            error: "You are not logged in".to_string(),
-        }),
+        None => response_401(),
     }
 }
 

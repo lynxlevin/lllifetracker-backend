@@ -6,7 +6,9 @@ use actix_web::{
 use entities::user as user_entity;
 use sea_orm::DbConn;
 use services::mindset_mutation::MindsetMutation;
-use types::{self, MindsetBulkUpdateOrderingRequest, INTERNAL_SERVER_ERROR_MESSAGE};
+use types::MindsetBulkUpdateOrderingRequest;
+
+use crate::utils::{response_401, response_500};
 
 /// Fuzzy Ordering Design Decision
 /// Ordering doesn’t need to be correctly serialized in the backend
@@ -33,16 +35,9 @@ pub async fn bulk_update_mindset_ordering(
             let user = user.into_inner();
             match MindsetMutation::bulk_update_ordering(&db, user.id, req.ordering.clone()).await {
                 Ok(_) => HttpResponse::Ok().finish(),
-                Err(e) => {
-                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                    HttpResponse::InternalServerError().json(types::ErrorResponse {
-                        error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                    })
-                }
+                Err(e) => response_500(e),
             }
         }
-        None => HttpResponse::Unauthorized().json(types::ErrorResponse {
-            error: "You are not logged in".to_string(),
-        }),
+        None => response_401(),
     }
 }

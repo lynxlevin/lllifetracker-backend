@@ -1,5 +1,4 @@
-use types::ReadingNoteUpdateRequest;
-use ::types::{self, CustomDbErr, ReadingNoteVisible, INTERNAL_SERVER_ERROR_MESSAGE};
+use ::types::{CustomDbErr, ReadingNoteVisible};
 use actix_web::{
     put,
     web::{Data, Json, Path, ReqData},
@@ -8,6 +7,9 @@ use actix_web::{
 use entities::user as user_entity;
 use sea_orm::{DbConn, DbErr, TransactionError};
 use services::reading_note_mutation::{ReadingNoteMutation, UpdateReadingNote};
+use types::ReadingNoteUpdateRequest;
+
+use crate::utils::{response_401, response_404, response_500};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -39,30 +41,19 @@ pub async fn update_reading_note(
                     let res: ReadingNoteVisible = reading_note.into();
                     HttpResponse::Ok().json(res)
                 }
-                Err(e) => {
-                    match &e {
-                        TransactionError::Transaction(DbErr::Custom(message)) => {
-                            match message.parse::<CustomDbErr>().unwrap() {
-                                CustomDbErr::NotFound => {
-                                    return HttpResponse::NotFound().json(types::ErrorResponse {
-                                        error: "reading note with this id was not found"
-                                            .to_string(),
-                                    })
-                                }
-                                _ => {}
+                Err(e) => match &e {
+                    TransactionError::Transaction(DbErr::Custom(message)) => {
+                        match message.parse::<CustomDbErr>().unwrap() {
+                            CustomDbErr::NotFound => {
+                                response_404("Reading note with this id was not found")
                             }
+                            _ => response_500(e),
                         }
-                        _ => {}
                     }
-                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                    HttpResponse::InternalServerError().json(types::ErrorResponse {
-                        error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                    })
-                }
+                    _ => response_500(e),
+                },
             }
         }
-        None => HttpResponse::Unauthorized().json(types::ErrorResponse {
-            error: "You are not logged in".to_string(),
-        }),
+        None => response_401(),
     }
 }

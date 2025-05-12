@@ -6,9 +6,11 @@ use actix_web::{
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
 
-use utils::auth::{password, tokens::verify_confirmation_token_pasetor};
-use ::types::{self, INTERNAL_SERVER_ERROR_MESSAGE};
+use ::types;
 use services::user as user_service;
+use utils::auth::{password, tokens::verify_confirmation_token_pasetor};
+
+use crate::utils::{response_400, response_500};
 
 #[derive(serde::Deserialize)]
 struct Parameters {
@@ -36,26 +38,15 @@ pub async fn submit_password_change(
                                     .to_string(),
                             })
                         }
-                        Err(e) => {
-                            tracing::event!(target: "backend", tracing::Level::ERROR, "Failed to change user password: {:#?}", e);
-                            HttpResponse::InternalServerError().json(types::ErrorResponse {
-                                error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                            })
-                        }
+                        Err(e) => response_500(e)
                     }
                 }
-                Err(e) => {
-                    tracing::event!(target: "backend", tracing::Level::ERROR, "{e}");
-                    HttpResponse::BadRequest().json(types::ErrorResponse {error: "It appears that your password request token has expired or previously used".to_string()})
-                }
+                Err(_) => response_400(
+                    "It appears that your password request token has expired or previously used",
+                ),
             }
         }
-        Err(e) => {
-            tracing::event!(target: "backend", tracing::Level::ERROR, "{e}");
-            HttpResponse::InternalServerError().json(types::ErrorResponse {
-                error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-            })
-        }
+        Err(e) => response_500(e),
     }
 }
 

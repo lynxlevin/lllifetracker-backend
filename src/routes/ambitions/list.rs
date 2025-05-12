@@ -1,4 +1,3 @@
-use ::types::{self, INTERNAL_SERVER_ERROR_MESSAGE};
 use actix_web::{
     get,
     web::{self, Data, ReqData},
@@ -8,6 +7,8 @@ use entities::user as user_entity;
 use sea_orm::DbConn;
 use serde::Deserialize;
 use services::ambition_query::AmbitionQuery;
+
+use crate::utils::{response_401, response_500};
 
 #[derive(Deserialize, Debug)]
 struct QueryParam {
@@ -32,14 +33,9 @@ pub async fn list_ambitions(
             .await
             {
                 Ok(ambitions) => HttpResponse::Ok().json(ambitions),
-                Err(e) => {
-                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                    HttpResponse::InternalServerError().json(types::ErrorResponse {
-                        error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                    })
-                }
+                Err(e) => response_500(e),
             }
         }
-        None => HttpResponse::Unauthorized().json("You are not logged in."),
+        None => response_401(),
     }
 }

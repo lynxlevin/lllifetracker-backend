@@ -1,5 +1,4 @@
-use utils::auth::password::verify_password;
-use ::types::{INTERNAL_SERVER_ERROR_MESSAGE, USER_EMAIL_KEY, USER_ID_KEY};
+use ::types::{USER_EMAIL_KEY, USER_ID_KEY};
 use actix_session::SessionInsertError;
 use actix_web::{
     post,
@@ -12,6 +11,9 @@ use deadpool_redis::{
 };
 use sea_orm::DbConn;
 use services::user::Query as UserQuery;
+use utils::auth::password::verify_password;
+
+use crate::utils::{response_404, response_500};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 pub struct LoginUser {
@@ -54,15 +56,7 @@ async fn login_user(
                                             last_name: user.last_name,
                                             is_active: user.is_active,
                                         }),
-                                        Err(e) => {
-                                            tracing::event!(target: "redis", tracing::Level::WARN, "Failed to renew session: {:#?}", e);
-                                            HttpResponse::InternalServerError().json(
-                                                ::types::ErrorResponse {
-                                                    error: INTERNAL_SERVER_ERROR_MESSAGE
-                                                        .to_string(),
-                                                },
-                                            )
-                                        }
+                                        Err(e) => response_500(e),
                                     }
                                 }
                                 Err(_) => {
@@ -72,9 +66,7 @@ async fn login_user(
                                         login_request_count,
                                     )
                                     .await;
-                                    HttpResponse::NotFound().json(::types::ErrorResponse {
-                                        error: not_found_message.to_string(),
-                                    })
+                                    response_404(not_found_message)
                                 }
                             }
                         }
@@ -85,29 +77,17 @@ async fn login_user(
                                 login_request_count,
                             )
                             .await;
-                            HttpResponse::NotFound().json(::types::ErrorResponse {
-                                error: not_found_message.to_string(),
-                            })
+                            response_404(not_found_message)
                         }
                     },
-                    Err(e) => {
-                        tracing::event!(target: "sea-orm", tracing::Level::ERROR, "Some DB error on retrieving a user:{:#?}", e);
-                        HttpResponse::InternalServerError().json(::types::ErrorResponse {
-                            error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                        })
-                    }
+                    Err(e) => response_500(e),
                 }
             }
             Err(_) => HttpResponse::Unauthorized().json(::types::ErrorResponse {
                 error: "Your account is temporarily locked. Please wait for 1 hour.".to_string(),
             }),
         },
-        Err(e) => {
-            tracing::event!(target: "backend", tracing::Level::ERROR, "{}", e);
-            HttpResponse::InternalServerError().json(::types::ErrorResponse {
-                error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-            })
-        }
+        Err(e) => response_500(e),
     }
 }
 
