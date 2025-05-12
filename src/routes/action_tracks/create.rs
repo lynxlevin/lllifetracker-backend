@@ -1,4 +1,4 @@
-use ::types::{self, ActionTrackVisible, INTERNAL_SERVER_ERROR_MESSAGE};
+use ::types::{self, ActionTrackVisible};
 use actix_web::{
     post,
     web::{Data, Json, ReqData},
@@ -11,6 +11,8 @@ use services::{
     action_track_mutation::{ActionTrackMutation, NewActionTrack},
 };
 use types::{ActionTrackCreateRequest, CustomDbErr};
+
+use crate::utils::{response_401, response_404, response_409, response_500};
 
 #[tracing::instrument(name = "Creating an action track", skip(db, user))]
 #[post("")]
@@ -55,48 +57,28 @@ pub async fn create_action_track(
                             let res: ActionTrackVisible = action_track.into();
                             HttpResponse::Created().json(res)
                         }
-                        Err(e) => {
-                            match &e {
-                                DbErr::Custom(message) => {
-                                    match message.parse::<CustomDbErr>().unwrap() {
-                                        CustomDbErr::Duplicate => {
-                                            return HttpResponse::Conflict().json(
-                                                types::ErrorResponse {
-                                                    error: "A track for the same action which starts at the same time exists.".to_string(),
-                                                }
-                                            )
-                                        }
-                                        _ => {}
+                        Err(e) => match &e {
+                            DbErr::Custom(message) => {
+                                match message.parse::<CustomDbErr>().unwrap() {
+                                        CustomDbErr::Duplicate => response_409("A track for the same action which starts at the same time exists."),
+                                        _ => response_500(e),
                                     }
-                                }
-                                _ => {}
                             }
-                            tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                            HttpResponse::InternalServerError().json(types::ErrorResponse {
-                                error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                            })
-                        }
-                    }
-                }
-                Err(e) => {
-                    match &e {
-                        DbErr::Custom(message) => match message.parse::<CustomDbErr>().unwrap() {
-                            CustomDbErr::NotFound => {
-                                return HttpResponse::NotFound().json(types::ErrorResponse {
-                                    error: "An action with that id does not exist.".to_string(),
-                                })
-                            }
-                            _ => {}
+                            _ => response_500(e),
                         },
-                        _ => {}
                     }
-                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                    HttpResponse::InternalServerError().json(types::ErrorResponse {
-                        error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                    })
                 }
+                Err(e) => match &e {
+                    DbErr::Custom(message) => match message.parse::<CustomDbErr>().unwrap() {
+                        CustomDbErr::NotFound => {
+                            return response_404("An action with that id does not exist.")
+                        }
+                        _ => response_500(e),
+                    },
+                    _ => response_500(e),
+                },
             }
         }
-        None => HttpResponse::Unauthorized().json("You are not logged in."),
+        None => response_401(),
     }
 }

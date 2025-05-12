@@ -1,5 +1,4 @@
-use types::ReadingNoteCreateRequest;
-use ::types::{self, ReadingNoteVisible, INTERNAL_SERVER_ERROR_MESSAGE};
+use ::types::ReadingNoteVisible;
 use actix_web::{
     post,
     web::{Data, Json, ReqData},
@@ -8,6 +7,9 @@ use actix_web::{
 use entities::user as user_entity;
 use sea_orm::DbConn;
 use services::reading_note_mutation::{NewReadingNote, ReadingNoteMutation};
+use types::ReadingNoteCreateRequest;
+
+use crate::utils::{response_401, response_500};
 
 #[tracing::instrument(name = "Creating a reading note", skip(db, user))]
 #[post("")]
@@ -36,14 +38,9 @@ pub async fn create_reading_note(
                     let res: ReadingNoteVisible = reading_note.into();
                     HttpResponse::Created().json(res)
                 }
-                Err(e) => {
-                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                    HttpResponse::InternalServerError().json(types::ErrorResponse {
-                        error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                    })
-                }
+                Err(e) => response_500(e),
             }
         }
-        None => HttpResponse::Unauthorized().json("You are not logged in."),
+        None => response_401(),
     }
 }

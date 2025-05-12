@@ -6,7 +6,9 @@ use actix_web::{
 use entities::user as user_entity;
 use sea_orm::DbConn;
 use services::mindset_mutation::{MindsetMutation, NewMindset};
-use types::{self, MindsetCreateRequest, MindsetVisible, INTERNAL_SERVER_ERROR_MESSAGE};
+use types::{MindsetCreateRequest, MindsetVisible};
+
+use crate::utils::{response_401, response_500};
 
 #[tracing::instrument(name = "Creating an mindset", skip(db, user))]
 #[post("")]
@@ -32,14 +34,9 @@ pub async fn create_mindset(
                     let res: MindsetVisible = mindset.into();
                     HttpResponse::Created().json(res)
                 }
-                Err(e) => {
-                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                    HttpResponse::InternalServerError().json(types::ErrorResponse {
-                        error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                    })
-                }
+                Err(e) => response_500(e),
             }
         }
-        None => HttpResponse::Unauthorized().json("You are not logged in."),
+        None => response_401(),
     }
 }

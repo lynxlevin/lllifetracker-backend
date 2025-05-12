@@ -1,4 +1,4 @@
-use ::types::{self, ActionTrackVisible, INTERNAL_SERVER_ERROR_MESSAGE};
+use ::types::ActionTrackVisible;
 use actix_web::{
     get,
     web::{Data, ReqData},
@@ -8,6 +8,8 @@ use chrono::{FixedOffset, TimeZone};
 use entities::{sea_orm_active_enums::TimezoneEnum, user as user_entity};
 use sea_orm::DbConn;
 use services::action_track_query::ActionTrackQuery;
+
+use crate::utils::{response_401, response_500};
 
 #[tracing::instrument(name = "Listing a user's action tracks by date", skip(db, user))]
 #[get("/by_date")]
@@ -46,15 +48,10 @@ pub async fn list_action_tracks_by_date(
                     }
                     HttpResponse::Ok().json(res)
                 }
-                Err(e) => {
-                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                    HttpResponse::InternalServerError().json(types::ErrorResponse {
-                        error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                    })
-                }
+                Err(e) => response_500(e),
             }
         }
-        None => HttpResponse::Unauthorized().json("You are not logged in."),
+        None => response_401(),
     }
 }
 

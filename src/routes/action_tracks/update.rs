@@ -1,5 +1,4 @@
-use types::ActionTrackUpdateRequest;
-use ::types::{self, ActionTrackVisible, CustomDbErr, INTERNAL_SERVER_ERROR_MESSAGE};
+use ::types::{self, ActionTrackVisible, CustomDbErr};
 use actix_web::{
     put,
     web::{Data, Json, Path, ReqData},
@@ -8,6 +7,9 @@ use actix_web::{
 use entities::user as user_entity;
 use sea_orm::{DbConn, DbErr};
 use services::action_track_mutation::{ActionTrackMutation, UpdateActionTrack};
+use types::ActionTrackUpdateRequest;
+
+use crate::utils::{response_401, response_404, response_409, response_500};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -41,34 +43,20 @@ pub async fn update_action_track(
                     let res: ActionTrackVisible = action_track.into();
                     HttpResponse::Ok().json(res)
                 }
-                Err(e) => {
-                    match &e {
-                        DbErr::Custom(message) => match message.parse::<CustomDbErr>().unwrap() {
-                            CustomDbErr::NotFound => {
-                                return HttpResponse::NotFound().json(types::ErrorResponse {
-                                    error: "ActionTrack with this id was not found".to_string(),
-                                })
-                            }
-                            CustomDbErr::Duplicate => {
-                                return HttpResponse::Conflict().json(types::ErrorResponse {
-                                    error:
-                                        "A track for the same action which starts at the same time exists."
-                                            .to_string(),
-                                })
-                            }
-                            _ => {}
-                        },
-                        _ => {}
-                    }
-                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                    HttpResponse::InternalServerError().json(types::ErrorResponse {
-                        error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                    })
-                }
+                Err(e) => match &e {
+                    DbErr::Custom(message) => match message.parse::<CustomDbErr>().unwrap() {
+                        CustomDbErr::NotFound => {
+                            response_404("ActionTrack with this id was not found")
+                        }
+                        CustomDbErr::Duplicate => response_409(
+                            "A track for the same action which starts at the same time exists.",
+                        ),
+                        _ => response_500(e),
+                    },
+                    _ => response_500(e),
+                },
             }
         }
-        None => HttpResponse::Unauthorized().json(types::ErrorResponse {
-            error: "You are not logged in".to_string(),
-        }),
+        None => response_401(),
     }
 }

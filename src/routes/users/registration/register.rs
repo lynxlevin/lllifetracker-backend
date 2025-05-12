@@ -1,4 +1,3 @@
-use services::user;
 use actix_web::{
     post,
     web::{Data, Json},
@@ -6,6 +5,9 @@ use actix_web::{
 };
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
+use services::user;
+
+use crate::utils::response_500;
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {
@@ -62,21 +64,11 @@ pub async fn register(
                 }
 
                 tracing::event!(target: "backend", tracing::Level::INFO, "User created successfully.");
-                HttpResponse::Ok().json(::types::SuccessResponse { message: message })
+                HttpResponse::Ok().json(::types::SuccessResponse { message })
             }
-            Err(e) => {
-                tracing::event!(target: "backend", tracing::Level::ERROR, "{}", e);
-                HttpResponse::InternalServerError().json(::types::ErrorResponse {
-                    error: "We cannot activate your account at the moment".to_string(),
-                })
-            }
+            Err(e) => response_500(e),
         },
-        Err(e) => {
-            tracing::event!(target: "backend", tracing::Level::ERROR, "Failed to create user: {:#?}", e);
-            HttpResponse::InternalServerError().json(::types::ErrorResponse {
-                error: "Some error on user registration.".to_string(),
-            })
-        }
+        Err(e) => response_500(e),
     }
 }
 

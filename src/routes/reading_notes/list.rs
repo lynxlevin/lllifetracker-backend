@@ -1,15 +1,14 @@
-use entities::user as user_entity;
-use ::types::{
-    self, ReadingNoteVisibleWithTags, ReadingNoteWithTagQueryResult, TagType, TagVisible,
-    INTERNAL_SERVER_ERROR_MESSAGE,
-};
-use services::reading_note_query::ReadingNoteQuery;
+use ::types::{ReadingNoteVisibleWithTags, ReadingNoteWithTagQueryResult, TagType, TagVisible};
 use actix_web::{
     get,
     web::{Data, ReqData},
     HttpResponse,
 };
+use entities::user as user_entity;
 use sea_orm::DbConn;
+use services::reading_note_query::ReadingNoteQuery;
+
+use crate::utils::{response_401, response_500};
 
 #[tracing::instrument(name = "Listing user's reading notes.", skip(db, user))]
 #[get("")]
@@ -47,15 +46,10 @@ pub async fn list_reading_notes(
                     }
                     HttpResponse::Ok().json(res)
                 }
-                Err(e) => {
-                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                    HttpResponse::InternalServerError().json(types::ErrorResponse {
-                        error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                    })
-                }
+                Err(e) => response_500(e),
             }
         }
-        None => HttpResponse::Unauthorized().json("You are not logged in."),
+        None => response_401(),
     }
 }
 

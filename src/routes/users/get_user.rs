@@ -2,6 +2,8 @@ use actix_web::{get, web::ReqData, HttpResponse};
 
 use entities::user as user_entity;
 
+use crate::utils::response_401;
+
 #[get("/me")]
 pub async fn get_user(user: Option<ReqData<user_entity::Model>>) -> HttpResponse {
     match user {
@@ -15,9 +17,7 @@ pub async fn get_user(user: Option<ReqData<user_entity::Model>>) -> HttpResponse
                 is_active: user.is_active,
             })
         }
-        None => HttpResponse::Unauthorized().json(::types::ErrorResponse {
-            error: "You are not logged in.".to_string(),
-        }),
+        None => response_401(),
     }
 }
 

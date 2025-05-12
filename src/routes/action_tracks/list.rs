@@ -1,4 +1,3 @@
-use ::types::{self, INTERNAL_SERVER_ERROR_MESSAGE};
 use actix_web::{
     get,
     web::{Data, Query, ReqData},
@@ -8,6 +7,8 @@ use entities::user as user_entity;
 use sea_orm::DbConn;
 use serde::Deserialize;
 use services::action_track_query::ActionTrackQuery;
+
+use crate::utils::{response_401, response_500};
 
 #[derive(Deserialize, Debug)]
 struct QueryParam {
@@ -30,14 +31,9 @@ pub async fn list_action_tracks(
             filters.started_at_gte = query.started_at_gte;
             match ActionTrackQuery::find_by_user_id_with_filters(&db, user.id, filters).await {
                 Ok(action_tracks) => HttpResponse::Ok().json(action_tracks),
-                Err(e) => {
-                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                    HttpResponse::InternalServerError().json(types::ErrorResponse {
-                        error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                    })
-                }
+                Err(e) => response_500(e),
             }
         }
-        None => HttpResponse::Unauthorized().json("You are not logged in."),
+        None => response_401(),
     }
 }

@@ -1,4 +1,3 @@
-use ::types::{self, INTERNAL_SERVER_ERROR_MESSAGE};
 use actix_web::{
     post,
     web::{Data, Json, ReqData},
@@ -8,6 +7,8 @@ use entities::user as user_entity;
 use sea_orm::DbConn;
 use services::tag_mutation::{NewTag, TagMutation};
 use types::TagCreateRequest;
+
+use crate::utils::{response_401, response_500};
 
 #[tracing::instrument(name = "Creating a plain tag", skip(db, user))]
 #[post("/plain")]
@@ -28,17 +29,10 @@ pub async fn create_plain_tag(
             )
             .await
             {
-                Ok(tag) => {
-                    HttpResponse::Created().json(tag)
-                }
-                Err(e) => {
-                    tracing::event!(target: "backend", tracing::Level::ERROR, "Failed on DB query: {:#?}", e);
-                    HttpResponse::InternalServerError().json(types::ErrorResponse {
-                        error: INTERNAL_SERVER_ERROR_MESSAGE.to_string(),
-                    })
-                }
+                Ok(tag) => HttpResponse::Created().json(tag),
+                Err(e) => response_500(e),
             }
         }
-        None => HttpResponse::Unauthorized().json("You are not logged in."),
+        None => response_401(),
     }
 }
