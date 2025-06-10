@@ -51,3 +51,8 @@ pub struct ActionUpdateRequest {
 pub struct ActionBulkUpdateOrderRequest {
     pub ordering: Vec<uuid::Uuid>,
 }
+
+#[derive(serde::Deserialize, Debug, serde::Serialize)]
+pub struct ActionTrackTypeConversionRequest {
+    pub track_type: ActionTrackType,
+}

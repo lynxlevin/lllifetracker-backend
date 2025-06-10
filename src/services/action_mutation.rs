@@ -75,6 +75,17 @@ impl ActionMutation {
         action.update(db).await
     }
 
+    pub async fn convert_track_type(
+        db: &DbConn,
+        action: action::Model,
+        track_type: ActionTrackType,
+    ) -> Result<action::Model, DbErr> {
+        let mut action = action.into_active_model();
+        action.track_type = Set(track_type);
+        action.updated_at = Set(Utc::now().into());
+        action.update(db).await
+    }
+
     pub async fn delete(
         db: &DbConn,
         action_id: uuid::Uuid,

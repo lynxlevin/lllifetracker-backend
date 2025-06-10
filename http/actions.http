@@ -1,4 +1,3 @@
-# Actions
 # Turn on debug to use these.
 ###
 # @name login
@@ -41,6 +40,15 @@ Content-Type: application/json
   "description": "Description added",
   "trackable": null,
   "color": "#adfadf"
+}
+
+###
+# @name convert_track_type
+PUT {{endpoint}}/api/actions/{{action_id}}/track_type
+Content-Type: application/json
+
+{
+  "track_type": "TimeSpan"
 }
 
 ###
