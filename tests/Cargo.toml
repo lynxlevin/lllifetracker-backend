@@ -8,12 +8,11 @@ name = "tests"
 path = "lib.rs"
 
 [dependencies]
-common = { path = "../src/common", features = ["settings"] }
+common = { path = "../src/common", features = ["db", "settings"] }
 entities = { path = "../src/entities" }
 routes = { path = "../src/routes" }
 test_utils = { path = "../src/test_utils" }
 types = { path = "../src/types" }
-migration = { path = "../migration" }
 server = { path = "../src/server" }
 
 actix-http.workspace = true

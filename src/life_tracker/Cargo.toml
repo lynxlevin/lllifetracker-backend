@@ -8,8 +8,7 @@ name = "life_tracker"
 path = "main.rs"
 
 [dependencies]
-common = { path = "../common", features = ["settings"] }
-migration = { path = "../../migration" }
+common = { path = "../common", features = ["db", "settings", "redis"] }
 server = { path = "../server" }
 utils = { path = "../utils" }
 

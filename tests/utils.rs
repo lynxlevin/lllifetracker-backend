@@ -5,27 +5,9 @@ use actix_web::{
     web::Data,
     App,
 };
-use common::settings::{get_test_settings, types::Settings};
-use migration::{Migrator, MigratorTrait};
-use sea_orm::{ConnectionTrait, Database, DbBackend, DbConn, DbErr};
+use common::{db::init_db, settings::get_test_settings};
+use sea_orm::{DbConn, DbErr};
 use server::get_routes;
-
-async fn init_db(settings: &Settings) -> Result<DbConn, DbErr> {
-    let db = Database::connect(&settings.database.url)
-        .await
-        .expect("Failed to open DB connection.");
-    let db_conn = match db.get_database_backend() {
-        DbBackend::MySql => Database::connect(&settings.database.url)
-            .await
-            .expect("Failed to open DB connection."),
-        DbBackend::Postgres => Database::connect(&settings.database.url)
-            .await
-            .expect("Failed to open DB connection."),
-        DbBackend::Sqlite => db,
-    };
-    Migrator::up(&db_conn, None).await.unwrap();
-    Ok(db_conn)
-}
 
 pub async fn init_app() -> Result<
     (
@@ -35,7 +17,7 @@ pub async fn init_app() -> Result<
     DbErr,
 > {
     let settings = get_test_settings();
-    let db = init_db(&settings).await?;
+    let db = init_db(&settings).await;
     let app = test::init_service(
         App::new()
             .service(get_routes())

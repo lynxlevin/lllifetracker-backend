@@ -2025,7 +2025,6 @@ dependencies = [
  "actix-web",
  "common",
  "deadpool-redis",
- "migration",
  "sea-orm",
  "server",
  "tracing",
@@ -3727,9 +3726,9 @@ name = "test_utils"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "common",
  "dotenvy",
  "entities",
- "migration",
  "sea-orm",
  "uuid",
 ]
@@ -3746,7 +3745,6 @@ dependencies = [
  "deadpool-redis",
  "dotenvy",
  "entities",
- "migration",
  "routes",
  "sea-orm",
  "serde",

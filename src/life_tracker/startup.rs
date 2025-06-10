@@ -1,10 +1,9 @@
 use actix_session::SessionMiddleware;
 use actix_web::{dev::Server, middleware::Compress, web::Data, App, HttpServer};
-use common::settings::types::Settings;
-use sea_orm::{ConnectionTrait, Database, DatabaseConnection, DbBackend};
+use common::{db::init_db, redis::init_redis_pool, settings::types::Settings};
+use sea_orm::DatabaseConnection;
 use server::{get_preps_for_redis_session_store, get_routes, setup_session_middleware_builder};
 
-use migration::{Migrator, MigratorTrait};
 use utils::auth::auth_middleware::AuthenticateUser;
 pub struct Application {
     port: u16,
@@ -13,8 +12,7 @@ pub struct Application {
 
 impl Application {
     pub async fn build(settings: Settings) -> Result<Self, std::io::Error> {
-        let db = get_database_connection(&settings).await;
-        Migrator::up(&db, None).await.unwrap();
+        let db = init_db(&settings).await;
         let address = format!(
             "{}:{}",
             settings.application.host, settings.application.port
@@ -33,27 +31,6 @@ impl Application {
 
     pub async fn run_until_stopped(self) -> Result<(), std::io::Error> {
         self.server.await
-    }
-}
-
-pub async fn get_database_connection(settings: &Settings) -> DatabaseConnection {
-    let db = Database::connect(&settings.database.url)
-        .await
-        .expect("Failed to open DB connection.");
-    match db.get_database_backend() {
-        DbBackend::MySql => {
-            let url = format!("{}", &settings.database.url);
-            Database::connect(&url)
-                .await
-                .expect("Failed to open DB connection.")
-        }
-        DbBackend::Postgres => {
-            let url = format!("{}", &settings.database.url);
-            Database::connect(&url)
-                .await
-                .expect("Failed to open DB connection.")
-        }
-        DbBackend::Sqlite => db,
     }
 }
 

@@ -8,8 +8,8 @@ name = "test_utils"
 path = "lib.rs"
 
 [dependencies]
+common = { path = "../common", features = ["db", "settings"]}
 entities = { path = "../entities" }
-migration = { path = "../../migration" }
 
 chrono.workspace = true
 dotenvy.workspace = true

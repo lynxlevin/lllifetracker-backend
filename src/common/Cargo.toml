@@ -20,7 +20,7 @@ sea-orm = { workspace = true, optional = true }
 uuid = { workspace = true, optional = true }
 
 [features]
-# db = ["dep:sea-orm", "dep:migration", "settings"]
+db = ["dep:sea-orm", "dep:migration", "settings"]
 # errors = ["dep:actix-web", "dep:serde"]
 # factory = ["dep:entities", "dep:sea-orm", "dep:uuid", "dep:chrono"]
 # redis = ["dep:deadpool-redis", "settings"]
