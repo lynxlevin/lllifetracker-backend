@@ -1,0 +1,15 @@
+[package]
+name = "server"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "server"
+path = "lib.rs"
+
+[dependencies]
+common = { path = "../common", features = ["settings"] }
+routes = { path = "../routes" }
+
+actix-session.workspace = true
+actix-web.workspace = true

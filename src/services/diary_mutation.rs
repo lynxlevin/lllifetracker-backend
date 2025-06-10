@@ -148,13 +148,18 @@ mod tests {
     use sea_orm::DbErr;
 
     use ::types::CustomDbErr;
-    use test_utils::{self, *};
+    use common::{
+        db::init_db,
+        factory::{self, *},
+        settings::get_test_settings,
+    };
 
     use super::*;
 
     #[actix_web::test]
     async fn create() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let (_, tag_0) = factory::action(user.id)
             .name("action_0".to_string())
@@ -207,7 +212,8 @@ mod tests {
 
     #[actix_web::test]
     async fn partial_update_text() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let diary = factory::diary(user.id).insert(&db).await?;
         let (_, tag) = factory::action(user.id).insert_with_tag(&db).await?;
@@ -245,7 +251,8 @@ mod tests {
 
     #[actix_web::test]
     async fn partial_update_date() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let diary = factory::diary(user.id).insert(&db).await?;
         let (_, tag) = factory::action(user.id).insert_with_tag(&db).await?;
@@ -283,7 +290,8 @@ mod tests {
 
     #[actix_web::test]
     async fn partial_update_score() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let diary = factory::diary(user.id).insert(&db).await?;
         let (_, tag) = factory::action(user.id).insert_with_tag(&db).await?;
@@ -321,7 +329,8 @@ mod tests {
 
     #[actix_web::test]
     async fn partial_update_add_tags() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let diary = factory::diary(user.id).insert(&db).await?;
         let (_, tag) = factory::action(user.id).insert_with_tag(&db).await?;
@@ -360,7 +369,8 @@ mod tests {
 
     #[actix_web::test]
     async fn partial_update_remove_tags() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let diary = factory::diary(user.id).insert(&db).await?;
         let (_, tag) = factory::action(user.id).insert_with_tag(&db).await?;
@@ -399,7 +409,8 @@ mod tests {
 
     #[actix_web::test]
     async fn partial_update_unauthorized() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let diary = factory::diary(user.id).insert(&db).await?;
         let form = UpdateDiary {
@@ -424,7 +435,8 @@ mod tests {
 
     #[actix_web::test]
     async fn delete() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let diary = factory::diary(user.id).insert(&db).await?;
         let (_, tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
@@ -447,7 +459,8 @@ mod tests {
 
     #[actix_web::test]
     async fn delete_unauthorized() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let diary = factory::diary(user.id).insert(&db).await?;
 

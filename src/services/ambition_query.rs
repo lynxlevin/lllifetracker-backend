@@ -38,15 +38,19 @@ impl AmbitionQuery {
 
 #[cfg(test)]
 mod tests {
-    use test_utils::{self, *};
-
+    use common::{
+        db::init_db,
+        factory::{self, *},
+        settings::get_test_settings,
+    };
     use sea_orm::ActiveModelTrait;
 
     use super::*;
 
     #[actix_web::test]
     async fn find_all_by_user_id() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let ambition_0 = factory::ambition(user.id)
             .name("ambition_0".to_string())
@@ -103,7 +107,8 @@ mod tests {
 
     #[actix_web::test]
     async fn find_all_by_user_id_show_archived_only() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let _ambition = factory::ambition(user.id).insert(&db).await?;
         let archived_ambition = factory::ambition(user.id)

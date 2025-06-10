@@ -54,14 +54,19 @@ impl DiaryQuery {
 #[cfg(test)]
 mod tests {
     use chrono::{Duration, Utc};
+    use common::{
+        db::init_db,
+        factory::{self, *},
+        settings::get_test_settings,
+    };
     use sea_orm::ActiveModelTrait;
-    use test_utils::{self, *};
 
     use super::*;
 
     #[actix_web::test]
     async fn find_all_with_tags_by_user_id() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let now = Utc::now();
         let diary_0 = factory::diary(user.id)

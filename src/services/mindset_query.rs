@@ -38,7 +38,11 @@ impl MindsetQuery {
 
 #[cfg(test)]
 mod tests {
-    use test_utils::{self, *};
+    use common::{
+        db::init_db,
+        factory::{self, *},
+        settings::get_test_settings,
+    };
 
     use sea_orm::ActiveModelTrait;
 
@@ -46,7 +50,8 @@ mod tests {
 
     #[actix_web::test]
     async fn find_all_by_user_id() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let mindset_0 = factory::mindset(user.id)
             .name("mindset_0".to_string())
@@ -100,7 +105,8 @@ mod tests {
 
     #[actix_web::test]
     async fn find_all_by_user_id_show_archived_only() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let _mindset = factory::mindset(user.id).insert(&db).await?;
         let archived_mindset = factory::mindset(user.id).archived(true).insert(&db).await?;

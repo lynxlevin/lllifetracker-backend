@@ -2,9 +2,9 @@ use actix_web::{http, test, HttpMessage};
 use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
 
 use super::super::utils::init_app;
-use test_utils::{self, *};
-use types::*;
+use common::factory;
 use entities::desired_state;
+use types::*;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {

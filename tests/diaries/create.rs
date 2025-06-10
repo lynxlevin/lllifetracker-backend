@@ -6,7 +6,7 @@ use sea_orm::{
 
 use super::super::utils::init_app;
 use entities::{diaries_tags, diary};
-use test_utils::{self, *};
+use common::factory::{self, *};
 use types::*;
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]

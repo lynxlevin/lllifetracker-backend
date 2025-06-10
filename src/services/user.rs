@@ -92,13 +92,18 @@ impl Query {
 
 #[cfg(test)]
 mod mutation_tests {
-    use test_utils::{self, *};
+    use common::{
+        db::init_db,
+        factory::{self, *},
+        settings::get_test_settings,
+    };
 
     use super::*;
 
     #[actix_web::test]
     async fn create_user() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let form_data = NewUser {
             email: format!("{}@test.com", uuid::Uuid::now_v7().to_string()),
             password: "password".to_string(),
@@ -123,7 +128,8 @@ mod mutation_tests {
 
     #[actix_web::test]
     async fn activate_user_by_id() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().is_active(false).insert(&db).await?;
 
         let res = Mutation::activate_user_by_id(&db, user.id).await?;
@@ -145,7 +151,8 @@ mod mutation_tests {
 
     #[actix_web::test]
     async fn update_user_password() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let new_password = "updated_password".to_string();
 

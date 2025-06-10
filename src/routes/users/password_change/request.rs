@@ -2,6 +2,7 @@ use actix_web::{
     web::{Data, Json},
     HttpResponse,
 };
+use common::settings::types::Settings;
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
 use services::user::Query as UserQuery;
@@ -14,12 +15,13 @@ struct UserEmail {
     email: String,
 }
 
-#[tracing::instrument(name = "Requesting a password change", skip(db, redis_pool))]
+#[tracing::instrument(name = "Requesting a password change", skip(db, redis_pool, settings))]
 #[actix_web::post("/email-verification")]
 pub async fn request_password_change(
     db: Data<DbConn>,
     redis_pool: Data<Pool>,
     req: Json<UserEmail>,
+    settings: Data<Settings>,
 ) -> HttpResponse {
     match UserQuery::find_active_by_email(&db, req.email.clone()).await {
         Ok(_user) => match _user {
@@ -33,6 +35,7 @@ pub async fn request_password_change(
                         user.last_name,
                         "password_reset_email.html",
                         redis_con,
+                        &settings,
                     )
                     .await
                     .unwrap();

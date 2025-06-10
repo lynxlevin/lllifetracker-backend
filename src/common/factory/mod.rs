@@ -1,13 +1,13 @@
-pub mod action;
-pub mod action_track;
-pub mod ambition;
-pub mod desired_state;
-pub mod diary;
-pub mod link;
-pub mod mindset;
-pub mod reading_note;
-pub mod tag;
-pub mod user;
+mod action;
+mod action_track;
+mod ambition;
+mod desired_state;
+mod diary;
+mod link;
+mod mindset;
+mod reading_note;
+mod tag;
+mod user;
 
 pub use action::*;
 pub use action_track::*;

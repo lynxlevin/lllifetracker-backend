@@ -3,6 +3,7 @@ use actix_web::{
     web::{Data, Json},
     HttpResponse,
 };
+use common::settings::types::Settings;
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
 use services::user::Query as UserQuery;
@@ -16,13 +17,14 @@ struct RequestBody {
 }
 #[tracing::instrument(
     name = "Resending registration confirmation email",
-    skip(db, redis_pool, req)
+    skip(db, redis_pool, req, settings)
 )]
 #[post("/resend-email")]
 pub async fn resend_email(
     db: Data<DbConn>,
     redis_pool: Data<Pool>,
     req: Json<RequestBody>,
+    settings: Data<Settings>,
 ) -> HttpResponse {
     match UserQuery::find_inactive_by_email(&db, req.email.clone()).await {
         Ok(user) => match user {
@@ -37,6 +39,7 @@ pub async fn resend_email(
                             user.last_name,
                             "verification_email.html",
                             redis_con,
+                            &settings,
                         )
                         .await
                         .unwrap();

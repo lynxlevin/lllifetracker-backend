@@ -3,7 +3,7 @@ use chrono::{DateTime, Duration, FixedOffset, TimeDelta};
 use sea_orm::{ActiveModelTrait, DbErr};
 
 use super::super::utils::init_app;
-use test_utils::{self, *};
+use common::factory::{self, *};
 use types::*;
 
 #[actix_web::test]
@@ -23,7 +23,9 @@ async fn happy_path() -> Result<(), DbErr> {
         .insert(&db)
         .await?;
 
-    let req = test::TestRequest::get().uri("/api/action_tracks").to_request();
+    let req = test::TestRequest::get()
+        .uri("/api/action_tracks")
+        .to_request();
     req.extensions_mut().insert(user.clone());
 
     let resp = test::call_service(&app, req).await;
@@ -122,7 +124,9 @@ async fn happy_path_started_at_gte() -> Result<(), DbErr> {
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let (app, _) = init_app().await?;
 
-    let req = test::TestRequest::get().uri("/api/action_tracks").to_request();
+    let req = test::TestRequest::get()
+        .uri("/api/action_tracks")
+        .to_request();
 
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), http::StatusCode::UNAUTHORIZED);
