@@ -9,6 +9,7 @@ members = [
     "src/utils",
     "src/settings",
     "src/routes",
+    "src/server",
     "src/life_tracker",
     "tests",
 ]

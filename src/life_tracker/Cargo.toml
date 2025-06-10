@@ -11,6 +11,7 @@ path = "main.rs"
 migration = { path = "../../migration" }
 routes = { path = "../routes" }
 settings = { path = "../settings" }
+server = { path = "../server" }
 utils = { path = "../utils" }
 
 actix-session.workspace = true

@@ -2093,6 +2093,7 @@ dependencies = [
  "migration",
  "routes",
  "sea-orm",
+ "server",
  "settings",
  "tracing",
  "tracing-appender",
@@ -3419,6 +3420,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "server"
+version = "0.1.0"
+dependencies = [
+ "actix-session",
+ "actix-web",
+ "routes",
+ "settings",
+]
+
+[[package]]
 name = "services"
 version = "0.1.0"
 dependencies = [
@@ -3908,6 +3919,7 @@ dependencies = [
  "sea-orm",
  "serde",
  "serde_json",
+ "server",
  "test_utils",
  "tracing",
  "types",

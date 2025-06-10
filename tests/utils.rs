@@ -7,6 +7,7 @@ use actix_web::{
 };
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{ConnectionTrait, Database, DbBackend, DbConn, DbErr};
+use server::get_routes;
 
 async fn init_db() -> Result<DbConn, DbErr> {
     dotenvy::from_filename(".env.testing").ok();
@@ -42,20 +43,8 @@ pub async fn init_app() -> Result<
 > {
     let db = init_db().await?;
     let app = test::init_service(
-        // MYMEMO: This should be completely the same as in startup.rs
         App::new()
-            .service(
-                scope("/api")
-                    .configure(routes::auth_routes)
-                    .configure(routes::ambition_routes)
-                    .configure(routes::desired_state_routes)
-                    .configure(routes::action_routes)
-                    .configure(routes::mindset_routes)
-                    .configure(routes::reading_note_routes)
-                    .configure(routes::tag_routes)
-                    .configure(routes::action_track_routes)
-                    .configure(routes::diary_routes),
-            )
+            .service(get_routes())
             .app_data(Data::new(db.clone())),
     )
     .await;

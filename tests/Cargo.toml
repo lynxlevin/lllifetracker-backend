@@ -13,6 +13,7 @@ routes = { path = "../src/routes" }
 test_utils = { path = "../src/test_utils" }
 types = { path = "../src/types" }
 migration = { path = "../migration" }
+server = { path = "../src/server" }
 
 actix-http.workspace = true
 actix-session.workspace = true

@@ -7,11 +7,13 @@ use actix_web::{
     App, HttpServer,
 };
 use sea_orm::{ConnectionTrait, Database, DatabaseConnection, DbBackend};
+use server::{get_preps_for_redis_session_store, get_routes, setup_session_middleware_builder};
 use std::env;
 
 use migration::{Migrator, MigratorTrait};
 use routes::{
-    action_routes, action_track_routes, ambition_routes, auth_routes, desired_state_routes, diary_routes, mindset_routes, reading_note_routes, tag_routes
+    action_routes, action_track_routes, ambition_routes, auth_routes, desired_state_routes,
+    diary_routes, mindset_routes, reading_note_routes, tag_routes,
 };
 use utils::auth::auth_middleware::AuthenticateUser;
 pub struct Application {
@@ -71,51 +73,26 @@ async fn run(
     db: DatabaseConnection,
     settings: settings::Settings,
 ) -> Result<Server, std::io::Error> {
-    // MYMEMO: refactor redis usage referencing deadpool redis official. Would like to remove boiler plates at getting connections.
     let redis_url = env::var("REDIS_URL").expect("REDIS_URL must be set");
     let cfg = deadpool_redis::Config::from_url(redis_url.clone());
     let redis_pool = cfg
         .create_pool(Some(deadpool_redis::Runtime::Tokio1))
         .expect("Cannot create deadpool redis.");
 
-    let secret_key = cookie::Key::from(settings.secret.hmac_secret.as_bytes());
-    let redis_store = storage::RedisSessionStore::new(redis_url)
-        .await
-        .expect("Cannot unwrap redis session.");
+    let (redis_store, secret_key) = get_preps_for_redis_session_store(&settings, &redis_url).await;
+
     let server = HttpServer::new(move || {
         App::new()
             .wrap(Compress::default())
             .wrap(AuthenticateUser)
-            .wrap(if settings.debug {
-                SessionMiddleware::builder(redis_store.clone(), secret_key.clone())
-                    .session_lifecycle(
-                        PersistentSession::default().session_ttl(cookie::time::Duration::days(7)),
-                    )
-                    .cookie_name("sessionId".to_string())
-                    .cookie_same_site(cookie::SameSite::None)
-                    .cookie_secure(false)
-                    .build()
-            } else {
-                SessionMiddleware::builder(redis_store.clone(), secret_key.clone())
-                    .session_lifecycle(
-                        PersistentSession::default().session_ttl(cookie::time::Duration::days(7)),
-                    )
-                    .cookie_name("sessionId".to_string())
-                    .build()
-            })
-            .service(
-                scope("/api")
-                    .service(routes::health_check)
-                    .configure(auth_routes)
-                    .configure(ambition_routes)
-                    .configure(desired_state_routes)
-                    .configure(action_routes)
-                    .configure(mindset_routes)
-                    .configure(reading_note_routes)
-                    .configure(tag_routes)
-                    .configure(action_track_routes)
-                    .configure(diary_routes),
+            .wrap(
+                setup_session_middleware_builder(
+                    SessionMiddleware::builder(redis_store.clone(), secret_key.clone()),
+                    &settings,
+                )
+                .build(),
             )
+            .service(get_routes())
             .app_data(Data::new(db.clone()))
             .app_data(Data::new(redis_pool.clone()))
     })
