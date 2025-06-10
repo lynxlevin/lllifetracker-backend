@@ -8,29 +8,23 @@ name = "routes"
 path = "lib.rs"
 
 [dependencies]
-actix-session = { version = "^0.10.0", features = ["redis-session"] }
-actix-web = "^4.8.0"
-chrono = "^0.4.40"
-deadpool-redis = "^0.18.0"
 entities = { path = "../entities" }
-# Features here: https://www.sea-ql.org/SeaORM/docs/install-and-config/database-and-async-runtime/#extra-features
-sea-orm = { version = "~1.0", features = [
-    "sqlx-postgres",
-    "runtime-tokio-rustls",
-    "macros",
-    "with-chrono",
-    "with-json",
-    "with-uuid",
-] }
-serde = "^1.0.219"
 services = { path = "../services" }
 settings = { path = "../settings" }
-tracing = "^0.1.40"
 types = { path = "../types" }
 utils = { path = "../utils" }
-uuid = { version = "^1.16.0", features = ["v7", "serde"] }
+
+actix-session.workspace = true
+actix-web.workspace = true
+chrono.workspace = true
+deadpool-redis.workspace = true
+sea-orm.workspace = true
+serde.workspace = true
+tracing.workspace = true
+uuid.workspace = true
 
 [dev-dependencies]
-actix-http = "3.*"
-serde_json = "^1.0.120"
 test_utils = { path = "../test_utils" }
+
+actix-http.workspace = true
+serde_json.workspace = true

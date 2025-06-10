@@ -14,22 +14,14 @@ test_utils = { path = "../src/test_utils" }
 types = { path = "../src/types" }
 migration = { path = "../migration" }
 
-actix-http = "3.*"
-actix-session = { version = "^0.10.0", features = ["redis-session"] }
-actix-web = "^4.8.0"
-chrono = "^0.4.40"
-deadpool-redis = "^0.18.0"
-dotenvy = "^0.15.7"
-# Features here: https://www.sea-ql.org/SeaORM/docs/install-and-config/database-and-async-runtime/#extra-features
-sea-orm = { version = "~1.0", features = [
-    "sqlx-postgres",
-    "runtime-tokio-rustls",
-    "macros",
-    "with-chrono",
-    "with-json",
-    "with-uuid",
-] }
-serde = "^1.0.219"
-serde_json = "^1.0.120"
-tracing = "^0.1.40"
-uuid = { version = "^1.16.0", features = ["v7", "serde"] }
+actix-http.workspace = true
+actix-session.workspace = true
+actix-web.workspace = true
+chrono.workspace = true
+deadpool-redis.workspace = true
+dotenvy.workspace = true
+sea-orm.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+uuid.workspace = true

@@ -8,41 +8,24 @@ name = "utils"
 path = "lib.rs"
 
 [dependencies]
-actix-session = { version = "^0.10.0", features = ["redis-session"] }
-actix-web = "^4.8.0"
-argon2 = { version = "^0.5.3", default-features = false }
-chrono = "^0.4.40"
-deadpool-redis = "^0.18.0"
-futures = { version = "^0.3.28", default-features = false }
-hex = { version = "^0.4.3", default-features = false }
-lettre = { version = "^0.11.10", default-features = false, features = [
-    "builder",
-    "pool",
-    "rustls-tls",
-    "smtp-transport",
-] }
-minijinja = { version = "^2.1.0", features = [
-    "loader",
-], default-features = false }
-pasetors = { version = "^0.6.8", features = [
-    "std",
-    "v4",
-], default-features = false }
-# Features here: https://www.sea-ql.org/SeaORM/docs/install-and-config/database-and-async-runtime/#extra-features
-sea-orm = { version = "~1.0", features = [
-    "sqlx-postgres",
-    "runtime-tokio-rustls",
-    "macros",
-    "with-chrono",
-    "with-json",
-    "with-uuid",
-] }
-serde_json = "^1.0.120"
 services = { path = "../services" }
 settings = { path = "../settings" }
-tracing = "^0.1.40"
 types = { path = "../types" }
-uuid = { version = "^1.16.0", features = ["v7", "serde"] }
+
+actix-session.workspace = true
+actix-web.workspace = true
+argon2.workspace = true
+chrono.workspace = true
+deadpool-redis.workspace = true
+futures.workspace = true
+hex.workspace = true
+lettre.workspace = true
+minijinja.workspace = true
+pasetors.workspace = true
+sea-orm.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+uuid.workspace = true
 
 [dev-dependencies]
 entities = { path = "../entities" }
