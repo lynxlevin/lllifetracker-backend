@@ -8,7 +8,7 @@ name = "tests"
 path = "lib.rs"
 
 [dependencies]
-common = { path = "../src/common", features = ["db", "settings"] }
+common = { path = "../src/common", features = ["db", "redis", "settings"] }
 entities = { path = "../src/entities" }
 routes = { path = "../src/routes" }
 test_utils = { path = "../src/test_utils" }
@@ -19,7 +19,6 @@ actix-http.workspace = true
 actix-session.workspace = true
 actix-web.workspace = true
 chrono.workspace = true
-deadpool-redis.workspace = true
 dotenvy.workspace = true
 sea-orm.workspace = true
 serde.workspace = true

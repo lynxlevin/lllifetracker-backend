@@ -39,9 +39,8 @@ async fn run(
     db: DatabaseConnection,
     settings: Settings,
 ) -> Result<Server, std::io::Error> {
-    let cfg = deadpool_redis::Config::from_url(settings.redis.url.clone());
-    let redis_pool = cfg
-        .create_pool(Some(deadpool_redis::Runtime::Tokio1))
+    let redis_pool = init_redis_pool(&settings)
+        .await
         .expect("Cannot create deadpool redis.");
 
     let (redis_store, secret_key) =

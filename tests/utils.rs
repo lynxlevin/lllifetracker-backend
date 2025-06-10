@@ -5,7 +5,7 @@ use actix_web::{
     web::Data,
     App,
 };
-use common::{db::init_db, settings::get_test_settings};
+use common::{db::init_db, redis::init_redis_pool, settings::get_test_settings};
 use sea_orm::{DbConn, DbErr};
 use server::get_routes;
 
@@ -18,10 +18,15 @@ pub async fn init_app() -> Result<
 > {
     let settings = get_test_settings();
     let db = init_db(&settings).await;
+    let redis_pool = init_redis_pool(&settings)
+        .await
+        .expect("Error on getting Redis pool.");
+
     let app = test::init_service(
         App::new()
             .service(get_routes())
             .app_data(Data::new(db.clone()))
+            .app_data(Data::new(redis_pool.clone()))
             .app_data(Data::new(settings)),
     )
     .await;
