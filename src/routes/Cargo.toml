@@ -8,9 +8,9 @@ name = "routes"
 path = "lib.rs"
 
 [dependencies]
+common = { path = "../common", features = ["settings"] }
 entities = { path = "../entities" }
 services = { path = "../services" }
-settings = { path = "../settings" }
 types = { path = "../types" }
 utils = { path = "../utils" }
 

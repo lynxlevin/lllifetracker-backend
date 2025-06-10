@@ -8,16 +8,14 @@ name = "life_tracker"
 path = "main.rs"
 
 [dependencies]
+common = { path = "../common", features = ["settings"] }
 migration = { path = "../../migration" }
-routes = { path = "../routes" }
-settings = { path = "../settings" }
 server = { path = "../server" }
 utils = { path = "../utils" }
 
 actix-session.workspace = true
 actix-web.workspace = true
 deadpool-redis.workspace = true
-dotenvy.workspace = true
 sea-orm.workspace = true
 tracing.workspace = true
 tracing-appender.workspace = true

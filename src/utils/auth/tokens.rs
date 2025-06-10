@@ -1,4 +1,5 @@
 use argon2::password_hash::rand_core::{OsRng, RngCore};
+use common::settings::types::Settings;
 use deadpool_redis::redis::{AsyncCommands, SetExpiry, SetOptions};
 use pasetors::claims::{Claims, ClaimsValidationRules};
 use pasetors::keys::SymmetricKey;
@@ -9,11 +10,12 @@ use pasetors::{local, Local};
 const SESSION_KEY_PREFIX: &str = "valid_session_key_for_{}";
 
 // MYMEMO: refactor
-#[tracing::instrument(name = "Issue pasetors token", skip(redis_connection))]
+#[tracing::instrument(name = "Issue pasetors token", skip(redis_connection, settings))]
 pub async fn issue_confirmation_token_pasetors(
     user_id: uuid::Uuid,
     redis_connection: &mut deadpool_redis::Connection,
     is_for_password_change: Option<bool>,
+    settings: &Settings,
 ) -> Result<String, deadpool_redis::redis::RedisError> {
     let session_key: String = {
         let mut buff = [0_u8; 128];
@@ -32,7 +34,6 @@ pub async fn issue_confirmation_token_pasetors(
         }
     };
 
-    let settings = settings::get_settings();
     let current_date_time = chrono::Local::now();
     let dt = {
         if is_for_password_change.is_some() {
@@ -83,13 +84,16 @@ pub async fn issue_confirmation_token_pasetors(
 }
 
 // MYMEMO: refactor
-#[tracing::instrument(name = "Verify pasetors token", skip(token, redis_connection))]
+#[tracing::instrument(
+    name = "Verify pasetors token",
+    skip(token, redis_connection, settings)
+)]
 pub async fn verify_confirmation_token_pasetor(
     token: String,
     redis_connection: &mut deadpool_redis::Connection,
     is_password: Option<bool>,
+    settings: &Settings,
 ) -> Result<::types::ConfirmationToken, String> {
-    let settings = settings::get_settings();
     let sk = SymmetricKey::<V4>::from(settings.secret.secret_key.as_bytes()).unwrap();
 
     let validation_rules = ClaimsValidationRules::new();

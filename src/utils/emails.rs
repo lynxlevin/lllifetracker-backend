@@ -1,3 +1,4 @@
+use common::settings::types::Settings;
 use lettre::{
     message::{header::ContentType, MultiPart, SinglePart},
     transport::smtp::{
@@ -10,7 +11,7 @@ use lettre::{
 // MYMEMO: refactor
 #[tracing::instrument(
     name = "Generic e-mail sending function.",
-    skip(recipient_email, recipient_first_name, recipient_last_name, subject, html_content, text_content),
+    skip(recipient_email, recipient_first_name, recipient_last_name, subject, html_content, text_content, settings),
     fields(recipient_email = %recipient_email, recipient_first_name = %recipient_first_name, recipient_last_name = %recipient_last_name)
 )]
 pub async fn send_email(
@@ -20,9 +21,8 @@ pub async fn send_email(
     subject: impl Into<String>,
     html_content: impl Into<String>,
     text_content: impl Into<String>,
+    settings: Settings,
 ) -> Result<(), String> {
-    let settings = settings::get_settings();
-
     let email = Message::builder()
         .from(match settings.email.sender.parse() {
                 Ok(mailbox) => mailbox,
@@ -78,7 +78,7 @@ pub async fn send_email(
 // MYMEMO: refactor
 #[tracing::instrument(
     name = "Generic multipart e-mail sending function.",
-    skip(redis_connection),
+    skip(redis_connection, settings),
     fields(
         recipient_user_id = %user_id,
         recipient_email = %recipient_email,
@@ -94,14 +94,15 @@ pub async fn send_multipart_email(
     recipient_last_name: String,
     template_name: &str,
     redis_connection: &mut deadpool_redis::Connection,
+    settings: &Settings,
 ) -> Result<(), String> {
-    let settings = settings::get_settings();
     let title = format!("Lynx Levin's LifeTracker - {subject}");
 
     let issued_token = match crate::auth::tokens::issue_confirmation_token_pasetors(
         user_id,
         redis_connection,
         None,
+        settings,
     )
     .await
     {
@@ -119,7 +120,7 @@ pub async fn send_multipart_email(
                 settings.application.base_url, settings.application.port
             )
         } else {
-            settings.application.base_url
+            settings.application.base_url.clone()
         }
     };
 
@@ -140,11 +141,11 @@ pub async fn send_multipart_email(
     let current_date_time = chrono::Local::now();
     let dt = current_date_time + chrono::Duration::minutes(settings.secret.token_expiration);
 
-    let template = settings::ENV.get_template(template_name).unwrap();
+    let template = ENV.get_template(template_name).unwrap();
     let ctx = minijinja::context! {
         title => &title,
         confirmation_link => &confirmation_link,
-        domain => &settings.frontend_url,
+        domain => &settings.application.frontend_url,
         expiration_time => &settings.secret.token_expiration,
         exact_time => &dt.format("%A %B %d, %Y at %r").to_string()
     };
@@ -165,9 +166,17 @@ pub async fn send_multipart_email(
         subject,
         html_text,
         text,
+        settings.clone(),
     ));
     Ok(())
 }
+
+static ENV: once_cell::sync::Lazy<minijinja::Environment<'static>> =
+    once_cell::sync::Lazy::new(|| {
+        let mut env = minijinja::Environment::new();
+        env.set_loader(minijinja::path_loader("templates"));
+        env
+    });
 
 #[cfg(test)]
 mod tests {

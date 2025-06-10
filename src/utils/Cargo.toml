@@ -8,8 +8,8 @@ name = "utils"
 path = "lib.rs"
 
 [dependencies]
+common = { path = "../common", features = ["settings"] }
 services = { path = "../services" }
-settings = { path = "../settings" }
 types = { path = "../types" }
 
 actix-session.workspace = true
@@ -21,6 +21,7 @@ futures.workspace = true
 hex.workspace = true
 lettre.workspace = true
 minijinja.workspace = true
+once_cell.workspace = true
 pasetors.workspace = true
 sea-orm.workspace = true
 serde_json.workspace = true

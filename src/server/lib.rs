@@ -3,11 +3,11 @@ use actix_session::{
     storage::RedisSessionStore,
 };
 use actix_web::{cookie, web::scope, Scope};
+use common::settings::types::Settings;
 use routes::{
     action_routes, action_track_routes, ambition_routes, auth_routes, desired_state_routes,
     diary_routes, mindset_routes, reading_note_routes, tag_routes,
 };
-use settings::Settings;
 
 pub async fn get_preps_for_redis_session_store(
     settings: &Settings,

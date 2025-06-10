@@ -1,20 +1,10 @@
-use actix_session::{config::PersistentSession, storage, SessionMiddleware};
-use actix_web::{
-    cookie,
-    dev::Server,
-    middleware::Compress,
-    web::{scope, Data},
-    App, HttpServer,
-};
+use actix_session::SessionMiddleware;
+use actix_web::{dev::Server, middleware::Compress, web::Data, App, HttpServer};
+use common::settings::types::Settings;
 use sea_orm::{ConnectionTrait, Database, DatabaseConnection, DbBackend};
 use server::{get_preps_for_redis_session_store, get_routes, setup_session_middleware_builder};
-use std::env;
 
 use migration::{Migrator, MigratorTrait};
-use routes::{
-    action_routes, action_track_routes, ambition_routes, auth_routes, desired_state_routes,
-    diary_routes, mindset_routes, reading_note_routes, tag_routes,
-};
 use utils::auth::auth_middleware::AuthenticateUser;
 pub struct Application {
     port: u16,
@@ -22,8 +12,8 @@ pub struct Application {
 }
 
 impl Application {
-    pub async fn build(settings: settings::Settings) -> Result<Self, std::io::Error> {
-        let db = get_database_connection().await;
+    pub async fn build(settings: Settings) -> Result<Self, std::io::Error> {
+        let db = get_database_connection(&settings).await;
         Migrator::up(&db, None).await.unwrap();
         let address = format!(
             "{}:{}",
@@ -46,20 +36,19 @@ impl Application {
     }
 }
 
-pub async fn get_database_connection() -> DatabaseConnection {
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let db = Database::connect(&database_url)
+pub async fn get_database_connection(settings: &Settings) -> DatabaseConnection {
+    let db = Database::connect(&settings.database.url)
         .await
         .expect("Failed to open DB connection.");
     match db.get_database_backend() {
         DbBackend::MySql => {
-            let url = format!("{}", &database_url);
+            let url = format!("{}", &settings.database.url);
             Database::connect(&url)
                 .await
                 .expect("Failed to open DB connection.")
         }
         DbBackend::Postgres => {
-            let url = format!("{}", &database_url);
+            let url = format!("{}", &settings.database.url);
             Database::connect(&url)
                 .await
                 .expect("Failed to open DB connection.")
@@ -71,15 +60,15 @@ pub async fn get_database_connection() -> DatabaseConnection {
 async fn run(
     listener: std::net::TcpListener,
     db: DatabaseConnection,
-    settings: settings::Settings,
+    settings: Settings,
 ) -> Result<Server, std::io::Error> {
-    let redis_url = env::var("REDIS_URL").expect("REDIS_URL must be set");
-    let cfg = deadpool_redis::Config::from_url(redis_url.clone());
+    let cfg = deadpool_redis::Config::from_url(settings.redis.url.clone());
     let redis_pool = cfg
         .create_pool(Some(deadpool_redis::Runtime::Tokio1))
         .expect("Cannot create deadpool redis.");
 
-    let (redis_store, secret_key) = get_preps_for_redis_session_store(&settings, &redis_url).await;
+    let (redis_store, secret_key) =
+        get_preps_for_redis_session_store(&settings, &settings.redis.url).await;
 
     let server = HttpServer::new(move || {
         App::new()
@@ -95,6 +84,7 @@ async fn run(
             .service(get_routes())
             .app_data(Data::new(db.clone()))
             .app_data(Data::new(redis_pool.clone()))
+            .app_data(Data::new(settings.clone()))
     })
     .listen(listener)?
     .run();

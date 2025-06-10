@@ -3,11 +3,11 @@ resolver = "2"
 members = [
     ".",
     "src/entities",
+    "src/common",
     "src/types",
     "src/test_utils",
     "src/services",
     "src/utils",
-    "src/settings",
     "src/routes",
     "src/server",
     "src/life_tracker",

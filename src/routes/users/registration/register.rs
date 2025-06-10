@@ -3,6 +3,7 @@ use actix_web::{
     web::{Data, Json},
     HttpResponse,
 };
+use common::settings::types::Settings;
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
 use services::user;
@@ -17,7 +18,7 @@ struct RequestBody {
     last_name: String,
 }
 #[tracing::instrument(name = "Adding a new user",
-skip(db, redis_pool, new_user),
+skip(db, redis_pool, new_user, settings),
 fields(
     new_user_mail = %new_user.email,
     new_user_first_name = %new_user.first_name,
@@ -28,9 +29,8 @@ pub async fn register(
     db: Data<DbConn>,
     redis_pool: Data<Pool>,
     new_user: Json<RequestBody>,
+    settings: Data<Settings>,
 ) -> HttpResponse {
-    let settings = settings::get_settings();
-
     let hashed_password = utils::auth::password::hash(new_user.0.password.as_bytes()).await;
 
     let new_user = user::NewUser {
@@ -54,6 +54,7 @@ pub async fn register(
                         user.last_name,
                         "verification_email.html",
                         redis_con,
+                        &settings,
                     )
                     .await
                     .unwrap();

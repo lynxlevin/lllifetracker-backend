@@ -1,33 +1,37 @@
-use services::user::Mutation as UserMutation;
 use actix_web::{
     get,
     http::header,
     web::{Data, Query},
     HttpResponse,
 };
+use common::settings::types::Settings;
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
+use services::user::Mutation as UserMutation;
 
 #[derive(serde::Deserialize)]
 pub struct Parameters {
     token: String,
 }
 
-#[tracing::instrument(name = "Activating a new user", skip(db, redis_pool, parameters))]
+#[tracing::instrument(
+    name = "Activating a new user",
+    skip(db, redis_pool, parameters, settings)
+)]
 #[get("/confirm")]
 pub async fn confirm(
     parameters: Query<Parameters>,
     db: Data<DbConn>,
     redis_pool: Data<Pool>,
+    settings: Data<Settings>,
 ) -> HttpResponse {
-    let settings = settings::get_settings();
-
     match redis_pool.get().await {
         Ok(ref mut redis_con) => {
             match utils::auth::tokens::verify_confirmation_token_pasetor(
                 parameters.token.clone(),
                 redis_con,
                 None,
+                &settings,
             )
             .await
             {
@@ -38,7 +42,7 @@ pub async fn confirm(
                             HttpResponse::SeeOther()
                                 .insert_header((
                                     header::LOCATION,
-                                    format!("{}/auth/confirmed", settings.frontend_url),
+                                    format!("{}/auth/confirmed", settings.application.frontend_url),
                                 ))
                                 .json(::types::SuccessResponse {
                                     message: "Your account has been activated successfully! You can now log in."
@@ -50,7 +54,10 @@ pub async fn confirm(
                             HttpResponse::SeeOther()
                                 .insert_header((
                                     header::LOCATION,
-                                    format!("{}/auth/error?reason={e}", settings.frontend_url),
+                                    format!(
+                                        "{}/auth/error?reason={e}",
+                                        settings.application.frontend_url
+                                    ),
                                 ))
                                 .json(::types::ErrorResponse {
                                     error: "We cannot activate your account at the moment"
@@ -64,7 +71,7 @@ pub async fn confirm(
                     HttpResponse::SeeOther()
                         .insert_header((
                             header::LOCATION,
-                            format!("{}/auth/regenerate-token", settings.frontend_url),
+                            format!("{}/auth/regenerate-token", settings.application.frontend_url),
                         )).json(::types::ErrorResponse {error: "It appears that your confirmation token has expired or previously used. Kindly generate a new token".to_string()})
                 }
             }
@@ -74,7 +81,7 @@ pub async fn confirm(
             HttpResponse::SeeOther()
                 .insert_header((
                     header::LOCATION,
-                    format!("{}/auth/error", settings.frontend_url),
+                    format!("{}/auth/error", settings.application.frontend_url),
                 ))
                 .json(::types::ErrorResponse {
                     error: "We cannot activate your account at the moment".to_string(),
