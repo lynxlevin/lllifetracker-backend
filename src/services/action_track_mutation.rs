@@ -94,15 +94,19 @@ mod tests {
     use sea_orm::EntityTrait;
 
     use ::types::CustomDbErr;
-    use common::factory::{self, *};
+    use common::{
+        db::init_db,
+        factory::{self, *},
+        settings::get_test_settings,
+    };
     use entities::action;
-    use test_utils;
 
     use super::*;
 
     #[actix_web::test]
     async fn create() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
 
@@ -133,7 +137,8 @@ mod tests {
 
     #[actix_web::test]
     async fn create_duplicate_creation() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
         let existing_action_track = factory::action_track(user.id)
@@ -159,7 +164,8 @@ mod tests {
 
     #[actix_web::test]
     async fn update() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
         let action_track = factory::action_track(user.id)
@@ -199,7 +205,8 @@ mod tests {
 
     #[actix_web::test]
     async fn update_conflicting_update() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
         let action_track = factory::action_track(user.id)
@@ -232,7 +239,8 @@ mod tests {
 
     #[actix_web::test]
     async fn update_unauthorized() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
         let action_track = factory::action_track(user.id)
@@ -259,7 +267,8 @@ mod tests {
 
     #[actix_web::test]
     async fn delete() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
         let action_track = factory::action_track(user.id)
@@ -282,7 +291,8 @@ mod tests {
 
     #[actix_web::test]
     async fn delete_unauthorized() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
         let action_track = factory::action_track(user.id)

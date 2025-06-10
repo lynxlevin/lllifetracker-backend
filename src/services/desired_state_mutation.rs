@@ -174,15 +174,19 @@ impl DesiredStateMutation {
 #[cfg(test)]
 mod tests {
     use ::types::CustomDbErr;
-    use common::factory::{self, *};
-    use test_utils;
+    use common::{
+        db::init_db,
+        factory::{self, *},
+        settings::get_test_settings,
+    };
     use types::DesiredStateConvertToType;
 
     use super::*;
 
     #[actix_web::test]
     async fn create_with_tag() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let name = "create_with_tag".to_string();
         let description = "Create with tag.".to_string();
@@ -220,7 +224,8 @@ mod tests {
 
     #[actix_web::test]
     async fn update() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let desired_state = factory::desired_state(user.id).insert(&db).await?;
 
@@ -254,7 +259,8 @@ mod tests {
 
     #[actix_web::test]
     async fn update_unauthorized() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let desired_state = factory::desired_state(user.id).insert(&db).await?;
 
@@ -276,7 +282,8 @@ mod tests {
 
     #[actix_web::test]
     async fn delete() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let (desired_state, tag) = factory::desired_state(user.id).insert_with_tag(&db).await?;
 
@@ -295,7 +302,8 @@ mod tests {
 
     #[actix_web::test]
     async fn delete_unauthorized() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let desired_state = factory::desired_state(user.id).insert(&db).await?;
 
@@ -309,7 +317,8 @@ mod tests {
 
     #[actix_web::test]
     async fn archive() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let desired_state = factory::desired_state(user.id).insert(&db).await?;
 
@@ -333,7 +342,8 @@ mod tests {
 
     #[actix_web::test]
     async fn archive_unauthorized() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let desired_state = factory::desired_state(user.id).insert(&db).await?;
 
@@ -347,7 +357,8 @@ mod tests {
 
     #[actix_web::test]
     async fn unarchive() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let desired_state = factory::desired_state(user.id)
             .archived(true)
@@ -374,7 +385,8 @@ mod tests {
 
     #[actix_web::test]
     async fn unarchive_unauthorized() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let desired_state = factory::desired_state(user.id)
             .archived(true)
@@ -391,7 +403,8 @@ mod tests {
 
     #[actix_web::test]
     async fn bulk_update_ordering() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let desired_state_0 = factory::desired_state(user.id).insert(&db).await?;
         let desired_state_1 = factory::desired_state(user.id).insert(&db).await?;
@@ -425,7 +438,8 @@ mod tests {
     #[actix_web::test]
     async fn bulk_update_ordering_no_modification_on_different_users_records() -> Result<(), DbErr>
     {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let another_user = factory::user().insert(&db).await?;
         let another_users_desired_state =
@@ -447,7 +461,8 @@ mod tests {
 
     #[actix_web::test]
     async fn convert() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let (desired_state, desired_state_tag) =
             factory::desired_state(user.id).insert_with_tag(&db).await?;
@@ -494,7 +509,8 @@ mod tests {
 
     #[actix_web::test]
     async fn convert_unauthorized() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let desired_state = factory::desired_state(user.id).insert(&db).await?;
 

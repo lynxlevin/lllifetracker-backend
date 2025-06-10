@@ -24,7 +24,7 @@ tracing.workspace = true
 uuid.workspace = true
 
 [dev-dependencies]
-test_utils = { path = "../test_utils" }
+common = { path = "../common", features = ["db"]}
 
 actix-http.workspace = true
 serde_json.workspace = true

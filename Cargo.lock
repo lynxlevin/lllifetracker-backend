@@ -2872,7 +2872,6 @@ dependencies = [
  "serde",
  "serde_json",
  "services",
- "test_utils",
  "tracing",
  "types",
  "utils",
@@ -3278,7 +3277,6 @@ dependencies = [
  "entities",
  "sea-orm",
  "serde",
- "test_utils",
  "types",
  "uuid",
 ]
@@ -3722,14 +3720,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "test_utils"
-version = "0.1.0"
-dependencies = [
- "common",
- "sea-orm",
-]
-
-[[package]]
 name = "tests"
 version = "0.1.0"
 dependencies = [
@@ -4125,7 +4115,6 @@ dependencies = [
  "sea-orm",
  "serde_json",
  "services",
- "test_utils",
  "tracing",
  "types",
  "uuid",

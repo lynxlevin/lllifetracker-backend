@@ -5,7 +5,6 @@ members = [
     "src/entities",
     "src/common",
     "src/types",
-    "src/test_utils",
     "src/services",
     "src/utils",
     "src/routes",

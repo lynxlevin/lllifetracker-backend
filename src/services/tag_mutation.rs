@@ -62,15 +62,15 @@ impl TagMutation {
 mod tests {
     use sea_orm::{DbErr, EntityTrait};
 
-    use common::factory;
+    use common::{db::init_db, factory, settings::get_test_settings};
     use entities::tag;
-    use test_utils;
 
     use super::*;
 
     #[actix_web::test]
     async fn create_plain_tag() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
 
         let form_data = NewTag {
@@ -92,7 +92,8 @@ mod tests {
 
     #[actix_web::test]
     async fn update() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let tag = factory::tag(user.id).insert(&db).await?;
 
@@ -114,7 +115,8 @@ mod tests {
 
     #[actix_web::test]
     async fn delete_plain_tag() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let tag = factory::tag(user.id).insert(&db).await?;
 

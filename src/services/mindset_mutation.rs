@@ -129,15 +129,19 @@ impl MindsetMutation {
 
 #[cfg(test)]
 mod tests {
-    use common::factory::{self, *};
-    use test_utils;
+    use common::{
+        db::init_db,
+        factory::{self, *},
+        settings::get_test_settings,
+    };
     use types::CustomDbErr;
 
     use super::*;
 
     #[actix_web::test]
     async fn create_with_tag() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let name = "Test MindsetMutation::create_with_tag".to_string();
         let description = Some("Dummy description".to_string());
@@ -173,7 +177,8 @@ mod tests {
 
     #[actix_web::test]
     async fn update() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let mindset = factory::mindset(user.id).insert(&db).await?;
 
@@ -204,7 +209,8 @@ mod tests {
 
     #[actix_web::test]
     async fn update_unauthorized() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let mindset = factory::mindset(user.id).insert(&db).await?;
 
@@ -227,7 +233,8 @@ mod tests {
 
     #[actix_web::test]
     async fn delete() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let (mindset, tag) = factory::mindset(user.id).insert_with_tag(&db).await?;
 
@@ -244,7 +251,8 @@ mod tests {
 
     #[actix_web::test]
     async fn delete_unauthorized() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let mindset = factory::mindset(user.id).insert(&db).await?;
 
@@ -258,7 +266,8 @@ mod tests {
 
     #[actix_web::test]
     async fn archive() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let mindset = factory::mindset(user.id).insert(&db).await?;
 
@@ -279,7 +288,8 @@ mod tests {
 
     #[actix_web::test]
     async fn archive_unauthorized() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let mindset = factory::mindset(user.id).insert(&db).await?;
 
@@ -293,7 +303,8 @@ mod tests {
 
     #[actix_web::test]
     async fn unarchive() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let mindset = factory::mindset(user.id).archived(true).insert(&db).await?;
 
@@ -314,7 +325,8 @@ mod tests {
 
     #[actix_web::test]
     async fn unarchive_unauthorized() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let mindset = factory::mindset(user.id).archived(true).insert(&db).await?;
 
@@ -328,7 +340,8 @@ mod tests {
 
     #[actix_web::test]
     async fn bulk_update_ordering() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let mindset_0 = factory::mindset(user.id).insert(&db).await?;
         let mindset_1 = factory::mindset(user.id).insert(&db).await?;
@@ -362,7 +375,8 @@ mod tests {
     #[actix_web::test]
     async fn bulk_update_ordering_no_modification_on_different_users_records() -> Result<(), DbErr>
     {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let another_user = factory::user().insert(&db).await?;
         let another_users_mindset = factory::mindset(another_user.id).insert(&db).await?;

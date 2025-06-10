@@ -54,15 +54,19 @@ impl ReadingNoteQuery {
 
 #[cfg(test)]
 mod tests {
-    use common::factory::{self, *};
+    use common::{
+        db::init_db,
+        factory::{self, *},
+        settings::get_test_settings,
+    };
     use sea_orm::ActiveModelTrait;
-    use test_utils;
 
     use super::*;
 
     #[actix_web::test]
     async fn find_all_with_tags_by_user_id() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let reading_note_0 = factory::reading_note(user.id)
             .title("reading_note_0".to_string())

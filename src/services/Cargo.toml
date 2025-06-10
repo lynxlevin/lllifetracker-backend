@@ -18,5 +18,4 @@ serde.workspace = true
 uuid.workspace = true
 
 [dev-dependencies]
-test_utils = { path = "../test_utils" }
-common = { path = "../common", features = ["factory"] }
+common = { path = "../common", features = ["db", "factory", "settings"] }

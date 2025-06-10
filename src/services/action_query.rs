@@ -38,8 +38,11 @@ impl ActionQuery {
 
 #[cfg(test)]
 mod tests {
-    use common::factory::{self, *};
-    use test_utils;
+    use common::{
+        db::init_db,
+        factory::{self, *},
+        settings::get_test_settings,
+    };
 
     use sea_orm::ActiveModelTrait;
 
@@ -47,7 +50,8 @@ mod tests {
 
     #[actix_web::test]
     async fn find_all_by_user_id() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let action_0 = factory::action(user.id)
             .name("action_0".to_string())
@@ -83,7 +87,8 @@ mod tests {
 
     #[actix_web::test]
     async fn find_all_by_user_id_show_archived_only() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let _action = factory::action(user.id).insert(&db).await?;
         let archived_action = factory::action(user.id).archived(true).insert(&db).await?;

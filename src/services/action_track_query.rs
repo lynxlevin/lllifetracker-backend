@@ -85,14 +85,18 @@ mod tests {
     use chrono::Duration;
     use sea_orm::ActiveModelTrait;
 
-    use common::factory::{self, *};
-    use test_utils;
+    use common::{
+        db::init_db,
+        factory::{self, *},
+        settings::get_test_settings,
+    };
 
     use super::*;
 
     #[actix_web::test]
     async fn find_by_user_id_with_filters() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let query_started_at_gte: DateTime<FixedOffset> =
             DateTime::parse_from_rfc3339("2025-01-27T00:00:00Z").unwrap();

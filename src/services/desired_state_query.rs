@@ -44,15 +44,19 @@ impl DesiredStateQuery {
 
 #[cfg(test)]
 mod tests {
-    use common::factory::{self, *};
+    use common::{
+        db::init_db,
+        factory::{self, *},
+        settings::get_test_settings,
+    };
     use sea_orm::ActiveModelTrait;
-    use test_utils;
 
     use super::*;
 
     #[actix_web::test]
     async fn find_all_by_user_id() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let desired_state_0 = factory::desired_state(user.id)
             .name("desired_state_0".to_string())
@@ -109,7 +113,8 @@ mod tests {
 
     #[actix_web::test]
     async fn find_all_by_user_id_show_archived_only() -> Result<(), DbErr> {
-        let db = test_utils::init_db().await?;
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let _desired_state = factory::desired_state(user.id).insert(&db).await?;
         let archived_desired_state = factory::desired_state(user.id)
