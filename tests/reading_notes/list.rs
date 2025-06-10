@@ -2,7 +2,7 @@ use actix_web::{http, test, HttpMessage};
 use sea_orm::{ActiveModelTrait, DbErr};
 
 use super::super::utils::init_app;
-use test_utils::{self, *};
+use common::factory::{self, *};
 use types::*;
 
 #[actix_web::test]

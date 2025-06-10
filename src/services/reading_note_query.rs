@@ -1,8 +1,8 @@
 use ::types::{CustomDbErr, ReadingNoteWithTagQueryResult};
 use entities::{action, ambition, desired_state, mindset, reading_note, reading_notes_tags, tag};
 use sea_orm::{
-    sea_query::NullOrdering::Last, ColumnTrait, DbConn, DbErr, EntityTrait,
-    JoinType::LeftJoin, Order::Asc, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
+    sea_query::NullOrdering::Last, ColumnTrait, DbConn, DbErr, EntityTrait, JoinType::LeftJoin,
+    Order::Asc, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
 };
 
 pub struct ReadingNoteQuery;
@@ -54,8 +54,9 @@ impl ReadingNoteQuery {
 
 #[cfg(test)]
 mod tests {
+    use common::factory::{self, *};
     use sea_orm::ActiveModelTrait;
-    use test_utils::{self, *};
+    use test_utils;
 
     use super::*;
 

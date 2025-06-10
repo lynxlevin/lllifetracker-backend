@@ -1,12 +1,12 @@
 use actix_web::{http, test, HttpMessage};
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter,
-    QueryFilter, QuerySelect,
+    ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter, QueryFilter,
+    QuerySelect,
 };
 
 use super::super::utils::init_app;
 use entities::{reading_note, reading_notes_tags};
-use test_utils::{self, *};
+use common::factory::{self, *};
 use types::*;
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]

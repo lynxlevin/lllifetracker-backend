@@ -3,7 +3,7 @@ use sea_orm::{ActiveModelTrait, ColumnTrait, DbErr, EntityTrait, QueryFilter};
 
 use super::super::utils::init_app;
 use entities::{reading_note, reading_notes_tags};
-use test_utils::{self, *};
+use common::factory::{self, *};
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {

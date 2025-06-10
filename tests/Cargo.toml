@@ -8,10 +8,9 @@ name = "tests"
 path = "lib.rs"
 
 [dependencies]
-common = { path = "../src/common", features = ["db", "redis", "settings"] }
+common = { path = "../src/common", features = ["db", "factory", "redis", "settings"] }
 entities = { path = "../src/entities" }
 routes = { path = "../src/routes" }
-test_utils = { path = "../src/test_utils" }
 types = { path = "../src/types" }
 server = { path = "../src/server" }
 

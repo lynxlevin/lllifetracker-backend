@@ -2,8 +2,8 @@ use actix_web::{http, test, HttpMessage};
 use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
 
 use super::super::utils::init_app;
+use common::factory::{self, *};
 use entities::{action, action_track};
-use test_utils::{self, *};
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {

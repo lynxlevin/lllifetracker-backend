@@ -3,7 +3,7 @@ use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
 use types::ActionBulkUpdateOrderRequest;
 
 use super::super::utils::init_app;
-use test_utils::{self, *};
+use common::factory;
 use entities::action;
 
 #[actix_web::test]

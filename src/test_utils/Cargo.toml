@@ -9,9 +9,5 @@ path = "lib.rs"
 
 [dependencies]
 common = { path = "../common", features = ["db", "settings"]}
-entities = { path = "../entities" }
 
-chrono.workspace = true
-dotenvy.workspace = true
 sea-orm.workspace = true
-uuid.workspace = true

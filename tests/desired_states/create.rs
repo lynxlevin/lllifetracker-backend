@@ -2,7 +2,7 @@ use actix_web::{http, test, HttpMessage};
 use sea_orm::{ActiveModelTrait, ColumnTrait, DbErr, EntityTrait, QueryFilter};
 
 use super::super::utils::init_app;
-use test_utils::{self, *};
+use common::factory;
 use types::*;
 use entities::{desired_state, tag};
 

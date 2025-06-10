@@ -31,3 +31,4 @@ uuid.workspace = true
 [dev-dependencies]
 entities = { path = "../entities" }
 test_utils = { path = "../test_utils" }
+common = { path = "../common", features = ["factory"]}

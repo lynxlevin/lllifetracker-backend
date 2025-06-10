@@ -38,8 +38,9 @@ impl AmbitionQuery {
 
 #[cfg(test)]
 mod tests {
-    use test_utils::{self, *};
+    use test_utils;
 
+    use common::factory::{self, *};
     use sea_orm::ActiveModelTrait;
 
     use super::*;

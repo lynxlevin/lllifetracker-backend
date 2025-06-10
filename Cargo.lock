@@ -3274,6 +3274,7 @@ version = "0.1.0"
 dependencies = [
  "actix-web",
  "chrono",
+ "common",
  "entities",
  "sea-orm",
  "serde",
@@ -3724,12 +3725,8 @@ dependencies = [
 name = "test_utils"
 version = "0.1.0"
 dependencies = [
- "chrono",
  "common",
- "dotenvy",
- "entities",
  "sea-orm",
- "uuid",
 ]
 
 [[package]]
@@ -3748,7 +3745,6 @@ dependencies = [
  "serde",
  "serde_json",
  "server",
- "test_utils",
  "tracing",
  "types",
  "uuid",

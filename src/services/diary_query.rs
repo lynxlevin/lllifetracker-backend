@@ -54,8 +54,9 @@ impl DiaryQuery {
 #[cfg(test)]
 mod tests {
     use chrono::{Duration, Utc};
+    use common::factory::{self, *};
     use sea_orm::ActiveModelTrait;
-    use test_utils::{self, *};
+    use test_utils;
 
     use super::*;
 

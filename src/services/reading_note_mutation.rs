@@ -153,7 +153,8 @@ mod tests {
     use sea_orm::DbErr;
 
     use ::types::CustomDbErr;
-    use test_utils::{self, *};
+    use common::factory::{self, *};
+    use test_utils;
 
     use super::*;
 

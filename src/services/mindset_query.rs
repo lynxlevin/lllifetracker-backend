@@ -38,7 +38,8 @@ impl MindsetQuery {
 
 #[cfg(test)]
 mod tests {
-    use test_utils::{self, *};
+    use common::factory::{self, *};
+    use test_utils;
 
     use sea_orm::ActiveModelTrait;
 

@@ -2,8 +2,8 @@ use actix_web::{http, test, HttpMessage};
 use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
 
 use super::super::utils::init_app;
+use common::factory::{self, *};
 use entities::{action, sea_orm_active_enums::ActionTrackType};
-use test_utils::{self, *};
 use types::*;
 
 #[actix_web::test]

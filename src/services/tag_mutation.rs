@@ -34,7 +34,11 @@ impl TagMutation {
         })
     }
 
-    pub async fn update(db: &DbConn, tag: tag::Model, form_data: UpdateTag) -> Result<TagVisible, DbErr> {
+    pub async fn update(
+        db: &DbConn,
+        tag: tag::Model,
+        form_data: UpdateTag,
+    ) -> Result<TagVisible, DbErr> {
         let mut tag = tag.into_active_model();
         tag.name = Set(Some(form_data.name));
         let tag = tag.update(db).await?;
@@ -58,8 +62,9 @@ impl TagMutation {
 mod tests {
     use sea_orm::{DbErr, EntityTrait};
 
+    use common::factory;
     use entities::tag;
-    use test_utils::{self, *};
+    use test_utils;
 
     use super::*;
 
@@ -73,7 +78,9 @@ mod tests {
             user_id: user.id,
         };
 
-        let res: TagVisible = TagMutation::create_plain_tag(&db, form_data.clone()).await.unwrap();
+        let res: TagVisible = TagMutation::create_plain_tag(&db, form_data.clone())
+            .await
+            .unwrap();
         assert_eq!(res.name, form_data.name.clone());
         assert_eq!(res.tag_type, TagType::Plain);
 
@@ -93,7 +100,9 @@ mod tests {
             name: "new name".to_string(),
         };
 
-        let res: TagVisible = TagMutation::update(&db, tag.clone(), form_data.clone()).await.unwrap();
+        let res: TagVisible = TagMutation::update(&db, tag.clone(), form_data.clone())
+            .await
+            .unwrap();
         assert_eq!(res.name, form_data.name.clone());
         assert_eq!(res.tag_type, TagType::Plain);
 

@@ -129,7 +129,8 @@ impl MindsetMutation {
 
 #[cfg(test)]
 mod tests {
-    use test_utils::{self, *};
+    use common::factory::{self, *};
+    use test_utils;
     use types::CustomDbErr;
 
     use super::*;

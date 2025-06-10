@@ -151,11 +151,12 @@ impl ActionMutation {
 
 #[cfg(test)]
 mod tests {
+    use common::factory::{self, *};
     use sea_orm::DbErr;
 
     use ::types::CustomDbErr;
     use entities::tag;
-    use test_utils::{self, *};
+    use test_utils;
 
     use super::*;
 

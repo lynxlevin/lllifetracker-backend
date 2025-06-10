@@ -94,8 +94,9 @@ mod tests {
     use sea_orm::EntityTrait;
 
     use ::types::CustomDbErr;
+    use common::factory::{self, *};
     use entities::action;
-    use test_utils::{self, *};
+    use test_utils;
 
     use super::*;
 

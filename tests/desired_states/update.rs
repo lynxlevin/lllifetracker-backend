@@ -3,7 +3,7 @@ use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
 
 use super::super::utils::init_app;
 use entities::desired_state;
-use test_utils::{self, *};
+use common::factory;
 use types::*;
 
 #[actix_web::test]

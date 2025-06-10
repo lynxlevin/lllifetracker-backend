@@ -92,7 +92,8 @@ impl Query {
 
 #[cfg(test)]
 mod mutation_tests {
-    use test_utils::{self, *};
+    use common::factory::{self, *};
+    use test_utils;
 
     use super::*;
 

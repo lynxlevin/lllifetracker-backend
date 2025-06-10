@@ -106,11 +106,12 @@ mod tests {
     use super::*;
     use actix_session::SessionExt;
     use actix_web::test;
+    use common::factory;
     use sea_orm::prelude::ActiveModelTrait;
 
     use ::types::{USER_EMAIL_KEY, USER_ID_KEY};
     use entities::user;
-    use test_utils::{self, *};
+    use test_utils;
 
     #[actix_web::test]
     async fn test_set_user() -> Result<(), String> {
