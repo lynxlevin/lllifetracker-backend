@@ -13,6 +13,7 @@ pub fn desired_state(user_id: Uuid) -> desired_state::ActiveModel {
         description: Set(None),
         archived: Set(false),
         ordering: NotSet,
+        category_id: NotSet,
         created_at: Set(now.into()),
         updated_at: Set(now.into()),
     }
