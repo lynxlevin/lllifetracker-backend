@@ -34,6 +34,7 @@ mod m20250412_000001_drop_my_way_link_tables;
 mod m20250412_000002_drop_memos_and_challenges_tables;
 mod m20250415_000001_add_name_to_tags_table;
 mod m20250430_000001_create_mindset_table;
+mod m20250610_000001_create_desired_state_categories_table;
 mod m_seed_data;
 
 pub struct Migrator;
@@ -81,6 +82,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20250412_000002_drop_memos_and_challenges_tables::Migration),
             Box::new(m20250415_000001_add_name_to_tags_table::Migration),
             Box::new(m20250430_000001_create_mindset_table::Migration),
+            Box::new(m20250610_000001_create_desired_state_categories_table::Migration),
         ]
     }
 }
