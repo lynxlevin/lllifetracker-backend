@@ -38,14 +38,8 @@ pub async fn update_desired_state(
                 )
                 .await
                 {
-                    Ok(_) => Some(category_id),
-                    Err(e) => match e {
-                        DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
-                            CustomDbErr::NotFound => None,
-                            _ => return response_500(e),
-                        },
-                        _ => return response_500(e),
-                    },
+                    Ok(res) => res.and(Some(category_id)),
+                    Err(e) => return response_500(e),
                 },
                 None => None,
             };

@@ -21,8 +21,8 @@ pub async fn create_desired_state_category(
         Some(user) => {
             let user = user.into_inner();
             match DesiredStateCategoryMutation::create(&db, user.id, req.name.clone()).await {
-                Ok(desired_state_category) => {
-                    let res: DesiredStateCategoryVisible = desired_state_category.into();
+                Ok(category) => {
+                    let res: DesiredStateCategoryVisible = category.into();
                     HttpResponse::Created().json(res)
                 }
                 Err(e) => response_500(e),

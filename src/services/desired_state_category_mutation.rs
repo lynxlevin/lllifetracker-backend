@@ -35,24 +35,15 @@ impl DesiredStateCategoryMutation {
         .await
     }
 
-    // pub async fn update(
-    //     db: &DbConn,
-    //     desired_state_id: uuid::Uuid,
-    //     user_id: uuid::Uuid,
-    //     name: String,
-    //     description: Option<String>,
-    //     category_id: Option<Uuid>,
-    // ) -> Result<desired_state_category::Model, DbErr> {
-    //     let mut desired_state_category: desired_state_category::ActiveModel =
-    //         DesiredStateQuery::find_by_id_and_user_id(db, desired_state_id, user_id)
-    //             .await?
-    //             .into();
-    //     desired_state_category.name = Set(name);
-    //     desired_state_category.description = Set(description);
-    //     desired_state_category.category_id = Set(category_id);
-    //     desired_state_category.updated_at = Set(Utc::now().into());
-    //     desired_state_category.update(db).await
-    // }
+    pub async fn update(
+        db: &DbConn,
+        category: desired_state_category::Model,
+        name: String,
+    ) -> Result<desired_state_category::Model, DbErr> {
+        let mut category = category.into_active_model();
+        category.name = Set(name);
+        category.update(db).await
+    }
 
     // pub async fn delete(
     //     db: &DbConn,
@@ -100,66 +91,6 @@ impl DesiredStateCategoryMutation {
 //     use types::DesiredStateConvertToType;
 
 //     use super::*;
-
-// #[actix_web::test]
-// async fn update() -> Result<(), DbErr> {
-//     let settings = get_test_settings();
-//     let db = init_db(&settings).await;
-//     let user = factory::user().insert(&db).await?;
-//     let desired_state_category = factory::desired_state_category(user.id).insert(&db).await?;
-//     let category = factory::desired_state_category(user.id).insert(&db).await?;
-
-//     let new_name = "desired_state_after_update".to_string();
-//     let new_description = "DesiredState after update.".to_string();
-
-//     let res = DesiredStateCategoryMutation::update(
-//         &db,
-//         desired_state_category.id,
-//         user.id,
-//         new_name.clone(),
-//         Some(new_description.clone()),
-//         Some(category.id),
-//     )
-//     .await?;
-//     assert_eq!(res.id, desired_state_category.id);
-//     assert_eq!(res.name, new_name.clone());
-//     assert_eq!(res.description, Some(new_description.clone()));
-//     assert_eq!(res.category_id, Some(category.id));
-//     assert_eq!(res.archived, desired_state_category.archived);
-//     assert_eq!(res.user_id, user.id);
-//     assert_eq!(res.created_at, desired_state_category.created_at);
-//     assert!(res.updated_at > desired_state_category.updated_at);
-
-//     let desired_state_in_db = desired_state_category::Entity::find_by_id(desired_state_category.id)
-//         .one(&db)
-//         .await?
-//         .unwrap();
-//     assert_eq!(desired_state_in_db, res);
-
-//     Ok(())
-// }
-
-// #[actix_web::test]
-// async fn update_unauthorized() -> Result<(), DbErr> {
-//     let settings = get_test_settings();
-//     let db = init_db(&settings).await;
-//     let user = factory::user().insert(&db).await?;
-//     let desired_state_category = factory::desired_state_category(user.id).insert(&db).await?;
-
-//     let error = DesiredStateCategoryMutation::update(
-//         &db,
-//         desired_state_category.id,
-//         uuid::Uuid::now_v7(),
-//         "desired_state_after_update_unauthorized".to_string(),
-//         None,
-//         None,
-//     )
-//     .await
-//     .unwrap_err();
-//     assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
-
-//     Ok(())
-// }
 
 // #[actix_web::test]
 // async fn delete() -> Result<(), DbErr> {

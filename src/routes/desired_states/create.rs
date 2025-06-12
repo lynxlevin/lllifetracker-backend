@@ -5,12 +5,12 @@ use actix_web::{
     HttpResponse,
 };
 use entities::user as user_entity;
-use sea_orm::{DbConn, DbErr};
+use sea_orm::DbConn;
 use services::{
     desired_state_category_query::DesiredStateCategoryQuery,
     desired_state_mutation::{DesiredStateMutation, NewDesiredState},
 };
-use types::{CustomDbErr, DesiredStateCreateRequest};
+use types::DesiredStateCreateRequest;
 
 use crate::utils::{response_401, response_500};
 
@@ -32,14 +32,8 @@ pub async fn create_desired_state(
                 )
                 .await
                 {
-                    Ok(_) => Some(category_id),
-                    Err(e) => match e {
-                        DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
-                            CustomDbErr::NotFound => None,
-                            _ => return response_500(e),
-                        },
-                        _ => return response_500(e),
-                    },
+                    Ok(res) => res.and(Some(category_id)),
+                    Err(e) => return response_500(e),
                 },
                 None => None,
             };

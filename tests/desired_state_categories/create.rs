@@ -25,15 +25,12 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(res.name, name);
     assert_eq!(res.ordering, None);
 
-    let desired_state_category_in_db = desired_state_category::Entity::find_by_id(res.id)
+    let category_in_db = desired_state_category::Entity::find_by_id(res.id)
         .one(&db)
         .await?
         .unwrap();
-    assert_eq!(desired_state_category_in_db.user_id, user.id);
-    assert_eq!(
-        DesiredStateCategoryVisible::from(desired_state_category_in_db),
-        res
-    );
+    assert_eq!(category_in_db.user_id, user.id);
+    assert_eq!(DesiredStateCategoryVisible::from(category_in_db), res);
 
     Ok(())
 }

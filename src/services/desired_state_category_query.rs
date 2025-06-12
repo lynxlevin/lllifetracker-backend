@@ -24,12 +24,11 @@ impl DesiredStateCategoryQuery {
         db: &DbConn,
         desired_state_category_id: uuid::Uuid,
         user_id: uuid::Uuid,
-    ) -> Result<desired_state_category::Model, DbErr> {
+    ) -> Result<Option<desired_state_category::Model>, DbErr> {
         desired_state_category::Entity::find_by_id(desired_state_category_id)
             .filter(desired_state_category::Column::UserId.eq(user_id))
             .one(db)
-            .await?
-            .ok_or(DbErr::Custom(CustomDbErr::NotFound.to_string()))
+            .await
     }
 }
 
