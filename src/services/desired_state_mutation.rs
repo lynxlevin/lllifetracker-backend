@@ -5,6 +5,7 @@ use sea_orm::{
     QueryFilter, Set, TransactionError, TransactionTrait,
 };
 use types::{CustomDbErr, DesiredStateConvertToType};
+use uuid::Uuid;
 
 use super::desired_state_query::DesiredStateQuery;
 
@@ -12,6 +13,7 @@ use super::desired_state_query::DesiredStateQuery;
 pub struct NewDesiredState {
     pub name: String,
     pub description: Option<String>,
+    pub category_id: Option<Uuid>,
     pub user_id: uuid::Uuid,
 }
 
@@ -30,6 +32,7 @@ impl DesiredStateMutation {
                     user_id: Set(form_data.user_id),
                     name: Set(form_data.name.to_owned()),
                     description: Set(form_data.description.to_owned()),
+                    category_id: Set(form_data.category_id),
                     ..Default::default()
                 }
                 .insert(txn)
@@ -55,6 +58,7 @@ impl DesiredStateMutation {
         user_id: uuid::Uuid,
         name: String,
         description: Option<String>,
+        category_id: Option<Uuid>,
     ) -> Result<desired_state::Model, DbErr> {
         let mut desired_state: desired_state::ActiveModel =
             DesiredStateQuery::find_by_id_and_user_id(db, desired_state_id, user_id)
@@ -62,6 +66,7 @@ impl DesiredStateMutation {
                 .into();
         desired_state.name = Set(name);
         desired_state.description = Set(description);
+        desired_state.category_id = Set(category_id);
         desired_state.updated_at = Set(Utc::now().into());
         desired_state.update(db).await
     }
@@ -190,10 +195,12 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let name = "create_with_tag".to_string();
         let description = "Create with tag.".to_string();
+        let category = factory::desired_state_category(user.id).insert(&db).await?;
 
         let form_data = NewDesiredState {
             name: name.clone(),
             description: Some(description.clone()),
+            category_id: Some(category.id),
             user_id: user.id,
         };
         let res = DesiredStateMutation::create_with_tag(&db, form_data)
@@ -201,6 +208,7 @@ mod tests {
             .unwrap();
         assert_eq!(res.name, name.clone());
         assert_eq!(res.description, Some(description.clone()));
+        assert_eq!(res.category_id, Some(category.id));
         assert_eq!(res.archived, false);
         assert_eq!(res.user_id, user.id);
 
@@ -228,6 +236,7 @@ mod tests {
         let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let desired_state = factory::desired_state(user.id).insert(&db).await?;
+        let category = factory::desired_state_category(user.id).insert(&db).await?;
 
         let new_name = "desired_state_after_update".to_string();
         let new_description = "DesiredState after update.".to_string();
@@ -238,11 +247,13 @@ mod tests {
             user.id,
             new_name.clone(),
             Some(new_description.clone()),
+            Some(category.id),
         )
         .await?;
         assert_eq!(res.id, desired_state.id);
         assert_eq!(res.name, new_name.clone());
         assert_eq!(res.description, Some(new_description.clone()));
+        assert_eq!(res.category_id, Some(category.id));
         assert_eq!(res.archived, desired_state.archived);
         assert_eq!(res.user_id, user.id);
         assert_eq!(res.created_at, desired_state.created_at);
@@ -264,13 +275,12 @@ mod tests {
         let user = factory::user().insert(&db).await?;
         let desired_state = factory::desired_state(user.id).insert(&db).await?;
 
-        let new_name = "desired_state_after_update_unauthorized".to_string();
-
         let error = DesiredStateMutation::update(
             &db,
             desired_state.id,
             uuid::Uuid::now_v7(),
-            new_name.clone(),
+            "desired_state_after_update_unauthorized".to_string(),
+            None,
             None,
         )
         .await

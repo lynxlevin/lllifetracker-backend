@@ -10,6 +10,7 @@ pub use my_way::action::*;
 pub use my_way::action_track::*;
 pub use my_way::ambition::*;
 pub use my_way::desired_state::*;
+pub use my_way::desired_state_category::*;
 pub use my_way::mindset::*;
 pub use tag::*;
 pub use user::*;
