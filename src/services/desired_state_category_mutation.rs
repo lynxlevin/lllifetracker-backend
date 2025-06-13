@@ -45,17 +45,10 @@ impl DesiredStateCategoryMutation {
         category.update(db).await
     }
 
-    // pub async fn delete(
-    //     db: &DbConn,
-    //     desired_state_id: uuid::Uuid,
-    //     user_id: uuid::Uuid,
-    // ) -> Result<(), DbErr> {
-    //     DesiredStateQuery::find_by_id_and_user_id(db, desired_state_id, user_id)
-    //         .await?
-    //         .delete(db)
-    //         .await?;
-    //     Ok(())
-    // }
+    pub async fn delete(db: &DbConn, category: desired_state_category::Model) -> Result<(), DbErr> {
+        category.delete(db).await?;
+        Ok(())
+    }
 
     // // FIXME: Reduce query.
     // pub async fn bulk_update_ordering(
