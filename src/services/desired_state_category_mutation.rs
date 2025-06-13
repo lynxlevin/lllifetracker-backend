@@ -1,21 +1,8 @@
-use chrono::Utc;
-use entities::{desired_state_category, mindset, tag};
+use entities::desired_state_category;
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::NotSet, ColumnTrait, DbConn, DbErr, EntityTrait,
-    IntoActiveModel, ModelTrait, QueryFilter, Set, TransactionError, TransactionTrait,
+    ActiveModelTrait, ActiveValue::NotSet, DbConn, DbErr, IntoActiveModel, ModelTrait, Set,
 };
-use types::{CustomDbErr, DesiredStateConvertToType};
 use uuid::Uuid;
-
-use super::desired_state_query::DesiredStateQuery;
-
-#[derive(serde::Deserialize, Debug, serde::Serialize, Clone)]
-pub struct NewDesiredState {
-    pub name: String,
-    pub description: Option<String>,
-    pub category_id: Option<Uuid>,
-    pub user_id: uuid::Uuid,
-}
 
 pub struct DesiredStateCategoryMutation;
 
@@ -50,131 +37,15 @@ impl DesiredStateCategoryMutation {
         Ok(())
     }
 
-    // // FIXME: Reduce query.
-    // pub async fn bulk_update_ordering(
-    //     db: &DbConn,
-    //     user_id: uuid::Uuid,
-    //     ordering: Vec<uuid::Uuid>,
-    // ) -> Result<(), DbErr> {
-    //     let desired_states = desired_state_category::Entity::find()
-    //         .filter(desired_state_category::Column::UserId.eq(user_id))
-    //         .filter(desired_state_category::Column::Id.is_in(ordering.clone()))
-    //         .all(db)
-    //         .await?;
-    //     for desired_state_category in desired_states {
-    //         let order = &ordering.iter().position(|id| id == &desired_state_category.id);
-    //         if let Some(order) = order {
-    //             let mut desired_state_category = desired_state_category.into_active_model();
-    //             desired_state_category.ordering = Set(Some((order + 1) as i32));
-    //             desired_state_category.update(db).await?;
-    //         }
-    //     }
-    //     Ok(())
-    // }
+    pub async fn bulk_update_ordering(
+        db: &DbConn,
+        params: Vec<(desired_state_category::Model, Option<i32>)>,
+    ) -> Result<(), DbErr> {
+        for (category, ordering) in params {
+            let mut category = category.into_active_model();
+            category.ordering = Set(ordering);
+            category.update(db).await?;
+        }
+        Ok(())
+    }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use ::types::CustomDbErr;
-//     use common::{
-//         db::init_db,
-//         factory::{self, *},
-//         settings::get_test_settings,
-//     };
-//     use types::DesiredStateConvertToType;
-
-//     use super::*;
-
-// #[actix_web::test]
-// async fn delete() -> Result<(), DbErr> {
-//     let settings = get_test_settings();
-//     let db = init_db(&settings).await;
-//     let user = factory::user().insert(&db).await?;
-//     let (desired_state_category, tag) = factory::desired_state_category(user.id).insert_with_tag(&db).await?;
-
-//     DesiredStateCategoryMutation::delete(&db, desired_state_category.id, user.id).await?;
-
-//     let desired_state_in_db = desired_state_category::Entity::find_by_id(desired_state_category.id)
-//         .one(&db)
-//         .await?;
-//     assert!(desired_state_in_db.is_none());
-
-//     let tag_in_db = tag::Entity::find_by_id(tag.id).one(&db).await?;
-//     assert!(tag_in_db.is_none());
-
-//     Ok(())
-// }
-
-// #[actix_web::test]
-// async fn delete_unauthorized() -> Result<(), DbErr> {
-//     let settings = get_test_settings();
-//     let db = init_db(&settings).await;
-//     let user = factory::user().insert(&db).await?;
-//     let desired_state_category = factory::desired_state_category(user.id).insert(&db).await?;
-
-//     let error = DesiredStateCategoryMutation::delete(&db, desired_state_category.id, uuid::Uuid::now_v7())
-//         .await
-//         .unwrap_err();
-//     assert_eq!(error, DbErr::Custom(CustomDbErr::NotFound.to_string()));
-
-//     Ok(())
-// }
-
-// #[actix_web::test]
-// async fn bulk_update_ordering() -> Result<(), DbErr> {
-//     let settings = get_test_settings();
-//     let db = init_db(&settings).await;
-//     let user = factory::user().insert(&db).await?;
-//     let desired_state_0 = factory::desired_state_category(user.id).insert(&db).await?;
-//     let desired_state_1 = factory::desired_state_category(user.id).insert(&db).await?;
-//     let desired_state_2 = factory::desired_state_category(user.id).insert(&db).await?;
-
-//     let ordering = vec![desired_state_0.id, desired_state_1.id];
-
-//     DesiredStateCategoryMutation::bulk_update_ordering(&db, user.id, ordering).await?;
-
-//     let desired_state_in_db_0 = desired_state_category::Entity::find_by_id(desired_state_0.id)
-//         .one(&db)
-//         .await?
-//         .unwrap();
-//     assert_eq!(desired_state_in_db_0.ordering, Some(1));
-
-//     let desired_state_in_db_1 = desired_state_category::Entity::find_by_id(desired_state_1.id)
-//         .one(&db)
-//         .await?
-//         .unwrap();
-//     assert_eq!(desired_state_in_db_1.ordering, Some(2));
-
-//     let desired_state_in_db_2 = desired_state_category::Entity::find_by_id(desired_state_2.id)
-//         .one(&db)
-//         .await?
-//         .unwrap();
-//     assert_eq!(desired_state_in_db_2.ordering, None);
-
-//     Ok(())
-// }
-
-// #[actix_web::test]
-// async fn bulk_update_ordering_no_modification_on_different_users_records() -> Result<(), DbErr>
-// {
-//     let settings = get_test_settings();
-//     let db = init_db(&settings).await;
-//     let user = factory::user().insert(&db).await?;
-//     let another_user = factory::user().insert(&db).await?;
-//     let another_users_desired_state =
-//         factory::desired_state_category(another_user.id).insert(&db).await?;
-
-//     let ordering = vec![another_users_desired_state.id];
-
-//     DesiredStateCategoryMutation::bulk_update_ordering(&db, user.id, ordering).await?;
-
-//     let another_users_desired_state_in_db =
-//         desired_state_category::Entity::find_by_id(another_users_desired_state.id)
-//             .one(&db)
-//             .await?
-//             .unwrap();
-//     assert_eq!(another_users_desired_state_in_db.ordering, None);
-
-//     Ok(())
-// }
-// }
