@@ -11,13 +11,19 @@ pub struct DesiredStateCategoryVisible {
     pub ordering: Option<i32>,
 }
 
-impl From<desired_state_category::Model> for DesiredStateCategoryVisible {
-    fn from(item: desired_state_category::Model) -> Self {
+impl From<&desired_state_category::Model> for DesiredStateCategoryVisible {
+    fn from(item: &desired_state_category::Model) -> Self {
         DesiredStateCategoryVisible {
             id: item.id,
-            name: item.name,
+            name: item.name.clone(),
             ordering: item.ordering,
         }
+    }
+}
+
+impl From<desired_state_category::Model> for DesiredStateCategoryVisible {
+    fn from(item: desired_state_category::Model) -> Self {
+        DesiredStateCategoryVisible::from(&item)
     }
 }
 
