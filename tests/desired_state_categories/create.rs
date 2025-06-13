@@ -23,13 +23,13 @@ async fn happy_path() -> Result<(), DbErr> {
 
     let res: DesiredStateCategoryVisible = test::read_body_json(res).await;
     assert_eq!(res.name, name);
-    assert_eq!(res.ordering, None);
 
     let category_in_db = desired_state_category::Entity::find_by_id(res.id)
         .one(&db)
         .await?
         .unwrap();
     assert_eq!(category_in_db.user_id, user.id);
+    assert_eq!(category_in_db.ordering, None);
     assert_eq!(DesiredStateCategoryVisible::from(category_in_db), res);
 
     Ok(())

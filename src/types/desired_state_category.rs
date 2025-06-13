@@ -8,7 +8,6 @@ use serde::{Deserialize, Serialize};
 pub struct DesiredStateCategoryVisible {
     pub id: uuid::Uuid,
     pub name: String,
-    pub ordering: Option<i32>,
 }
 
 impl From<&desired_state_category::Model> for DesiredStateCategoryVisible {
@@ -16,7 +15,6 @@ impl From<&desired_state_category::Model> for DesiredStateCategoryVisible {
         DesiredStateCategoryVisible {
             id: item.id,
             name: item.name.clone(),
-            ordering: item.ordering,
         }
     }
 }
