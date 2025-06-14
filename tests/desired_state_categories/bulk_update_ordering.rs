@@ -3,21 +3,21 @@ use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
 
 use super::super::utils::init_app;
 use common::factory;
-use entities::desired_state;
+use entities::desired_state_category;
 use types::*;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let (app, db) = init_app().await?;
     let user = factory::user().insert(&db).await?;
-    let desired_state_0 = factory::desired_state(user.id).insert(&db).await?;
-    let desired_state_1 = factory::desired_state(user.id).insert(&db).await?;
-    let desired_state_2 = factory::desired_state(user.id).insert(&db).await?;
+    let category_0 = factory::desired_state_category(user.id).insert(&db).await?;
+    let category_1 = factory::desired_state_category(user.id).insert(&db).await?;
+    let category_2 = factory::desired_state_category(user.id).insert(&db).await?;
 
     let req = test::TestRequest::put()
-        .uri("/api/desired_states/bulk_update_ordering")
-        .set_json(DesiredStateBulkUpdateOrderingRequest {
-            ordering: vec![desired_state_0.id, desired_state_1.id],
+        .uri("/api/desired_state_categories/bulk_update_ordering")
+        .set_json(DesiredStateCategoryBulkUpdateOrderingRequest {
+            ordering: vec![category_0.id, category_1.id],
         })
         .to_request();
     req.extensions_mut().insert(user.clone());
@@ -25,23 +25,23 @@ async fn happy_path() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::OK);
 
-    let category_in_db_0 = desired_state::Entity::find_by_id(desired_state_0.id)
+    let category_in_db_0 = desired_state_category::Entity::find_by_id(category_0.id)
         .one(&db)
         .await?
         .unwrap();
     assert_eq!(category_in_db_0.ordering, Some(1));
 
-    let category_in_db_1 = desired_state::Entity::find_by_id(desired_state_1.id)
+    let category_in_db_1 = desired_state_category::Entity::find_by_id(category_1.id)
         .one(&db)
         .await?
         .unwrap();
     assert_eq!(category_in_db_1.ordering, Some(2));
 
-    let desired_state_in_db_2 = desired_state::Entity::find_by_id(desired_state_2.id)
+    let category_in_db_2 = desired_state_category::Entity::find_by_id(category_2.id)
         .one(&db)
         .await?
         .unwrap();
-    assert_eq!(desired_state_in_db_2.ordering, None);
+    assert_eq!(category_in_db_2.ordering, None);
 
     Ok(())
 }

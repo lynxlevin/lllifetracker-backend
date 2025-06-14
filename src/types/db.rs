@@ -17,7 +17,7 @@ impl fmt::Display for CustomDbErr {
 }
 
 impl std::str::FromStr for CustomDbErr {
-    type Err = &'static str;
+    type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
@@ -25,5 +25,11 @@ impl std::str::FromStr for CustomDbErr {
             "Duplicate" => Ok(CustomDbErr::Duplicate),
             _ => Ok(CustomDbErr::Unimplemented),
         }
+    }
+}
+
+impl From<&String> for CustomDbErr {
+    fn from(value: &String) -> Self {
+        value.parse().unwrap()
     }
 }

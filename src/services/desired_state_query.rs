@@ -80,27 +80,9 @@ mod tests {
         let res = DesiredStateQuery::find_all_by_user_id(&db, user.id, false).await?;
 
         let expected = [
-            DesiredStateVisible {
-                id: desired_state_2.id,
-                name: desired_state_2.name,
-                description: desired_state_2.description,
-                created_at: desired_state_2.created_at,
-                updated_at: desired_state_2.updated_at,
-            },
-            DesiredStateVisible {
-                id: desired_state_1.id,
-                name: desired_state_1.name,
-                description: desired_state_1.description,
-                created_at: desired_state_1.created_at,
-                updated_at: desired_state_1.updated_at,
-            },
-            DesiredStateVisible {
-                id: desired_state_0.id,
-                name: desired_state_0.name,
-                description: desired_state_0.description,
-                created_at: desired_state_0.created_at,
-                updated_at: desired_state_0.updated_at,
-            },
+            DesiredStateVisible::from(desired_state_2),
+            DesiredStateVisible::from(desired_state_1),
+            DesiredStateVisible::from(desired_state_0),
         ];
 
         assert_eq!(res.len(), expected.len());
@@ -124,13 +106,7 @@ mod tests {
 
         let res = DesiredStateQuery::find_all_by_user_id(&db, user.id, true).await?;
 
-        let expected = [DesiredStateVisible {
-            id: archived_desired_state.id,
-            name: archived_desired_state.name,
-            description: archived_desired_state.description,
-            created_at: archived_desired_state.created_at,
-            updated_at: archived_desired_state.updated_at,
-        }];
+        let expected = [DesiredStateVisible::from(archived_desired_state)];
 
         assert_eq!(res.len(), expected.len());
         assert_eq!(res[0], expected[0]);

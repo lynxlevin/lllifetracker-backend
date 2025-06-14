@@ -6,7 +6,10 @@ use actix_web::{
 };
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use services::desired_state_mutation::{DesiredStateMutation, NewDesiredState};
+use services::{
+    desired_state_category_query::DesiredStateCategoryQuery,
+    desired_state_mutation::{DesiredStateMutation, NewDesiredState},
+};
 use types::DesiredStateCreateRequest;
 
 use crate::utils::{response_401, response_500};
@@ -21,11 +24,25 @@ pub async fn create_desired_state(
     match user {
         Some(user) => {
             let user = user.into_inner();
+            let category_id = match req.category_id {
+                Some(category_id) => match DesiredStateCategoryQuery::find_by_id_and_user_id(
+                    &db,
+                    category_id,
+                    user.id,
+                )
+                .await
+                {
+                    Ok(res) => res.and(Some(category_id)),
+                    Err(e) => return response_500(e),
+                },
+                None => None,
+            };
             match DesiredStateMutation::create_with_tag(
                 &db,
                 NewDesiredState {
                     name: req.name.clone(),
                     description: req.description.clone(),
+                    category_id: category_id,
                     user_id: user.id,
                 },
             )

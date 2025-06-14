@@ -4,6 +4,7 @@ pub use super::action::Entity as Action;
 pub use super::action_track::Entity as ActionTrack;
 pub use super::ambition::Entity as Ambition;
 pub use super::desired_state::Entity as DesiredState;
+pub use super::desired_state_category::Entity as DesiredStateCategory;
 pub use super::diaries_tags::Entity as DiariesTags;
 pub use super::diary::Entity as Diary;
 pub use super::mindset::Entity as Mindset;

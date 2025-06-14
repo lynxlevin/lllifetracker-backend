@@ -4,32 +4,19 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
-#[sea_orm(table_name = "desired_state")]
+#[sea_orm(table_name = "desired_state_category")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
     pub user_id: Uuid,
     pub name: String,
-    pub created_at: DateTimeWithTimeZone,
-    pub updated_at: DateTimeWithTimeZone,
-    pub description: Option<String>,
-    pub archived: bool,
     pub ordering: Option<i32>,
-    pub category_id: Option<Uuid>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(
-        belongs_to = "super::desired_state_category::Entity",
-        from = "Column::CategoryId",
-        to = "super::desired_state_category::Column::Id",
-        on_update = "NoAction",
-        on_delete = "SetNull"
-    )]
-    DesiredStateCategory,
-    #[sea_orm(has_one = "super::tag::Entity")]
-    Tag,
+    #[sea_orm(has_many = "super::desired_state::Entity")]
+    DesiredState,
     #[sea_orm(
         belongs_to = "super::user::Entity",
         from = "Column::UserId",
@@ -40,15 +27,9 @@ pub enum Relation {
     User,
 }
 
-impl Related<super::desired_state_category::Entity> for Entity {
+impl Related<super::desired_state::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::DesiredStateCategory.def()
-    }
-}
-
-impl Related<super::tag::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Tag.def()
+        Relation::DesiredState.def()
     }
 }
 

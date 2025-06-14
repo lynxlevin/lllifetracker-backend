@@ -126,7 +126,6 @@ impl ActionMutation {
         action.update(db).await
     }
 
-    // FIXME: Reduce query.
     pub async fn bulk_update_ordering(
         db: &DbConn,
         user_id: uuid::Uuid,
