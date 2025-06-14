@@ -10,8 +10,6 @@ pub mod desired_state_mutation;
 pub mod desired_state_query;
 pub mod diary_mutation;
 pub mod diary_query;
-pub mod mindset_mutation;
-pub mod mindset_query;
 pub mod reading_note_mutation;
 pub mod reading_note_query;
 pub mod tag_mutation;

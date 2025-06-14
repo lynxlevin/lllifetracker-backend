@@ -9,7 +9,6 @@ pub mod desired_state;
 pub mod desired_state_category;
 pub mod diaries_tags;
 pub mod diary;
-pub mod mindset;
 pub mod reading_note;
 pub mod reading_notes_tags;
 pub mod sea_orm_active_enums;

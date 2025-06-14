@@ -5,7 +5,6 @@ mod ambitions;
 mod desired_state_categories;
 mod desired_states;
 mod diaries;
-mod mindsets;
 mod reading_notes;
 mod tags;
 

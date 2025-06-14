@@ -21,12 +21,10 @@ async fn happy_path() -> Result<(), DbErr> {
     let (ambition, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
     let (desired_state, desired_state_tag) =
         factory::desired_state(user.id).insert_with_tag(&db).await?;
-    let (mindset, mindset_tag) = factory::mindset(user.id).insert_with_tag(&db).await?;
     factory::link_diary_tag(&db, diary_0.id, plain_tag.id).await?;
     factory::link_diary_tag(&db, diary_0.id, ambition_tag.id).await?;
     factory::link_diary_tag(&db, diary_1.id, desired_state_tag.id).await?;
     factory::link_diary_tag(&db, diary_1.id, action_tag.id).await?;
-    factory::link_diary_tag(&db, diary_1.id, mindset_tag.id).await?;
 
     let req = test::TestRequest::get().uri("/api/diaries").to_request();
     req.extensions_mut().insert(user.clone());
@@ -67,12 +65,6 @@ async fn happy_path() -> Result<(), DbErr> {
                     name: desired_state.name,
                     tag_type: TagType::DesiredState,
                     created_at: desired_state_tag.created_at,
-                },
-                TagVisible {
-                    id: mindset_tag.id,
-                    name: mindset.name,
-                    tag_type: TagType::Mindset,
-                    created_at: mindset_tag.created_at,
                 },
                 TagVisible {
                     id: action_tag.id,

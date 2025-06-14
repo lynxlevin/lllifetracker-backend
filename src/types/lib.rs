@@ -6,7 +6,6 @@ mod desired_state_category;
 mod desired_states;
 mod diaries;
 mod general;
-mod mindsets;
 mod reading_notes;
 mod tags;
 mod tokens;
@@ -22,7 +21,6 @@ pub use diaries::*;
 pub use general::{
     ErrorResponse, SuccessResponse, INTERNAL_SERVER_ERROR_MESSAGE, USER_EMAIL_KEY, USER_ID_KEY,
 };
-pub use mindsets::*;
 pub use reading_notes::*;
 pub use tags::*;
 pub use tokens::ConfirmationToken;

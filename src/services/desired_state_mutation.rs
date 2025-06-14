@@ -1,10 +1,9 @@
 use chrono::Utc;
-use entities::{desired_state, mindset, tag};
+use entities::{desired_state, tag};
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel, ModelTrait,
     QueryFilter, Set, TransactionError, TransactionTrait,
 };
-use types::{CustomDbErr, DesiredStateConvertToType};
 use uuid::Uuid;
 
 use super::desired_state_query::DesiredStateQuery;
@@ -131,48 +130,6 @@ impl DesiredStateMutation {
         }
         Ok(())
     }
-    pub async fn convert(
-        db: &DbConn,
-        desired_state_id: uuid::Uuid,
-        user_id: uuid::Uuid,
-        convert_to: DesiredStateConvertToType,
-    ) -> Result<mindset::Model, TransactionError<DbErr>> {
-        let desired_state_result =
-            DesiredStateQuery::find_by_id_and_user_id(db, desired_state_id, user_id).await;
-        db.transaction::<_, mindset::Model, DbErr>(|txn| {
-            Box::pin(async move {
-                let desired_state = desired_state_result?;
-                let mut tag = tag::Entity::find()
-                    .filter(tag::Column::UserId.eq(user_id))
-                    .filter(tag::Column::DesiredStateId.eq(desired_state_id))
-                    .one(txn)
-                    .await?
-                    .ok_or(DbErr::Custom(CustomDbErr::NotFound.to_string()))?
-                    .into_active_model();
-                let converted = match convert_to {
-                    DesiredStateConvertToType::Mindset => {
-                        let mindset = mindset::ActiveModel {
-                            id: Set(uuid::Uuid::now_v7()),
-                            user_id: Set(user_id),
-                            name: Set(desired_state.name.clone()),
-                            description: Set(desired_state.description.clone()),
-                            ..Default::default()
-                        }
-                        .insert(txn)
-                        .await?;
-                        tag.mindset_id = Set(Some(mindset.id));
-                        mindset
-                    }
-                };
-                tag.desired_state_id = Set(None);
-                tag.update(txn).await?;
-                desired_state.delete(txn).await?;
-
-                Ok(converted)
-            })
-        })
-        .await
-    }
 }
 
 #[cfg(test)]
@@ -183,7 +140,6 @@ mod tests {
         factory::{self, *},
         settings::get_test_settings,
     };
-    use types::DesiredStateConvertToType;
 
     use super::*;
 
@@ -464,78 +420,6 @@ mod tests {
                 .await?
                 .unwrap();
         assert_eq!(another_users_desired_state_in_db.ordering, None);
-
-        Ok(())
-    }
-
-    #[actix_web::test]
-    async fn convert() -> Result<(), DbErr> {
-        let settings = get_test_settings();
-        let db = init_db(&settings).await;
-        let user = factory::user().insert(&db).await?;
-        let (desired_state, desired_state_tag) =
-            factory::desired_state(user.id).insert_with_tag(&db).await?;
-
-        let res = DesiredStateMutation::convert(
-            &db,
-            desired_state.id,
-            user.id,
-            DesiredStateConvertToType::Mindset,
-        )
-        .await
-        .unwrap();
-        assert_ne!(res.id, desired_state.id);
-        assert_eq!(res.name, desired_state.name);
-        assert_eq!(res.description, desired_state.description);
-        assert_eq!(res.archived, false);
-        assert_eq!(res.user_id, user.id);
-        assert_ne!(res.created_at, desired_state.created_at);
-        assert_ne!(res.updated_at, desired_state.updated_at);
-
-        let mindset_in_db = mindset::Entity::find_by_id(res.id).one(&db).await?.unwrap();
-        assert_eq!(mindset_in_db, res);
-
-        let desired_state_in_db = desired_state::Entity::find_by_id(desired_state.id)
-            .one(&db)
-            .await?;
-        assert!(desired_state_in_db.is_none());
-
-        dbg!(&desired_state_tag);
-        let tag_in_db = tag::Entity::find_by_id(desired_state_tag.id)
-            .one(&db)
-            .await?
-            .unwrap();
-        assert!(tag_in_db.ambition_id.is_none());
-        assert!(tag_in_db.desired_state_id.is_none());
-        assert_eq!(tag_in_db.mindset_id, Some(res.id));
-        assert!(tag_in_db.action_id.is_none());
-        assert!(tag_in_db.name.is_none());
-        assert_eq!(tag_in_db.user_id, user.id);
-        assert_eq!(tag_in_db.created_at, desired_state_tag.created_at);
-
-        Ok(())
-    }
-
-    #[actix_web::test]
-    async fn convert_unauthorized() -> Result<(), DbErr> {
-        let settings = get_test_settings();
-        let db = init_db(&settings).await;
-        let user = factory::user().insert(&db).await?;
-        let desired_state = factory::desired_state(user.id).insert(&db).await?;
-
-        let error = DesiredStateMutation::convert(
-            &db,
-            desired_state.id,
-            uuid::Uuid::now_v7(),
-            DesiredStateConvertToType::Mindset,
-        )
-        .await
-        .unwrap_err();
-        assert_eq!(
-            error.to_string(),
-            TransactionError::Transaction(DbErr::Custom(CustomDbErr::NotFound.to_string()))
-                .to_string()
-        );
 
         Ok(())
     }

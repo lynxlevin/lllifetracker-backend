@@ -67,8 +67,6 @@ fn get_tag(diary: &DiaryWithTagQueryResult) -> Option<TagVisible> {
         (name, TagType::Ambition)
     } else if let Some(name) = diary.tag_desired_state_name.clone() {
         (name, TagType::DesiredState)
-    } else if let Some(name) = diary.tag_mindset_name.clone() {
-        (name, TagType::Mindset)
     } else if let Some(name) = diary.tag_action_name.clone() {
         (name, TagType::Action)
     } else {

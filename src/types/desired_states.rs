@@ -46,13 +46,3 @@ pub struct DesiredStateUpdateRequest {
 pub struct DesiredStateBulkUpdateOrderingRequest {
     pub ordering: Vec<uuid::Uuid>,
 }
-
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
-pub enum DesiredStateConvertToType {
-    Mindset,
-}
-
-#[derive(Deserialize, Debug, Serialize)]
-pub struct DesiredStateConvertRequest {
-    pub convert_to: DesiredStateConvertToType,
-}

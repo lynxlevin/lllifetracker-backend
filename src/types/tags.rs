@@ -6,7 +6,6 @@ pub enum TagType {
     Ambition,
     DesiredState,
     Action,
-    Mindset,
     Plain,
 }
 
@@ -16,7 +15,6 @@ pub struct TagQueryResult {
     pub name: Option<String>,
     pub ambition_name: Option<String>,
     pub desired_state_name: Option<String>,
-    pub mindset_name: Option<String>,
     pub action_name: Option<String>,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
 }
@@ -37,8 +35,6 @@ impl From<TagQueryResult> for TagVisible {
             (name, TagType::Ambition)
         } else if let Some(name) = item.desired_state_name.clone() {
             (name, TagType::DesiredState)
-        } else if let Some(name) = item.mindset_name.clone() {
-            (name, TagType::Mindset)
         } else if let Some(name) = item.action_name.clone() {
             (name, TagType::Action)
         } else {
