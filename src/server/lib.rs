@@ -6,8 +6,8 @@ use actix_web::{cookie, web::scope, Scope};
 use common::settings::types::Settings;
 use routes::{
     action_routes, action_track_routes, ambition_routes, auth_routes,
-    desired_state_category_routes, desired_state_routes, diary_routes, mindset_routes,
-    reading_note_routes, tag_routes,
+    desired_state_category_routes, desired_state_routes, diary_routes, reading_note_routes,
+    tag_routes,
 };
 
 pub async fn get_preps_for_redis_session_store(
@@ -49,7 +49,6 @@ pub fn get_routes() -> Scope {
         .configure(ambition_routes)
         .configure(desired_state_routes)
         .configure(action_routes)
-        .configure(mindset_routes)
         .configure(reading_note_routes)
         .configure(tag_routes)
         .configure(action_track_routes)
