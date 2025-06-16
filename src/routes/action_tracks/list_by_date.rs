@@ -5,9 +5,12 @@ use actix_web::{
     HttpResponse,
 };
 use chrono::{FixedOffset, TimeZone};
-use entities::{sea_orm_active_enums::TimezoneEnum, user as user_entity};
+use db_adapters::{
+    action_track_query::{ActionTrackQuery, ActionTrackQueryFilter, ActionTrackQueryOrder},
+    Order,
+};
+use entities::{action_track, sea_orm_active_enums::TimezoneEnum, user as user_entity};
 use sea_orm::DbConn;
-use services::action_track_query::ActionTrackQuery;
 
 use crate::utils::{response_401, response_500};
 
@@ -20,36 +23,37 @@ pub async fn list_action_tracks_by_date(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ActionTrackQuery::find_by_user_id_with_filters(
-                &db,
-                user.id,
-                ActionTrackQuery::get_default_filters(),
-            )
-            .await
+            let action_tracks = match ActionTrackQuery::init(&db)
+                .filter_eq_user(&user)
+                .filter_eq_archived_action(false)
+                .order_by_started_at(Order::Desc)
+                .get_all()
+                .await
             {
-                Ok(action_tracks) => {
-                    let mut res: Vec<Vec<ActionTrackVisible>> = vec![];
-                    let user_offset = match user.timezone {
-                        TimezoneEnum::Utc => FixedOffset::east_opt(0).unwrap(),
-                        TimezoneEnum::AsiaTokyo => FixedOffset::east_opt(9 * 3600).unwrap(),
-                    };
-                    for action_track in action_tracks {
-                        if res.is_empty()
-                            || !started_on_same_day(
-                                res.last().unwrap().last().unwrap(),
-                                &action_track,
-                                &user_offset,
-                            )
-                        {
-                            res.push(vec![action_track])
-                        } else {
-                            res.last_mut().unwrap().push(action_track);
-                        }
-                    }
-                    HttpResponse::Ok().json(res)
+                Ok(action_tracks) => action_tracks,
+                Err(e) => return response_500(e),
+            };
+            let mut res: Vec<Vec<ActionTrackVisible>> = vec![];
+            let user_offset = match user.timezone {
+                TimezoneEnum::Utc => FixedOffset::east_opt(0).unwrap(),
+                TimezoneEnum::AsiaTokyo => FixedOffset::east_opt(9 * 3600).unwrap(),
+            };
+            for action_track in action_tracks {
+                if res.is_empty()
+                    || !started_on_same_day(
+                        res.last().unwrap().last().unwrap(),
+                        &action_track,
+                        &user_offset,
+                    )
+                {
+                    res.push(vec![ActionTrackVisible::from(action_track)])
+                } else {
+                    res.last_mut()
+                        .unwrap()
+                        .push(ActionTrackVisible::from(action_track));
                 }
-                Err(e) => response_500(e),
             }
+            HttpResponse::Ok().json(res)
         }
         None => response_401(),
     }
@@ -57,7 +61,7 @@ pub async fn list_action_tracks_by_date(
 
 fn started_on_same_day<Tz2: TimeZone>(
     date_1: &ActionTrackVisible,
-    date_2: &ActionTrackVisible,
+    date_2: &action_track::Model,
     user_timezone: &Tz2,
 ) -> bool {
     date_1.started_at.with_timezone(user_timezone).date_naive()

@@ -4,12 +4,11 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use chrono::SubsecRound;
+use db_adapters::action_track_mutation::{ActionTrackMutation, CreateActionTrackParams};
 use entities::{sea_orm_active_enums::ActionTrackType, user as user_entity};
 use sea_orm::{DbConn, DbErr};
-use services::{
-    action_query::ActionQuery,
-    action_track_mutation::{ActionTrackMutation, NewActionTrack},
-};
+use services::action_query::ActionQuery;
 use types::{ActionTrackCreateRequest, CustomDbErr};
 
 use crate::utils::{response_401, response_404, response_409, response_500};
@@ -28,28 +27,26 @@ pub async fn create_action_track(
                 Ok(action) => {
                     let result = match action.track_type {
                         ActionTrackType::TimeSpan => {
-                            ActionTrackMutation::create(
-                                &db,
-                                NewActionTrack {
-                                    started_at: req.started_at,
+                            ActionTrackMutation::init(&db)
+                                .create(CreateActionTrackParams {
+                                    started_at: req.started_at.trunc_subsecs(0),
                                     ended_at: None,
+                                    duration: None,
                                     action_id: req.action_id,
                                     user_id: user.id,
-                                },
-                            )
-                            .await
+                                })
+                                .await
                         }
                         ActionTrackType::Count => {
-                            ActionTrackMutation::create(
-                                &db,
-                                NewActionTrack {
-                                    started_at: req.started_at,
-                                    ended_at: Some(req.started_at),
+                            ActionTrackMutation::init(&db)
+                                .create(CreateActionTrackParams {
+                                    started_at: req.started_at.trunc_subsecs(0),
+                                    ended_at: Some(req.started_at.trunc_subsecs(0)),
+                                    duration: Some(0),
                                     action_id: req.action_id,
                                     user_id: user.id,
-                                },
-                            )
-                            .await
+                                })
+                                .await
                         }
                     };
                     match result {

@@ -1,0 +1,16 @@
+[package]
+name = "db_adapters"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "db_adapters"
+path = "lib.rs"
+
+[dependencies]
+entities = { path = "../entities" }
+
+chrono.workspace = true
+sea-orm.workspace = true
+serde.workspace = true
+uuid.workspace = true
