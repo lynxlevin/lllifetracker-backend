@@ -1,0 +1,10 @@
+[package]
+name = "web_adapters"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "web_adapters"
+path = "lib.rs"
+
+[dependencies]

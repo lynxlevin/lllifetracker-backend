@@ -8,6 +8,8 @@ members = [
     "src/services",
     "src/utils",
     "src/routes",
+    "src/use_cases",
+    "src/web_adapters",
     "src/server",
     "src/life_tracker",
     "tests",
