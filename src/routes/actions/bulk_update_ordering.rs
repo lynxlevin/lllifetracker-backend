@@ -4,9 +4,9 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use db_adapters::action_adapter::{ActionAdapter, ActionFilter, ActionMutation, ActionQuery};
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use services::action_mutation::ActionMutation;
 use types::ActionBulkUpdateOrderRequest;
 
 use crate::utils::{response_401, response_500};
@@ -34,7 +34,19 @@ pub async fn bulk_update_action_ordering(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ActionMutation::bulk_update_ordering(&db, user.id, req.ordering.clone()).await {
+            let actions = match ActionAdapter::init(&db)
+                .filter_eq_user(&user)
+                .filter_in_ids(req.ordering.clone())
+                .get_all()
+                .await
+            {
+                Ok(actions) => actions,
+                Err(e) => return response_500(e),
+            };
+            match ActionAdapter::init(&db)
+                .bulk_update_ordering(actions, req.ordering.clone())
+                .await
+            {
                 Ok(_) => HttpResponse::Ok().finish(),
                 Err(e) => response_500(e),
             }

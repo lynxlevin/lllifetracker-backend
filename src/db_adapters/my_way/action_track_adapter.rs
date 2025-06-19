@@ -6,7 +6,6 @@ use sea_orm::{
     IntoActiveModel, JoinType::LeftJoin, Order, QueryFilter, QueryOrder, QuerySelect,
     RelationTrait, RuntimeErr::SqlxError, Select, Set,
 };
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::CustomDbErr;
@@ -104,7 +103,7 @@ impl ActionTrackQuery for ActionTrackAdapter<'_> {
     }
 }
 
-#[derive(Deserialize, Debug, Serialize, Clone)]
+#[derive(Debug, Clone)]
 pub struct CreateActionTrackParams {
     pub started_at: chrono::DateTime<chrono::FixedOffset>,
     pub ended_at: Option<chrono::DateTime<chrono::FixedOffset>>,
@@ -113,7 +112,7 @@ pub struct CreateActionTrackParams {
     pub user_id: uuid::Uuid,
 }
 
-#[derive(Deserialize, Debug, Serialize, Clone)]
+#[derive(Debug, Clone)]
 pub struct UpdateActionTrackParams {
     pub started_at: chrono::DateTime<chrono::FixedOffset>,
     pub ended_at: Option<chrono::DateTime<chrono::FixedOffset>>,

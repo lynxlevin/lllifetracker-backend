@@ -17,18 +17,24 @@ pub struct ActionVisible {
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
 }
 
-impl From<action::Model> for ActionVisible {
-    fn from(item: action::Model) -> Self {
+impl From<&action::Model> for ActionVisible {
+    fn from(item: &action::Model) -> Self {
         ActionVisible {
             id: item.id,
-            name: item.name,
-            description: item.description,
+            name: item.name.clone(),
+            description: item.description.clone(),
             trackable: item.trackable,
-            color: item.color,
-            track_type: item.track_type,
+            color: item.color.clone(),
+            track_type: item.track_type.clone(),
             created_at: item.created_at,
             updated_at: item.updated_at,
         }
+    }
+}
+
+impl From<action::Model> for ActionVisible {
+    fn from(item: action::Model) -> Self {
+        ActionVisible::from(&item)
     }
 }
 

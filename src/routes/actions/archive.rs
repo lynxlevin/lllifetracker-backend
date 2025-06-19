@@ -1,12 +1,12 @@
-use ::types::{ActionVisible, CustomDbErr};
+use ::types::ActionVisible;
 use actix_web::{
     put,
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use db_adapters::action_adapter::{ActionAdapter, ActionFilter, ActionMutation, ActionQuery};
 use entities::user as user_entity;
-use sea_orm::{DbConn, DbErr};
-use services::action_mutation::ActionMutation;
+use sea_orm::DbConn;
 
 use crate::utils::{response_401, response_404, response_500};
 
@@ -25,18 +25,20 @@ pub async fn archive_action(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ActionMutation::archive(&db, path_param.action_id, user.id).await {
-                Ok(action) => {
-                    let res: ActionVisible = action.into();
-                    HttpResponse::Ok().json(res)
-                }
-                Err(e) => match &e {
-                    DbErr::Custom(message) => match message.parse::<CustomDbErr>().unwrap() {
-                        CustomDbErr::NotFound => response_404("Action with this id was not found"),
-                        _ => response_500(e),
-                    },
-                    _ => response_500(e),
+            let action = match ActionAdapter::init(&db)
+                .filter_eq_user(&user)
+                .get_by_id(path_param.action_id)
+                .await
+            {
+                Ok(action) => match action {
+                    Some(action) => action,
+                    None => return response_404("Action with this id was not found"),
                 },
+                Err(e) => return response_500(e),
+            };
+            match ActionAdapter::init(&db).archive(action).await {
+                Ok(action) => HttpResponse::Ok().json(ActionVisible::from(action)),
+                Err(e) => response_500(e),
             }
         }
         None => response_401(),

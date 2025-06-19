@@ -4,9 +4,9 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use db_adapters::action_adapter::{ActionAdapter, ActionMutation, CreateActionParams};
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use services::action_mutation::{ActionMutation, NewAction};
 use types::ActionCreateRequest;
 
 use crate::utils::{response_401, response_500};
@@ -21,21 +21,16 @@ pub async fn create_action(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ActionMutation::create_with_tag(
-                &db,
-                NewAction {
+            match ActionAdapter::init(&db)
+                .create_with_tag(CreateActionParams {
                     name: req.name.clone(),
                     description: req.description.clone(),
                     track_type: req.track_type.clone(),
                     user_id: user.id,
-                },
-            )
-            .await
+                })
+                .await
             {
-                Ok(action) => {
-                    let res: ActionVisible = action.into();
-                    HttpResponse::Created().json(res)
-                }
+                Ok(action) => HttpResponse::Created().json(ActionVisible::from(action)),
                 Err(e) => response_500(e),
             }
         }
