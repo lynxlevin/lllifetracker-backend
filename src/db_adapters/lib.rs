@@ -1,6 +1,6 @@
 mod my_way;
 
-pub use my_way::{action_track_mutation, action_track_query};
+pub use my_way::action_track_adapter;
 
 use core::fmt;
 pub use sea_orm::Order;

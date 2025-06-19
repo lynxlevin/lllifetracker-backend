@@ -22,7 +22,7 @@ GET {{endpoint}}/api/action_tracks?active_only=true
 # @name list_by_date
 GET {{endpoint}}/api/action_tracks/by_date
 
-@action_track_id=53e53e88-f8b9-4fa1-a6c6-ddec0d823df5
+@action_track_id=01978573-64cf-70f0-aaca-e09c7503d398
 @action_id="4ea4010c-05bd-4607-9199-8d07f8ba7d03"
 
 ###
@@ -33,7 +33,7 @@ Content-Type: application/json
 {
   "started_at": "2024-12-27T12:51:04.000Z",
   "ended_at": null,
-  "action_id": null
+  "action_id": {{action_id}}
 }
 
 ###

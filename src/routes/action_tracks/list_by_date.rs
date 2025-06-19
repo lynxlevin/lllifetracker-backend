@@ -6,7 +6,9 @@ use actix_web::{
 };
 use chrono::{FixedOffset, TimeZone};
 use db_adapters::{
-    action_track_query::{ActionTrackQuery, ActionTrackQueryFilter, ActionTrackQueryOrder},
+    action_track_adapter::{
+        ActionTrackAdapter, ActionTrackFilter, ActionTrackOrder, ActionTrackQuery,
+    },
     Order,
 };
 use entities::{action_track, sea_orm_active_enums::TimezoneEnum, user as user_entity};
@@ -23,7 +25,7 @@ pub async fn list_action_tracks_by_date(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            let action_tracks = match ActionTrackQuery::init(&db)
+            let action_tracks = match ActionTrackAdapter::init(&db)
                 .filter_eq_user(&user)
                 .filter_eq_archived_action(false)
                 .order_by_started_at(Order::Desc)

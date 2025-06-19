@@ -5,7 +5,9 @@ use actix_web::{
     HttpResponse,
 };
 use chrono::SubsecRound;
-use db_adapters::action_track_mutation::{ActionTrackMutation, CreateActionTrackParams};
+use db_adapters::action_track_adapter::{
+    ActionTrackAdapter, ActionTrackMutation, CreateActionTrackParams,
+};
 use entities::{sea_orm_active_enums::ActionTrackType, user as user_entity};
 use sea_orm::{DbConn, DbErr};
 use services::action_query::ActionQuery;
@@ -27,7 +29,7 @@ pub async fn create_action_track(
                 Ok(action) => {
                     let result = match action.track_type {
                         ActionTrackType::TimeSpan => {
-                            ActionTrackMutation::init(&db)
+                            ActionTrackAdapter::init(&db)
                                 .create(CreateActionTrackParams {
                                     started_at: req.started_at.trunc_subsecs(0),
                                     ended_at: None,
@@ -38,7 +40,7 @@ pub async fn create_action_track(
                                 .await
                         }
                         ActionTrackType::Count => {
-                            ActionTrackMutation::init(&db)
+                            ActionTrackAdapter::init(&db)
                                 .create(CreateActionTrackParams {
                                     started_at: req.started_at.trunc_subsecs(0),
                                     ended_at: Some(req.started_at.trunc_subsecs(0)),

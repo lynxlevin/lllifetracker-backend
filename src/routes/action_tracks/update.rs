@@ -6,8 +6,10 @@ use actix_web::{
 };
 use chrono::SubsecRound;
 use db_adapters::{
-    action_track_mutation::{ActionTrackMutation, UpdateActionTrackParams},
-    action_track_query::{ActionTrackQuery, ActionTrackQueryFilter},
+    action_track_adapter::{
+        ActionTrackAdapter, ActionTrackFilter, ActionTrackMutation, ActionTrackQuery,
+        UpdateActionTrackParams,
+    },
     CustomDbErr,
 };
 use entities::user as user_entity;
@@ -32,7 +34,7 @@ pub async fn update_action_track(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            let action_track = match ActionTrackQuery::init(&db)
+            let action_track = match ActionTrackAdapter::init(&db)
                 .filter_eq_user(&user)
                 .get_by_id(path_param.action_track_id)
                 .await
@@ -43,7 +45,7 @@ pub async fn update_action_track(
                 },
                 Err(e) => return response_500(e),
             };
-            match ActionTrackMutation::init(&db)
+            match ActionTrackAdapter::init(&db)
                 .update(
                     action_track,
                     UpdateActionTrackParams {

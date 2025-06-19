@@ -4,7 +4,9 @@ use actix_web::{
     HttpResponse,
 };
 use db_adapters::{
-    action_track_query::{ActionTrackQuery, ActionTrackQueryFilter, ActionTrackQueryOrder},
+    action_track_adapter::{
+        ActionTrackAdapter, ActionTrackFilter, ActionTrackOrder, ActionTrackQuery,
+    },
     Order,
 };
 use entities::user as user_entity;
@@ -30,7 +32,7 @@ pub async fn list_action_tracks(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            let mut action_track_query = ActionTrackQuery::init(&db)
+            let mut action_track_query = ActionTrackAdapter::init(&db)
                 .filter_eq_user(&user)
                 .filter_eq_archived_action(false);
             if let Some(active_only) = query.active_only {

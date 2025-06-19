@@ -6,7 +6,9 @@ use actix_web::{
 };
 
 use db_adapters::{
-    action_track_query::{ActionTrackQuery, ActionTrackQueryFilter, ActionTrackQueryOrder},
+    action_track_adapter::{
+        ActionTrackAdapter, ActionTrackFilter, ActionTrackOrder, ActionTrackQuery,
+    },
     Order,
 };
 use entities::user as user_entity;
@@ -31,15 +33,15 @@ pub async fn aggregate_action_tracks(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            let action_track_query = ActionTrackQuery::init(&db);
-            let mut action_track_query = action_track_query.filter_eq_user(&user);
+            let action_track_adapter = ActionTrackAdapter::init(&db);
+            let mut action_track_adapter = action_track_adapter.filter_eq_user(&user);
             if let Some(started_at_gte) = query.started_at_gte {
-                action_track_query = action_track_query.filter_started_at_gte(started_at_gte)
+                action_track_adapter = action_track_adapter.filter_started_at_gte(started_at_gte)
             };
             if let Some(started_at_lte) = query.started_at_lte {
-                action_track_query = action_track_query.filter_started_at_lte(started_at_lte)
+                action_track_adapter = action_track_adapter.filter_started_at_lte(started_at_lte)
             };
-            let action_tracks = match action_track_query
+            let action_tracks = match action_track_adapter
                 .filter_ended_at_is_null(false)
                 .filter_eq_archived_action(false)
                 .order_by_action_id(Order::Asc)
