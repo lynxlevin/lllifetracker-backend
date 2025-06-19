@@ -14,15 +14,21 @@ pub struct AmbitionVisible {
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
 }
 
-impl From<ambition::Model> for AmbitionVisible {
-    fn from(item: ambition::Model) -> Self {
+impl From<&ambition::Model> for AmbitionVisible {
+    fn from(item: &ambition::Model) -> Self {
         AmbitionVisible {
             id: item.id,
-            name: item.name,
-            description: item.description,
+            name: item.name.clone(),
+            description: item.description.clone(),
             created_at: item.created_at,
             updated_at: item.updated_at,
         }
+    }
+}
+
+impl From<ambition::Model> for AmbitionVisible {
+    fn from(item: ambition::Model) -> Self {
+        AmbitionVisible::from(&item)
     }
 }
 

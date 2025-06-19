@@ -1,12 +1,12 @@
-use ::types::{AmbitionVisible, CustomDbErr};
+use ::types::AmbitionVisible;
 use actix_web::{
     get,
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use db_adapters::ambition_adapter::{AmbitionAdapter, AmbitionFilter, AmbitionQuery};
 use entities::user as user_entity;
-use sea_orm::{DbConn, DbErr};
-use services::ambition_query::AmbitionQuery;
+use sea_orm::DbConn;
 
 use crate::utils::{response_401, response_404, response_500};
 
@@ -25,21 +25,16 @@ pub async fn get_ambition(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match AmbitionQuery::find_by_id_and_user_id(&db, path_param.ambition_id, user.id).await
+            match AmbitionAdapter::init(&db)
+                .filter_eq_user(&user)
+                .get_by_id(path_param.ambition_id)
+                .await
             {
-                Ok(ambition) => {
-                    let res: AmbitionVisible = ambition.into();
-                    HttpResponse::Ok().json(res)
-                }
-                Err(e) => match &e {
-                    DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
-                        CustomDbErr::NotFound => {
-                            response_404("Ambition with this id was not found")
-                        }
-                        _ => response_500(e),
-                    },
-                    _ => response_500(e),
+                Ok(ambition) => match ambition {
+                    Some(ambition) => HttpResponse::Ok().json(AmbitionVisible::from(ambition)),
+                    None => response_404("Ambition with this id was not found"),
                 },
+                Err(e) => response_500(e),
             }
         }
         None => response_401(),

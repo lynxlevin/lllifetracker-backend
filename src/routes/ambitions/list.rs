@@ -3,10 +3,11 @@ use actix_web::{
     web::{self, Data, ReqData},
     HttpResponse,
 };
+use db_adapters::ambition_adapter::{AmbitionAdapter, AmbitionFilter, AmbitionQuery};
 use entities::user as user_entity;
 use sea_orm::DbConn;
 use serde::Deserialize;
-use services::ambition_query::AmbitionQuery;
+use types::AmbitionVisible;
 
 use crate::utils::{response_401, response_500};
 
@@ -25,14 +26,18 @@ pub async fn list_ambitions(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match AmbitionQuery::find_all_by_user_id(
-                &db,
-                user.id,
-                query.show_archived_only.unwrap_or(false),
-            )
-            .await
+            match AmbitionAdapter::init(&db)
+                .filter_eq_user(&user)
+                .filter_eq_archived(query.show_archived_only.unwrap_or(false))
+                .get_all()
+                .await
             {
-                Ok(ambitions) => HttpResponse::Ok().json(ambitions),
+                Ok(ambitions) => HttpResponse::Ok().json(
+                    ambitions
+                        .iter()
+                        .map(|ambition| AmbitionVisible::from(ambition))
+                        .collect::<Vec<_>>(),
+                ),
                 Err(e) => response_500(e),
             }
         }

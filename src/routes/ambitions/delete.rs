@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use db_adapters::ambition_adapter::{AmbitionAdapter, AmbitionMutation};
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use services::ambition_mutation::AmbitionMutation;
 
 use crate::utils::{response_401, response_500};
 
@@ -24,7 +24,10 @@ pub async fn delete_ambition(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match AmbitionMutation::delete(&db, path_param.ambition_id, user.id).await {
+            match AmbitionAdapter::init(&db)
+                .delete(path_param.ambition_id, &user)
+                .await
+            {
                 Ok(_) => HttpResponse::NoContent().into(),
                 Err(e) => response_500(e),
             }

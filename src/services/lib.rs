@@ -1,5 +1,3 @@
-pub mod ambition_mutation;
-pub mod ambition_query;
 pub mod desired_state_category_mutation;
 pub mod desired_state_category_query;
 pub mod desired_state_mutation;
