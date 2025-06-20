@@ -4,13 +4,17 @@ use actix_web::{
     web::{Data, Json, Path, ReqData},
     HttpResponse,
 };
-use db_adapters::desired_state_adapter::{
-    DesiredStateAdapter, DesiredStateFilter, DesiredStateMutation, DesiredStateQuery,
-    UpdateDesiredStateParams,
+use db_adapters::{
+    desired_state_adapter::{
+        DesiredStateAdapter, DesiredStateFilter, DesiredStateMutation, DesiredStateQuery,
+        UpdateDesiredStateParams,
+    },
+    desired_state_category_adapter::{
+        DesiredStateCategoryAdapter, DesiredStateCategoryFilter, DesiredStateCategoryQuery,
+    },
 };
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use services::desired_state_category_query::DesiredStateCategoryQuery;
 use types::DesiredStateUpdateRequest;
 
 use crate::utils::{response_401, response_404, response_500};
@@ -32,12 +36,10 @@ pub async fn update_desired_state(
         Some(user) => {
             let user = user.into_inner();
             let category_id = match req.category_id {
-                Some(category_id) => match DesiredStateCategoryQuery::find_by_id_and_user_id(
-                    &db,
-                    category_id,
-                    user.id,
-                )
-                .await
+                Some(category_id) => match DesiredStateCategoryAdapter::init(&db)
+                    .filter_eq_user(&user)
+                    .get_by_id(category_id)
+                    .await
                 {
                     Ok(res) => res.and(Some(category_id)),
                     Err(e) => return response_500(e),

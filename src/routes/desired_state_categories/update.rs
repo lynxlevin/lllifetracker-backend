@@ -3,12 +3,12 @@ use actix_web::{
     web::{Data, Json, Path, ReqData},
     HttpResponse,
 };
+use db_adapters::desired_state_category_adapter::{
+    DesiredStateCategoryAdapter, DesiredStateCategoryFilter, DesiredStateCategoryMutation,
+    DesiredStateCategoryQuery, UpdateDesiredStateCategoryParams,
+};
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use services::{
-    desired_state_category_mutation::DesiredStateCategoryMutation,
-    desired_state_category_query::DesiredStateCategoryQuery,
-};
 use types::{DesiredStateCategoryUpdateRequest, DesiredStateCategoryVisible};
 use uuid::Uuid;
 
@@ -30,12 +30,10 @@ pub async fn update_desired_state_category(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            let category = match DesiredStateCategoryQuery::find_by_id_and_user_id(
-                &db,
-                path_param.category_id,
-                user.id,
-            )
-            .await
+            let category = match DesiredStateCategoryAdapter::init(&db)
+                .filter_eq_user(&user)
+                .get_by_id(path_param.category_id)
+                .await
             {
                 Ok(res) => match res {
                     Some(category) => category,
@@ -43,7 +41,15 @@ pub async fn update_desired_state_category(
                 },
                 Err(e) => return response_500(e),
             };
-            match DesiredStateCategoryMutation::update(&db, category, req.name.clone()).await {
+            match DesiredStateCategoryAdapter::init(&db)
+                .update(
+                    category,
+                    UpdateDesiredStateCategoryParams {
+                        name: req.name.clone(),
+                    },
+                )
+                .await
+            {
                 Ok(category) => {
                     let res: DesiredStateCategoryVisible = category.into();
                     HttpResponse::Ok().json(res)

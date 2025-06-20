@@ -3,12 +3,12 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use db_adapters::desired_state_category_adapter::{
+    DesiredStateCategoryAdapter, DesiredStateCategoryFilter, DesiredStateCategoryMutation,
+    DesiredStateCategoryQuery,
+};
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use services::{
-    desired_state_category_mutation::DesiredStateCategoryMutation,
-    desired_state_category_query::DesiredStateCategoryQuery,
-};
 use types::DesiredStateCategoryBulkUpdateOrderingRequest;
 
 use crate::utils::{response_401, response_500};
@@ -39,12 +39,11 @@ pub async fn bulk_update_desired_state_category_ordering(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            let categories = match DesiredStateCategoryQuery::find_in_ids_by_user_id(
-                &db,
-                req.ordering.clone(),
-                user.id,
-            )
-            .await
+            let categories = match DesiredStateCategoryAdapter::init(&db)
+                .filter_eq_user(&user)
+                .filter_in_ids(req.ordering.clone())
+                .get_all()
+                .await
             {
                 Ok(categories) => categories,
                 Err(e) => return response_500(e),
@@ -62,7 +61,10 @@ pub async fn bulk_update_desired_state_category_ordering(
                 })
                 .collect::<Vec<_>>();
 
-            match DesiredStateCategoryMutation::bulk_update_ordering(&db, params).await {
+            match DesiredStateCategoryAdapter::init(&db)
+                .bulk_update_ordering(params)
+                .await
+            {
                 Ok(_) => HttpResponse::Ok().finish(),
                 Err(e) => response_500(e),
             }
