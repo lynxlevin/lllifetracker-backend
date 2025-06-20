@@ -3,10 +3,10 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use db_adapters::tag_adapter::{CreatePlainTagParams, TagAdapter, TagMutation};
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use services::tag_mutation::{NewTag, TagMutation};
-use types::TagCreateRequest;
+use types::{TagCreateRequest, TagType, TagVisible};
 
 use crate::utils::{response_401, response_500};
 
@@ -20,16 +20,19 @@ pub async fn create_plain_tag(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match TagMutation::create_plain_tag(
-                &db,
-                NewTag {
+            match TagAdapter::init(&db)
+                .create_plain(CreatePlainTagParams {
                     name: req.name.clone(),
                     user_id: user.id,
-                },
-            )
-            .await
+                })
+                .await
             {
-                Ok(tag) => HttpResponse::Created().json(tag),
+                Ok(tag) => HttpResponse::Created().json(TagVisible {
+                    id: tag.id,
+                    name: tag.name.unwrap(),
+                    tag_type: TagType::Plain,
+                    created_at: tag.created_at,
+                }),
                 Err(e) => response_500(e),
             }
         }

@@ -3,10 +3,9 @@ use actix_web::{
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use db_adapters::tag_adapter::{TagAdapter, TagFilter, TagMutation, TagQuery};
 use entities::{tag, user as user_entity};
-use sea_orm::{DbConn, DbErr};
-use services::{tag_mutation::TagMutation, tag_query::TagQuery};
-use types::CustomDbErr;
+use sea_orm::DbConn;
 
 use crate::utils::{response_400, response_401, response_500};
 
@@ -25,21 +24,23 @@ pub async fn delete_plain_tag(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match TagQuery::find_by_id_and_user_id(&db, path_param.tag_id, user.id).await {
-                Ok(tag) => match _is_plain_tag(&tag) {
-                    true => match TagMutation::delete(&db, tag).await {
-                        Ok(_) => HttpResponse::NoContent().finish(),
-                        Err(e) => response_500(e),
-                    },
-                    false => response_400("Tag to delete must be a plain tag."),
+            let tag = match TagAdapter::init(&db)
+                .filter_eq_user(&user)
+                .get_by_id(path_param.tag_id)
+                .await
+            {
+                Ok(tag) => match tag {
+                    Some(tag) => tag,
+                    None => return HttpResponse::NoContent().finish(),
                 },
-                Err(e) => match &e {
-                    DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
-                        CustomDbErr::NotFound => return HttpResponse::NoContent().finish(),
-                        _ => response_500(e),
-                    },
-                    _ => response_500(e),
-                },
+                Err(e) => return response_500(e),
+            };
+            if !_is_plain_tag(&tag) {
+                return response_400("Tag to delete must be a plain tag.");
+            };
+            match TagAdapter::init(&db).delete(tag).await {
+                Ok(_) => HttpResponse::NoContent().finish(),
+                Err(e) => response_500(e),
             }
         }
         None => response_401(),

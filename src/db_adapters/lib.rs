@@ -1,4 +1,5 @@
 mod my_way;
+pub mod tag_adapter;
 
 pub use my_way::{
     action_adapter, action_track_adapter, ambition_adapter, desired_state_adapter,
