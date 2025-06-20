@@ -3,7 +3,9 @@ use actix_web::{
     web::{Data, Path, ReqData},
     HttpResponse,
 };
-use db_adapters::action_track_adapter::{ActionTrackAdapter, ActionTrackMutation};
+use db_adapters::action_track_adapter::{
+    ActionTrackAdapter, ActionTrackFilter, ActionTrackMutation, ActionTrackQuery,
+};
 use entities::user as user_entity;
 use sea_orm::DbConn;
 
@@ -24,10 +26,18 @@ pub async fn delete_action_track(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ActionTrackAdapter::init(&db)
-                .delete(path_param.action_track_id, &user)
+            let action_track = match ActionTrackAdapter::init(&db)
+                .filter_eq_user(&user)
+                .get_by_id(path_param.action_track_id)
                 .await
             {
+                Ok(action_track) => match action_track {
+                    Some(action_track) => action_track,
+                    None => return HttpResponse::NoContent().into(),
+                },
+                Err(e) => return response_500(e),
+            };
+            match ActionTrackAdapter::init(&db).delete(action_track).await {
                 Ok(_) => HttpResponse::NoContent().finish(),
                 Err(e) => response_500(e),
             }

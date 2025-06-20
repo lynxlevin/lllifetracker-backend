@@ -3,7 +3,7 @@ use std::future::Future;
 use chrono::Utc;
 use sea_orm::{
     sea_query::NullOrdering::Last, ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait,
-    IntoActiveModel, Order, QueryFilter, QueryOrder, Select, Set, TransactionError,
+    IntoActiveModel, ModelTrait, Order, QueryFilter, QueryOrder, Select, Set, TransactionError,
     TransactionTrait,
 };
 use uuid::Uuid;
@@ -124,7 +124,7 @@ pub trait ActionMutation {
         actions: Vec<Model>,
         ordering: Vec<Uuid>,
     ) -> impl Future<Output = Result<(), DbErr>>;
-    fn delete(self, id: Uuid, user: &user::Model) -> impl Future<Output = Result<(), DbErr>>;
+    fn delete(self, action: Model) -> impl Future<Output = Result<(), DbErr>>;
 }
 
 impl ActionMutation for ActionAdapter<'_> {
@@ -216,14 +216,7 @@ impl ActionMutation for ActionAdapter<'_> {
         Ok(())
     }
 
-    async fn delete(self, id: Uuid, user: &user::Model) -> Result<(), DbErr> {
-        Entity::delete(ActiveModel {
-            id: Set(id),
-            user_id: Set(user.id),
-            ..Default::default()
-        })
-        .exec(self.db)
-        .await
-        .map(|_| ())
+    async fn delete(self, action: Model) -> Result<(), DbErr> {
+        action.delete(self.db).await.map(|_| ())
     }
 }

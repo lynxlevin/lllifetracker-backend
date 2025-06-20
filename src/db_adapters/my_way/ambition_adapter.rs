@@ -3,7 +3,7 @@ use std::future::Future;
 use chrono::Utc;
 use sea_orm::{
     sea_query::NullOrdering::Last, ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait,
-    IntoActiveModel, Order, QueryFilter, QueryOrder, Select, Set, TransactionError,
+    IntoActiveModel, ModelTrait, Order, QueryFilter, QueryOrder, Select, Set, TransactionError,
     TransactionTrait,
 };
 use uuid::Uuid;
@@ -115,7 +115,7 @@ pub trait AmbitionMutation {
         ambitions: Vec<Model>,
         ordering: Vec<Uuid>,
     ) -> impl Future<Output = Result<(), DbErr>>;
-    fn delete(self, id: Uuid, user: &user::Model) -> impl Future<Output = Result<(), DbErr>>;
+    fn delete(self, ambition: Model) -> impl Future<Output = Result<(), DbErr>>;
 }
 
 impl AmbitionMutation for AmbitionAdapter<'_> {
@@ -189,14 +189,7 @@ impl AmbitionMutation for AmbitionAdapter<'_> {
         Ok(())
     }
 
-    async fn delete(self, id: Uuid, user: &user::Model) -> Result<(), DbErr> {
-        Entity::delete(ActiveModel {
-            id: Set(id),
-            user_id: Set(user.id),
-            ..Default::default()
-        })
-        .exec(self.db)
-        .await
-        .map(|_| ())
+    async fn delete(self, ambition: Model) -> Result<(), DbErr> {
+        ambition.delete(self.db).await.map(|_| ())
     }
 }

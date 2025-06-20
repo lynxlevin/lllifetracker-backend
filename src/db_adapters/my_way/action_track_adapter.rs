@@ -3,7 +3,7 @@ use std::future::Future;
 use chrono::{DateTime, FixedOffset};
 use sea_orm::{
     sqlx::error::Error::Database, ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait,
-    IntoActiveModel, JoinType::LeftJoin, Order, QueryFilter, QueryOrder, QuerySelect,
+    IntoActiveModel, JoinType::LeftJoin, ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect,
     RelationTrait, RuntimeErr::SqlxError, Select, Set,
 };
 use uuid::Uuid;
@@ -127,7 +127,7 @@ pub trait ActionTrackMutation {
         action_track: Model,
         params: UpdateActionTrackParams,
     ) -> impl Future<Output = Result<Model, DbErr>>;
-    fn delete(self, id: Uuid, user: &user::Model) -> impl Future<Output = Result<(), DbErr>>;
+    fn delete(self, action_track: Model) -> impl Future<Output = Result<(), DbErr>>;
 }
 
 impl ActionTrackMutation for ActionTrackAdapter<'_> {
@@ -174,14 +174,7 @@ impl ActionTrackMutation for ActionTrackAdapter<'_> {
         })
     }
 
-    async fn delete(self, id: Uuid, user: &user::Model) -> Result<(), DbErr> {
-        Entity::delete(ActiveModel {
-            id: Set(id),
-            user_id: Set(user.id),
-            ..Default::default()
-        })
-        .exec(self.db)
-        .await
-        .map(|_| ())
+    async fn delete(self, action_track: Model) -> Result<(), DbErr> {
+        action_track.delete(self.db).await.map(|_| ())
     }
 }

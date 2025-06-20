@@ -4,7 +4,8 @@ use actix_web::{
     HttpResponse,
 };
 use db_adapters::desired_state_category_adapter::{
-    DesiredStateCategoryAdapter, DesiredStateCategoryMutation,
+    DesiredStateCategoryAdapter, DesiredStateCategoryFilter, DesiredStateCategoryMutation,
+    DesiredStateCategoryQuery,
 };
 use entities::user as user_entity;
 use sea_orm::DbConn;
@@ -27,8 +28,19 @@ pub async fn delete_desired_state_category(
     match user {
         Some(user) => {
             let user = user.into_inner();
+            let category = match DesiredStateCategoryAdapter::init(&db)
+                .filter_eq_user(&user)
+                .get_by_id(path_param.category_id)
+                .await
+            {
+                Ok(category) => match category {
+                    Some(category) => category,
+                    None => return HttpResponse::NoContent().into(),
+                },
+                Err(e) => return response_500(e),
+            };
             match DesiredStateCategoryAdapter::init(&db)
-                .delete(path_param.category_id, &user)
+                .delete(category)
                 .await
             {
                 Ok(_) => HttpResponse::NoContent().finish(),
