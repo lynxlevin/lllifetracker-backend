@@ -1,6 +1,6 @@
 mod my_way;
 
-pub use my_way::{action_adapter, action_track_adapter, ambition_adapter};
+pub use my_way::{action_adapter, action_track_adapter, ambition_adapter, desired_state_adapter};
 
 use core::fmt;
 pub use sea_orm::Order;

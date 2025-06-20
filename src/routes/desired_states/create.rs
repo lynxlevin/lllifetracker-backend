@@ -4,12 +4,12 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use db_adapters::desired_state_adapter::{
+    CreateDesiredStateParams, DesiredStateAdapter, DesiredStateMutation,
+};
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use services::{
-    desired_state_category_query::DesiredStateCategoryQuery,
-    desired_state_mutation::{DesiredStateMutation, NewDesiredState},
-};
+use services::desired_state_category_query::DesiredStateCategoryQuery;
 use types::DesiredStateCreateRequest;
 
 use crate::utils::{response_401, response_500};
@@ -37,20 +37,17 @@ pub async fn create_desired_state(
                 },
                 None => None,
             };
-            match DesiredStateMutation::create_with_tag(
-                &db,
-                NewDesiredState {
+            match DesiredStateAdapter::init(&db)
+                .create_with_tag(CreateDesiredStateParams {
                     name: req.name.clone(),
                     description: req.description.clone(),
-                    category_id: category_id,
+                    category_id,
                     user_id: user.id,
-                },
-            )
-            .await
+                })
+                .await
             {
                 Ok(desired_state) => {
-                    let res: DesiredStateVisible = desired_state.into();
-                    HttpResponse::Created().json(res)
+                    HttpResponse::Created().json(DesiredStateVisible::from(desired_state))
                 }
                 Err(e) => response_500(e),
             }

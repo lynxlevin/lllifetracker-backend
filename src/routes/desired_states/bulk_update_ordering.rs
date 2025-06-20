@@ -3,9 +3,12 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use db_adapters::desired_state_adapter::{
+    DesiredStateAdapter, DesiredStateFilter, DesiredStateMutation, DesiredStateQuery,
+};
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use services::desired_state_mutation::DesiredStateMutation;
+
 use types::DesiredStateBulkUpdateOrderingRequest;
 
 use crate::utils::{response_401, response_500};
@@ -33,7 +36,17 @@ pub async fn bulk_update_desired_state_ordering(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match DesiredStateMutation::bulk_update_ordering(&db, user.id, req.ordering.clone())
+            let desired_states = match DesiredStateAdapter::init(&db)
+                .filter_eq_user(&user)
+                .filter_in_ids(req.ordering.clone())
+                .get_all()
+                .await
+            {
+                Ok(desired_states) => desired_states,
+                Err(e) => return response_500(e),
+            };
+            match DesiredStateAdapter::init(&db)
+                .bulk_update_ordering(desired_states, req.ordering.clone())
                 .await
             {
                 Ok(_) => HttpResponse::Ok().finish(),

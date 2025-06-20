@@ -15,16 +15,22 @@ pub struct DesiredStateVisible {
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
 }
 
-impl From<desired_state::Model> for DesiredStateVisible {
-    fn from(item: desired_state::Model) -> Self {
+impl From<&desired_state::Model> for DesiredStateVisible {
+    fn from(item: &desired_state::Model) -> Self {
         DesiredStateVisible {
             id: item.id,
-            name: item.name,
-            description: item.description,
+            name: item.name.clone(),
+            description: item.description.clone(),
             category_id: item.category_id,
             created_at: item.created_at,
             updated_at: item.updated_at,
         }
+    }
+}
+
+impl From<desired_state::Model> for DesiredStateVisible {
+    fn from(item: desired_state::Model) -> Self {
+        DesiredStateVisible::from(&item)
     }
 }
 

@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use db_adapters::desired_state_adapter::{DesiredStateAdapter, DesiredStateMutation};
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use services::desired_state_mutation::DesiredStateMutation;
 
 use crate::utils::{response_401, response_500};
 
@@ -24,7 +24,10 @@ pub async fn delete_desired_state(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match DesiredStateMutation::delete(&db, path_param.desired_state_id, user.id).await {
+            match DesiredStateAdapter::init(&db)
+                .delete(path_param.desired_state_id, &user)
+                .await
+            {
                 Ok(_) => HttpResponse::NoContent().into(),
                 Err(e) => response_500(e),
             }
