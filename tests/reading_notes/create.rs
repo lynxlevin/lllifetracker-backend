@@ -3,10 +3,11 @@ use sea_orm::{
     ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter, QueryFilter,
     QuerySelect,
 };
+use uuid::Uuid;
 
 use super::super::utils::init_app;
-use entities::{reading_note, reading_notes_tags};
 use common::factory::{self, *};
+use entities::{reading_note, reading_notes_tags};
 use types::*;
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
@@ -89,6 +90,29 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::UNAUTHORIZED);
+
+    Ok(())
+}
+
+#[actix_web::test]
+async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
+    let (app, db) = init_app().await?;
+    let user = factory::user().insert(&db).await?;
+
+    let non_existent_tag_req = test::TestRequest::post()
+        .uri("/api/reading_notes")
+        .set_json(ReadingNoteCreateRequest {
+            title: "New ReadingNote".to_string(),
+            page_number: 1,
+            text: "This is a new reading note for testing create method.".to_string(),
+            date: chrono::Utc::now().date_naive(),
+            tag_ids: vec![Uuid::now_v7()],
+        })
+        .to_request();
+    non_existent_tag_req.extensions_mut().insert(user.clone());
+
+    let res = test::call_service(&app, non_existent_tag_req).await;
+    assert_eq!(res.status(), http::StatusCode::NOT_FOUND);
 
     Ok(())
 }

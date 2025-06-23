@@ -82,6 +82,7 @@ pub async fn update_diary(
                 )
                 .await
                 {
+                    // FIXME: diary creation should be canceled.
                     match &e {
                         DbErr::Custom(ce) => match CustomDbErr::from(ce) {
                             CustomDbErr::NotFound => {

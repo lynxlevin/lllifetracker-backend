@@ -1,12 +1,18 @@
-use ::types::{ReadingNoteVisibleWithTags, ReadingNoteWithTagQueryResult, TagType, TagVisible};
+use ::types::{ReadingNoteVisibleWithTags, TagType, TagVisible};
 use actix_web::{
     get,
     web::{Data, ReqData},
     HttpResponse,
 };
+use db_adapters::{
+    reading_note_adapter::{
+        ReadingNoteAdapter, ReadingNoteFilter, ReadingNoteJoin, ReadingNoteOrder, ReadingNoteQuery,
+        ReadingNoteWithTag,
+    },
+    Order::{Asc, Desc},
+};
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use services::reading_note_query::ReadingNoteQuery;
 
 use crate::utils::{response_401, response_500};
 
@@ -19,7 +25,18 @@ pub async fn list_reading_notes(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ReadingNoteQuery::find_all_with_tags_by_user_id(&db, user.id).await {
+            match ReadingNoteAdapter::init(&db)
+                .filter_eq_user(&user)
+                .join_my_way_tags()
+                .order_by_date(Desc)
+                .order_by_created_at(Desc)
+                .order_by_ambition_created_at_nulls_last(Asc)
+                .order_by_desired_state_created_at_nulls_last(Asc)
+                .order_by_action_created_at_nulls_last(Asc)
+                .order_by_tag_created_at_nulls_last(Asc)
+                .get_all_with_tags()
+                .await
+            {
                 Ok(reading_notes) => {
                     let mut res: Vec<ReadingNoteVisibleWithTags> = vec![];
                     for reading_note in reading_notes {
@@ -53,7 +70,7 @@ pub async fn list_reading_notes(
     }
 }
 
-fn get_tag(reading_note: &ReadingNoteWithTagQueryResult) -> Option<TagVisible> {
+fn get_tag(reading_note: &ReadingNoteWithTag) -> Option<TagVisible> {
     if reading_note.tag_id.is_none() {
         return None;
     }

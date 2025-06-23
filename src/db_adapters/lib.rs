@@ -2,7 +2,7 @@ mod journal;
 mod my_way;
 pub mod tag_adapter;
 
-pub use journal::diary_adapter;
+pub use journal::{diary_adapter, reading_note_adapter};
 pub use my_way::{
     action_adapter, action_track_adapter, ambition_adapter, desired_state_adapter,
     desired_state_category_adapter,

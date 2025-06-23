@@ -53,6 +53,7 @@ pub async fn create_diary(
                     {
                         Ok(_) => HttpResponse::Created().json(DiaryVisible::from(diary)),
                         Err(e) => match &e {
+                            // FIXME: diary creation should be canceled.
                             DbErr::Custom(ce) => match CustomDbErr::from(ce) {
                                 CustomDbErr::NotFound => {
                                     return response_404("One or more of the tag_ids do not exist.")
