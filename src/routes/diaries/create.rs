@@ -9,7 +9,7 @@ use db_adapters::{
     CustomDbErr,
 };
 use entities::user as user_entity;
-use sea_orm::{DbConn, DbErr, TransactionError};
+use sea_orm::{DbConn, DbErr};
 use types::DiaryCreateRequest;
 
 use crate::utils::{response_400, response_401, response_404, response_409, response_500};
@@ -26,35 +26,40 @@ pub async fn create_diary(
             let user = user.into_inner();
             match _validate_request_body(&req) {
                 Ok(_) => {
-                    // MYMEMO: Extract more logics from db_adapter
-                    match DiaryAdapter::init(&db)
-                        .create(CreateDiaryParams {
-                            text: req.text.clone(),
-                            date: req.date,
-                            score: req.score,
-                            tag_ids: req.tag_ids.clone(),
-                            user_id: user.id,
-                        })
-                        .await
-                    {
-                        Ok(diary) => {
-                            let res: DiaryVisible = diary.into();
-                            HttpResponse::Created().json(res)
-                        }
-                        Err(e) => match &e {
-                            TransactionError::Transaction(e) => match e {
+                    let diary =
+                        match DiaryAdapter::init(&db)
+                            .create(CreateDiaryParams {
+                                text: req.text.clone(),
+                                date: req.date,
+                                score: req.score,
+                                user_id: user.id,
+                            })
+                            .await
+                        {
+                            Ok(diary) => diary,
+                            Err(e) => match &e {
                                 DbErr::Custom(ce) => match CustomDbErr::from(ce) {
-                                    CustomDbErr::Duplicate => response_409(
+                                    CustomDbErr::Duplicate => return response_409(
                                         "Another diary record for the same date already exists.",
                                     ),
-                                    CustomDbErr::NotFound => {
-                                        response_404("One or more of the tag_ids do not exist.")
-                                    }
-                                    _ => response_500(e),
+                                    _ => return response_500(e),
                                 },
-                                _ => response_500(e),
+                                _ => return response_500(e),
                             },
-                            _ => response_500(e),
+                        };
+                    match DiaryAdapter::init(&db)
+                        .link_tags(&diary, req.tag_ids.clone())
+                        .await
+                    {
+                        Ok(_) => HttpResponse::Created().json(DiaryVisible::from(diary)),
+                        Err(e) => match &e {
+                            DbErr::Custom(ce) => match CustomDbErr::from(ce) {
+                                CustomDbErr::NotFound => {
+                                    return response_404("One or more of the tag_ids do not exist.")
+                                }
+                                _ => return response_500(e),
+                            },
+                            _ => return response_500(e),
                         },
                     }
                 }

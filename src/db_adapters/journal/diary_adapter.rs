@@ -5,7 +5,6 @@ use sea_orm::{
     sea_query::NullOrdering::Last, sqlx::error::Error::Database, ActiveModelTrait, ColumnTrait,
     DbConn, DbErr, EntityTrait, FromQueryResult, IntoActiveModel, JoinType::LeftJoin, ModelTrait,
     Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait, RuntimeErr::SqlxError, Select, Set,
-    TransactionError, TransactionTrait,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -34,11 +33,11 @@ impl<'a> DiaryAdapter<'a> {
 }
 
 pub trait DiaryJoin {
-    fn join_diary_with_my_ways(self) -> Self;
+    fn join_my_way_tags(self) -> Self;
 }
 
 impl DiaryJoin for DiaryAdapter<'_> {
-    fn join_diary_with_my_ways(mut self) -> Self {
+    fn join_my_way_tags(mut self) -> Self {
         self.query = self
             .query
             .join_rev(LeftJoin, diaries_tags::Relation::Diary.def())
@@ -119,12 +118,16 @@ pub struct DiaryWithTag {
 }
 
 pub trait DiaryQuery {
-    fn get_all_with_tag(self) -> impl Future<Output = Result<Vec<DiaryWithTag>, DbErr>>;
+    fn get_all_with_tags(self) -> impl Future<Output = Result<Vec<DiaryWithTag>, DbErr>>;
     fn get_by_id(self, id: Uuid) -> impl Future<Output = Result<Option<Model>, DbErr>>;
+    fn get_with_tags_by_id(
+        self,
+        id: Uuid,
+    ) -> impl Future<Output = Result<Option<(Model, Vec<tag::Model>)>, DbErr>>;
 }
 
 impl DiaryQuery for DiaryAdapter<'_> {
-    async fn get_all_with_tag(self) -> Result<Vec<DiaryWithTag>, DbErr> {
+    async fn get_all_with_tags(self) -> Result<Vec<DiaryWithTag>, DbErr> {
         self.query
             .column_as(tag::Column::Id, "tag_id")
             .column_as(tag::Column::Name, "tag_name")
@@ -140,6 +143,25 @@ impl DiaryQuery for DiaryAdapter<'_> {
     async fn get_by_id(self, id: Uuid) -> Result<Option<Model>, DbErr> {
         self.query.filter(Column::Id.eq(id)).one(self.db).await
     }
+
+    async fn get_with_tags_by_id(
+        self,
+        id: Uuid,
+    ) -> Result<Option<(Model, Vec<tag::Model>)>, DbErr> {
+        match self
+            .query
+            .filter(Column::Id.eq(id))
+            .find_with_related(tag::Entity)
+            .all(self.db)
+            .await
+        {
+            Ok(diaries) => match diaries.len() > 0 {
+                true => Ok(diaries.into_iter().nth(0)),
+                false => Ok(None),
+            },
+            Err(e) => Err(e),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -147,7 +169,6 @@ pub struct CreateDiaryParams {
     pub text: Option<String>,
     pub date: NaiveDate,
     pub score: Option<i16>,
-    pub tag_ids: Vec<Uuid>,
     pub user_id: Uuid,
 }
 
@@ -156,7 +177,7 @@ pub enum DiaryUpdateKey {
     Text,
     Date,
     Score,
-    TagIds,
+    TagIds, // FIXME: remove this key after removing from frontend
 }
 
 #[derive(Debug, Clone)]
@@ -164,157 +185,112 @@ pub struct UpdateDiaryParams {
     pub text: Option<String>,
     pub date: NaiveDate,
     pub score: Option<i16>,
-    pub tag_ids: Vec<Uuid>,
     pub update_keys: Vec<DiaryUpdateKey>,
 }
 
 pub trait DiaryMutation {
-    fn create(
-        self,
-        params: CreateDiaryParams,
-    ) -> impl Future<Output = Result<Model, TransactionError<DbErr>>>;
+    fn create(self, params: CreateDiaryParams) -> impl Future<Output = Result<Model, DbErr>>;
     fn partial_update(
         self,
         diary: Model,
         params: UpdateDiaryParams,
-    ) -> impl Future<Output = Result<Model, TransactionError<DbErr>>>;
+    ) -> impl Future<Output = Result<Model, DbErr>>;
     fn delete(self, diary: Model) -> impl Future<Output = Result<(), DbErr>>;
+    fn link_tags(
+        &self,
+        diary: &Model,
+        tag_ids: impl IntoIterator<Item = Uuid>,
+    ) -> impl Future<Output = Result<(), DbErr>>;
+    fn unlink_tags(
+        &self,
+        diary: &Model,
+        tag_ids: impl IntoIterator<Item = Uuid>,
+    ) -> impl Future<Output = Result<(), DbErr>>;
 }
 
 impl DiaryMutation for DiaryAdapter<'_> {
-    async fn create(self, params: CreateDiaryParams) -> Result<Model, TransactionError<DbErr>> {
-        self.db
-            .transaction::<_, Model, DbErr>(|txn| {
-                Box::pin(async move {
-                    let diary_id = Uuid::now_v7();
-                    let diary = ActiveModel {
-                        id: Set(diary_id),
-                        user_id: Set(params.user_id),
-                        text: Set(params.text),
-                        date: Set(params.date),
-                        score: Set(params.score),
-                    }
-                    .insert(txn)
-                    .await
-                    .map_err(|e| match &e {
-                        DbErr::Query(SqlxError(Database(err))) => match err.constraint() {
-                            Some("diaries_user_id_date_unique_index") => {
-                                DbErr::Custom(CustomDbErr::Duplicate.to_string())
-                            }
-                            _ => e,
-                        },
-                        _ => e,
-                    })?;
-
-                    let tag_links_to_create = params
-                        .tag_ids
-                        .clone()
-                        .into_iter()
-                        .map(|tag_id| diaries_tags::ActiveModel {
-                            diary_id: Set(diary.id),
-                            tag_id: Set(tag_id),
-                        })
-                        .collect::<Vec<_>>();
-                    diaries_tags::Entity::insert_many(tag_links_to_create)
-                        .on_empty_do_nothing()
-                        .exec(txn)
-                        .await
-                        .map_err(|e| match &e {
-                            DbErr::Exec(SqlxError(Database(err))) => match err.constraint() {
-                                Some("fk-diaries_tags-tag_id") => {
-                                    DbErr::Custom(CustomDbErr::NotFound.to_string())
-                                }
-                                _ => e,
-                            },
-                            _ => e,
-                        })?;
-
-                    Ok(diary)
-                })
-            })
-            .await
+    async fn create(self, params: CreateDiaryParams) -> Result<Model, DbErr> {
+        ActiveModel {
+            id: Set(Uuid::now_v7()),
+            user_id: Set(params.user_id),
+            text: Set(params.text),
+            date: Set(params.date),
+            score: Set(params.score),
+        }
+        .insert(self.db)
+        .await
+        .map_err(|e| match &e {
+            DbErr::Query(SqlxError(Database(err))) => match err.constraint() {
+                Some("diaries_user_id_date_unique_index") => {
+                    DbErr::Custom(CustomDbErr::Duplicate.to_string())
+                }
+                _ => e,
+            },
+            _ => e,
+        })
     }
 
-    async fn partial_update(
-        self,
-        diary: Model,
-        params: UpdateDiaryParams,
-    ) -> Result<Model, TransactionError<DbErr>> {
-        self.db
-            .transaction::<_, Model, DbErr>(|txn| {
-                Box::pin(async move {
-                    let diary_id = diary.id;
-                    let mut diary = diary.into_active_model();
-                    if params.update_keys.contains(&DiaryUpdateKey::Text) {
-                        diary.text = Set(params.text);
-                    }
-                    if params.update_keys.contains(&DiaryUpdateKey::Date) {
-                        diary.date = Set(params.date);
-                    }
-                    if params.update_keys.contains(&DiaryUpdateKey::Score) {
-                        diary.score = Set(params.score);
-                    }
-                    if params.update_keys.contains(&DiaryUpdateKey::TagIds) {
-                        let tag_ids = params.tag_ids;
-                        let tag_links = diaries_tags::Entity::find()
-                            .filter(diaries_tags::Column::DiaryId.eq(diary_id))
-                            .all(txn)
-                            .await?;
-                        let linked_tag_ids = tag_links
-                            .into_iter()
-                            .map(|link| link.tag_id)
-                            .collect::<Vec<_>>();
-
-                        let tag_links_to_create: Vec<diaries_tags::ActiveModel> = tag_ids
-                            .clone()
-                            .into_iter()
-                            .filter(|id| !linked_tag_ids.contains(id))
-                            .map(|tag_id| diaries_tags::ActiveModel {
-                                diary_id: Set(diary_id),
-                                tag_id: Set(tag_id),
-                            })
-                            .collect();
-                        diaries_tags::Entity::insert_many(tag_links_to_create)
-                            .on_empty_do_nothing()
-                            .exec(txn)
-                            .await
-                            .map_err(|e| match &e {
-                                DbErr::Exec(SqlxError(Database(err))) => match err.constraint() {
-                                    Some("fk-diaries_tags-tag_id") => {
-                                        DbErr::Custom(CustomDbErr::NotFound.to_string())
-                                    }
-                                    _ => e,
-                                },
-                                _ => e,
-                            })?;
-
-                        let ids_to_delete: Vec<uuid::Uuid> = linked_tag_ids
-                            .into_iter()
-                            .filter(|linked_tag_id| !tag_ids.contains(linked_tag_id))
-                            .collect();
-                        if ids_to_delete.len() > 0 {
-                            diaries_tags::Entity::delete_many()
-                                .filter(diaries_tags::Column::DiaryId.eq(diary_id))
-                                .filter(diaries_tags::Column::TagId.is_in(ids_to_delete))
-                                .exec(txn)
-                                .await?;
-                        }
-                    }
-                    diary.update(txn).await.map_err(|e| match &e {
-                        DbErr::Query(SqlxError(Database(err))) => match err.constraint() {
-                            Some("diaries_user_id_date_unique_index") => {
-                                DbErr::Custom(CustomDbErr::Duplicate.to_string())
-                            }
-                            _ => e,
-                        },
-                        _ => e,
-                    })
-                })
-            })
-            .await
+    async fn partial_update(self, diary: Model, params: UpdateDiaryParams) -> Result<Model, DbErr> {
+        let mut diary = diary.into_active_model();
+        if params.update_keys.contains(&DiaryUpdateKey::Text) {
+            diary.text = Set(params.text);
+        }
+        if params.update_keys.contains(&DiaryUpdateKey::Date) {
+            diary.date = Set(params.date);
+        }
+        if params.update_keys.contains(&DiaryUpdateKey::Score) {
+            diary.score = Set(params.score);
+        }
+        diary.update(self.db).await.map_err(|e| match &e {
+            DbErr::Query(SqlxError(Database(err))) => match err.constraint() {
+                Some("diaries_user_id_date_unique_index") => {
+                    DbErr::Custom(CustomDbErr::Duplicate.to_string())
+                }
+                _ => e,
+            },
+            _ => e,
+        })
     }
 
     async fn delete(self, diary: Model) -> Result<(), DbErr> {
         diary.delete(self.db).await.map(|_| ())
+    }
+
+    async fn link_tags(
+        &self,
+        diary: &Model,
+        tag_ids: impl IntoIterator<Item = Uuid>,
+    ) -> Result<(), DbErr> {
+        let tag_links = tag_ids.into_iter().map(|tag_id| diaries_tags::ActiveModel {
+            diary_id: Set(diary.id),
+            tag_id: Set(tag_id),
+        });
+        diaries_tags::Entity::insert_many(tag_links)
+            .on_empty_do_nothing()
+            .exec(self.db)
+            .await
+            .map(|_| ())
+            .map_err(|e| match &e {
+                DbErr::Exec(SqlxError(Database(err))) => match err.constraint() {
+                    Some("fk-diaries_tags-tag_id") => {
+                        DbErr::Custom(CustomDbErr::NotFound.to_string())
+                    }
+                    _ => e,
+                },
+                _ => e,
+            })
+    }
+
+    async fn unlink_tags(
+        &self,
+        diary: &Model,
+        tag_ids: impl IntoIterator<Item = Uuid>,
+    ) -> Result<(), DbErr> {
+        diaries_tags::Entity::delete_many()
+            .filter(diaries_tags::Column::DiaryId.eq(diary.id))
+            .filter(diaries_tags::Column::TagId.is_in(tag_ids))
+            .exec(self.db)
+            .await
+            .map(|_| ())
     }
 }

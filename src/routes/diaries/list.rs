@@ -23,14 +23,14 @@ pub async fn list_diaries(
         Some(user) => {
             let user = user.into_inner();
             match DiaryAdapter::init(&db)
-                .join_diary_with_my_ways()
+                .join_my_way_tags()
                 .filter_eq_user(&user)
                 .order_by_date(Desc)
                 .order_by_ambition_created_at_nulls_last(Asc)
                 .order_by_desired_state_created_at_nulls_last(Asc)
                 .order_by_action_created_at_nulls_last(Asc)
                 .order_by_tag_created_at_nulls_last(Asc)
-                .get_all_with_tag()
+                .get_all_with_tags()
                 .await
             {
                 Ok(diaries) => {
