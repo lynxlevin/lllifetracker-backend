@@ -4,11 +4,12 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
-use entities::user as user_entity;
-use sea_orm::{
-    sqlx::error::Error::Database, DbConn, DbErr, RuntimeErr::SqlxError, TransactionError,
+use db_adapters::{
+    diary_adapter::{CreateDiaryParams, DiaryAdapter, DiaryMutation},
+    CustomDbErr,
 };
-use services::diary_mutation::{DiaryMutation, NewDiary};
+use entities::user as user_entity;
+use sea_orm::{DbConn, DbErr, TransactionError};
 use types::DiaryCreateRequest;
 
 use crate::utils::{response_400, response_401, response_404, response_409, response_500};
@@ -25,17 +26,16 @@ pub async fn create_diary(
             let user = user.into_inner();
             match _validate_request_body(&req) {
                 Ok(_) => {
-                    match DiaryMutation::create(
-                        &db,
-                        NewDiary {
+                    // MYMEMO: Extract more logics from db_adapter
+                    match DiaryAdapter::init(&db)
+                        .create(CreateDiaryParams {
                             text: req.text.clone(),
                             date: req.date,
                             score: req.score,
                             tag_ids: req.tag_ids.clone(),
                             user_id: user.id,
-                        },
-                    )
-                    .await
+                        })
+                        .await
                     {
                         Ok(diary) => {
                             let res: DiaryVisible = diary.into();
@@ -43,14 +43,11 @@ pub async fn create_diary(
                         }
                         Err(e) => match &e {
                             TransactionError::Transaction(e) => match e {
-                                DbErr::Query(SqlxError(Database(e))) => match e.constraint() {
-                                    Some("diaries_user_id_date_unique_index") => response_409(
+                                DbErr::Custom(ce) => match CustomDbErr::from(ce) {
+                                    CustomDbErr::Duplicate => response_409(
                                         "Another diary record for the same date already exists.",
                                     ),
-                                    _ => response_500(e),
-                                },
-                                DbErr::Exec(SqlxError(Database(e))) => match e.constraint() {
-                                    Some("fk-diaries_tags-tag_id") => {
+                                    CustomDbErr::NotFound => {
                                         response_404("One or more of the tag_ids do not exist.")
                                     }
                                     _ => response_500(e),

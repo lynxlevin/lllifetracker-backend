@@ -3,7 +3,10 @@ use actix_web::{
     web::{self, Data, ReqData},
     HttpResponse,
 };
-use db_adapters::ambition_adapter::{AmbitionAdapter, AmbitionFilter, AmbitionQuery};
+use db_adapters::{
+    ambition_adapter::{AmbitionAdapter, AmbitionFilter, AmbitionOrder, AmbitionQuery},
+    Order::Asc,
+};
 use entities::user as user_entity;
 use sea_orm::DbConn;
 use serde::Deserialize;
@@ -29,6 +32,8 @@ pub async fn list_ambitions(
             match AmbitionAdapter::init(&db)
                 .filter_eq_user(&user)
                 .filter_eq_archived(query.show_archived_only.unwrap_or(false))
+                .order_by_ordering_nulls_last(Asc)
+                .order_by_created_at(Asc)
                 .get_all()
                 .await
             {

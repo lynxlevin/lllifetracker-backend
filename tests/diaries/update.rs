@@ -1,12 +1,13 @@
 use actix_web::{http, test, HttpMessage};
+use db_adapters::diary_adapter::DiaryUpdateKey;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter,
-    QueryFilter, QuerySelect,
+    ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter, QueryFilter,
+    QuerySelect,
 };
 
 use super::super::utils::init_app;
-use entities::{diaries_tags, diary};
 use common::factory::{self, *};
+use entities::{diaries_tags, diary};
 use types::*;
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
@@ -26,10 +27,10 @@ async fn happy_path() -> Result<(), DbErr> {
         score: None,
         tag_ids: vec![tag.id],
         update_keys: vec![
-            DiaryKey::Text,
-            DiaryKey::Date,
-            DiaryKey::Score,
-            DiaryKey::TagIds,
+            DiaryUpdateKey::Text,
+            DiaryUpdateKey::Date,
+            DiaryUpdateKey::Score,
+            DiaryUpdateKey::TagIds,
         ],
     };
 
@@ -126,7 +127,7 @@ async fn conflict_if_duplicate_exists() -> Result<(), DbErr> {
             date: chrono::NaiveDate::from_ymd_opt(2025, 3, 19).unwrap(),
             score: None,
             tag_ids: vec![],
-            update_keys: vec![DiaryKey::Date],
+            update_keys: vec![DiaryUpdateKey::Date],
         })
         .to_request();
     req.extensions_mut().insert(user.clone());
@@ -150,7 +151,7 @@ async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
             date: diary.date,
             score: None,
             tag_ids: vec![uuid::Uuid::now_v7()],
-            update_keys: vec![DiaryKey::TagIds],
+            update_keys: vec![DiaryUpdateKey::TagIds],
         })
         .to_request();
     req.extensions_mut().insert(user.clone());
@@ -174,7 +175,7 @@ async fn validation_errors() -> Result<(), DbErr> {
             date: diary.date,
             score: Some(6),
             tag_ids: vec![],
-            update_keys: vec![DiaryKey::Score],
+            update_keys: vec![DiaryUpdateKey::Score],
         })
         .to_request();
     score_too_large_req.extensions_mut().insert(user.clone());
@@ -188,7 +189,7 @@ async fn validation_errors() -> Result<(), DbErr> {
             date: diary.date,
             score: Some(0),
             tag_ids: vec![],
-            update_keys: vec![DiaryKey::Score],
+            update_keys: vec![DiaryUpdateKey::Score],
         })
         .to_request();
     score_too_small_req.extensions_mut().insert(user.clone());

@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use db_adapters::diary_adapter::{DiaryAdapter, DiaryFilter, DiaryMutation, DiaryQuery};
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use services::diary_mutation::DiaryMutation;
 
 use crate::utils::{response_401, response_500};
 
@@ -24,7 +24,18 @@ pub async fn delete_diary(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match DiaryMutation::delete(&db, path_param.diary_id, user.id).await {
+            let diary = match DiaryAdapter::init(&db)
+                .filter_eq_user(&user)
+                .get_by_id(path_param.diary_id)
+                .await
+            {
+                Ok(diary) => match diary {
+                    Some(diary) => diary,
+                    None => return HttpResponse::NoContent().into(),
+                },
+                Err(e) => return response_500(e),
+            };
+            match DiaryAdapter::init(&db).delete(diary).await {
                 Ok(_) => HttpResponse::NoContent().into(),
                 Err(e) => response_500(e),
             }

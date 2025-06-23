@@ -3,12 +3,13 @@ use actix_web::{
     web::{Data, Json, Path, ReqData},
     HttpResponse,
 };
-use entities::user as user_entity;
-use sea_orm::{
-    sqlx::error::Error::Database, DbConn, DbErr, RuntimeErr::SqlxError, TransactionError,
+use db_adapters::{
+    diary_adapter::{DiaryAdapter, DiaryFilter, DiaryMutation, DiaryQuery, UpdateDiaryParams},
+    CustomDbErr,
 };
-use services::diary_mutation::{DiaryMutation, UpdateDiary};
-use types::{CustomDbErr, DiaryUpdateRequest, DiaryVisible};
+use entities::user as user_entity;
+use sea_orm::{DbConn, DbErr, TransactionError};
+use types::{DiaryUpdateRequest, DiaryVisible};
 
 use crate::utils::{response_400, response_401, response_404, response_409, response_500};
 
@@ -30,37 +31,38 @@ pub async fn update_diary(
             let user = user.into_inner();
             match _validate_request_body(&req) {
                 Ok(_) => {
-                    let form = UpdateDiary {
-                        id: path_param.diary_id,
+                    let diary = match DiaryAdapter::init(&db)
+                        .filter_eq_user(&user)
+                        .get_by_id(path_param.diary_id)
+                        .await
+                    {
+                        Ok(diary) => match diary {
+                            Some(diary) => diary,
+                            None => return response_404("Diary with this id was not found"),
+                        },
+                        Err(e) => return response_500(e),
+                    };
+                    let params = UpdateDiaryParams {
                         text: req.text.clone(),
                         date: req.date,
                         score: req.score,
                         tag_ids: req.tag_ids.clone(),
-                        user_id: user.id,
                         update_keys: req.update_keys.clone(),
                     };
-                    match DiaryMutation::partial_update(&db, form).await {
+                    // MYMEMO: Extract more logics from db_adapter
+                    match DiaryAdapter::init(&db).partial_update(diary, params).await {
                         Ok(diary) => {
                             let res: DiaryVisible = diary.into();
                             HttpResponse::Ok().json(res)
                         }
                         Err(e) => match &e {
                             TransactionError::Transaction(e) => match e {
-                                DbErr::Query(SqlxError(Database(e))) => match e.constraint() {
-                                    Some("diaries_user_id_date_unique_index") => response_409(
+                                DbErr::Custom(ce) => match CustomDbErr::from(ce) {
+                                    CustomDbErr::Duplicate => response_409(
                                         "Another diary record for the same date already exists.",
                                     ),
-                                    _ => response_500(e),
-                                },
-                                DbErr::Exec(SqlxError(Database(e))) => match e.constraint() {
-                                    Some("fk-diaries_tags-tag_id") => {
-                                        response_404("One or more of the tag_ids do not exist.")
-                                    }
-                                    _ => response_500(e),
-                                },
-                                DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
                                     CustomDbErr::NotFound => {
-                                        response_404("Diary with this id was not found")
+                                        response_404("One or more of the tag_ids do not exist.")
                                     }
                                     _ => response_500(e),
                                 },

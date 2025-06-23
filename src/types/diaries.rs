@@ -1,3 +1,4 @@
+use db_adapters::diary_adapter::DiaryUpdateKey;
 use entities::{diary, prelude::Diary};
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
@@ -54,14 +55,6 @@ impl DiaryVisibleWithTags {
     }
 }
 
-#[derive(serde::Deserialize, Debug, serde::Serialize, Clone, PartialEq)]
-pub enum DiaryKey {
-    Text,
-    Date,
-    Score,
-    TagIds,
-}
-
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 pub struct DiaryCreateRequest {
     pub text: Option<String>,
@@ -76,5 +69,5 @@ pub struct DiaryUpdateRequest {
     pub date: chrono::NaiveDate,
     pub score: Option<i16>,
     pub tag_ids: Vec<uuid::Uuid>,
-    pub update_keys: Vec<DiaryKey>,
+    pub update_keys: Vec<DiaryUpdateKey>,
 }

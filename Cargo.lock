@@ -3803,6 +3803,7 @@ dependencies = [
  "actix-web",
  "chrono",
  "common",
+ "db_adapters",
  "dotenvy",
  "entities",
  "env_logger",
@@ -4069,6 +4070,7 @@ name = "types"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "db_adapters",
  "entities",
  "sea-orm",
  "serde",
