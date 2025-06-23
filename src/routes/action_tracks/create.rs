@@ -8,10 +8,11 @@ use chrono::SubsecRound;
 use db_adapters::{
     action_adapter::{ActionAdapter, ActionFilter, ActionQuery},
     action_track_adapter::{ActionTrackAdapter, ActionTrackMutation, CreateActionTrackParams},
+    CustomDbErr,
 };
 use entities::{sea_orm_active_enums::ActionTrackType, user as user_entity};
 use sea_orm::{DbConn, DbErr};
-use types::{ActionTrackCreateRequest, CustomDbErr};
+use types::ActionTrackCreateRequest;
 
 use crate::utils::{response_401, response_404, response_409, response_500};
 
@@ -63,7 +64,7 @@ pub async fn create_action_track(
                             }
                             Err(e) => match &e {
                                 DbErr::Custom(message) => {
-                                    match message.parse::<CustomDbErr>().unwrap() {
+                                    match CustomDbErr::from(message) {
                                                 CustomDbErr::Duplicate => response_409("A track for the same action which starts at the same time exists."),
                                                 _ => response_500(e),
                                             }

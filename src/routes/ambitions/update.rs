@@ -3,12 +3,15 @@ use actix_web::{
     web::{Data, Json, Path, ReqData},
     HttpResponse,
 };
-use db_adapters::ambition_adapter::{
-    AmbitionAdapter, AmbitionFilter, AmbitionMutation, AmbitionQuery, UpdateAmbitionParams,
+use db_adapters::{
+    ambition_adapter::{
+        AmbitionAdapter, AmbitionFilter, AmbitionMutation, AmbitionQuery, UpdateAmbitionParams,
+    },
+    CustomDbErr,
 };
 use entities::user as user_entity;
 use sea_orm::{DbConn, DbErr};
-use types::{AmbitionUpdateRequest, AmbitionVisible, CustomDbErr};
+use types::{AmbitionUpdateRequest, AmbitionVisible};
 
 use crate::utils::{response_401, response_404, response_500};
 
@@ -54,7 +57,7 @@ pub async fn update_ambition(
                     HttpResponse::Ok().json(res)
                 }
                 Err(e) => match &e {
-                    DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
+                    DbErr::Custom(e) => match CustomDbErr::from(e) {
                         CustomDbErr::NotFound => {
                             response_404("Ambition with this id was not found")
                         }
