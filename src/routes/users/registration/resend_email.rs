@@ -4,9 +4,9 @@ use actix_web::{
     HttpResponse,
 };
 use common::settings::types::Settings;
+use db_adapters::user_adapter::{UserAdapter, UserFilter, UserQuery};
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
-use services::user::Query as UserQuery;
 use utils::emails::send_multipart_email;
 
 use crate::utils::{response_404, response_500};
@@ -26,7 +26,7 @@ pub async fn resend_email(
     req: Json<RequestBody>,
     settings: Data<Settings>,
 ) -> HttpResponse {
-    match UserQuery::find_inactive_by_email(&db, req.email.clone()).await {
+    match UserAdapter::init(&db).filter_eq_is_active(false).get_by_email(req.email.clone()).await {
         Ok(user) => match user {
             Some(user) => {
                 match redis_pool.get().await {

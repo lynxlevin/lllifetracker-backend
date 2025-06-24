@@ -1,12 +1,15 @@
-use ::types::{DiaryVisibleWithTags, DiaryWithTagQueryResult, TagType, TagVisible};
+use ::types::{DiaryVisibleWithTags, TagType, TagVisible};
 use actix_web::{
     get,
     web::{Data, ReqData},
     HttpResponse,
 };
+use db_adapters::{
+    diary_adapter::{DiaryAdapter, DiaryFilter, DiaryJoin, DiaryOrder, DiaryQuery, DiaryWithTag},
+    Order::{Asc, Desc},
+};
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use services::diary_query::DiaryQuery;
 
 use crate::utils::{response_401, response_500};
 
@@ -19,7 +22,17 @@ pub async fn list_diaries(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match DiaryQuery::find_all_with_tags_by_user_id(&db, user.id).await {
+            match DiaryAdapter::init(&db)
+                .join_my_way_tags()
+                .filter_eq_user(&user)
+                .order_by_date(Desc)
+                .order_by_ambition_created_at_nulls_last(Asc)
+                .order_by_desired_state_created_at_nulls_last(Asc)
+                .order_by_action_created_at_nulls_last(Asc)
+                .order_by_tag_created_at_nulls_last(Asc)
+                .get_all_with_tags()
+                .await
+            {
                 Ok(diaries) => {
                     let mut res: Vec<DiaryVisibleWithTags> = vec![];
                     for diary in diaries {
@@ -50,14 +63,11 @@ pub async fn list_diaries(
     }
 }
 
-fn is_first_diary_to_process(
-    res: &Vec<DiaryVisibleWithTags>,
-    diary: &DiaryWithTagQueryResult,
-) -> bool {
+fn is_first_diary_to_process(res: &Vec<DiaryVisibleWithTags>, diary: &DiaryWithTag) -> bool {
     res.is_empty() || res.last().unwrap().id != diary.id
 }
 
-fn get_tag(diary: &DiaryWithTagQueryResult) -> Option<TagVisible> {
+fn get_tag(diary: &DiaryWithTag) -> Option<TagVisible> {
     if diary.tag_id.is_none() {
         return None;
     }

@@ -3,10 +3,15 @@ use actix_web::{
     web::{Data, Json, Path, ReqData},
     HttpResponse,
 };
+use db_adapters::{
+    ambition_adapter::{
+        AmbitionAdapter, AmbitionFilter, AmbitionMutation, AmbitionQuery, UpdateAmbitionParams,
+    },
+    CustomDbErr,
+};
 use entities::user as user_entity;
 use sea_orm::{DbConn, DbErr};
-use services::ambition_mutation::AmbitionMutation;
-use types::{AmbitionUpdateRequest, AmbitionVisible, CustomDbErr};
+use types::{AmbitionUpdateRequest, AmbitionVisible};
 
 use crate::utils::{response_401, response_404, response_500};
 
@@ -26,21 +31,33 @@ pub async fn update_ambition(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match AmbitionMutation::update(
-                &db,
-                path_param.ambition_id,
-                user.id,
-                req.name.clone(),
-                req.description.clone(),
-            )
-            .await
+            let ambition = match AmbitionAdapter::init(&db)
+                .filter_eq_user(&user)
+                .get_by_id(path_param.ambition_id)
+                .await
+            {
+                Ok(ambition) => match ambition {
+                    Some(ambition) => ambition,
+                    None => return response_404("Ambition with this id was not found"),
+                },
+                Err(e) => return response_500(e),
+            };
+            match AmbitionAdapter::init(&db)
+                .update(
+                    ambition,
+                    UpdateAmbitionParams {
+                        name: req.name.clone(),
+                        description: req.description.clone(),
+                    },
+                )
+                .await
             {
                 Ok(ambition) => {
                     let res: AmbitionVisible = ambition.into();
                     HttpResponse::Ok().json(res)
                 }
                 Err(e) => match &e {
-                    DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
+                    DbErr::Custom(e) => match CustomDbErr::from(e) {
                         CustomDbErr::NotFound => {
                             response_404("Ambition with this id was not found")
                         }

@@ -1,12 +1,12 @@
-use ::types::{self, ActionVisible, CustomDbErr};
+use ::types::{self, ActionVisible};
 use actix_web::{
     put,
     web::{Data, Json, Path, ReqData},
     HttpResponse,
 };
+use db_adapters::action_adapter::{ActionAdapter, ActionFilter, ActionMutation, ActionQuery};
 use entities::user as user_entity;
-use sea_orm::{DbConn, DbErr};
-use services::{action_mutation::ActionMutation, action_query::ActionQuery};
+use sea_orm::DbConn;
 use types::ActionTrackTypeConversionRequest;
 
 use crate::utils::{response_401, response_404, response_500};
@@ -27,29 +27,28 @@ pub async fn convert_action_track_type(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ActionQuery::find_by_id_and_user_id(&db, path_param.action_id, user.id).await {
-                Ok(action) => match action.track_type == req.track_type {
-                    true => HttpResponse::Ok().json(ActionVisible::from(action)),
-                    false => {
-                        match ActionMutation::convert_track_type(
-                            &db,
-                            action,
-                            req.track_type.clone(),
-                        )
+            let action = match ActionAdapter::init(&db)
+                .filter_eq_user(&user)
+                .get_by_id(path_param.action_id)
+                .await
+            {
+                Ok(action) => match action {
+                    Some(action) => action,
+                    None => return response_404("Action with this id was not found"),
+                },
+                Err(e) => return response_500(e),
+            };
+            match action.track_type == req.track_type {
+                true => HttpResponse::Ok().json(ActionVisible::from(action)),
+                false => {
+                    match ActionAdapter::init(&db)
+                        .convert_track_type(action, req.track_type.clone())
                         .await
-                        {
-                            Ok(action) => HttpResponse::Ok().json(ActionVisible::from(action)),
-                            Err(e) => response_500(e),
-                        }
+                    {
+                        Ok(action) => HttpResponse::Ok().json(ActionVisible::from(action)),
+                        Err(e) => response_500(e),
                     }
-                },
-                Err(e) => match &e {
-                    DbErr::Custom(message) => match message.parse::<CustomDbErr>().unwrap() {
-                        CustomDbErr::NotFound => response_404("Action with this id was not found"),
-                        _ => response_500(e),
-                    },
-                    _ => response_500(e),
-                },
+                }
             }
         }
         None => response_401(),

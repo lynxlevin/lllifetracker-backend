@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use db_adapters::ambition_adapter::{AmbitionAdapter, AmbitionMutation, CreateAmbitionParams};
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use services::ambition_mutation::{AmbitionMutation, NewAmbition};
 use types::{AmbitionCreateRequest, AmbitionVisible};
 
 use crate::utils::{response_401, response_500};
@@ -20,20 +20,15 @@ pub async fn create_ambition(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match AmbitionMutation::create_with_tag(
-                &db,
-                NewAmbition {
+            match AmbitionAdapter::init(&db)
+                .create_with_tag(CreateAmbitionParams {
                     name: req.name.clone(),
                     description: req.description.clone(),
                     user_id: user.id,
-                },
-            )
-            .await
+                })
+                .await
             {
-                Ok(ambition) => {
-                    let res: AmbitionVisible = ambition.into();
-                    HttpResponse::Created().json(res)
-                }
+                Ok(ambition) => HttpResponse::Created().json(AmbitionVisible::from(ambition)),
                 Err(e) => response_500(e),
             }
         }

@@ -4,11 +4,12 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
-use entities::user as user_entity;
-use sea_orm::{
-    sqlx::error::Error::Database, DbConn, DbErr, RuntimeErr::SqlxError, TransactionError,
+use db_adapters::{
+    diary_adapter::{CreateDiaryParams, DiaryAdapter, DiaryMutation},
+    CustomDbErr,
 };
-use services::diary_mutation::{DiaryMutation, NewDiary};
+use entities::user as user_entity;
+use sea_orm::{DbConn, DbErr};
 use types::DiaryCreateRequest;
 
 use crate::utils::{response_400, response_401, response_404, response_409, response_500};
@@ -25,39 +26,41 @@ pub async fn create_diary(
             let user = user.into_inner();
             match _validate_request_body(&req) {
                 Ok(_) => {
-                    match DiaryMutation::create(
-                        &db,
-                        NewDiary {
-                            text: req.text.clone(),
-                            date: req.date,
-                            score: req.score,
-                            tag_ids: req.tag_ids.clone(),
-                            user_id: user.id,
-                        },
-                    )
-                    .await
-                    {
-                        Ok(diary) => {
-                            let res: DiaryVisible = diary.into();
-                            HttpResponse::Created().json(res)
-                        }
-                        Err(e) => match &e {
-                            TransactionError::Transaction(e) => match e {
-                                DbErr::Query(SqlxError(Database(e))) => match e.constraint() {
-                                    Some("diaries_user_id_date_unique_index") => response_409(
+                    let diary =
+                        match DiaryAdapter::init(&db)
+                            .create(CreateDiaryParams {
+                                text: req.text.clone(),
+                                date: req.date,
+                                score: req.score,
+                                user_id: user.id,
+                            })
+                            .await
+                        {
+                            Ok(diary) => diary,
+                            Err(e) => match &e {
+                                DbErr::Custom(ce) => match CustomDbErr::from(ce) {
+                                    CustomDbErr::Duplicate => return response_409(
                                         "Another diary record for the same date already exists.",
                                     ),
-                                    _ => response_500(e),
+                                    _ => return response_500(e),
                                 },
-                                DbErr::Exec(SqlxError(Database(e))) => match e.constraint() {
-                                    Some("fk-diaries_tags-tag_id") => {
-                                        response_404("One or more of the tag_ids do not exist.")
-                                    }
-                                    _ => response_500(e),
-                                },
-                                _ => response_500(e),
+                                _ => return response_500(e),
                             },
-                            _ => response_500(e),
+                        };
+                    match DiaryAdapter::init(&db)
+                        .link_tags(&diary, req.tag_ids.clone())
+                        .await
+                    {
+                        Ok(_) => HttpResponse::Created().json(DiaryVisible::from(diary)),
+                        Err(e) => match &e {
+                            // FIXME: diary creation should be canceled.
+                            DbErr::Custom(ce) => match CustomDbErr::from(ce) {
+                                CustomDbErr::NotFound => {
+                                    return response_404("One or more of the tag_ids do not exist.")
+                                }
+                                _ => return response_500(e),
+                            },
+                            _ => return response_500(e),
                         },
                     }
                 }

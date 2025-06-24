@@ -3,10 +3,14 @@ use actix_web::{
     web::{Data, Query, ReqData},
     HttpResponse,
 };
+use db_adapters::{
+    action_adapter::{ActionAdapter, ActionFilter, ActionOrder, ActionQuery},
+    Order::Asc,
+};
 use entities::user as user_entity;
 use sea_orm::DbConn;
 use serde::Deserialize;
-use services::action_query::ActionQuery;
+use types::ActionVisible;
 
 use crate::utils::{response_401, response_500};
 
@@ -25,14 +29,20 @@ pub async fn list_actions(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ActionQuery::find_all_by_user_id(
-                &db,
-                user.id,
-                query.show_archived_only.unwrap_or(false),
-            )
-            .await
+            match ActionAdapter::init(&db)
+                .filter_eq_user(&user)
+                .filter_eq_archived(query.show_archived_only.unwrap_or(false))
+                .order_by_ordering_nulls_last(Asc)
+                .order_by_created_at(Asc)
+                .get_all()
+                .await
             {
-                Ok(actions) => HttpResponse::Ok().json(actions),
+                Ok(actions) => HttpResponse::Ok().json(
+                    actions
+                        .iter()
+                        .map(|action| ActionVisible::from(action))
+                        .collect::<Vec<_>>(),
+                ),
                 Err(e) => response_500(e),
             }
         }

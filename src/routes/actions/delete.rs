@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use db_adapters::action_adapter::{ActionAdapter, ActionFilter, ActionMutation, ActionQuery};
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use services::action_mutation::ActionMutation;
 
 use crate::utils::{response_401, response_500};
 
@@ -24,7 +24,18 @@ pub async fn delete_action(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match ActionMutation::delete(&db, path_param.action_id, user.id).await {
+            let action = match ActionAdapter::init(&db)
+                .filter_eq_user(&user)
+                .get_by_id(path_param.action_id)
+                .await
+            {
+                Ok(action) => match action {
+                    Some(action) => action,
+                    None => return HttpResponse::NoContent().into(),
+                },
+                Err(e) => return response_500(e),
+            };
+            match ActionAdapter::init(&db).delete(action).await {
                 Ok(_) => HttpResponse::NoContent().into(),
                 Err(e) => response_500(e),
             }

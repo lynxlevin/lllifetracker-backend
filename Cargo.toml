@@ -5,9 +5,9 @@ members = [
     "src/entities",
     "src/common",
     "src/types",
-    "src/services",
     "src/utils",
     "src/routes",
+    "src/db_adapters",
     "src/server",
     "src/life_tracker",
     "tests",
@@ -23,6 +23,7 @@ chrono = "^0.4.40"
 config = { version = "^0.14.0", features = ["yaml"] }
 deadpool-redis = "^0.18.0"
 dotenvy = "^0.15.7"
+env_logger = "0.11.8"
 futures = { version = "^0.3.28", default-features = false }
 hex = { version = "^0.4.3", default-features = false }
 lettre = { version = "^0.11.10", default-features = false, features = [

@@ -1,12 +1,14 @@
-use ::types::{CustomDbErr, DesiredStateVisible};
+use ::types::DesiredStateVisible;
 use actix_web::{
     put,
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use db_adapters::desired_state_adapter::{
+    DesiredStateAdapter, DesiredStateFilter, DesiredStateMutation, DesiredStateQuery,
+};
 use entities::user as user_entity;
-use sea_orm::{DbConn, DbErr};
-use services::desired_state_mutation::DesiredStateMutation;
+use sea_orm::DbConn;
 
 use crate::utils::{response_401, response_404, response_500};
 
@@ -25,20 +27,22 @@ pub async fn archive_desired_state(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match DesiredStateMutation::archive(&db, path_param.desired_state_id, user.id).await {
-                Ok(desired_state) => {
-                    let res: DesiredStateVisible = desired_state.into();
-                    HttpResponse::Ok().json(res)
-                }
-                Err(e) => match &e {
-                    DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
-                        CustomDbErr::NotFound => {
-                            response_404("DesiredState with this id was not found")
-                        }
-                        _ => response_500(e),
-                    },
-                    _ => response_500(e),
+            let desired_state = match DesiredStateAdapter::init(&db)
+                .filter_eq_user(&user)
+                .get_by_id(path_param.desired_state_id)
+                .await
+            {
+                Ok(desired_state) => match desired_state {
+                    Some(desired_state) => desired_state,
+                    None => return response_404("DesiredState with this id was not found"),
                 },
+                Err(e) => return response_500(e),
+            };
+            match DesiredStateAdapter::init(&db).archive(desired_state).await {
+                Ok(desired_state) => {
+                    HttpResponse::Ok().json(DesiredStateVisible::from(desired_state))
+                }
+                Err(e) => response_500(e),
             }
         }
         None => response_401(),

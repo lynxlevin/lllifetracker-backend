@@ -17,6 +17,7 @@ pub async fn init_app() -> Result<
     DbErr,
 > {
     let settings = get_test_settings();
+    // let _ = env_logger::try_init();
     let db = init_db(&settings).await;
     let redis_pool = init_redis_pool(&settings)
         .await

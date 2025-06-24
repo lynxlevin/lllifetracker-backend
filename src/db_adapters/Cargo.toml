@@ -1,21 +1,16 @@
 [package]
-name = "services"
+name = "db_adapters"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "services"
+name = "db_adapters"
 path = "lib.rs"
 
 [dependencies]
 entities = { path = "../entities" }
-types = { path = "../types" }
 
-actix-web.workspace = true
 chrono.workspace = true
 sea-orm.workspace = true
 serde.workspace = true
 uuid.workspace = true
-
-[dev-dependencies]
-common = { path = "../common", features = ["db", "factory", "settings"] }

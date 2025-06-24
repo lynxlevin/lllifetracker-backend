@@ -15,6 +15,12 @@ pub struct ActionTrackVisible {
 
 impl From<action_track::Model> for ActionTrackVisible {
     fn from(item: action_track::Model) -> Self {
+        ActionTrackVisible::from(&item)
+    }
+}
+
+impl From<&action_track::Model> for ActionTrackVisible {
+    fn from(item: &action_track::Model) -> Self {
         ActionTrackVisible {
             id: item.id,
             action_id: item.action_id,
@@ -29,7 +35,6 @@ impl From<action_track::Model> for ActionTrackVisible {
 pub struct ActionTrackAggregation {
     pub durations_by_action: Vec<ActionTrackAggregationDuration>,
 }
-
 
 #[derive(serde::Serialize, serde::Deserialize, PartialEq, Debug)]
 pub struct ActionTrackAggregationDuration {

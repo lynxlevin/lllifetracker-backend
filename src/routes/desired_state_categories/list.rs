@@ -3,9 +3,15 @@ use actix_web::{
     web::{Data, ReqData},
     HttpResponse,
 };
+use db_adapters::{
+    desired_state_category_adapter::{
+        DesiredStateCategoryAdapter, DesiredStateCategoryFilter, DesiredStateCategoryOrder,
+        DesiredStateCategoryQuery,
+    },
+    Order::Asc,
+};
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use services::desired_state_category_query::DesiredStateCategoryQuery;
 use types::DesiredStateCategoryVisible;
 
 use crate::utils::{response_401, response_500};
@@ -19,7 +25,13 @@ pub async fn list_desired_state_categories(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match DesiredStateCategoryQuery::find_all_by_user_id(&db, user.id).await {
+            match DesiredStateCategoryAdapter::init(&db)
+                .filter_eq_user(&user)
+                .order_by_ordering_nulls_last(Asc)
+                .order_by_id(Asc)
+                .get_all()
+                .await
+            {
                 Ok(categories) => HttpResponse::Ok().json(
                     categories
                         .iter()

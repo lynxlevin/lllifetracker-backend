@@ -3,10 +3,16 @@ use actix_web::{
     web::{Data, Query, ReqData},
     HttpResponse,
 };
+use db_adapters::{
+    action_track_adapter::{
+        ActionTrackAdapter, ActionTrackFilter, ActionTrackOrder, ActionTrackQuery,
+    },
+    Order,
+};
 use entities::user as user_entity;
 use sea_orm::DbConn;
 use serde::Deserialize;
-use services::action_track_query::ActionTrackQuery;
+use types::ActionTrackVisible;
 
 use crate::utils::{response_401, response_500};
 
@@ -26,11 +32,28 @@ pub async fn list_action_tracks(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            let mut filters = ActionTrackQuery::get_default_filters();
-            filters.show_inactive = !query.active_only.unwrap_or(false);
-            filters.started_at_gte = query.started_at_gte;
-            match ActionTrackQuery::find_by_user_id_with_filters(&db, user.id, filters).await {
-                Ok(action_tracks) => HttpResponse::Ok().json(action_tracks),
+            let mut action_track_query = ActionTrackAdapter::init(&db)
+                .filter_eq_user(&user)
+                .filter_eq_archived_action(false);
+            if let Some(active_only) = query.active_only {
+                if active_only {
+                    action_track_query = action_track_query.filter_ended_at_is_null(true);
+                }
+            }
+            if let Some(started_at_gte) = query.started_at_gte {
+                action_track_query = action_track_query.filter_started_at_gte(started_at_gte);
+            }
+            match action_track_query
+                .order_by_started_at(Order::Desc)
+                .get_all()
+                .await
+            {
+                Ok(action_tracks) => HttpResponse::Ok().json(
+                    action_tracks
+                        .iter()
+                        .map(|at| ActionTrackVisible::from(at))
+                        .collect::<Vec<_>>(),
+                ),
                 Err(e) => response_500(e),
             }
         }

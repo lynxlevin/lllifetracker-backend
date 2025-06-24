@@ -4,9 +4,11 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use db_adapters::ambition_adapter::{
+    AmbitionAdapter, AmbitionFilter, AmbitionMutation, AmbitionQuery,
+};
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use services::ambition_mutation::AmbitionMutation;
 use types::AmbitionBulkUpdateOrderingRequest;
 
 use crate::utils::{response_401, response_500};
@@ -34,7 +36,19 @@ pub async fn bulk_update_ambition_ordering(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match AmbitionMutation::bulk_update_ordering(&db, user.id, req.ordering.clone()).await {
+            let ambitions = match AmbitionAdapter::init(&db)
+                .filter_eq_user(&user)
+                .filter_in_ids(req.ordering.clone())
+                .get_all()
+                .await
+            {
+                Ok(ambitions) => ambitions,
+                Err(e) => return response_500(e),
+            };
+            match AmbitionAdapter::init(&db)
+                .bulk_update_ordering(ambitions, req.ordering.clone())
+                .await
+            {
                 Ok(_) => HttpResponse::Ok().finish(),
                 Err(e) => response_500(e),
             }

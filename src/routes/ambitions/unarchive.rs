@@ -1,12 +1,14 @@
-use ::types::{AmbitionVisible, CustomDbErr};
+use ::types::AmbitionVisible;
 use actix_web::{
     put,
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use db_adapters::ambition_adapter::{
+    AmbitionAdapter, AmbitionFilter, AmbitionMutation, AmbitionQuery,
+};
 use entities::user as user_entity;
-use sea_orm::{DbConn, DbErr};
-use services::ambition_mutation::AmbitionMutation;
+use sea_orm::DbConn;
 
 use crate::utils::{response_401, response_404, response_500};
 
@@ -28,20 +30,20 @@ pub async fn unarchive_ambition(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match AmbitionMutation::unarchive(&db, path_param.ambition_id, user.id).await {
-                Ok(ambition) => {
-                    let res: AmbitionVisible = ambition.into();
-                    HttpResponse::Ok().json(res)
-                }
-                Err(e) => match &e {
-                    DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
-                        CustomDbErr::NotFound => {
-                            response_404("Ambition with this id was not found")
-                        }
-                        _ => response_500(e),
-                    },
-                    _ => response_500(e),
+            let ambition = match AmbitionAdapter::init(&db)
+                .filter_eq_user(&user)
+                .get_by_id(path_param.ambition_id)
+                .await
+            {
+                Ok(ambition) => match ambition {
+                    Some(ambition) => ambition,
+                    None => return response_404("Ambition with this id was not found"),
                 },
+                Err(e) => return response_500(e),
+            };
+            match AmbitionAdapter::init(&db).unarchive(ambition).await {
+                Ok(ambition) => HttpResponse::Ok().json(AmbitionVisible::from(ambition)),
+                Err(e) => response_500(e),
             }
         }
         None => response_401(),

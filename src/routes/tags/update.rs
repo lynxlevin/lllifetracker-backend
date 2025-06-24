@@ -3,13 +3,12 @@ use actix_web::{
     web::{Data, Json, Path, ReqData},
     HttpResponse,
 };
-use entities::{tag, user as user_entity};
-use sea_orm::{DbConn, DbErr};
-use services::{
-    tag_mutation::{TagMutation, UpdateTag},
-    tag_query::TagQuery,
+use db_adapters::tag_adapter::{
+    TagAdapter, TagFilter, TagMutation, TagQuery, UpdatePlainTagParams,
 };
-use types::{CustomDbErr, TagUpdateRequest};
+use entities::{tag, user as user_entity};
+use sea_orm::DbConn;
+use types::{TagType, TagUpdateRequest, TagVisible};
 
 use crate::utils::{response_400, response_401, response_404, response_500};
 
@@ -29,31 +28,37 @@ pub async fn update_plain_tag(
     match user {
         Some(user) => {
             let user = user.into_inner();
-            match TagQuery::find_by_id_and_user_id(&db, path_param.tag_id, user.id).await {
-                Ok(tag) => match _is_plain_tag(&tag) {
-                    true => {
-                        match TagMutation::update(
-                            &db,
-                            tag,
-                            UpdateTag {
-                                name: req.name.clone(),
-                            },
-                        )
-                        .await
-                        {
-                            Ok(tag) => HttpResponse::Ok().json(tag),
-                            Err(e) => response_500(e),
-                        }
-                    }
-                    false => response_400("Tag to update must be a plain tag."),
+            let tag = match TagAdapter::init(&db)
+                .filter_eq_user(&user)
+                .get_by_id(path_param.tag_id)
+                .await
+            {
+                Ok(tag) => match tag {
+                    Some(tag) => tag,
+                    None => return response_404("Tag with this id was not found"),
                 },
-                Err(e) => match &e {
-                    DbErr::Custom(e) => match e.parse::<CustomDbErr>().unwrap() {
-                        CustomDbErr::NotFound => response_404("Tag with this id was not found"),
-                        _ => response_500(e),
+                Err(e) => return response_500(e),
+            };
+            if !_is_plain_tag(&tag) {
+                return response_400("Tag to update must be a plain tag.");
+            };
+
+            match TagAdapter::init(&db)
+                .update_plain(
+                    tag,
+                    UpdatePlainTagParams {
+                        name: req.name.clone(),
                     },
-                    _ => response_500(e),
-                },
+                )
+                .await
+            {
+                Ok(tag) => HttpResponse::Ok().json(TagVisible {
+                    id: tag.id,
+                    name: tag.name.unwrap(),
+                    tag_type: TagType::Plain,
+                    created_at: tag.created_at,
+                }),
+                Err(e) => response_500(e),
             }
         }
         None => response_401(),
