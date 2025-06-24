@@ -5,9 +5,9 @@ use actix_web::{
     HttpResponse,
 };
 use common::settings::types::Settings;
+use db_adapters::user_adapter::{UserAdapter, UserMutation, UserQuery};
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
-use services::user::Mutation as UserMutation;
 
 #[derive(serde::Deserialize)]
 pub struct Parameters {
@@ -36,26 +36,60 @@ pub async fn confirm(
             .await
             {
                 Ok(confirmation_token) => {
-                    match UserMutation::activate_user_by_id(&db, confirmation_token.user_id).await {
-                        Ok(_) => {
-                            tracing::event!(target: "backend", tracing::Level::INFO, "New user was activated successfully.");
-                            HttpResponse::SeeOther()
+                    match UserAdapter::init(&db)
+                        .get_by_id(confirmation_token.user_id)
+                        .await
+                    {
+                        Ok(user) => match user {
+                            Some(user) => match UserAdapter::init(&db).activate(user).await {
+                                Ok(_) => {
+                                    tracing::event!(target: "backend", tracing::Level::INFO, "New user was activated successfully.");
+                                    HttpResponse::SeeOther()
+                                            .insert_header((
+                                                header::LOCATION,
+                                                format!("{}/auth/confirmed", settings.application.frontend_url),
+                                            ))
+                                            .json(::types::SuccessResponse {
+                                                message: "Your account has been activated successfully! You can now log in."
+                                                    .to_string(),
+                                            })
+                                }
+                                Err(e) => {
+                                    tracing::event!(target: "backend", tracing::Level::ERROR, "Cannot activate account: {}", e);
+                                    HttpResponse::SeeOther()
+                                        .insert_header((
+                                            header::LOCATION,
+                                            format!(
+                                                "{}/auth/error?reason=internal_server_error",
+                                                settings.application.frontend_url
+                                            ),
+                                        ))
+                                        .json(::types::ErrorResponse {
+                                            error: "We cannot activate your account at the moment"
+                                                .to_string(),
+                                        })
+                                }
+                            },
+                            None => HttpResponse::SeeOther()
                                 .insert_header((
                                     header::LOCATION,
-                                    format!("{}/auth/confirmed", settings.application.frontend_url),
+                                    format!(
+                                        "{}/auth/error?reason=user_not_found",
+                                        settings.application.frontend_url
+                                    ),
                                 ))
-                                .json(::types::SuccessResponse {
-                                    message: "Your account has been activated successfully! You can now log in."
+                                .json(::types::ErrorResponse {
+                                    error: "We cannot activate your account at the moment"
                                         .to_string(),
-                                })
-                        }
+                                }),
+                        },
                         Err(e) => {
                             tracing::event!(target: "backend", tracing::Level::ERROR, "Cannot activate account: {}", e);
                             HttpResponse::SeeOther()
                                 .insert_header((
                                     header::LOCATION,
                                     format!(
-                                        "{}/auth/error?reason={e}",
+                                        "{}/auth/error?reason=internal_server_error",
                                         settings.application.frontend_url
                                     ),
                                 ))

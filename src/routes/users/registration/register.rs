@@ -4,9 +4,9 @@ use actix_web::{
     HttpResponse,
 };
 use common::settings::types::Settings;
+use db_adapters::user_adapter::{CreateUserParams, UserAdapter, UserMutation};
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
-use services::user;
 
 use crate::utils::response_500;
 
@@ -33,15 +33,16 @@ pub async fn register(
 ) -> HttpResponse {
     let hashed_password = utils::auth::password::hash(new_user.0.password.as_bytes()).await;
 
-    let new_user = user::NewUser {
-        password: hashed_password,
-        email: new_user.0.email,
-        first_name: new_user.0.first_name,
-        last_name: new_user.0.last_name,
-        is_active: settings.email.no_verify,
-    };
-
-    match user::Mutation::create_user(&db, new_user).await {
+    match UserAdapter::init(&db)
+        .create(CreateUserParams {
+            email: new_user.0.email,
+            password: hashed_password,
+            first_name: new_user.0.first_name,
+            last_name: new_user.0.last_name,
+            is_active: settings.email.no_verify,
+        })
+        .await
+    {
         Ok(user) => match redis_pool.get().await {
             Ok(ref mut redis_con) => {
                 let message: String;

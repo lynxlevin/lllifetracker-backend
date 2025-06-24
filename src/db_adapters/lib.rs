@@ -1,6 +1,7 @@
 mod journal;
 mod my_way;
 pub mod tag_adapter;
+pub mod user_adapter;
 
 pub use journal::{diary_adapter, reading_note_adapter};
 pub use my_way::{

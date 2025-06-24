@@ -2945,7 +2945,6 @@ dependencies = [
  "sea-orm",
  "serde",
  "serde_json",
- "services",
  "tracing",
  "types",
  "utils",
@@ -3340,20 +3339,6 @@ dependencies = [
  "common",
  "routes",
  "web_adapters",
-]
-
-[[package]]
-name = "services"
-version = "0.1.0"
-dependencies = [
- "actix-web",
- "chrono",
- "common",
- "entities",
- "sea-orm",
- "serde",
- "types",
- "uuid",
 ]
 
 [[package]]
@@ -4164,7 +4149,6 @@ dependencies = [
  "entities",
  "sea-orm",
  "serde",
- "services",
  "uuid",
 ]
 
@@ -4195,6 +4179,7 @@ dependencies = [
  "argon2",
  "chrono",
  "common",
+ "db_adapters",
  "deadpool-redis",
  "entities",
  "futures",
@@ -4205,7 +4190,6 @@ dependencies = [
  "pasetors",
  "sea-orm",
  "serde_json",
- "services",
  "tracing",
  "types",
  "uuid",

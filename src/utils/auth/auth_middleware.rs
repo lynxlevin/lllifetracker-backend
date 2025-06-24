@@ -10,9 +10,9 @@ use actix_web::{
     web::Data,
     Error, HttpMessage,
 };
+use db_adapters::user_adapter::{UserAdapter, UserQuery};
 use futures::future::LocalBoxFuture;
 use sea_orm::DbConn;
-use services::user::Query as UserQuery;
 
 pub struct AuthenticateUser;
 
@@ -81,7 +81,7 @@ async fn set_user(req: &ServiceRequest) -> Result<(), String> {
     };
 
     let user = match req.app_data::<Data<DbConn>>() {
-        Some(data) => match UserQuery::find_by_id(data, user_id).await {
+        Some(data) => match UserAdapter::init(data).get_by_id(user_id).await {
             Ok(user) => match user {
                 Some(user) => user,
                 None => {

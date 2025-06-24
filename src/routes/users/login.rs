@@ -6,12 +6,12 @@ use actix_web::{
     HttpResponse,
 };
 use common::settings::types::Settings;
+use db_adapters::user_adapter::{UserAdapter, UserFilter, UserQuery};
 use deadpool_redis::{
     redis::{AsyncCommands, SetExpiry, SetOptions},
     Connection, Pool,
 };
 use sea_orm::DbConn;
-use services::user::Query as UserQuery;
 use utils::auth::password::verify_password;
 
 use crate::utils::{response_404, response_500};
@@ -36,7 +36,11 @@ async fn login_user(
         Ok(ref mut redis_con) => {
             match validate_request_count(redis_con, &req_user.email, &settings).await {
                 Ok((login_request_count_key, login_request_count)) => {
-                    match UserQuery::find_active_by_email(&db, req_user.email.clone()).await {
+                    match UserAdapter::init(&db)
+                        .filter_eq_is_active(true)
+                        .get_by_email(req_user.email.clone())
+                        .await
+                    {
                         Ok(user) => match user {
                             Some(user) => {
                                 match verify_password(

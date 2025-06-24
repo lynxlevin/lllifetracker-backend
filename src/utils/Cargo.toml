@@ -9,7 +9,7 @@ path = "lib.rs"
 
 [dependencies]
 common = { path = "../common", features = ["settings"] }
-services = { path = "../services" }
+db_adapters = { path = "../db_adapters" }
 types = { path = "../types" }
 
 actix-session.workspace = true
