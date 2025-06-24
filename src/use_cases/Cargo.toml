@@ -8,3 +8,10 @@ name = "use_cases"
 path = "lib.rs"
 
 [dependencies]
+db_adapters = { path = "../db_adapters" }
+entities = { path = "../entities" }
+
+chrono.workspace = true
+sea-orm.workspace = true
+serde.workspace = true
+uuid.workspace = true

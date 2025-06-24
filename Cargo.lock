@@ -3799,6 +3799,7 @@ dependencies = [
  "server",
  "tracing",
  "types",
+ "use_cases",
  "uuid",
 ]
 
@@ -4351,6 +4352,7 @@ dependencies = [
  "serde",
  "tracing",
  "use_cases",
+ "uuid",
 ]
 
 [[package]]

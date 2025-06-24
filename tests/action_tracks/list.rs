@@ -1,10 +1,10 @@
 use actix_web::{http, test, HttpMessage};
 use chrono::{DateTime, Duration, FixedOffset, TimeDelta};
 use sea_orm::{ActiveModelTrait, DbErr};
+use use_cases::my_way::action_tracks::types::ActionTrackVisible;
 
 use super::super::utils::init_app;
 use common::factory::{self, *};
-use types::*;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {

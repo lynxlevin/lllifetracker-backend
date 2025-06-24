@@ -1,4 +1,3 @@
-mod action_tracks;
 mod actions;
 mod ambitions;
 mod desired_state_categories;
@@ -10,7 +9,6 @@ mod tags;
 mod users;
 mod utils;
 
-pub use action_tracks::action_track_routes;
 pub use actions::action_routes;
 pub use ambitions::ambition_routes;
 pub use desired_state_categories::desired_state_category_routes;

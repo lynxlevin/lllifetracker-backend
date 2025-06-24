@@ -1,9 +1,9 @@
+use chrono::{DateTime, FixedOffset};
 use entities::{action_track, prelude::ActionTrack};
 use sea_orm::{DerivePartialModel, FromQueryResult};
+use serde::{Deserialize, Serialize};
 
-#[derive(
-    serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug,
-)]
+#[derive(Serialize, Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug)]
 #[sea_orm(entity = "ActionTrack")]
 pub struct ActionTrackVisible {
     pub id: uuid::Uuid,
@@ -31,26 +31,38 @@ impl From<&action_track::Model> for ActionTrackVisible {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize, PartialEq, Debug)]
+#[derive(Deserialize, Debug)]
+pub struct ActionTrackListQuery {
+    pub active_only: Option<bool>,
+    pub started_at_gte: Option<DateTime<FixedOffset>>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct ActionTrackAggregationQuery {
+    pub started_at_gte: Option<DateTime<FixedOffset>>,
+    pub started_at_lte: Option<DateTime<FixedOffset>>,
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct ActionTrackAggregation {
     pub durations_by_action: Vec<ActionTrackAggregationDuration>,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct ActionTrackAggregationDuration {
     pub action_id: uuid::Uuid,
     pub duration: i64,
 }
 
-#[derive(serde::Deserialize, Debug, serde::Serialize)]
+#[derive(Deserialize, Debug, Serialize)]
 pub struct ActionTrackCreateRequest {
-    pub started_at: chrono::DateTime<chrono::FixedOffset>,
+    pub started_at: DateTime<FixedOffset>,
     pub action_id: uuid::Uuid,
 }
 
-#[derive(serde::Deserialize, Debug, serde::Serialize)]
+#[derive(Deserialize, Debug, Serialize)]
 pub struct ActionTrackUpdateRequest {
     pub action_id: uuid::Uuid,
-    pub started_at: chrono::DateTime<chrono::FixedOffset>,
-    pub ended_at: Option<chrono::DateTime<chrono::FixedOffset>>,
+    pub started_at: DateTime<FixedOffset>,
+    pub ended_at: Option<DateTime<FixedOffset>>,
 }

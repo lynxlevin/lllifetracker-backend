@@ -8,3 +8,12 @@ name = "web_adapters"
 path = "lib.rs"
 
 [dependencies]
+db_adapters = { path = "../db_adapters" }
+entities = { path = "../entities" }
+use_cases = { path = "../use_cases" }
+
+actix-web.workspace = true
+sea-orm.workspace = true
+serde.workspace = true
+tracing.workspace = true
+uuid.workspace = true
