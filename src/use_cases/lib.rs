@@ -2,7 +2,7 @@ pub mod my_way;
 
 #[derive(Debug)]
 pub enum UseCaseError {
-    BadRequest,                  // 400
+    BadRequest(String),          // 400
     Unauthorized,                // 401
     Forbidden,                   // 403
     NotFound(String),            // 404

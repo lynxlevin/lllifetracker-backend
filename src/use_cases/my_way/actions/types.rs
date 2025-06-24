@@ -1,20 +1,21 @@
+use chrono::{DateTime, FixedOffset};
 use sea_orm::{DerivePartialModel, FromQueryResult};
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use entities::{action, prelude::Action, sea_orm_active_enums::ActionTrackType};
 
-#[derive(
-    serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug,
-)]
+#[derive(Serialize, Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug)]
 #[sea_orm(entity = "Action")]
 pub struct ActionVisible {
-    pub id: uuid::Uuid,
+    pub id: Uuid,
     pub name: String,
     pub description: Option<String>,
     pub trackable: bool,
     pub color: String,
     pub track_type: ActionTrackType,
-    pub created_at: chrono::DateTime<chrono::FixedOffset>,
-    pub updated_at: chrono::DateTime<chrono::FixedOffset>,
+    pub created_at: DateTime<FixedOffset>,
+    pub updated_at: DateTime<FixedOffset>,
 }
 
 impl From<&action::Model> for ActionVisible {
@@ -38,14 +39,19 @@ impl From<action::Model> for ActionVisible {
     }
 }
 
-#[derive(serde::Deserialize, Debug, serde::Serialize)]
+#[derive(Deserialize, Debug)]
+pub struct ActionListQuery {
+    pub show_archived_only: Option<bool>,
+}
+
+#[derive(Deserialize, Debug, Serialize)]
 pub struct ActionCreateRequest {
     pub name: String,
     pub description: Option<String>,
     pub track_type: ActionTrackType,
 }
 
-#[derive(serde::Deserialize, Debug, serde::Serialize)]
+#[derive(Deserialize, Debug, Serialize)]
 pub struct ActionUpdateRequest {
     pub name: String,
     pub description: Option<String>,
@@ -53,12 +59,12 @@ pub struct ActionUpdateRequest {
     pub color: Option<String>,
 }
 
-#[derive(serde::Deserialize, Debug, serde::Serialize)]
+#[derive(Deserialize, Debug, Serialize)]
 pub struct ActionBulkUpdateOrderRequest {
     pub ordering: Vec<uuid::Uuid>,
 }
 
-#[derive(serde::Deserialize, Debug, serde::Serialize)]
+#[derive(Deserialize, Debug, Serialize)]
 pub struct ActionTrackTypeConversionRequest {
     pub track_type: ActionTrackType,
 }

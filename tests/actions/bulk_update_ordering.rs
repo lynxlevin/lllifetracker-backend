@@ -1,6 +1,6 @@
 use actix_web::{http, test, HttpMessage};
 use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
-use types::ActionBulkUpdateOrderRequest;
+use use_cases::my_way::actions::types::ActionBulkUpdateOrderRequest;
 
 use super::super::utils::init_app;
 use common::factory;

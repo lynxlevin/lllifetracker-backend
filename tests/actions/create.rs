@@ -1,10 +1,10 @@
 use actix_web::{http, test, HttpMessage};
 use sea_orm::{ActiveModelTrait, ColumnTrait, DbErr, EntityTrait, QueryFilter};
+use use_cases::my_way::actions::types::{ActionCreateRequest, ActionVisible};
 
 use super::super::utils::init_app;
 use common::factory;
 use entities::{action, sea_orm_active_enums::ActionTrackType, tag};
-use types::*;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
