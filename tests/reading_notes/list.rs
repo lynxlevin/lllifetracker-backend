@@ -1,9 +1,12 @@
 use actix_web::{http, test, HttpMessage};
 use sea_orm::{ActiveModelTrait, DbErr};
+use use_cases::{
+    journal::reading_notes::types::ReadingNoteVisibleWithTags,
+    tags::types::{TagType, TagVisible},
+};
 
 use super::super::utils::init_app;
 use common::factory::{self, *};
-use types::*;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {

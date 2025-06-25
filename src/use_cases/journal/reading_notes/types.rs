@@ -1,7 +1,7 @@
 use entities::{prelude::ReadingNote, reading_note};
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
-use super::TagVisible;
+use crate::tags::types::TagVisible;
 
 #[derive(
     serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug,

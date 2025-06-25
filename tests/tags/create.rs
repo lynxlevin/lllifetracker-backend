@@ -1,10 +1,10 @@
 use actix_web::{http, test, HttpMessage};
 use entities::tag;
 use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
+use use_cases::tags::types::{TagCreateRequest, TagType, TagVisible};
 
 use super::super::utils::init_app;
 use common::factory;
-use types::*;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {

@@ -3,12 +3,12 @@ use sea_orm::{
     ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter, QueryFilter,
     QuerySelect,
 };
+use use_cases::journal::reading_notes::types::{ReadingNoteCreateRequest, ReadingNoteVisible};
 use uuid::Uuid;
 
 use super::super::utils::init_app;
 use common::factory::{self, *};
 use entities::{reading_note, reading_notes_tags};
-use types::*;
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
 enum QueryAs {
