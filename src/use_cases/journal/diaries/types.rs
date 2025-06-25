@@ -2,7 +2,7 @@ use db_adapters::diary_adapter::DiaryUpdateKey;
 use entities::{diary, prelude::Diary};
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
-use super::TagVisible;
+use crate::tags::types::TagVisible;
 
 #[derive(
     serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug,

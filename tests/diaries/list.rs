@@ -1,10 +1,13 @@
 use actix_web::{http, test, HttpMessage};
 use chrono::{Duration, Utc};
 use sea_orm::{ActiveModelTrait, DbErr};
+use use_cases::{
+    journal::diaries::types::DiaryVisibleWithTags,
+    tags::types::{TagType, TagVisible},
+};
 
 use super::super::utils::init_app;
 use common::factory::{self, *};
-use types::*;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {

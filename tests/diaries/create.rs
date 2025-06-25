@@ -1,13 +1,13 @@
 use actix_web::{http, test, HttpMessage};
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter,
-    QueryFilter, QuerySelect,
+    ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter, QueryFilter,
+    QuerySelect,
 };
+use use_cases::journal::diaries::types::{DiaryCreateRequest, DiaryVisible};
 
 use super::super::utils::init_app;
-use entities::{diaries_tags, diary};
 use common::factory::{self, *};
-use types::*;
+use entities::{diaries_tags, diary};
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
 enum QueryAs {

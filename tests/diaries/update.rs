@@ -4,11 +4,11 @@ use sea_orm::{
     ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter, QueryFilter,
     QuerySelect,
 };
+use use_cases::journal::diaries::types::{DiaryUpdateRequest, DiaryVisible};
 
 use super::super::utils::init_app;
 use common::factory::{self, *};
 use entities::{diaries_tags, diary};
-use types::*;
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
 enum QueryAs {
