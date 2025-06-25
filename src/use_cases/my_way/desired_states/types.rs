@@ -1,3 +1,4 @@
+use chrono::{DateTime, FixedOffset};
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
 use entities::{desired_state, prelude::DesiredState};
@@ -11,8 +12,8 @@ pub struct DesiredStateVisible {
     pub name: String,
     pub description: Option<String>,
     pub category_id: Option<Uuid>,
-    pub created_at: chrono::DateTime<chrono::FixedOffset>,
-    pub updated_at: chrono::DateTime<chrono::FixedOffset>,
+    pub created_at: DateTime<FixedOffset>,
+    pub updated_at: DateTime<FixedOffset>,
 }
 
 impl From<&desired_state::Model> for DesiredStateVisible {
@@ -32,6 +33,11 @@ impl From<desired_state::Model> for DesiredStateVisible {
     fn from(item: desired_state::Model) -> Self {
         DesiredStateVisible::from(&item)
     }
+}
+
+#[derive(Deserialize, Debug)]
+pub struct DesiredStateListQuery {
+    pub show_archived_only: Option<bool>,
 }
 
 #[derive(Deserialize, Debug, Serialize)]

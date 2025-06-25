@@ -1,9 +1,9 @@
 use actix_web::{http, test, HttpMessage};
 use sea_orm::{ActiveModelTrait, DbErr};
+use use_cases::my_way::desired_states::types::DesiredStateVisible;
 
 use super::super::utils::init_app;
 use common::factory::{self, *};
-use types::*;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
@@ -22,7 +22,9 @@ async fn happy_path() -> Result<(), DbErr> {
         .insert(&db)
         .await?;
 
-    let req = test::TestRequest::get().uri("/api/desired_states").to_request();
+    let req = test::TestRequest::get()
+        .uri("/api/desired_states")
+        .to_request();
     req.extensions_mut().insert(user.clone());
 
     let resp = test::call_service(&app, req).await;
@@ -72,7 +74,9 @@ async fn happy_path_show_archived_only() -> Result<(), DbErr> {
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let (app, _) = init_app().await?;
 
-    let req = test::TestRequest::get().uri("/api/desired_states").to_request();
+    let req = test::TestRequest::get()
+        .uri("/api/desired_states")
+        .to_request();
 
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), http::StatusCode::UNAUTHORIZED);

@@ -3,13 +3,13 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
-use db_adapters::desired_state_adapter::{
-    DesiredStateAdapter, DesiredStateFilter, DesiredStateMutation, DesiredStateQuery,
-};
+use db_adapters::desired_state_adapter::DesiredStateAdapter;
 use entities::user as user_entity;
 use sea_orm::DbConn;
-
-use types::DesiredStateBulkUpdateOrderingRequest;
+use use_cases::my_way::desired_states::{
+    bulk_update_ordering::bulk_update_desired_state_ordering,
+    types::DesiredStateBulkUpdateOrderingRequest,
+};
 
 use crate::utils::{response_401, response_500};
 
@@ -28,26 +28,19 @@ use crate::utils::{response_401, response_500};
 
 #[tracing::instrument(name = "Bulk updating desired_state ordering", skip(db, user, req))]
 #[put("/bulk_update_ordering")]
-pub async fn bulk_update_desired_state_ordering(
+pub async fn bulk_update_desired_state_ordering_endpoint(
     db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<DesiredStateBulkUpdateOrderingRequest>,
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            let user = user.into_inner();
-            let desired_states = match DesiredStateAdapter::init(&db)
-                .filter_eq_user(&user)
-                .filter_in_ids(req.ordering.clone())
-                .get_all()
-                .await
-            {
-                Ok(desired_states) => desired_states,
-                Err(e) => return response_500(e),
-            };
-            match DesiredStateAdapter::init(&db)
-                .bulk_update_ordering(desired_states, req.ordering.clone())
-                .await
+            match bulk_update_desired_state_ordering(
+                user.into_inner(),
+                req.into_inner(),
+                DesiredStateAdapter::init(&db),
+            )
+            .await
             {
                 Ok(_) => HttpResponse::Ok().finish(),
                 Err(e) => response_500(e),
