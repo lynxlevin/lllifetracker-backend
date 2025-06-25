@@ -1,17 +1,17 @@
+use chrono::{DateTime, FixedOffset};
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
 use entities::{ambition, prelude::Ambition};
+use serde::{Deserialize, Serialize};
 
-#[derive(
-    serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug,
-)]
+#[derive(Serialize, Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug)]
 #[sea_orm(entity = "Ambition")]
 pub struct AmbitionVisible {
     pub id: uuid::Uuid,
     pub name: String,
     pub description: Option<String>,
-    pub created_at: chrono::DateTime<chrono::FixedOffset>,
-    pub updated_at: chrono::DateTime<chrono::FixedOffset>,
+    pub created_at: DateTime<FixedOffset>,
+    pub updated_at: DateTime<FixedOffset>,
 }
 
 impl From<&ambition::Model> for AmbitionVisible {
@@ -32,19 +32,24 @@ impl From<ambition::Model> for AmbitionVisible {
     }
 }
 
-#[derive(serde::Deserialize, Debug, serde::Serialize)]
+#[derive(Deserialize, Debug)]
+pub struct AmbitionListQuery {
+    pub show_archived_only: Option<bool>,
+}
+
+#[derive(Deserialize, Debug, Serialize)]
 pub struct AmbitionCreateRequest {
     pub name: String,
     pub description: Option<String>,
 }
 
-#[derive(serde::Deserialize, Debug, serde::Serialize)]
+#[derive(Deserialize, Debug, Serialize)]
 pub struct AmbitionUpdateRequest {
     pub name: String,
     pub description: Option<String>,
 }
 
-#[derive(serde::Deserialize, Debug, serde::Serialize)]
+#[derive(Deserialize, Debug, Serialize)]
 pub struct AmbitionBulkUpdateOrderingRequest {
     pub ordering: Vec<uuid::Uuid>,
 }

@@ -1,12 +1,12 @@
-use ::types::AmbitionVisible;
 use actix_web::{
     get,
     web::{Data, Path, ReqData},
     HttpResponse,
 };
-use db_adapters::ambition_adapter::{AmbitionAdapter, AmbitionFilter, AmbitionQuery};
+use db_adapters::ambition_adapter::AmbitionAdapter;
 use entities::user as user_entity;
 use sea_orm::DbConn;
+use use_cases::{my_way::ambitions::get::get_ambition, UseCaseError};
 
 use crate::utils::{response_401, response_404, response_500};
 
@@ -17,24 +17,25 @@ struct PathParam {
 
 #[tracing::instrument(name = "Getting an ambition", skip(db, user))]
 #[get("/{ambition_id}")]
-pub async fn get_ambition(
+pub async fn get_ambition_endpoint(
     db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
     path_param: Path<PathParam>,
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            let user = user.into_inner();
-            match AmbitionAdapter::init(&db)
-                .filter_eq_user(&user)
-                .get_by_id(path_param.ambition_id)
-                .await
+            match get_ambition(
+                user.into_inner(),
+                path_param.ambition_id,
+                AmbitionAdapter::init(&db),
+            )
+            .await
             {
-                Ok(ambition) => match ambition {
-                    Some(ambition) => HttpResponse::Ok().json(AmbitionVisible::from(ambition)),
-                    None => response_404("Ambition with this id was not found"),
+                Ok(res) => HttpResponse::Ok().json(res),
+                Err(e) => match &e {
+                    UseCaseError::NotFound(message) => response_404(message),
+                    _ => response_500(e),
                 },
-                Err(e) => response_500(e),
             }
         }
         None => response_401(),

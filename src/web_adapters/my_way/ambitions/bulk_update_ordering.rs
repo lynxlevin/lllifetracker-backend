@@ -1,15 +1,14 @@
-use ::types;
 use actix_web::{
     put,
     web::{Data, Json, ReqData},
     HttpResponse,
 };
-use db_adapters::ambition_adapter::{
-    AmbitionAdapter, AmbitionFilter, AmbitionMutation, AmbitionQuery,
-};
+use db_adapters::ambition_adapter::AmbitionAdapter;
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use types::AmbitionBulkUpdateOrderingRequest;
+use use_cases::my_way::ambitions::{
+    bulk_update_ordering::bulk_update_ambition_ordering, types::AmbitionBulkUpdateOrderingRequest,
+};
 
 use crate::utils::{response_401, response_500};
 
@@ -28,26 +27,19 @@ use crate::utils::{response_401, response_500};
 
 #[tracing::instrument(name = "Bulk updating ambition ordering", skip(db, user, req))]
 #[put("/bulk_update_ordering")]
-pub async fn bulk_update_ambition_ordering(
+pub async fn bulk_update_ambition_ordering_endpoint(
     db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<AmbitionBulkUpdateOrderingRequest>,
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            let user = user.into_inner();
-            let ambitions = match AmbitionAdapter::init(&db)
-                .filter_eq_user(&user)
-                .filter_in_ids(req.ordering.clone())
-                .get_all()
-                .await
-            {
-                Ok(ambitions) => ambitions,
-                Err(e) => return response_500(e),
-            };
-            match AmbitionAdapter::init(&db)
-                .bulk_update_ordering(ambitions, req.ordering.clone())
-                .await
+            match bulk_update_ambition_ordering(
+                user.into_inner(),
+                req.into_inner(),
+                AmbitionAdapter::init(&db),
+            )
+            .await
             {
                 Ok(_) => HttpResponse::Ok().finish(),
                 Err(e) => response_500(e),

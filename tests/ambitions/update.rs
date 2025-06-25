@@ -1,10 +1,10 @@
 use actix_web::{http, test, HttpMessage};
 use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
+use use_cases::my_way::ambitions::types::{AmbitionUpdateRequest, AmbitionVisible};
 
 use super::super::utils::init_app;
-use entities::ambition;
 use common::factory::{self, *};
-use types::*;
+use entities::ambition;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {

@@ -1,4 +1,3 @@
-mod ambitions;
 mod desired_state_categories;
 mod desired_states;
 mod diaries;
@@ -8,7 +7,6 @@ mod tags;
 mod users;
 mod utils;
 
-pub use ambitions::ambition_routes;
 pub use desired_state_categories::desired_state_category_routes;
 pub use desired_states::desired_state_routes;
 pub use diaries::diary_routes;
