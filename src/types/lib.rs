@@ -1,4 +1,3 @@
-mod desired_state_category;
 mod desired_states;
 mod diaries;
 mod general;
@@ -7,7 +6,6 @@ mod tags;
 mod tokens;
 mod users;
 
-pub use desired_state_category::*;
 pub use desired_states::*;
 pub use diaries::*;
 pub use general::{

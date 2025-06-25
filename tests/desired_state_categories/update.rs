@@ -1,11 +1,13 @@
 use actix_web::{http, test, HttpMessage};
 use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
+use use_cases::my_way::desired_state_categories::types::{
+    DesiredStateCategoryUpdateRequest, DesiredStateCategoryVisible,
+};
 use uuid::Uuid;
 
 use super::super::utils::init_app;
 use common::factory;
 use entities::desired_state_category;
-use types::*;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {

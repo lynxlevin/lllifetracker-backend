@@ -3,13 +3,13 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
-use db_adapters::desired_state_category_adapter::{
-    DesiredStateCategoryAdapter, DesiredStateCategoryFilter, DesiredStateCategoryMutation,
-    DesiredStateCategoryQuery,
-};
+use db_adapters::desired_state_category_adapter::DesiredStateCategoryAdapter;
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use types::DesiredStateCategoryBulkUpdateOrderingRequest;
+use use_cases::my_way::desired_state_categories::{
+    bulk_update_ordering::bulk_update_desired_state_category_ordering,
+    types::DesiredStateCategoryBulkUpdateOrderingRequest,
+};
 
 use crate::utils::{response_401, response_500};
 
@@ -31,39 +31,19 @@ use crate::utils::{response_401, response_500};
     skip(db, user, req)
 )]
 #[put("/bulk_update_ordering")]
-pub async fn bulk_update_desired_state_category_ordering(
+pub async fn bulk_update_desired_state_category_ordering_endpoint(
     db: Data<DbConn>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<DesiredStateCategoryBulkUpdateOrderingRequest>,
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            let user = user.into_inner();
-            let categories = match DesiredStateCategoryAdapter::init(&db)
-                .filter_eq_user(&user)
-                .filter_in_ids(req.ordering.clone())
-                .get_all()
-                .await
-            {
-                Ok(categories) => categories,
-                Err(e) => return response_500(e),
-            };
-
-            let params = categories
-                .into_iter()
-                .map(|category| {
-                    let ordering = req
-                        .ordering
-                        .iter()
-                        .position(|id| id == &category.id)
-                        .and_then(|ordering| Some((ordering + 1) as i32));
-                    (category, ordering)
-                })
-                .collect::<Vec<_>>();
-
-            match DesiredStateCategoryAdapter::init(&db)
-                .bulk_update_ordering(params)
-                .await
+            match bulk_update_desired_state_category_ordering(
+                user.into_inner(),
+                req.into_inner(),
+                DesiredStateCategoryAdapter::init(&db),
+            )
+            .await
             {
                 Ok(_) => HttpResponse::Ok().finish(),
                 Err(e) => response_500(e),
