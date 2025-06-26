@@ -5,6 +5,8 @@ use sea_orm::{
 };
 use use_cases::journal::diaries::types::{DiaryCreateRequest, DiaryVisible};
 
+use crate::utils::Connections;
+
 use super::super::utils::init_app;
 use common::factory::{self, *};
 use entities::{diaries_tags, diary};
@@ -16,7 +18,7 @@ enum QueryAs {
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let (_, tag_0) = factory::action(user.id)
         .name("action_0".to_string())
@@ -68,7 +70,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let (app, _) = init_app().await?;
+    let Connections { app, ..} = init_app().await?;
 
     let req = test::TestRequest::post()
         .uri("/api/diaries")
@@ -88,7 +90,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn conflict_if_duplicate_exists() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let _existing_diary = factory::diary(user.id)
         .date(chrono::NaiveDate::from_ymd_opt(2025, 3, 19).unwrap())
@@ -114,7 +116,7 @@ async fn conflict_if_duplicate_exists() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let today = chrono::Utc::now().date_naive();
 
@@ -136,7 +138,7 @@ async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn validation_errors() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let today = chrono::Utc::now().date_naive();
 

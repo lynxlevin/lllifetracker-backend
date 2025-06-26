@@ -11,24 +11,19 @@ use deadpool_redis::{
     Connection, Pool,
 };
 use sea_orm::DbConn;
+use use_cases::users::types::{LoginRequest, UserVisible};
 
 use crate::{
-    users::types::{UserVisible, USER_EMAIL_KEY, USER_ID_KEY},
+    users::types::{USER_EMAIL_KEY, USER_ID_KEY},
     utils::{auth::password::verify_password, response_404, response_500},
 };
-
-#[derive(serde::Deserialize, Debug, serde::Serialize)]
-pub struct LoginUser {
-    email: String,
-    password: String,
-}
 
 #[tracing::instrument(name = "Logging a user in", skip(db, redis_pool, req_user, session, settings), fields(user_email = &req_user.email))]
 #[post("/login")]
 async fn login_user(
     db: Data<DbConn>,
     redis_pool: Data<Pool>,
-    req_user: Json<LoginUser>,
+    req_user: Json<LoginRequest>,
     session: actix_session::Session,
     settings: Data<Settings>,
 ) -> HttpResponse {
@@ -146,28 +141,4 @@ async fn increment_login_request_count(
     {
         tracing::event!(target: "redis", tracing::Level::WARN, "Error adding login_request_count_key to Redis: {:#?}", e)
     };
-}
-
-#[cfg(test)]
-mod tests {
-    #[actix_web::test]
-    #[ignore]
-    async fn login_user() -> Result<(), String> {
-        todo!();
-    }
-    #[actix_web::test]
-    #[ignore]
-    async fn validate_request_count() -> Result<(), String> {
-        todo!();
-    }
-    #[actix_web::test]
-    #[ignore]
-    async fn renew_session() -> Result<(), String> {
-        todo!();
-    }
-    #[actix_web::test]
-    #[ignore]
-    async fn increment_login_request_count() -> Result<(), String> {
-        todo!();
-    }
 }

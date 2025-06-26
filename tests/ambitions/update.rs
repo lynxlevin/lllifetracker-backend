@@ -2,13 +2,15 @@ use actix_web::{http, test, HttpMessage};
 use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
 use use_cases::my_way::ambitions::types::{AmbitionUpdateRequest, AmbitionVisible};
 
+use crate::utils::Connections;
+
 use super::super::utils::init_app;
 use common::factory::{self, *};
 use entities::ambition;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let ambition = factory::ambition(user.id).insert(&db).await?;
 
@@ -46,7 +48,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn happy_path_no_description() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let ambition = factory::ambition(user.id)
         .description(Some("Original description".to_string()))
@@ -87,7 +89,7 @@ async fn happy_path_no_description() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let ambition = factory::ambition(user.id).insert(&db).await?;
 

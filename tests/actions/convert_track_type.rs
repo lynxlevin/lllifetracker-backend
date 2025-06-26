@@ -2,13 +2,15 @@ use actix_web::{http, test, HttpMessage};
 use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
 use use_cases::my_way::actions::types::{ActionTrackTypeConversionRequest, ActionVisible};
 
+use crate::utils::Connections;
+
 use super::super::utils::init_app;
 use common::factory::{self, *};
 use entities::{action, sea_orm_active_enums::ActionTrackType};
 
 #[actix_web::test]
 async fn happy_path_time_span_to_count() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let action = factory::action(user.id)
         .track_type(ActionTrackType::TimeSpan)
@@ -49,7 +51,7 @@ async fn happy_path_time_span_to_count() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn happy_path_count_to_time_span() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let action = factory::action(user.id)
         .track_type(ActionTrackType::Count)
@@ -90,7 +92,7 @@ async fn happy_path_count_to_time_span() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn happy_path_no_change() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let action = factory::action(user.id)
         .track_type(ActionTrackType::TimeSpan)
@@ -131,7 +133,7 @@ async fn happy_path_no_change() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let action = factory::action(user.id).insert(&db).await?;
 

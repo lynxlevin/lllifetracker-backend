@@ -3,12 +3,14 @@ use entities::tag;
 use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
 use use_cases::tags::types::{TagCreateRequest, TagType, TagVisible};
 
+use crate::utils::Connections;
+
 use super::super::utils::init_app;
 use common::factory;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
 
     let req_body = TagCreateRequest {
@@ -37,7 +39,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let (app, _) = init_app().await?;
+    let Connections { app, ..} = init_app().await?;
 
     let req = test::TestRequest::post()
         .uri("/api/tags/plain")

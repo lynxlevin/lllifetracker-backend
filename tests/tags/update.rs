@@ -3,12 +3,14 @@ use entities::tag;
 use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
 use use_cases::tags::types::{TagType, TagUpdateRequest, TagVisible};
 
+use crate::utils::Connections;
+
 use super::super::utils::init_app;
 use common::factory::{self, *};
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let tag = factory::tag(user.id).insert(&db).await?;
 
@@ -38,7 +40,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let tag = factory::tag(user.id).insert(&db).await?;
 
@@ -57,7 +59,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn not_found_if_non_existent_tag_id() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
 
     let req = test::TestRequest::put()
@@ -76,7 +78,7 @@ async fn not_found_if_non_existent_tag_id() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn bad_request_if_not_plain_tag() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
 

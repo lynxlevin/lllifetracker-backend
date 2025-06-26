@@ -2,13 +2,15 @@ use actix_web::{http, test, HttpMessage};
 use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
 use uuid::Uuid;
 
+use crate::utils::Connections;
+
 use super::super::utils::init_app;
 use common::factory;
 use entities::desired_state_category;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let category = factory::desired_state_category(user.id).insert(&db).await?;
 
@@ -30,7 +32,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn do_nothing_for_other_user_category() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let other_user = factory::user().insert(&db).await?;
     let other_user_category = factory::desired_state_category(other_user.id)
@@ -58,7 +60,7 @@ async fn do_nothing_for_other_user_category() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let (app, _) = init_app().await?;
+    let Connections { app, ..} = init_app().await?;
 
     let req = test::TestRequest::delete()
         .uri(&format!("/api/desired_state_categories/{}", Uuid::now_v7()))

@@ -1,6 +1,7 @@
 pub mod journal;
 pub mod my_way;
 pub mod tags;
+pub mod users;
 
 #[derive(Debug)]
 pub enum UseCaseError {

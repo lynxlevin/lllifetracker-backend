@@ -1,8 +1,9 @@
 use actix_web::{get, web::ReqData, HttpResponse};
 
 use entities::user as user_entity;
+use use_cases::users::types::UserVisible;
 
-use crate::{users::types::UserVisible, utils::response_401};
+use crate::utils::response_401;
 
 #[get("/me")]
 pub async fn get_user(user: Option<ReqData<user_entity::Model>>) -> HttpResponse {
@@ -18,14 +19,5 @@ pub async fn get_user(user: Option<ReqData<user_entity::Model>>) -> HttpResponse
             })
         }
         None => response_401(),
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[actix_web::test]
-    #[ignore]
-    async fn get_user() -> Result<(), String> {
-        todo!();
     }
 }

@@ -51,21 +51,14 @@ where
 
     forward_ready!(service);
 
-    // MYMEMO: maybe add redirect if not logged in.
-    // MYMEMO: then, maybe there's a way to make user not-optional?
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let svc = self.service.clone();
         Box::pin(async move {
             match set_user(&req).await {
                 Ok(_) => (),
-                Err(e) => {
-                    // MYMEMO: use log
-                    println!("Error in the auth middleware! {e}");
-                }
+                Err(_) => {}
             }
-
             let res = svc.call(req).await?;
-
             Ok(res)
         })
     }

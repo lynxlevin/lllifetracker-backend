@@ -5,12 +5,14 @@ use use_cases::{
     tags::types::{TagType, TagVisible},
 };
 
+use crate::utils::Connections;
+
 use super::super::utils::init_app;
 use common::factory::{self, *};
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let reading_note_0 = factory::reading_note(user.id)
         .title("reading_note_0".to_string())
@@ -99,7 +101,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let (app, _) = init_app().await?;
+    let Connections { app, ..} = init_app().await?;
 
     let req = test::TestRequest::get()
         .uri("/api/reading_notes")

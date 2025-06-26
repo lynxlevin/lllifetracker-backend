@@ -20,14 +20,32 @@ pub fn verify_password(hash: &str, password: &[u8]) -> Result<(), argon2::passwo
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     #[actix_web::test]
     #[ignore]
     async fn hash() -> Result<(), String> {
         todo!();
     }
+
     #[actix_web::test]
-    #[ignore]
-    async fn verify_password() -> Result<(), String> {
-        todo!();
+    async fn test_verify_password() -> Result<(), String> {
+        let password = "password";
+        let hashed_password = "$argon2id$v=19$m=19456,t=2,p=1$r07vWFCaKrbNPrSgUrG/+Q$/2lBaeRWeox6ROMu6qAwOYmttdGXA3o4Uw2YHC/fvfY";
+
+        let res = verify_password(hashed_password, password.as_bytes());
+
+        assert!(res.is_ok());
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn test_verify_incorrect_password() -> Result<(), String> {
+        let incorrect_password = "passworda";
+        let hashed_password = "$argon2id$v=19$m=19456,t=2,p=1$r07vWFCaKrbNPrSgUrG/+Q$/2lBaeRWeox6ROMu6qAwOYmttdGXA3o4Uw2YHC/fvfY";
+
+        let res = verify_password(hashed_password, incorrect_password.as_bytes());
+
+        assert!(res.is_err());
+        Ok(())
     }
 }

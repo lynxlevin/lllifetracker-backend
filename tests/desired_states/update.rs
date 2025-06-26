@@ -3,13 +3,15 @@ use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
 use use_cases::my_way::desired_states::types::{DesiredStateUpdateRequest, DesiredStateVisible};
 use uuid::Uuid;
 
+use crate::utils::Connections;
+
 use super::super::utils::init_app;
 use common::factory;
 use entities::desired_state;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let desired_state = factory::desired_state(user.id).insert(&db).await?;
     let category = factory::desired_state_category(user.id).insert(&db).await?;
@@ -51,7 +53,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn no_category_cases() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let other_user = factory::user().insert(&db).await?;
     let desired_state = factory::desired_state(user.id).insert(&db).await?;
@@ -94,7 +96,7 @@ async fn no_category_cases() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let desired_state = factory::desired_state(user.id).insert(&db).await?;
 

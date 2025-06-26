@@ -6,6 +6,8 @@ use sea_orm::{
 };
 use use_cases::journal::diaries::types::{DiaryUpdateRequest, DiaryVisible};
 
+use crate::utils::Connections;
+
 use super::super::utils::init_app;
 use common::factory::{self, *};
 use entities::{diaries_tags, diary};
@@ -17,7 +19,7 @@ enum QueryAs {
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let diary = factory::diary(user.id).insert(&db).await?;
     let (_, tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
@@ -66,7 +68,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn not_found_if_invalid_id() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
 
     let req = test::TestRequest::put()
@@ -89,7 +91,7 @@ async fn not_found_if_invalid_id() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let diary = factory::diary(user.id).insert(&db).await?;
 
@@ -112,7 +114,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn conflict_if_duplicate_exists() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let diary = factory::diary(user.id).insert(&db).await?;
     let _existing_diary = factory::diary(user.id)
@@ -140,7 +142,7 @@ async fn conflict_if_duplicate_exists() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let diary = factory::diary(user.id).insert(&db).await?;
 
@@ -164,7 +166,7 @@ async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn validation_errors() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let diary = factory::diary(user.id).insert(&db).await?;
 

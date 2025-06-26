@@ -6,6 +6,8 @@ use sea_orm::{
 use use_cases::journal::reading_notes::types::{ReadingNoteCreateRequest, ReadingNoteVisible};
 use uuid::Uuid;
 
+use crate::utils::Connections;
+
 use super::super::utils::init_app;
 use common::factory::{self, *};
 use entities::{reading_note, reading_notes_tags};
@@ -17,7 +19,7 @@ enum QueryAs {
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let (_, tag_0) = factory::action(user.id)
         .name("action_0".to_string())
@@ -75,7 +77,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let (app, _) = init_app().await?;
+    let Connections { app, ..} = init_app().await?;
 
     let req = test::TestRequest::post()
         .uri("/api/reading_notes")
@@ -96,7 +98,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
 
     let non_existent_tag_req = test::TestRequest::post()
