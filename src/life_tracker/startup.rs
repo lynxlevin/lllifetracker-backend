@@ -2,9 +2,11 @@ use actix_session::SessionMiddleware;
 use actix_web::{dev::Server, middleware::Compress, web::Data, App, HttpServer};
 use common::{db::init_db, redis::init_redis_pool, settings::types::Settings};
 use sea_orm::DatabaseConnection;
-use server::{get_preps_for_redis_session_store, get_routes, setup_session_middleware_builder};
+use server::{
+    auth_middleware::AuthenticateUser, get_preps_for_redis_session_store, get_routes,
+    setup_session_middleware_builder,
+};
 
-use utils::auth::auth_middleware::AuthenticateUser;
 pub struct Application {
     port: u16,
     server: Server,

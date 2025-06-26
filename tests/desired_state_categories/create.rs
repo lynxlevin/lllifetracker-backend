@@ -1,14 +1,18 @@
 use actix_web::{http, test, HttpMessage};
 use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
+use use_cases::my_way::desired_state_categories::types::{
+    DesiredStateCategoryCreateRequest, DesiredStateCategoryVisible,
+};
+
+use crate::utils::Connections;
 
 use super::super::utils::init_app;
 use common::factory;
 use entities::desired_state_category;
-use types::*;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let name = "new_category".to_string();
 

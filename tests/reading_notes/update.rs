@@ -3,12 +3,14 @@ use sea_orm::{
     ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter, QueryFilter,
     QuerySelect,
 };
+use use_cases::journal::reading_notes::types::{ReadingNoteUpdateRequest, ReadingNoteVisible};
 use uuid::Uuid;
+
+use crate::utils::Connections;
 
 use super::super::utils::init_app;
 use common::factory::{self, *};
 use entities::{reading_note, reading_notes_tags};
-use types::*;
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
 enum QueryAs {
@@ -17,7 +19,7 @@ enum QueryAs {
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let reading_note = factory::reading_note(user.id).insert(&db).await?;
     let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
@@ -68,7 +70,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn not_found_if_invalid_id() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
 
     let req = test::TestRequest::put()
@@ -91,7 +93,7 @@ async fn not_found_if_invalid_id() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let reading_note = factory::reading_note(user.id).insert(&db).await?;
 
@@ -114,7 +116,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let reading_note = factory::reading_note(user.id).insert(&db).await?;
 

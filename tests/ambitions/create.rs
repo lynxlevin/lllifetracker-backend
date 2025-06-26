@@ -1,14 +1,16 @@
 use actix_web::{http, test, HttpMessage};
 use sea_orm::{ActiveModelTrait, ColumnTrait, DbErr, EntityTrait, QueryFilter};
+use use_cases::my_way::ambitions::types::{AmbitionCreateRequest, AmbitionVisible};
+
+use crate::utils::Connections;
 
 use super::super::utils::init_app;
-use entities::{ambition, tag};
 use common::factory;
-use types::*;
+use entities::{ambition, tag};
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
 
     let name = "Test create_ambition route".to_string();
@@ -50,7 +52,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn happy_path_no_description() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
 
     let name = "Test create_ambition route".to_string();
@@ -91,7 +93,7 @@ async fn happy_path_no_description() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let (app, _) = init_app().await?;
+    let Connections { app, ..} = init_app().await?;
 
     let req = test::TestRequest::post()
         .uri("/api/ambitions")

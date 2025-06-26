@@ -1,15 +1,17 @@
 use actix_web::{http, test, HttpMessage};
 use chrono::{SubsecRound, TimeDelta, Utc};
 use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
+use use_cases::my_way::action_tracks::types::{ActionTrackUpdateRequest, ActionTrackVisible};
+
+use crate::utils::Connections;
 
 use super::super::utils::init_app;
 use common::factory::{self, *};
 use entities::action_track;
-use types::*;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let action = factory::action(user.id).insert(&db).await?;
     let action_track = factory::action_track(user.id)
@@ -52,7 +54,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn conflict_on_duplicate_starts_at() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let action = factory::action(user.id).insert(&db).await?;
     let action_track = factory::action_track(user.id)
@@ -83,7 +85,7 @@ async fn conflict_on_duplicate_starts_at() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let action = factory::action(user.id).insert(&db).await?;
     let action_track = factory::action_track(user.id)

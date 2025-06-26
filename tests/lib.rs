@@ -7,5 +7,6 @@ mod desired_states;
 mod diaries;
 mod reading_notes;
 mod tags;
+mod users;
 
 mod utils;

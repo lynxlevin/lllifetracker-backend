@@ -1,5 +1,5 @@
-use entities::user;
 use chrono::Utc;
+use entities::user;
 use sea_orm::Set;
 
 pub fn user() -> user::ActiveModel {
@@ -21,11 +21,17 @@ pub fn user() -> user::ActiveModel {
 
 pub trait UserFactory {
     fn is_active(self, is_active: bool) -> user::ActiveModel;
+    fn password(self, hashed_password: &str) -> user::ActiveModel;
 }
 
 impl UserFactory for user::ActiveModel {
     fn is_active(mut self, is_active: bool) -> user::ActiveModel {
         self.is_active = Set(is_active);
+        self
+    }
+
+    fn password(mut self, hashed_password: &str) -> user::ActiveModel {
+        self.password = Set(hashed_password.to_string());
         self
     }
 }

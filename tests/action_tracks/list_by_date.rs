@@ -1,14 +1,16 @@
 use actix_web::{http, test, HttpMessage};
 use chrono::{Duration, TimeDelta, Utc};
 use sea_orm::{ActiveModelTrait, DbErr};
+use use_cases::my_way::action_tracks::types::ActionTrackVisible;
+
+use crate::utils::Connections;
 
 use super::super::utils::init_app;
 use common::factory::{self, *};
-use types::*;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let action = factory::action(user.id).insert(&db).await?;
     let now = Utc::now();
@@ -57,7 +59,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let (app, _) = init_app().await?;
+    let Connections { app, .. } = init_app().await?;
 
     let req = test::TestRequest::get()
         .uri("/api/action_tracks/by_date")

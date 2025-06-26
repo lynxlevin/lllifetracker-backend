@@ -1,15 +1,17 @@
 use actix_web::{http, test, HttpMessage};
 use sea_orm::{ActiveModelTrait, ColumnTrait, DbErr, EntityTrait, QueryFilter};
+use use_cases::my_way::desired_states::types::{DesiredStateCreateRequest, DesiredStateVisible};
 use uuid::Uuid;
+
+use crate::utils::Connections;
 
 use super::super::utils::init_app;
 use common::factory;
 use entities::{desired_state, tag};
-use types::*;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let name = "create_desired_state route happy path".to_string();
     let description = "Create desired_state route happy path.".to_string();
@@ -54,7 +56,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn no_category_cases() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let other_user = factory::user().insert(&db).await?;
     let other_user_category = factory::desired_state_category(other_user.id)

@@ -8,12 +8,16 @@ name = "tests"
 path = "lib.rs"
 
 [dependencies]
+common = { path = "../src/common", features = [
+    "db",
+    "factory",
+    "redis",
+    "settings",
+] }
 db_adapters = { path = "../src/db_adapters" }
-common = { path = "../src/common", features = ["db", "factory", "redis", "settings"] }
 entities = { path = "../src/entities" }
-routes = { path = "../src/routes" }
-types = { path = "../src/types" }
 server = { path = "../src/server" }
+use_cases = { path = "../src/use_cases" }
 
 actix-http.workspace = true
 actix-session.workspace = true
@@ -25,4 +29,5 @@ sea-orm.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tracing.workspace = true
+urlencoding.workspace = true
 uuid.workspace = true

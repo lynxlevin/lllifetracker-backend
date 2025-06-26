@@ -1,0 +1,17 @@
+[package]
+name = "use_cases"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "use_cases"
+path = "lib.rs"
+
+[dependencies]
+db_adapters = { path = "../db_adapters" }
+entities = { path = "../entities" }
+
+chrono.workspace = true
+sea-orm.workspace = true
+serde.workspace = true
+uuid.workspace = true

@@ -4,11 +4,13 @@ use actix_session::{
 };
 use actix_web::{cookie, web::scope, Scope};
 use common::settings::types::Settings;
-use routes::{
+use web_adapters::{
     action_routes, action_track_routes, ambition_routes, auth_routes,
     desired_state_category_routes, desired_state_routes, diary_routes, reading_note_routes,
     tag_routes,
 };
+
+pub use web_adapters::auth_middleware;
 
 pub async fn get_preps_for_redis_session_store(
     settings: &Settings,
@@ -44,7 +46,7 @@ pub fn setup_session_middleware_builder(
 
 pub fn get_routes() -> Scope {
     scope("/api")
-        .service(routes::health_check)
+        .service(health_check)
         .configure(auth_routes)
         .configure(ambition_routes)
         .configure(desired_state_routes)

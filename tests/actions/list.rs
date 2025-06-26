@@ -1,13 +1,15 @@
 use actix_web::{http, test, HttpMessage};
 use sea_orm::{ActiveModelTrait, DbErr};
+use use_cases::my_way::actions::types::ActionVisible;
+
+use crate::utils::Connections;
 
 use super::super::utils::init_app;
 use common::factory::{self, *};
-use types::*;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let action_0 = factory::action(user.id)
         .name("action_0".to_string())
@@ -38,7 +40,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn happy_path_show_archived_only() -> Result<(), DbErr> {
-    let (app, db) = init_app().await?;
+    let Connections { app, db, ..} = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let _action = factory::action(user.id).insert(&db).await?;
     let archived_action = factory::action(user.id).archived(true).insert(&db).await?;
@@ -63,7 +65,7 @@ async fn happy_path_show_archived_only() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let (app, _) = init_app().await?;
+    let Connections { app, ..} = init_app().await?;
 
     let req = test::TestRequest::get().uri("/api/actions").to_request();
 
