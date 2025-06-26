@@ -55,6 +55,7 @@ pub struct DesiredStateUpdateRequest {
     pub name: String,
     pub description: Option<String>,
     pub category_id: Option<Uuid>,
+    pub is_focused: bool,
 }
 
 #[derive(Deserialize, Debug, Serialize)]

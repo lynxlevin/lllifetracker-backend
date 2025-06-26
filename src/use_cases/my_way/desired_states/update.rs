@@ -49,6 +49,7 @@ pub async fn update_desired_state<'a>(
                 name: params.name.clone(),
                 description: params.description.clone(),
                 category_id,
+                is_focused: params.is_focused,
             },
         )
         .await
