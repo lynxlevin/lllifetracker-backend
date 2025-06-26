@@ -1,4 +1,5 @@
 mod journal;
+mod middlewares;
 mod my_way;
 mod tags;
 mod users;
@@ -10,4 +11,6 @@ pub use my_way::{
     desired_state_categories::desired_state_category_routes, desired_states::desired_state_routes,
 };
 pub use tags::tag_routes;
-pub use users::{auth_routes, utils::auth::auth_middleware};
+pub use users::auth_routes;
+
+pub use middlewares::auth as auth_middleware;

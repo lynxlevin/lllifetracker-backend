@@ -9,8 +9,7 @@ mod login;
 mod logout;
 mod password_change;
 mod registration;
-mod types;
-pub mod utils;
+pub mod types;
 
 pub fn auth_routes(cfg: &mut ServiceConfig) {
     cfg.service(

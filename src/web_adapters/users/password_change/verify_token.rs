@@ -7,7 +7,7 @@ use actix_web::{
 use common::settings::types::Settings;
 use deadpool_redis::Pool;
 
-use crate::users::utils::auth::tokens::{
+use crate::utils::auth::tokens::{
     issue_confirmation_token_pasetors, verify_confirmation_token_pasetor,
 };
 

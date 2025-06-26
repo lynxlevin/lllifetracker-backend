@@ -8,10 +8,7 @@ use db_adapters::user_adapter::{CreateUserParams, UserAdapter, UserMutation};
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
 
-use crate::{
-    users::utils::{auth::password, emails::send_multipart_email},
-    utils::response_500,
-};
+use crate::utils::{auth::password, emails::send_multipart_email, response_500};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {

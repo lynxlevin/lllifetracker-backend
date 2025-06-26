@@ -8,7 +8,7 @@ use lettre::{
     Message, SmtpTransport, Transport,
 };
 
-use crate::users::utils::auth::tokens::issue_confirmation_token_pasetors;
+use crate::utils::auth::tokens::issue_confirmation_token_pasetors;
 
 // MYMEMO: refactor
 #[tracing::instrument(

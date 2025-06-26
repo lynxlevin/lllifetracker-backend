@@ -13,11 +13,8 @@ use deadpool_redis::{
 use sea_orm::DbConn;
 
 use crate::{
-    users::{
-        types::{UserVisible, USER_EMAIL_KEY, USER_ID_KEY},
-        utils::auth::password::verify_password,
-    },
-    utils::{response_404, response_500},
+    users::types::{UserVisible, USER_EMAIL_KEY, USER_ID_KEY},
+    utils::{auth::password::verify_password, response_404, response_500},
 };
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]

@@ -4,6 +4,9 @@ use actix_web::HttpResponse;
 use serde::{Deserialize, Serialize};
 use tracing::{event, Level};
 
+pub mod auth;
+pub mod emails;
+
 #[derive(Serialize, Deserialize)]
 pub struct ErrorResponse {
     pub error: String,

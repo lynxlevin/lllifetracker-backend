@@ -9,7 +9,7 @@ use db_adapters::user_adapter::{UserAdapter, UserMutation, UserQuery};
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
 
-use crate::{users::utils::auth::tokens::verify_confirmation_token_pasetor, utils::ErrorResponse};
+use crate::{utils::auth::tokens::verify_confirmation_token_pasetor, utils::ErrorResponse};
 
 #[derive(serde::Deserialize)]
 pub struct Parameters {

@@ -3,7 +3,7 @@ use std::{
     rc::Rc,
 };
 
-use crate::users::utils::auth::session::get_user_id;
+use crate::utils::auth::session::get_user_id;
 use actix_session::SessionExt;
 use actix_web::{
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
@@ -104,7 +104,6 @@ async fn set_user(req: &ServiceRequest) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use actix_session::SessionExt;
     use actix_web::test;
     use sea_orm::prelude::ActiveModelTrait;
 

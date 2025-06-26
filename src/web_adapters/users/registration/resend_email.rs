@@ -8,10 +8,7 @@ use db_adapters::user_adapter::{UserAdapter, UserFilter, UserQuery};
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
 
-use crate::{
-    users::utils::emails::send_multipart_email,
-    utils::{response_404, response_500},
-};
+use crate::utils::{emails::send_multipart_email, response_404, response_500};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {

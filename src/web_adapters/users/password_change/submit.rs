@@ -8,9 +8,9 @@ use db_adapters::user_adapter::{UserAdapter, UserMutation, UserQuery};
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
 
-use crate::{
-    users::utils::auth::{password, tokens::verify_confirmation_token_pasetor},
-    utils::{response_400, response_404, response_500},
+use crate::utils::{
+    auth::{password, tokens::verify_confirmation_token_pasetor},
+    response_400, response_404, response_500,
 };
 
 #[derive(serde::Deserialize)]

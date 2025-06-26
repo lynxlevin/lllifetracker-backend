@@ -1,6 +1,6 @@
 use actix_web::{post, HttpResponse};
 
-use crate::{users::utils::auth::session::get_user_id, utils::response_400};
+use crate::utils::{auth::session::get_user_id, response_400};
 
 #[tracing::instrument(name = "Log out user", skip(session))]
 #[post("/logout")]
