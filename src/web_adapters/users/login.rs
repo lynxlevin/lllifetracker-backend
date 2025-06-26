@@ -102,9 +102,7 @@ async fn validate_request_count(
     settings: &Settings,
 ) -> Result<(String, u64), String> {
     let login_request_count_key = format!("login_count_{}", email);
-    let login_request_count = redis_con.get(login_request_count_key.clone()).await.map_err(|e| {
-        tracing::event!(target: "backend", tracing::Level::WARN, "Error getting login_request_count, defaults to 0: {}", e);
-    }).unwrap_or(0);
+    let login_request_count = redis_con.get(&login_request_count_key).await.unwrap_or(0);
     if login_request_count >= settings.application.max_login_attempts {
         Err("Too many login requests".to_string())
     } else {

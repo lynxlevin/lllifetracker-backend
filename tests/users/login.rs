@@ -1,6 +1,7 @@
 use actix_web::{http, test};
 use sea_orm::{ActiveModelTrait, DbErr};
 use use_cases::users::types::LoginRequest;
+use uuid::Uuid;
 
 use crate::utils::{init_app, Connections};
 use common::factory::{self, *};
@@ -49,7 +50,6 @@ async fn block_too_many_attempts_on_incorrect_password() -> Result<(), DbErr> {
 }
 
 #[actix_web::test]
-#[ignore]
 async fn not_found_on_incorrect_email() -> Result<(), DbErr> {
     let Connections { app, .. } = init_app().await?;
     let password = "password";
@@ -57,7 +57,7 @@ async fn not_found_on_incorrect_email() -> Result<(), DbErr> {
     let req = test::TestRequest::post()
         .uri("/api/users/login")
         .set_json(LoginRequest {
-            email: "incorrect-email@test.com".to_string(),
+            email: format!("{}@test.com", Uuid::now_v7()),
             password: password.to_string(),
         })
         .to_request();
