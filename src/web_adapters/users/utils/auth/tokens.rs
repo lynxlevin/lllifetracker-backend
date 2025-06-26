@@ -1,3 +1,4 @@
+use crate::users::types::ConfirmationToken;
 use argon2::password_hash::rand_core::{OsRng, RngCore};
 use common::settings::types::Settings;
 use deadpool_redis::redis::{AsyncCommands, SetExpiry, SetOptions};
@@ -93,7 +94,7 @@ pub async fn verify_confirmation_token_pasetor(
     redis_connection: &mut deadpool_redis::Connection,
     is_password: Option<bool>,
     settings: &Settings,
-) -> Result<::types::ConfirmationToken, String> {
+) -> Result<ConfirmationToken, String> {
     let sk = SymmetricKey::<V4>::from(settings.secret.secret_key.as_bytes()).unwrap();
 
     let validation_rules = ClaimsValidationRules::new();
@@ -143,7 +144,7 @@ pub async fn verify_confirmation_token_pasetor(
                     return Err("Token has been used or expired.".to_string());
                 }
 
-                Ok(::types::ConfirmationToken { user_id: user_uuid })
+                Ok(ConfirmationToken { user_id: user_uuid })
             }
             Err(e) => Err(format!("{}", e)),
         },

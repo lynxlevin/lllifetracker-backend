@@ -7,9 +7,11 @@ use common::settings::types::Settings;
 use db_adapters::user_adapter::{UserAdapter, UserFilter, UserQuery};
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
-use utils::emails::send_multipart_email;
 
-use crate::utils::{response_404, response_500};
+use crate::{
+    users::utils::emails::send_multipart_email,
+    utils::{response_404, response_500},
+};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {
@@ -45,7 +47,7 @@ pub async fn resend_email(
                         .unwrap();
 
                         tracing::event!(target: "backend", tracing::Level::INFO, "Verification email re-sent successfully.");
-                        HttpResponse::Ok().json(::types::SuccessResponse { message: "Account activation link has been sent to your email address. Kindly take action before its expiration".to_string() })
+                        HttpResponse::Ok().json("Account activation link has been sent to your email address. Kindly take action before its expiration")
                     },
                     Err(e) => response_500(e)
                 }

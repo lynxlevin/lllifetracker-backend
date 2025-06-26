@@ -1,4 +1,3 @@
-use ::types::{USER_EMAIL_KEY, USER_ID_KEY};
 use actix_session::SessionInsertError;
 use actix_web::{
     post,
@@ -12,9 +11,14 @@ use deadpool_redis::{
     Connection, Pool,
 };
 use sea_orm::DbConn;
-use utils::auth::password::verify_password;
 
-use crate::utils::{response_404, response_500};
+use crate::{
+    users::{
+        types::{UserVisible, USER_EMAIL_KEY, USER_ID_KEY},
+        utils::auth::password::verify_password,
+    },
+    utils::{response_404, response_500},
+};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 pub struct LoginUser {
@@ -56,15 +60,13 @@ async fn login_user(
                                             tracing::event!(target: "redis", tracing::Level::WARN, "Error deleting login_request_count_key from Redis: {:#?}", e)
                                         };
                                         match renew_session(session, user.id, user.email.clone()) {
-                                            Ok(_) => {
-                                                HttpResponse::Ok().json(::types::UserVisible {
-                                                    id: user.id,
-                                                    email: user.email,
-                                                    first_name: user.first_name,
-                                                    last_name: user.last_name,
-                                                    is_active: user.is_active,
-                                                })
-                                            }
+                                            Ok(_) => HttpResponse::Ok().json(UserVisible {
+                                                id: user.id,
+                                                email: user.email,
+                                                first_name: user.first_name,
+                                                last_name: user.last_name,
+                                                is_active: user.is_active,
+                                            }),
                                             Err(e) => response_500(e),
                                         }
                                     }
@@ -94,10 +96,8 @@ async fn login_user(
                         Err(e) => response_500(e),
                     }
                 }
-                Err(_) => HttpResponse::Unauthorized().json(::types::ErrorResponse {
-                    error: "Your account is temporarily locked. Please wait for 1 hour."
-                        .to_string(),
-                }),
+                Err(_) => HttpResponse::Unauthorized()
+                    .json("Your account is temporarily locked. Please wait for 1 hour."),
             }
         }
         Err(e) => response_500(e),

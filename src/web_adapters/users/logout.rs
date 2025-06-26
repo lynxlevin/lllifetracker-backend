@@ -1,7 +1,6 @@
 use actix_web::{post, HttpResponse};
-use utils::auth::session::get_user_id;
 
-use crate::utils::response_400;
+use crate::{users::utils::auth::session::get_user_id, utils::response_400};
 
 #[tracing::instrument(name = "Log out user", skip(session))]
 #[post("/logout")]
@@ -10,9 +9,7 @@ pub async fn log_out(session: actix_session::Session) -> HttpResponse {
         Ok(_) => {
             tracing::event!(target: "backend", tracing::Level::INFO, "User_id retrieved from the session.");
             session.purge();
-            HttpResponse::Ok().json(::types::SuccessResponse {
-                message: "You have successfully logged out".to_string(),
-            })
+            HttpResponse::Ok().json("You have successfully logged out")
         }
         Err(_) => response_400(
             "We currently have some issues. Kindly try again and ensure you are logged in.",

@@ -8,7 +8,10 @@ use db_adapters::user_adapter::{CreateUserParams, UserAdapter, UserMutation};
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
 
-use crate::utils::response_500;
+use crate::{
+    users::utils::{auth::password, emails::send_multipart_email},
+    utils::response_500,
+};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct RequestBody {
@@ -31,7 +34,7 @@ pub async fn register(
     new_user: Json<RequestBody>,
     settings: Data<Settings>,
 ) -> HttpResponse {
-    let hashed_password = utils::auth::password::hash(new_user.0.password.as_bytes()).await;
+    let hashed_password = password::hash(new_user.0.password.as_bytes()).await;
 
     match UserAdapter::init(&db)
         .create(CreateUserParams {
@@ -47,7 +50,7 @@ pub async fn register(
             Ok(ref mut redis_con) => {
                 let message: String;
                 if !settings.email.no_verify {
-                    utils::emails::send_multipart_email(
+                    send_multipart_email(
                         "Let's get you verified".to_string(),
                         user.id,
                         user.email,
@@ -66,7 +69,7 @@ pub async fn register(
                 }
 
                 tracing::event!(target: "backend", tracing::Level::INFO, "User created successfully.");
-                HttpResponse::Ok().json(::types::SuccessResponse { message })
+                HttpResponse::Ok().json(message)
             }
             Err(e) => response_500(e),
         },

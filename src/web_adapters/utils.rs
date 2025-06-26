@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use tracing::{event, Level};
 
 #[derive(Serialize, Deserialize)]
-struct ErrorResponse {
+pub struct ErrorResponse {
     pub error: String,
 }
 

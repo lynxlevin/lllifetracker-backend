@@ -8,9 +8,10 @@ use db_adapters::user_adapter::{UserAdapter, UserMutation, UserQuery};
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
 
-use utils::auth::{password, tokens::verify_confirmation_token_pasetor};
-
-use crate::utils::{response_400, response_404, response_500};
+use crate::{
+    users::utils::auth::{password, tokens::verify_confirmation_token_pasetor},
+    utils::{response_400, response_404, response_500},
+};
 
 #[derive(serde::Deserialize)]
 struct Parameters {
@@ -50,10 +51,7 @@ pub async fn submit_password_change(
                     };
                     match UserAdapter::init(&db).update_password(user, hashed_password).await {
                         Ok(_) => {
-                            HttpResponse::Ok().json(types::SuccessResponse {
-                                message: "Your password has been changed successfully. Kindly login with the new password"
-                                    .to_string(),
-                            })
+                            HttpResponse::Ok().json("Your password has been changed successfully. Kindly login with the new password")
                         }
                         Err(e) => response_500(e)
                     }

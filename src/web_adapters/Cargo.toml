@@ -17,3 +17,16 @@ sea-orm.workspace = true
 serde.workspace = true
 tracing.workspace = true
 uuid.workspace = true
+
+common = {path="../common"}
+lettre.workspace = true
+deadpool-redis.workspace = true
+actix-session.workspace = true
+futures.workspace = true
+argon2.workspace = true
+pasetors.workspace = true
+chrono.workspace = true
+hex.workspace = true
+serde_json.workspace = true
+minijinja.workspace = true
+once_cell.workspace = true

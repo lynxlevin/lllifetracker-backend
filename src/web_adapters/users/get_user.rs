@@ -2,14 +2,14 @@ use actix_web::{get, web::ReqData, HttpResponse};
 
 use entities::user as user_entity;
 
-use crate::utils::response_401;
+use crate::{users::types::UserVisible, utils::response_401};
 
 #[get("/me")]
 pub async fn get_user(user: Option<ReqData<user_entity::Model>>) -> HttpResponse {
     match user {
         Some(user) => {
             let user = user.into_inner();
-            HttpResponse::Ok().json(::types::UserVisible {
+            HttpResponse::Ok().json(UserVisible {
                 id: user.id,
                 email: user.email,
                 first_name: user.first_name,

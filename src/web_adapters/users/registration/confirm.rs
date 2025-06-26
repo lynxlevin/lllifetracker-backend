@@ -9,6 +9,8 @@ use db_adapters::user_adapter::{UserAdapter, UserMutation, UserQuery};
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
 
+use crate::{users::utils::auth::tokens::verify_confirmation_token_pasetor, utils::ErrorResponse};
+
 #[derive(serde::Deserialize)]
 pub struct Parameters {
     token: String,
@@ -27,7 +29,7 @@ pub async fn confirm(
 ) -> HttpResponse {
     match redis_pool.get().await {
         Ok(ref mut redis_con) => {
-            match utils::auth::tokens::verify_confirmation_token_pasetor(
+            match verify_confirmation_token_pasetor(
                 parameters.token.clone(),
                 redis_con,
                 None,
@@ -49,10 +51,7 @@ pub async fn confirm(
                                                 header::LOCATION,
                                                 format!("{}/auth/confirmed", settings.application.frontend_url),
                                             ))
-                                            .json(::types::SuccessResponse {
-                                                message: "Your account has been activated successfully! You can now log in."
-                                                    .to_string(),
-                                            })
+                                            .json("Your account has been activated successfully! You can now log in.")
                                 }
                                 Err(e) => {
                                     tracing::event!(target: "backend", tracing::Level::ERROR, "Cannot activate account: {}", e);
@@ -64,7 +63,7 @@ pub async fn confirm(
                                                 settings.application.frontend_url
                                             ),
                                         ))
-                                        .json(::types::ErrorResponse {
+                                        .json(ErrorResponse {
                                             error: "We cannot activate your account at the moment"
                                                 .to_string(),
                                         })
@@ -78,7 +77,7 @@ pub async fn confirm(
                                         settings.application.frontend_url
                                     ),
                                 ))
-                                .json(::types::ErrorResponse {
+                                .json(ErrorResponse {
                                     error: "We cannot activate your account at the moment"
                                         .to_string(),
                                 }),
@@ -93,7 +92,7 @@ pub async fn confirm(
                                         settings.application.frontend_url
                                     ),
                                 ))
-                                .json(::types::ErrorResponse {
+                                .json(ErrorResponse {
                                     error: "We cannot activate your account at the moment"
                                         .to_string(),
                                 })
@@ -106,7 +105,7 @@ pub async fn confirm(
                         .insert_header((
                             header::LOCATION,
                             format!("{}/auth/regenerate-token", settings.application.frontend_url),
-                        )).json(::types::ErrorResponse {error: "It appears that your confirmation token has expired or previously used. Kindly generate a new token".to_string()})
+                        )).json(ErrorResponse {error: "It appears that your confirmation token has expired or previously used. Kindly generate a new token".to_string()})
                 }
             }
         }
@@ -117,7 +116,7 @@ pub async fn confirm(
                     header::LOCATION,
                     format!("{}/auth/error", settings.application.frontend_url),
                 ))
-                .json(::types::ErrorResponse {
+                .json(ErrorResponse {
                     error: "We cannot activate your account at the moment".to_string(),
                 })
         }

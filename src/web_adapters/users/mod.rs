@@ -9,6 +9,8 @@ mod login;
 mod logout;
 mod password_change;
 mod registration;
+mod types;
+pub mod utils;
 
 pub fn auth_routes(cfg: &mut ServiceConfig) {
     cfg.service(
@@ -28,11 +30,5 @@ pub fn auth_routes(cfg: &mut ServiceConfig) {
                     .service(verify_password_change_token)
                     .service(submit_password_change),
             ),
-        // MYMEMO: Can restrict AuthenticateUser this way.
-        // .service(
-        //     actix_web::web::scope("")
-        //         .wrap(AuthenticateUser)
-        //         .service(get_user::get_user),
-        // ),
     );
 }

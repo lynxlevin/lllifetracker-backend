@@ -6,9 +6,11 @@ use common::settings::types::Settings;
 use db_adapters::user_adapter::{UserAdapter, UserFilter, UserQuery};
 use deadpool_redis::Pool;
 use sea_orm::DbConn;
-use utils::emails::send_multipart_email;
 
-use crate::utils::{response_404, response_500};
+use crate::{
+    users::utils::emails::send_multipart_email,
+    utils::{response_404, response_500},
+};
 
 #[derive(serde::Deserialize, Debug)]
 struct UserEmail {
@@ -43,9 +45,7 @@ pub async fn request_password_change(
                     )
                     .await
                     .unwrap();
-                    HttpResponse::Ok().json(::types::SuccessResponse {
-                            message: "Password reset instructions have been sent to your email address.Kindly take action before its expiration.".to_string()
-                        })
+                    HttpResponse::Ok().json("Password reset instructions have been sent to your email address.Kindly take action before its expiration.")
                 }
                 Err(e) => response_500(e),
             },

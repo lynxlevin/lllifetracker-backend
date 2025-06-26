@@ -3,7 +3,7 @@ use std::{
     rc::Rc,
 };
 
-use crate::auth::session::get_user_id;
+use crate::users::utils::auth::session::get_user_id;
 use actix_session::SessionExt;
 use actix_web::{
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
@@ -108,7 +108,7 @@ mod tests {
     use actix_web::test;
     use sea_orm::prelude::ActiveModelTrait;
 
-    use ::types::{USER_EMAIL_KEY, USER_ID_KEY};
+    use crate::users::types::{USER_EMAIL_KEY, USER_ID_KEY};
     use common::{db::init_db, factory, settings::get_test_settings};
     use entities::user;
 

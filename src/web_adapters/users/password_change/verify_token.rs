@@ -1,4 +1,3 @@
-use ::types::INTERNAL_SERVER_ERROR_MESSAGE;
 use actix_web::{
     get,
     http::header,
@@ -7,7 +6,10 @@ use actix_web::{
 };
 use common::settings::types::Settings;
 use deadpool_redis::Pool;
-use utils::auth::tokens::{issue_confirmation_token_pasetors, verify_confirmation_token_pasetor};
+
+use crate::users::utils::auth::tokens::{
+    issue_confirmation_token_pasetors, verify_confirmation_token_pasetor,
+};
 
 #[derive(serde::Deserialize)]
 struct Parameters {
@@ -75,7 +77,7 @@ pub async fn verify_password_change_token(
             HttpResponse::SeeOther()
                 .insert_header((
                     header::LOCATION,
-                    format!("{frontend_url}/auth/error?reason={INTERNAL_SERVER_ERROR_MESSAGE}"),
+                    format!("{frontend_url}/auth/error?reason=Some unexpected error happened. Please try again later."),
                 ))
                 .finish()
         }

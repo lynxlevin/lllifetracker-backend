@@ -8,6 +8,8 @@ use lettre::{
     Message, SmtpTransport, Transport,
 };
 
+use crate::users::utils::auth::tokens::issue_confirmation_token_pasetors;
+
 // MYMEMO: refactor
 #[tracing::instrument(
     name = "Generic e-mail sending function.",
@@ -98,20 +100,14 @@ pub async fn send_multipart_email(
 ) -> Result<(), String> {
     let title = format!("Lynx Levin's LifeTracker - {subject}");
 
-    let issued_token = match crate::auth::tokens::issue_confirmation_token_pasetors(
-        user_id,
-        redis_connection,
-        None,
-        settings,
-    )
-    .await
-    {
-        Ok(t) => t,
-        Err(e) => {
-            tracing::event!(target: "backend", tracing::Level::ERROR, "{}", e);
-            return Err(format!("{}", e));
-        }
-    };
+    let issued_token =
+        match issue_confirmation_token_pasetors(user_id, redis_connection, None, settings).await {
+            Ok(t) => t,
+            Err(e) => {
+                tracing::event!(target: "backend", tracing::Level::ERROR, "{}", e);
+                return Err(format!("{}", e));
+            }
+        };
 
     let web_address = {
         if settings.debug {

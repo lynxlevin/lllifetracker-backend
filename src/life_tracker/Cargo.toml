@@ -10,7 +10,6 @@ path = "main.rs"
 [dependencies]
 common = { path = "../common", features = ["db", "redis", "settings"] }
 server = { path = "../server" }
-utils = { path = "../utils" }
 
 actix-session.workspace = true
 actix-web.workspace = true

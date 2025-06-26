@@ -16,9 +16,7 @@ common = { path = "../src/common", features = [
 ] }
 db_adapters = { path = "../src/db_adapters" }
 entities = { path = "../src/entities" }
-routes = { path = "../src/routes" }
 server = { path = "../src/server" }
-types = { path = "../src/types" }
 use_cases = { path = "../src/use_cases" }
 
 actix-http.workspace = true
