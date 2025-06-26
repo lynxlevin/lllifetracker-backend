@@ -11,7 +11,6 @@ pub struct Model {
     pub user_id: Uuid,
     #[sea_orm(unique)]
     pub ambition_id: Option<Uuid>,
-    #[sea_orm(unique)]
     pub desired_state_id: Option<Uuid>,
     #[sea_orm(unique)]
     pub action_id: Option<Uuid>,
