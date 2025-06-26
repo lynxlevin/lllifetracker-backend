@@ -44,7 +44,7 @@ pub fn setup_session_middleware_builder(
 
 pub fn get_routes() -> Scope {
     scope("/api")
-        .service(routes::health_check)
+        .service(health_check)
         .configure(auth_routes)
         .configure(ambition_routes)
         .configure(desired_state_routes)
