@@ -31,6 +31,7 @@ pub async fn create_desired_state<'a>(
             name: params.name.clone(),
             description: params.description.clone(),
             category_id,
+            is_focused: params.is_focused,
             user_id: user.id,
         })
         .await

@@ -90,6 +90,7 @@ pub struct CreateDesiredStateParams {
     pub name: String,
     pub description: Option<String>,
     pub category_id: Option<Uuid>,
+    pub is_focused: bool,
     pub user_id: Uuid,
 }
 
@@ -135,6 +136,7 @@ impl DesiredStateMutation for DesiredStateAdapter<'_> {
                         name: Set(params.name.to_owned()),
                         description: Set(params.description.to_owned()),
                         category_id: Set(params.category_id),
+                        is_focused: Set(params.is_focused),
                         ..Default::default()
                     }
                     .insert(txn)
