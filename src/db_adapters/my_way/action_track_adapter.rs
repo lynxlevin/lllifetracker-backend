@@ -58,10 +58,16 @@ impl ActionTrackFilter for ActionTrackAdapter<'_> {
     fn filter_started_at_in_dates(mut self, dates: Vec<NaiveDate>) -> Self {
         let mut cond = Condition::any();
         for date in dates {
-            cond = cond.add(Column::StartedAt.between(
-                date.and_hms_micro_opt(0, 0, 0, 0).unwrap(),
-                date.and_hms_micro_opt(23, 59, 59, 999999).unwrap(),
-            ))
+            cond = cond.add(
+                Column::StartedAt.between(
+                    // FIXME: Need to take the user's timezone into account.
+                    date.pred_opt()
+                        .unwrap()
+                        .and_hms_micro_opt(15, 0, 0, 0)
+                        .unwrap(),
+                    date.and_hms_micro_opt(14, 59, 59, 999999).unwrap(),
+                ),
+            )
         }
         self.query = self.query.filter(cond);
         self
