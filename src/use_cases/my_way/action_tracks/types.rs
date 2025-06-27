@@ -41,6 +41,8 @@ pub struct ActionTrackListQuery {
 pub struct ActionTrackAggregationQuery {
     pub started_at_gte: Option<DateTime<FixedOffset>>,
     pub started_at_lte: Option<DateTime<FixedOffset>>,
+    // NOTE: multiple yyyymmdd strings connected with "," (example: ?dates=20250601,20250625)
+    pub dates: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
