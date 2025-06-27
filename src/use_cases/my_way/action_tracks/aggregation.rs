@@ -27,7 +27,7 @@ pub async fn aggregate_action_tracks<'a>(
         query = query.filter_started_at_lte(started_at_lte)
     };
     if let Some(dates) = params.dates {
-        query = query.filter_started_at_in_dates(dates)
+        query = query.filter_started_at_in_dates(dates, user.timezone)
     }
     let action_tracks = query
         .filter_ended_at_is_null(false)

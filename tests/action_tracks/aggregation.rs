@@ -51,6 +51,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let req = test::TestRequest::get()
         .uri(&format!(
             "/api/action_tracks/aggregation?dates={},{}",
+            // FIXME: These are naive datetimes, so maybe flakey.
             (now - Duration::days(1)).date_naive().format("%Y%m%d"),
             (now + Duration::days(1)).date_naive().format("%Y%m%d"),
         ))
