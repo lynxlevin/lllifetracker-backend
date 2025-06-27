@@ -16,6 +16,7 @@ pub struct Model {
     pub archived: bool,
     pub ordering: Option<i32>,
     pub category_id: Option<Uuid>,
+    pub is_focused: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -28,7 +29,7 @@ pub enum Relation {
         on_delete = "SetNull"
     )]
     DesiredStateCategory,
-    #[sea_orm(has_one = "super::tag::Entity")]
+    #[sea_orm(has_many = "super::tag::Entity")]
     Tag,
     #[sea_orm(
         belongs_to = "super::user::Entity",

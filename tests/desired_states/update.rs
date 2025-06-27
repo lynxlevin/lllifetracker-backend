@@ -11,13 +11,14 @@ use entities::desired_state;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let desired_state = factory::desired_state(user.id).insert(&db).await?;
     let category = factory::desired_state_category(user.id).insert(&db).await?;
 
     let new_name = "desired_state_after_update".to_string();
     let new_description = "DesiredState after update.".to_string();
+    let is_focused = true;
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/desired_states/{}", desired_state.id))
@@ -25,6 +26,7 @@ async fn happy_path() -> Result<(), DbErr> {
             name: new_name.clone(),
             description: Some(new_description.clone()),
             category_id: Some(category.id),
+            is_focused,
         })
         .to_request();
     req.extensions_mut().insert(user.clone());
@@ -37,6 +39,7 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(res.name, new_name.clone());
     assert_eq!(res.description, Some(new_description.clone()));
     assert_eq!(res.category_id, Some(category.id));
+    assert_eq!(res.is_focused, is_focused);
     assert_eq!(res.created_at, desired_state.created_at);
     assert!(res.updated_at > desired_state.updated_at);
 
@@ -53,7 +56,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn no_category_cases() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let other_user = factory::user().insert(&db).await?;
     let desired_state = factory::desired_state(user.id).insert(&db).await?;
@@ -72,6 +75,7 @@ async fn no_category_cases() -> Result<(), DbErr> {
                 name: String::default(),
                 description: None,
                 category_id: Some(category_id),
+                is_focused: false,
             })
             .to_request();
         req.extensions_mut().insert(user.clone());
@@ -96,7 +100,7 @@ async fn no_category_cases() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let desired_state = factory::desired_state(user.id).insert(&db).await?;
 
@@ -106,6 +110,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
             name: "desired_state".to_string(),
             description: None,
             category_id: None,
+            is_focused: false,
         })
         .to_request();
 

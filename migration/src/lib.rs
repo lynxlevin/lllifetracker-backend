@@ -36,6 +36,7 @@ mod m20250415_000001_add_name_to_tags_table;
 mod m20250430_000001_create_mindset_table;
 mod m20250610_000001_create_desired_state_categories_table;
 mod m20250614_000001_remove_mindset_table;
+mod m20250626_000001_add_focus_to_desired_state_table;
 mod m_seed_data;
 
 pub struct Migrator;
@@ -85,6 +86,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20250430_000001_create_mindset_table::Migration),
             Box::new(m20250610_000001_create_desired_state_categories_table::Migration),
             Box::new(m20250614_000001_remove_mindset_table::Migration),
+            Box::new(m20250626_000001_add_focus_to_desired_state_table::Migration),
         ]
     }
 }

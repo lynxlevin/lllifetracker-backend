@@ -90,6 +90,7 @@ pub struct CreateDesiredStateParams {
     pub name: String,
     pub description: Option<String>,
     pub category_id: Option<Uuid>,
+    pub is_focused: bool,
     pub user_id: Uuid,
 }
 
@@ -98,6 +99,7 @@ pub struct UpdateDesiredStateParams {
     pub name: String,
     pub description: Option<String>,
     pub category_id: Option<Uuid>,
+    pub is_focused: bool,
 }
 
 pub trait DesiredStateMutation {
@@ -135,6 +137,7 @@ impl DesiredStateMutation for DesiredStateAdapter<'_> {
                         name: Set(params.name.to_owned()),
                         description: Set(params.description.to_owned()),
                         category_id: Set(params.category_id),
+                        is_focused: Set(params.is_focused),
                         ..Default::default()
                     }
                     .insert(txn)
@@ -163,6 +166,7 @@ impl DesiredStateMutation for DesiredStateAdapter<'_> {
         desired_state.name = Set(params.name);
         desired_state.description = Set(params.description);
         desired_state.category_id = Set(params.category_id);
+        desired_state.is_focused = Set(params.is_focused);
         desired_state.updated_at = Set(Utc::now().into());
         desired_state.update(self.db).await
     }
