@@ -44,9 +44,11 @@ pub async fn aggregate_action_tracks<'a>(
             res.push(ActionTrackAggregationDuration {
                 action_id: action_track.action_id,
                 duration: action_track.duration.unwrap_or(0),
+                count: 1,
             });
         } else {
-            res.last_mut().unwrap().duration += action_track.duration.unwrap_or(0)
+            res.last_mut().unwrap().duration += action_track.duration.unwrap_or(0);
+            res.last_mut().unwrap().count += 1;
         }
     }
     Ok(ActionTrackAggregation {

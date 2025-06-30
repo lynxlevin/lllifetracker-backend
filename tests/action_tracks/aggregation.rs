@@ -16,6 +16,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let user = factory::user().insert(&db).await?;
     let action_0 = factory::action(user.id).insert(&db).await?;
     let action_1 = factory::action(user.id).insert(&db).await?;
+    let _action_2 = factory::action(user.id).insert(&db).await?;
     let now = Utc::now();
     let action_0_track_0 = factory::action_track(user.id)
         .started_at((now - Duration::days(1)).into())
@@ -68,10 +69,12 @@ async fn happy_path() -> Result<(), DbErr> {
             ActionTrackAggregationDuration {
                 action_id: action_0.id,
                 duration: action_0_track_0.duration.unwrap() + action_0_track_2.duration.unwrap(),
+                count: 2,
             },
             ActionTrackAggregationDuration {
                 action_id: action_1.id,
                 duration: action_1_track_0.duration.unwrap(),
+                count: 1,
             },
         ],
     };
@@ -91,6 +94,7 @@ async fn started_at_gte_lte() -> Result<(), DbErr> {
         DateTime::parse_from_rfc3339("2025-01-27T23:59:59Z").unwrap();
     let action_0 = factory::action(user.id).insert(&db).await?;
     let action_1 = factory::action(user.id).insert(&db).await?;
+    let _action_2 = factory::action(user.id).insert(&db).await?;
     let _action_0_track_0 = factory::action_track(user.id)
         .started_at(query_started_at_gte - Duration::seconds(1))
         .duration(Some(120))
@@ -141,10 +145,12 @@ async fn started_at_gte_lte() -> Result<(), DbErr> {
             ActionTrackAggregationDuration {
                 action_id: action_0.id,
                 duration: action_0_track_1.duration.unwrap() + action_0_track_2.duration.unwrap(),
+                count: 2,
             },
             ActionTrackAggregationDuration {
                 action_id: action_1.id,
                 duration: action_1_track_0.duration.unwrap(),
+                count: 1,
             },
         ],
     };
