@@ -51,8 +51,12 @@ Content-Type: application/json
 # @name delete
 DELETE {{endpoint}}/api/action_tracks/{{action_track_id}}
 
+###
+# @name aggregation_by_timestamp_range
+GET {{endpoint}}/api/action_tracks/aggregation?started_at_gte=2025-06-01T15:00:00Z&started_at_lte=2025-06-06T14:59:59Z
 
 ###
-# @name aggregation
-GET {{endpoint}}/api/action_tracks/aggregation?started_at_gte=2025-01-26T15:00:00Z&started_at_lte=2025-01-27T14:59:59Z
+# @name aggregation_by_dates
+GET {{endpoint}}/api/action_tracks/aggregation?dates=20250602,20250603,20250604,20250605,20250606
+
 

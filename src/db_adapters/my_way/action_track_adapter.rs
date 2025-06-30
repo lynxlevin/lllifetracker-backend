@@ -1,10 +1,10 @@
 use std::future::Future;
 
-use chrono::{DateTime, FixedOffset};
+use chrono::{DateTime, Duration, FixedOffset, NaiveDate, Utc};
 use sea_orm::{
-    sqlx::error::Error::Database, ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait,
-    IntoActiveModel, JoinType::LeftJoin, ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect,
-    RelationTrait, RuntimeErr::SqlxError, Select, Set,
+    sqlx::error::Error::Database, ActiveModelTrait, ColumnTrait, Condition, DbConn, DbErr,
+    EntityTrait, IntoActiveModel, JoinType::LeftJoin, ModelTrait, Order, QueryFilter, QueryOrder,
+    QuerySelect, RelationTrait, RuntimeErr::SqlxError, Select, Set,
 };
 use uuid::Uuid;
 
@@ -12,6 +12,7 @@ use crate::CustomDbErr;
 use entities::{
     action,
     action_track::{ActiveModel, Column, Entity, Model, Relation},
+    sea_orm_active_enums::TimezoneEnum,
     user,
 };
 
@@ -30,10 +31,27 @@ impl<'a> ActionTrackAdapter<'a> {
     }
 }
 
+fn get_date_start_end_in_utc(
+    date: NaiveDate,
+    user_timezone: &TimezoneEnum,
+) -> (DateTime<Utc>, DateTime<Utc>) {
+    let utc_start = date.and_hms_micro_opt(0, 0, 0, 0).unwrap().and_utc();
+    let utc_end = date
+        .and_hms_micro_opt(23, 59, 59, 999999)
+        .unwrap()
+        .and_utc();
+    match user_timezone {
+        TimezoneEnum::AsiaTokyo => (utc_start - Duration::hours(9), utc_end - Duration::hours(9)),
+        TimezoneEnum::Utc => (utc_start, utc_end),
+    }
+}
+
 pub trait ActionTrackFilter {
     fn filter_eq_user(self, user: &user::Model) -> Self;
     fn filter_started_at_gte(self, started_at: DateTime<FixedOffset>) -> Self;
     fn filter_started_at_lte(self, started_at: DateTime<FixedOffset>) -> Self;
+    fn filter_started_at_in_dates(self, dates: Vec<NaiveDate>, user_timezone: TimezoneEnum)
+        -> Self;
     fn filter_ended_at_is_null(self, is_null: bool) -> Self;
     fn filter_eq_archived_action(self, archived: bool) -> Self;
 }
@@ -51,6 +69,20 @@ impl ActionTrackFilter for ActionTrackAdapter<'_> {
 
     fn filter_started_at_lte(mut self, started_at: DateTime<FixedOffset>) -> Self {
         self.query = self.query.filter(Column::StartedAt.lte(started_at));
+        self
+    }
+
+    fn filter_started_at_in_dates(
+        mut self,
+        dates: Vec<NaiveDate>,
+        user_timezone: TimezoneEnum,
+    ) -> Self {
+        let mut cond = Condition::any();
+        for date in dates {
+            let (start, end) = get_date_start_end_in_utc(date, &user_timezone);
+            cond = cond.add(Column::StartedAt.between(start, end))
+        }
+        self.query = self.query.filter(cond);
         self
     }
 
