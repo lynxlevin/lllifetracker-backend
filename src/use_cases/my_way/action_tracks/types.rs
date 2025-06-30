@@ -54,6 +54,7 @@ pub struct ActionTrackAggregation {
 pub struct ActionTrackAggregationDuration {
     pub action_id: uuid::Uuid,
     pub duration: i64,
+    pub count: i64,
 }
 
 #[derive(Deserialize, Debug, Serialize)]
