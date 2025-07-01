@@ -57,6 +57,12 @@ pub struct ActionTrackAggregationDuration {
     pub count: i64,
 }
 
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
+pub struct ActionTrackDailyAggregationItem {
+    pub date: u8,
+    pub aggregation: Vec<ActionTrackAggregationDuration>,
+}
+
 #[derive(Deserialize, Debug, Serialize)]
 pub struct ActionTrackCreateRequest {
     pub started_at: DateTime<FixedOffset>,
