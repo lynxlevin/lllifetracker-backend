@@ -1,4 +1,5 @@
 mod aggregation;
+mod aggregation_daily;
 mod create;
 mod delete;
 mod list;
@@ -15,6 +16,7 @@ pub fn action_track_routes(cfg: &mut ServiceConfig) {
             .service(create::create_action_track_endpoint)
             .service(update::update_action_track_endpoint)
             .service(delete::delete_action_track_endpoint)
-            .service(aggregation::aggregate_action_tracks_endpoint),
+            .service(aggregation::aggregate_action_tracks_endpoint)
+            .service(aggregation_daily::aggregate_daily_action_tracks_endpoint),
     );
 }

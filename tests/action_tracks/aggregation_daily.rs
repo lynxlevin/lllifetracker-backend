@@ -19,7 +19,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let action_0 = factory::action(user.id).insert(&db).await?;
     let action_1 = factory::action(user.id).insert(&db).await?;
     let _action_2 = factory::action(user.id).insert(&db).await?;
-    let target = DateTime::parse_from_rfc3339("2025-02-01T15:00:00").unwrap();
+    let target = DateTime::parse_from_rfc3339("2025-01-31T15:00:00Z").unwrap();
     let _action_0_track_0 = factory::action_track(user.id)
         .started_at((target - Duration::days(1)).into())
         .duration(Some(120))
@@ -52,11 +52,7 @@ async fn happy_path() -> Result<(), DbErr> {
         .await?;
 
     let req = test::TestRequest::get()
-        .uri(&format!(
-            "/api/action_tracks/aggregation/daily?year_month={}",
-            // FIXME: These are naive datetimes, so maybe flakey.
-            target.date_naive().format("%Y%m"),
-        ))
+        .uri("/api/action_tracks/aggregation/daily?year_month=202502")
         .to_request();
     req.extensions_mut().insert(user.clone());
 
@@ -66,7 +62,15 @@ async fn happy_path() -> Result<(), DbErr> {
     let res: HashMap<String, Vec<ActionTrackDailyAggregationItem>> =
         test::read_body_json(resp).await;
 
-    let mut expected_items = vec![
+    let expected_items = vec![
+        ActionTrackDailyAggregationItem {
+            date: 28,
+            aggregation: vec![ActionTrackAggregationDuration {
+                action_id: action_0.id,
+                duration: action_0_track_2.duration.unwrap(),
+                count: 1,
+            }],
+        },
         ActionTrackDailyAggregationItem {
             date: 1,
             aggregation: vec![
@@ -82,24 +86,7 @@ async fn happy_path() -> Result<(), DbErr> {
                 },
             ],
         },
-        ActionTrackDailyAggregationItem {
-            date: 2,
-            aggregation: vec![ActionTrackAggregationDuration {
-                action_id: action_0.id,
-                duration: action_0_track_2.duration.unwrap(),
-                count: 1,
-            }],
-        },
     ];
-    expected_items.extend(
-        (3..29)
-            .map(|date| ActionTrackDailyAggregationItem {
-                date,
-                aggregation: vec![],
-            })
-            .collect::<Vec<_>>(),
-    );
-    assert_eq!(28, expected_items.len());
     let mut expected = HashMap::new();
     expected.insert("202502".to_string(), expected_items);
 
@@ -113,7 +100,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let Connections { app, .. } = init_app().await?;
 
     let req = test::TestRequest::get()
-        .uri("/api/action_tracks/aggregation/daily")
+        .uri("/api/action_tracks/aggregation/daily?year_month=202506")
         .to_request();
 
     let resp = test::call_service(&app, req).await;
