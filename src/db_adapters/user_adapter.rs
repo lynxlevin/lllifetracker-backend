@@ -86,6 +86,7 @@ impl UserMutation for UserAdapter<'_> {
             last_name: Set(params.last_name),
             is_active: Set(params.is_active),
             timezone: Set(TimezoneEnum::AsiaTokyo),
+            first_track_at: Set(None),
             created_at: Set(now.into()),
             updated_at: Set(now.into()),
         }

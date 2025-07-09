@@ -1,4 +1,4 @@
-use chrono::Utc;
+use chrono::{DateTime, FixedOffset, Utc};
 use entities::user;
 use sea_orm::Set;
 
@@ -14,6 +14,7 @@ pub fn user() -> user::ActiveModel {
         last_name: Set("Levin".to_string()),
         timezone: Set(TimezoneEnum::AsiaTokyo),
         is_active: Set(true),
+        first_track_at: Set(None),
         created_at: Set(now.into()),
         updated_at: Set(now.into()),
     }
@@ -22,6 +23,7 @@ pub fn user() -> user::ActiveModel {
 pub trait UserFactory {
     fn is_active(self, is_active: bool) -> user::ActiveModel;
     fn password(self, hashed_password: &str) -> user::ActiveModel;
+    fn first_track_at(self, first_track_at: Option<DateTime<FixedOffset>>) -> user::ActiveModel;
 }
 
 impl UserFactory for user::ActiveModel {
@@ -32,6 +34,14 @@ impl UserFactory for user::ActiveModel {
 
     fn password(mut self, hashed_password: &str) -> user::ActiveModel {
         self.password = Set(hashed_password.to_string());
+        self
+    }
+
+    fn first_track_at(
+        mut self,
+        first_track_at: Option<DateTime<FixedOffset>>,
+    ) -> user::ActiveModel {
+        self.first_track_at = Set(first_track_at);
         self
     }
 }
