@@ -120,6 +120,17 @@ impl ActionTrackOrder for ActionTrackAdapter<'_> {
     }
 }
 
+pub trait ActionTrackLimit {
+    fn limit(self, num: u64) -> Self;
+}
+
+impl ActionTrackLimit for ActionTrackAdapter<'_> {
+    fn limit(mut self, num: u64) -> Self {
+        self.query = self.query.limit(Some(num));
+        self
+    }
+}
+
 pub trait ActionTrackQuery {
     fn get_all(self) -> impl Future<Output = Result<Vec<Model>, DbErr>>;
     fn get_by_id(self, id: Uuid) -> impl Future<Output = Result<Option<Model>, DbErr>>;

@@ -11,6 +11,7 @@ use db_adapters::{
         ActionTrackAdapter, ActionTrackFilter, ActionTrackMutation, ActionTrackQuery,
         UpdateActionTrackParams,
     },
+    user_adapter::{UserAdapter, UserMutation},
     CustomDbErr,
 };
 use entities::user as user_entity;
@@ -20,6 +21,7 @@ pub async fn update_action_track<'a>(
     params: ActionTrackUpdateRequest,
     action_track_id: Uuid,
     action_track_adapter: ActionTrackAdapter<'a>,
+    user_adapter: UserAdapter<'a>,
 ) -> Result<ActionTrackVisible, UseCaseError> {
     let action_track = action_track_adapter
         .clone()
@@ -31,7 +33,7 @@ pub async fn update_action_track<'a>(
             "ActionTrack with this id was not found".to_string(),
         ))?;
 
-    match action_track_adapter
+    let action_track = action_track_adapter
         .update(
             action_track,
             UpdateActionTrackParams {
@@ -49,16 +51,22 @@ pub async fn update_action_track<'a>(
             },
         )
         .await
-    {
-        Ok(action_track) => Ok(ActionTrackVisible::from(action_track)),
-        Err(e) => match &e {
+        .map_err(|e| match &e {
             DbErr::Custom(ce) => match CustomDbErr::from(ce) {
-                CustomDbErr::Duplicate => Err(UseCaseError::Conflict(
+                CustomDbErr::Duplicate => UseCaseError::Conflict(
                     "A track for the same action which starts at the same time exists.".to_string(),
-                )),
-                _ => Err(UseCaseError::InternalServerError(format!("{:?}", e))),
+                ),
+                _ => UseCaseError::InternalServerError(format!("{:?}", e)),
             },
-            _ => Err(UseCaseError::InternalServerError(format!("{:?}", e))),
-        },
+            _ => UseCaseError::InternalServerError(format!("{:?}", e)),
+        })?;
+
+    if user.first_track_at.is_none() || user.first_track_at.unwrap() > action_track.started_at {
+        user_adapter
+            .update_first_track_at(user, Some(action_track.started_at))
+            .await
+            .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
     }
+
+    Ok(ActionTrackVisible::from(action_track))
 }

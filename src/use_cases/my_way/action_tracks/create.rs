@@ -8,6 +8,7 @@ use crate::{
 use db_adapters::{
     action_adapter::{ActionAdapter, ActionFilter, ActionQuery},
     action_track_adapter::{ActionTrackAdapter, ActionTrackMutation, CreateActionTrackParams},
+    user_adapter::{UserAdapter, UserMutation},
     CustomDbErr,
 };
 use entities::{sea_orm_active_enums::ActionTrackType, user as user_entity};
@@ -17,6 +18,7 @@ pub async fn create_action_track<'a>(
     req: ActionTrackCreateRequest,
     action_track_adapter: ActionTrackAdapter<'a>,
     action_adapter: ActionAdapter<'a>,
+    user_adapter: UserAdapter<'a>,
 ) -> Result<ActionTrackVisible, UseCaseError> {
     let action = action_adapter
         .filter_eq_user(&user)
@@ -43,16 +45,25 @@ pub async fn create_action_track<'a>(
             user_id: user.id,
         },
     };
-    match action_track_adapter.create(params).await {
-        Ok(action_track) => Ok(ActionTrackVisible::from(action_track)),
-        Err(e) => match &e {
+    let action_track = action_track_adapter
+        .create(params)
+        .await
+        .map_err(|e| match &e {
             DbErr::Custom(message) => match CustomDbErr::from(message) {
-                CustomDbErr::Duplicate => Err(UseCaseError::Conflict(
+                CustomDbErr::Duplicate => UseCaseError::Conflict(
                     "A track for the same action which starts at the same time exists.".to_string(),
-                )),
-                _ => Err(UseCaseError::InternalServerError(format!("{:?}", e))),
+                ),
+                _ => UseCaseError::InternalServerError(format!("{:?}", e)),
             },
-            _ => Err(UseCaseError::InternalServerError(format!("{:?}", e))),
-        },
+            _ => UseCaseError::InternalServerError(format!("{:?}", e)),
+        })?;
+
+    if user.first_track_at.is_none() || user.first_track_at.unwrap() > action_track.started_at {
+        user_adapter
+            .update_first_track_at(user, Some(action_track.started_at))
+            .await
+            .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
     }
+
+    Ok(ActionTrackVisible::from(action_track))
 }

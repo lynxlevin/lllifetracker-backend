@@ -6,7 +6,10 @@ use actix_web::{
 use sea_orm::DbConn;
 
 use crate::utils::{response_401, response_404, response_409, response_500};
-use db_adapters::{action_adapter::ActionAdapter, action_track_adapter::ActionTrackAdapter};
+use db_adapters::{
+    action_adapter::ActionAdapter, action_track_adapter::ActionTrackAdapter,
+    user_adapter::UserAdapter,
+};
 use entities::user as user_entity;
 use use_cases::{
     my_way::action_tracks::{create::create_action_track, types::ActionTrackCreateRequest},
@@ -27,6 +30,7 @@ pub async fn create_action_track_endpoint(
                 req.into_inner(),
                 ActionTrackAdapter::init(&db),
                 ActionAdapter::init(&db),
+                UserAdapter::init(&db),
             )
             .await
             {
