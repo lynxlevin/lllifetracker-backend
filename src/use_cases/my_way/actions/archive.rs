@@ -1,3 +1,4 @@
+use chrono::{DateTime, FixedOffset};
 use uuid::Uuid;
 
 use crate::{my_way::actions::types::ActionVisible, UseCaseError};
@@ -45,18 +46,25 @@ pub async fn archive_action<'a>(
 
         if action_tracks.len() > 0 {
             if user.first_track_at.unwrap() != action_tracks[0].started_at {
-                user_adapter
-                    .update_first_track_at(user, Some(action_tracks[0].started_at))
-                    .await
-                    .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
+                _update_first_track_at(user_adapter, user, Some(action_tracks[0].started_at))
+                    .await?;
             }
         } else {
-            user_adapter
-                .update_first_track_at(user, None)
-                .await
-                .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
+            _update_first_track_at(user_adapter, user, None).await?;
         };
     }
 
     Ok(ActionVisible::from(action))
+}
+
+async fn _update_first_track_at<'a>(
+    user_adapter: UserAdapter<'a>,
+    user: user_entity::Model,
+    first_track_at: Option<DateTime<FixedOffset>>,
+) -> Result<(), UseCaseError> {
+    user_adapter
+        .update_first_track_at(user, first_track_at)
+        .await
+        .map(|_| ())
+        .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
 }

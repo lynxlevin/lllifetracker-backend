@@ -58,7 +58,10 @@ pub async fn create_action_track<'a>(
             _ => UseCaseError::InternalServerError(format!("{:?}", e)),
         })?;
 
-    if user.first_track_at.is_none() || user.first_track_at.unwrap() > action_track.started_at {
+    if user
+        .first_track_at
+        .is_none_or(|timestamp| timestamp > action_track.started_at)
+    {
         user_adapter
             .update_first_track_at(user, Some(action_track.started_at))
             .await

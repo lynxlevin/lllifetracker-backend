@@ -11,7 +11,12 @@ use entities::{action, action_track, user};
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let original_first_track_at =
+        Some(DateTime::parse_from_rfc3339("2025-01-01T00:00:00Z").unwrap());
+    let user = factory::user()
+        .first_track_at(original_first_track_at)
+        .insert(&db)
+        .await?;
     let action = factory::action(user.id).insert(&db).await?;
     let action_track = factory::action_track(user.id)
         .action_id(action.id)
@@ -33,6 +38,9 @@ async fn happy_path() -> Result<(), DbErr> {
 
     let action_in_db = action::Entity::find_by_id(action.id).one(&db).await?;
     assert!(action_in_db.is_some());
+
+    let user_in_db = user::Entity::find_by_id(user.id).one(&db).await?.unwrap();
+    assert_eq!(user_in_db.first_track_at, original_first_track_at);
 
     Ok(())
 }

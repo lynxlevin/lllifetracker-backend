@@ -28,8 +28,7 @@ pub async fn delete_action_track<'a>(
         None => return Ok(()),
     };
 
-    let should_update_user_first_track_at =
-        user.first_track_at.is_some() && user.first_track_at.unwrap() == action_track.started_at;
+    let original_started_at = action_track.started_at.clone();
 
     action_track_adapter
         .clone()
@@ -37,9 +36,13 @@ pub async fn delete_action_track<'a>(
         .await
         .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
 
-    if should_update_user_first_track_at {
+    if user
+        .first_track_at
+        .is_some_and(|timestamp| timestamp == original_started_at)
+    {
         let action_tracks = action_track_adapter
             .filter_eq_user(&user)
+            .filter_eq_archived_action(false)
             .order_by_started_at(Asc)
             .limit(1)
             .get_all()

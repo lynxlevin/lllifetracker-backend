@@ -12,13 +12,18 @@ use entities::{action_track, user};
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let original_first_track_at =
+        Some(DateTime::parse_from_rfc3339("2025-01-01T00:00:00Z").unwrap());
+    let user = factory::user()
+        .first_track_at(original_first_track_at)
+        .insert(&db)
+        .await?;
     let action = factory::action(user.id).insert(&db).await?;
     let action_track = factory::action_track(user.id)
         .action_id(action.id)
         .insert(&db)
         .await?;
-    let ended_at: chrono::DateTime<chrono::FixedOffset> = Utc::now().into();
+    let ended_at = DateTime::parse_from_rfc3339("2025-07-08T00:00:00Z").unwrap();
     let duration = 180;
     let started_at = ended_at - chrono::TimeDelta::seconds(duration.into());
 
@@ -50,7 +55,7 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(ActionTrackVisible::from(action_track_in_db), res);
 
     let user_in_db = user::Entity::find_by_id(user.id).one(&db).await?.unwrap();
-    assert_eq!(user_in_db.first_track_at, Some(started_at.trunc_subsecs(0)));
+    assert_eq!(user_in_db.first_track_at, original_first_track_at);
 
     Ok(())
 }
