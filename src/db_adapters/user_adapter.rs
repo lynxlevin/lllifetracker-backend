@@ -1,6 +1,6 @@
 use std::future::Future;
 
-use chrono::Utc;
+use chrono::{DateTime, FixedOffset, Utc};
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel, QueryFilter,
     Select, Set,
@@ -73,6 +73,11 @@ pub trait UserMutation {
         user: Model,
         password: String,
     ) -> impl Future<Output = Result<Model, DbErr>>;
+    fn update_first_track_at(
+        self,
+        user: Model,
+        first_track_at: Option<DateTime<FixedOffset>>,
+    ) -> impl Future<Output = Result<Model, DbErr>>;
 }
 
 impl UserMutation for UserAdapter<'_> {
@@ -86,6 +91,7 @@ impl UserMutation for UserAdapter<'_> {
             last_name: Set(params.last_name),
             is_active: Set(params.is_active),
             timezone: Set(TimezoneEnum::AsiaTokyo),
+            first_track_at: Set(None),
             created_at: Set(now.into()),
             updated_at: Set(now.into()),
         }
@@ -103,6 +109,17 @@ impl UserMutation for UserAdapter<'_> {
     async fn update_password(self, user: Model, password: String) -> Result<Model, DbErr> {
         let mut user = user.into_active_model();
         user.password = Set(password);
+        user.updated_at = Set(Utc::now().into());
+        user.update(self.db).await
+    }
+
+    async fn update_first_track_at(
+        self,
+        user: Model,
+        first_track_at: Option<DateTime<FixedOffset>>,
+    ) -> Result<Model, DbErr> {
+        let mut user = user.into_active_model();
+        user.first_track_at = Set(first_track_at);
         user.updated_at = Set(Utc::now().into());
         user.update(self.db).await
     }

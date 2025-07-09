@@ -58,6 +58,7 @@ async fn login_user(
                                                 first_name: user.first_name,
                                                 last_name: user.last_name,
                                                 is_active: user.is_active,
+                                                first_track_at: user.first_track_at,
                                             }),
                                             Err(e) => response_500(e),
                                         }

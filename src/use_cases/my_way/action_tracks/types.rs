@@ -44,6 +44,10 @@ pub struct ActionTrackAggregationQuery {
     // NOTE: multiple yyyymmdd strings connected with "," (example: ?dates=20250601,20250625)
     pub dates: Option<String>,
 }
+#[derive(Deserialize, Debug)]
+pub struct ActionTrackAggregationDailyQuery {
+    pub year_month: String,
+}
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct ActionTrackAggregation {
@@ -55,6 +59,12 @@ pub struct ActionTrackAggregationDuration {
     pub action_id: uuid::Uuid,
     pub duration: i64,
     pub count: i64,
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
+pub struct ActionTrackDailyAggregationItem {
+    pub date: u32,
+    pub aggregation: Vec<ActionTrackAggregationDuration>,
 }
 
 #[derive(Deserialize, Debug, Serialize)]

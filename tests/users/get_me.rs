@@ -22,6 +22,7 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(res.last_name, user.last_name);
     assert_eq!(res.email, user.email);
     assert_eq!(res.is_active, user.is_active);
+    assert_eq!(res.first_track_at, user.first_track_at);
 
     Ok(())
 }
