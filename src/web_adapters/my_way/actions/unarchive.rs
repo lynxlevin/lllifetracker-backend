@@ -3,7 +3,10 @@ use actix_web::{
     web::{Data, Path, ReqData},
     HttpResponse,
 };
-use db_adapters::action_adapter::ActionAdapter;
+use db_adapters::{
+    action_adapter::ActionAdapter, action_track_adapter::ActionTrackAdapter,
+    user_adapter::UserAdapter,
+};
 use entities::user as user_entity;
 use sea_orm::DbConn;
 use use_cases::{my_way::actions::unarchive::unarchive_action, UseCaseError};
@@ -28,6 +31,8 @@ pub async fn unarchive_action_endpoint(
                 user.into_inner(),
                 path_param.action_id,
                 ActionAdapter::init(&db),
+                UserAdapter::init(&db),
+                ActionTrackAdapter::init(&db),
             )
             .await
             {
