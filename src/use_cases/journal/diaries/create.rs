@@ -29,14 +29,6 @@ pub async fn create_diary<'a>(
     {
         Ok(diary) => diary,
         Err(e) => match &e {
-            DbErr::Custom(ce) => match CustomDbErr::from(ce) {
-                CustomDbErr::Duplicate => {
-                    return Err(UseCaseError::Conflict(
-                        "Another diary record for the same date already exists.".to_string(),
-                    ))
-                }
-                _ => return Err(UseCaseError::InternalServerError(format!("{:?}", e))),
-            },
             _ => return Err(UseCaseError::InternalServerError(format!("{:?}", e))),
         },
     };

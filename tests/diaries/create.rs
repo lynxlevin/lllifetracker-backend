@@ -88,32 +88,6 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 }
 
 #[actix_web::test]
-async fn conflict_if_duplicate_exists() -> Result<(), DbErr> {
-    let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let _existing_diary = factory::diary(user.id)
-        .date(chrono::NaiveDate::from_ymd_opt(2025, 3, 19).unwrap())
-        .insert(&db)
-        .await?;
-
-    let req = test::TestRequest::post()
-        .uri("/api/diaries")
-        .set_json(DiaryCreateRequest {
-            text: None,
-            date: chrono::NaiveDate::from_ymd_opt(2025, 3, 19).unwrap(),
-            score: None,
-            tag_ids: vec![],
-        })
-        .to_request();
-    req.extensions_mut().insert(user.clone());
-
-    let res = test::call_service(&app, req).await;
-    assert_eq!(res.status(), http::StatusCode::CONFLICT);
-
-    Ok(())
-}
-
-#[actix_web::test]
 async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
