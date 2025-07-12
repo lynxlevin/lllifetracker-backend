@@ -13,7 +13,7 @@ use common::factory::{self, *};
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let now = Utc::now();
     let diary_0 = factory::diary(user.id).text(None).insert(&db).await?;
@@ -43,7 +43,6 @@ async fn happy_path() -> Result<(), DbErr> {
             id: diary_0.id,
             text: diary_0.text.clone(),
             date: diary_0.date,
-            score: diary_0.score,
             tags: vec![
                 TagVisible {
                     id: ambition_tag.id,
@@ -63,7 +62,6 @@ async fn happy_path() -> Result<(), DbErr> {
             id: diary_1.id,
             text: diary_1.text.clone(),
             date: diary_1.date,
-            score: diary_1.score.clone(),
             tags: vec![
                 TagVisible {
                     id: desired_state_tag.id,
@@ -92,7 +90,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let Connections { app, ..} = init_app().await?;
+    let Connections { app, .. } = init_app().await?;
 
     let req = test::TestRequest::get().uri("/api/diaries").to_request();
 

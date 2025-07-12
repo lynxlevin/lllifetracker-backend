@@ -12,7 +12,6 @@ pub struct Model {
     #[sea_orm(column_type = "Text", nullable)]
     pub text: Option<String>,
     pub date: Date,
-    pub score: Option<i16>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

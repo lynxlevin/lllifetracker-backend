@@ -26,7 +26,6 @@ Content-Type: application/json
 {
   "text": "This is my second diary.",
   "date": "2025-03-03",
-  "score": 7,
   "tag_ids": [{{tag_0_id}}, {{tag_1_id}}]
 }
 
@@ -38,9 +37,8 @@ Content-Type: application/json
 {
   "text": "This is my first diary.",
   "date": "2025-03-16",
-  "score": null,
   "tag_ids": [],
-  "update_keys": ["Score"]
+  "update_keys": ["TagIds"]
 }
 
 ###

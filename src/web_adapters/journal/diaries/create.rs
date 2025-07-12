@@ -11,7 +11,7 @@ use use_cases::{
     UseCaseError,
 };
 
-use crate::utils::{response_400, response_401, response_404, response_409, response_500};
+use crate::utils::{response_401, response_404, response_500};
 
 #[tracing::instrument(name = "Creating a diary", skip(db, user))]
 #[post("")]
@@ -25,9 +25,7 @@ pub async fn create_diary_endpoint(
             match create_diary(user.into_inner(), req.into_inner(), DiaryAdapter::init(&db)).await {
                 Ok(res) => HttpResponse::Created().json(res),
                 Err(e) => match &e {
-                    UseCaseError::BadRequest(message) => response_400(message),
                     UseCaseError::NotFound(message) => response_404(message),
-                    UseCaseError::Conflict(message) => response_409(message),
                     _ => response_500(e),
                 },
             }
