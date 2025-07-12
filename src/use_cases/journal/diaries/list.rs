@@ -33,7 +33,6 @@ pub async fn list_diaries<'a>(
                 id: diary.id,
                 text: diary.text.clone(),
                 date: diary.date,
-                score: diary.score,
                 tags: vec![],
             };
             if let Some(tag) = get_tag(&diary) {

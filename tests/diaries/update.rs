@@ -48,7 +48,6 @@ async fn happy_path() -> Result<(), DbErr> {
     let res: DiaryVisible = test::read_body_json(res).await;
     assert_eq!(res.text, form.text.clone());
     assert_eq!(res.date, form.date);
-    assert_eq!(res.score, form.score);
 
     let diary_in_db = diary::Entity::find_by_id(res.id).one(&db).await?.unwrap();
     assert_eq!(diary_in_db.user_id, user.id);

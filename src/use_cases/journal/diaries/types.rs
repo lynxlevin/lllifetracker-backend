@@ -12,7 +12,6 @@ pub struct DiaryVisible {
     pub id: uuid::Uuid,
     pub text: Option<String>,
     pub date: chrono::NaiveDate,
-    pub score: Option<i16>,
 }
 
 impl From<diary::Model> for DiaryVisible {
@@ -21,7 +20,6 @@ impl From<diary::Model> for DiaryVisible {
             id: item.id,
             text: item.text,
             date: item.date,
-            score: item.score,
         }
     }
 }
@@ -45,7 +43,6 @@ pub struct DiaryVisibleWithTags {
     pub id: uuid::Uuid,
     pub text: Option<String>,
     pub date: chrono::NaiveDate,
-    pub score: Option<i16>,
     pub tags: Vec<TagVisible>,
 }
 

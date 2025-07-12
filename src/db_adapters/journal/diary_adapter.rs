@@ -215,7 +215,6 @@ impl DiaryMutation for DiaryAdapter<'_> {
             user_id: Set(params.user_id),
             text: Set(params.text),
             date: Set(params.date),
-            score: Set(params.score),
         }
         .insert(self.db)
         .await
@@ -237,9 +236,6 @@ impl DiaryMutation for DiaryAdapter<'_> {
         }
         if params.update_keys.contains(&DiaryUpdateKey::Date) {
             diary.date = Set(params.date);
-        }
-        if params.update_keys.contains(&DiaryUpdateKey::Score) {
-            diary.score = Set(params.score);
         }
         diary.update(self.db).await.map_err(|e| match &e {
             DbErr::Query(SqlxError(Database(err))) => match err.constraint() {
