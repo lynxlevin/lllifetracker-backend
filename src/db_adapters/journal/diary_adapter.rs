@@ -108,7 +108,6 @@ pub struct DiaryWithTag {
     pub id: Uuid,
     pub text: Option<String>,
     pub date: NaiveDate,
-    pub score: Option<i16>,
     pub tag_id: Option<Uuid>,
     pub tag_name: Option<String>,
     pub tag_ambition_name: Option<String>,
@@ -168,7 +167,6 @@ impl DiaryQuery for DiaryAdapter<'_> {
 pub struct CreateDiaryParams {
     pub text: Option<String>,
     pub date: NaiveDate,
-    pub score: Option<i16>,
     pub user_id: Uuid,
 }
 
@@ -176,7 +174,6 @@ pub struct CreateDiaryParams {
 pub enum DiaryUpdateKey {
     Text,
     Date,
-    Score,
     TagIds, // FIXME: remove this key after removing from frontend
 }
 
@@ -184,7 +181,6 @@ pub enum DiaryUpdateKey {
 pub struct UpdateDiaryParams {
     pub text: Option<String>,
     pub date: NaiveDate,
-    pub score: Option<i16>,
     pub update_keys: Vec<DiaryUpdateKey>,
 }
 
@@ -215,7 +211,6 @@ impl DiaryMutation for DiaryAdapter<'_> {
             user_id: Set(params.user_id),
             text: Set(params.text),
             date: Set(params.date),
-            score: Set(params.score),
         }
         .insert(self.db)
         .await
@@ -237,9 +232,6 @@ impl DiaryMutation for DiaryAdapter<'_> {
         }
         if params.update_keys.contains(&DiaryUpdateKey::Date) {
             diary.date = Set(params.date);
-        }
-        if params.update_keys.contains(&DiaryUpdateKey::Score) {
-            diary.score = Set(params.score);
         }
         diary.update(self.db).await.map_err(|e| match &e {
             DbErr::Query(SqlxError(Database(err))) => match err.constraint() {

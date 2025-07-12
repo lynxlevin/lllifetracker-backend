@@ -12,7 +12,6 @@ pub struct DiaryVisible {
     pub id: uuid::Uuid,
     pub text: Option<String>,
     pub date: chrono::NaiveDate,
-    pub score: Option<i16>,
 }
 
 impl From<diary::Model> for DiaryVisible {
@@ -21,7 +20,6 @@ impl From<diary::Model> for DiaryVisible {
             id: item.id,
             text: item.text,
             date: item.date,
-            score: item.score,
         }
     }
 }
@@ -31,7 +29,6 @@ pub struct DiaryWithTagQueryResult {
     pub id: uuid::Uuid,
     pub text: Option<String>,
     pub date: chrono::NaiveDate,
-    pub score: Option<i16>,
     pub tag_id: Option<uuid::Uuid>,
     pub tag_name: Option<String>,
     pub tag_ambition_name: Option<String>,
@@ -45,7 +42,6 @@ pub struct DiaryVisibleWithTags {
     pub id: uuid::Uuid,
     pub text: Option<String>,
     pub date: chrono::NaiveDate,
-    pub score: Option<i16>,
     pub tags: Vec<TagVisible>,
 }
 
@@ -59,7 +55,6 @@ impl DiaryVisibleWithTags {
 pub struct DiaryCreateRequest {
     pub text: Option<String>,
     pub date: chrono::NaiveDate,
-    pub score: Option<i16>,
     pub tag_ids: Vec<uuid::Uuid>,
 }
 
@@ -67,7 +62,6 @@ pub struct DiaryCreateRequest {
 pub struct DiaryUpdateRequest {
     pub text: Option<String>,
     pub date: chrono::NaiveDate,
-    pub score: Option<i16>,
     pub tag_ids: Vec<uuid::Uuid>,
     pub update_keys: Vec<DiaryUpdateKey>,
 }

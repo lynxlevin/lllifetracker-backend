@@ -8,7 +8,6 @@ pub fn diary(user_id: Uuid) -> diary::ActiveModel {
         id: Set(uuid::Uuid::now_v7()),
         text: Set(Some("diary".to_string())),
         date: Set(Utc::now().date_naive()),
-        score: Set(Some(4)),
         user_id: Set(user_id),
     }
 }

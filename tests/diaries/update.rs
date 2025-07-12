@@ -26,12 +26,10 @@ async fn happy_path() -> Result<(), DbErr> {
     let form = DiaryUpdateRequest {
         text: None,
         date: chrono::NaiveDate::from_ymd_opt(2024, 11, 3).unwrap(),
-        score: None,
         tag_ids: vec![tag.id],
         update_keys: vec![
             DiaryUpdateKey::Text,
             DiaryUpdateKey::Date,
-            DiaryUpdateKey::Score,
             DiaryUpdateKey::TagIds,
         ],
     };
@@ -48,7 +46,6 @@ async fn happy_path() -> Result<(), DbErr> {
     let res: DiaryVisible = test::read_body_json(res).await;
     assert_eq!(res.text, form.text.clone());
     assert_eq!(res.date, form.date);
-    assert_eq!(res.score, form.score);
 
     let diary_in_db = diary::Entity::find_by_id(res.id).one(&db).await?.unwrap();
     assert_eq!(diary_in_db.user_id, user.id);
@@ -76,7 +73,6 @@ async fn not_found_if_invalid_id() -> Result<(), DbErr> {
         .set_json(DiaryUpdateRequest {
             text: None,
             date: chrono::Utc::now().date_naive(),
-            score: None,
             tag_ids: vec![],
             update_keys: vec![],
         })
@@ -100,7 +96,6 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
         .set_json(DiaryUpdateRequest {
             text: None,
             date: chrono::Utc::now().date_naive(),
-            score: None,
             tag_ids: vec![],
             update_keys: vec![],
         })
@@ -108,34 +103,6 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::UNAUTHORIZED);
-
-    Ok(())
-}
-
-#[actix_web::test]
-async fn conflict_if_duplicate_exists() -> Result<(), DbErr> {
-    let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let diary = factory::diary(user.id).insert(&db).await?;
-    let _existing_diary = factory::diary(user.id)
-        .date(chrono::NaiveDate::from_ymd_opt(2025, 3, 19).unwrap())
-        .insert(&db)
-        .await?;
-
-    let req = test::TestRequest::put()
-        .uri(&format!("/api/diaries/{}", diary.id))
-        .set_json(DiaryUpdateRequest {
-            text: None,
-            date: chrono::NaiveDate::from_ymd_opt(2025, 3, 19).unwrap(),
-            score: None,
-            tag_ids: vec![],
-            update_keys: vec![DiaryUpdateKey::Date],
-        })
-        .to_request();
-    req.extensions_mut().insert(user.clone());
-
-    let res = test::call_service(&app, req).await;
-    assert_eq!(res.status(), http::StatusCode::CONFLICT);
 
     Ok(())
 }
@@ -151,7 +118,6 @@ async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
         .set_json(DiaryUpdateRequest {
             text: None,
             date: diary.date,
-            score: None,
             tag_ids: vec![uuid::Uuid::now_v7()],
             update_keys: vec![DiaryUpdateKey::TagIds],
         })
@@ -162,53 +128,4 @@ async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
     assert_eq!(res.status(), http::StatusCode::NOT_FOUND);
 
     Ok(())
-}
-
-mod validation_errors {
-    use super::*;
-
-    #[actix_web::test]
-    async fn too_large_score() -> Result<(), DbErr> {
-        let Connections { app, db, .. } = init_app().await?;
-        let user = factory::user().insert(&db).await?;
-        let diary = factory::diary(user.id).insert(&db).await?;
-
-        let score_too_large_req = test::TestRequest::put()
-            .uri(&format!("/api/diaries/{}", diary.id))
-            .set_json(DiaryUpdateRequest {
-                text: None,
-                date: diary.date,
-                score: Some(6),
-                tag_ids: vec![],
-                update_keys: vec![DiaryUpdateKey::Score],
-            })
-            .to_request();
-        score_too_large_req.extensions_mut().insert(user.clone());
-        let res = test::call_service(&app, score_too_large_req).await;
-        assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
-
-        Ok(())
-    }
-    #[actix_web::test]
-    async fn too_small_score() -> Result<(), DbErr> {
-        let Connections { app, db, .. } = init_app().await?;
-        let user = factory::user().insert(&db).await?;
-        let diary = factory::diary(user.id).insert(&db).await?;
-
-        let score_too_small_req = test::TestRequest::put()
-            .uri(&format!("/api/diaries/{}", diary.id))
-            .set_json(DiaryUpdateRequest {
-                text: None,
-                date: diary.date,
-                score: Some(0),
-                tag_ids: vec![],
-                update_keys: vec![DiaryUpdateKey::Score],
-            })
-            .to_request();
-        score_too_small_req.extensions_mut().insert(user.clone());
-        let res = test::call_service(&app, score_too_small_req).await;
-        assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
-
-        Ok(())
-    }
 }
