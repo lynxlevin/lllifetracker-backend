@@ -13,7 +13,7 @@ use entities::desired_state_category;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let category = factory::desired_state_category(user.id).insert(&db).await?;
 
@@ -46,37 +46,8 @@ async fn happy_path() -> Result<(), DbErr> {
 }
 
 #[actix_web::test]
-async fn not_found_cases() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let other_user = factory::user().insert(&db).await?;
-    let other_user_category = factory::desired_state_category(other_user.id)
-        .insert(&db)
-        .await?;
-
-    for (category_id, case) in vec![
-        (other_user_category.id, "other_user_category.id"),
-        (Uuid::now_v7(), "non-existent-id"),
-    ] {
-        dbg!(case);
-        let req = test::TestRequest::put()
-            .uri(&format!("/api/desired_state_categories/{}", category_id))
-            .set_json(DesiredStateCategoryUpdateRequest {
-                name: String::default(),
-            })
-            .to_request();
-        req.extensions_mut().insert(user.clone());
-
-        let res = test::call_service(&app, req).await;
-        assert_eq!(res.status(), http::StatusCode::NOT_FOUND);
-    }
-
-    Ok(())
-}
-
-#[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let Connections { app, ..} = init_app().await?;
+    let Connections { app, .. } = init_app().await?;
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/desired_state_categories/{}", Uuid::now_v7()))
@@ -89,4 +60,52 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     assert_eq!(res.status(), http::StatusCode::UNAUTHORIZED);
 
     Ok(())
+}
+
+mod not_found {
+    use super::*;
+
+    #[actix_web::test]
+    async fn other_user_category() -> Result<(), DbErr> {
+        let Connections { app, db, .. } = init_app().await?;
+        let user = factory::user().insert(&db).await?;
+        let other_user = factory::user().insert(&db).await?;
+        let other_user_category = factory::desired_state_category(other_user.id)
+            .insert(&db)
+            .await?;
+
+        let req = test::TestRequest::put()
+            .uri(&format!(
+                "/api/desired_state_categories/{}",
+                other_user_category.id
+            ))
+            .set_json(DesiredStateCategoryUpdateRequest {
+                name: String::default(),
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::NOT_FOUND);
+
+        Ok(())
+    }
+    #[actix_web::test]
+    async fn non_existent_id() -> Result<(), DbErr> {
+        let Connections { app, db, .. } = init_app().await?;
+        let user = factory::user().insert(&db).await?;
+
+        let req = test::TestRequest::put()
+            .uri(&format!("/api/desired_state_categories/{}", Uuid::now_v7()))
+            .set_json(DesiredStateCategoryUpdateRequest {
+                name: String::default(),
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::NOT_FOUND);
+
+        Ok(())
+    }
 }
