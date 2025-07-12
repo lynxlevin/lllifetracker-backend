@@ -29,7 +29,6 @@ pub struct DiaryWithTagQueryResult {
     pub id: uuid::Uuid,
     pub text: Option<String>,
     pub date: chrono::NaiveDate,
-    pub score: Option<i16>,
     pub tag_id: Option<uuid::Uuid>,
     pub tag_name: Option<String>,
     pub tag_ambition_name: Option<String>,
@@ -56,7 +55,6 @@ impl DiaryVisibleWithTags {
 pub struct DiaryCreateRequest {
     pub text: Option<String>,
     pub date: chrono::NaiveDate,
-    pub score: Option<i16>,
     pub tag_ids: Vec<uuid::Uuid>,
 }
 
@@ -64,7 +62,6 @@ pub struct DiaryCreateRequest {
 pub struct DiaryUpdateRequest {
     pub text: Option<String>,
     pub date: chrono::NaiveDate,
-    pub score: Option<i16>,
     pub tag_ids: Vec<uuid::Uuid>,
     pub update_keys: Vec<DiaryUpdateKey>,
 }

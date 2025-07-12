@@ -19,8 +19,6 @@ pub async fn update_diary<'a>(
     diary_id: Uuid,
     diary_adapter: DiaryAdapter<'a>,
 ) -> Result<DiaryVisible, UseCaseError> {
-    _validate_request_body(&params).map_err(|e| UseCaseError::BadRequest(e))?;
-
     let (diary, linked_tags) = diary_adapter
         .clone()
         .filter_eq_user(&user)
@@ -38,7 +36,6 @@ pub async fn update_diary<'a>(
             UpdateDiaryParams {
                 text: params.text.clone(),
                 date: params.date,
-                score: params.score,
                 update_keys: params.update_keys.clone(),
             },
         )
@@ -69,13 +66,6 @@ pub async fn update_diary<'a>(
         };
     }
     Ok(DiaryVisible::from(diary))
-}
-
-fn _validate_request_body(params: &DiaryUpdateRequest) -> Result<(), String> {
-    if params.score.is_some_and(|score| score > 5 || score < 1) {
-        return Err("score should be within 1 to 5.".to_string());
-    }
-    Ok(())
 }
 
 async fn _update_tag_links(

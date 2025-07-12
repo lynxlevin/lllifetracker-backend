@@ -15,14 +15,11 @@ pub async fn create_diary<'a>(
     params: DiaryCreateRequest,
     diary_adapter: DiaryAdapter<'a>,
 ) -> Result<DiaryVisible, UseCaseError> {
-    _validate_request_body(&params).map_err(|e| UseCaseError::BadRequest(e))?;
-
     let diary = match diary_adapter
         .clone()
         .create(CreateDiaryParams {
             text: params.text.clone(),
             date: params.date,
-            score: params.score,
             user_id: user.id,
         })
         .await
@@ -51,11 +48,4 @@ pub async fn create_diary<'a>(
             _ => return Err(UseCaseError::InternalServerError(format!("{:?}", e))),
         },
     }
-}
-
-fn _validate_request_body(params: &DiaryCreateRequest) -> Result<(), String> {
-    if params.score.is_some_and(|score| score > 5 || score < 1) {
-        return Err("score should be within 1 to 5.".to_string());
-    }
-    Ok(())
 }

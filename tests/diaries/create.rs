@@ -31,13 +31,11 @@ async fn happy_path() -> Result<(), DbErr> {
 
     let diary_text = Some("This is a new diary for testing create method.".to_string());
     let today = chrono::Utc::now().date_naive();
-    let diary_score = Some(2);
     let req = test::TestRequest::post()
         .uri("/api/diaries")
         .set_json(DiaryCreateRequest {
             text: diary_text.clone(),
             date: today,
-            score: diary_score,
             tag_ids: vec![tag_0.id, tag_1.id],
         })
         .to_request();
@@ -76,7 +74,6 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
         .set_json(DiaryCreateRequest {
             text: None,
             date: chrono::Utc::now().date_naive(),
-            score: None,
             tag_ids: vec![],
         })
         .to_request();
@@ -98,7 +95,6 @@ async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
         .set_json(DiaryCreateRequest {
             text: None,
             date: today,
-            score: None,
             tag_ids: vec![uuid::Uuid::now_v7()],
         })
         .to_request();
@@ -107,52 +103,4 @@ async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
     assert_eq!(res.status(), http::StatusCode::NOT_FOUND);
 
     Ok(())
-}
-
-mod validation_errors {
-    use super::*;
-
-    #[actix_web::test]
-    async fn too_large_score() -> Result<(), DbErr> {
-        let Connections { app, db, .. } = init_app().await?;
-        let user = factory::user().insert(&db).await?;
-        let today = chrono::Utc::now().date_naive();
-
-        let score_too_large_req = test::TestRequest::post()
-            .uri("/api/diaries")
-            .set_json(DiaryCreateRequest {
-                text: None,
-                date: today,
-                score: Some(6),
-                tag_ids: vec![],
-            })
-            .to_request();
-        score_too_large_req.extensions_mut().insert(user.clone());
-        let res = test::call_service(&app, score_too_large_req).await;
-        assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
-
-        Ok(())
-    }
-
-    #[actix_web::test]
-    async fn too_small_score() -> Result<(), DbErr> {
-        let Connections { app, db, .. } = init_app().await?;
-        let user = factory::user().insert(&db).await?;
-        let today = chrono::Utc::now().date_naive();
-
-        let score_too_small_req = test::TestRequest::post()
-            .uri("/api/diaries")
-            .set_json(DiaryCreateRequest {
-                text: None,
-                date: today,
-                score: Some(0),
-                tag_ids: vec![],
-            })
-            .to_request();
-        score_too_small_req.extensions_mut().insert(user.clone());
-        let res = test::call_service(&app, score_too_small_req).await;
-        assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
-
-        Ok(())
-    }
 }
