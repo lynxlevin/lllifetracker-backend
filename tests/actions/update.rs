@@ -10,7 +10,7 @@ use entities::action;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let action = factory::action(user.id).insert(&db).await?;
 
@@ -55,7 +55,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let action = factory::action(user.id).insert(&db).await?;
 
@@ -75,71 +75,102 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     Ok(())
 }
 
-#[actix_web::test]
-async fn validation_errors() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let action = factory::action(user.id).insert(&db).await?;
+mod validation_errors {
+    use super::*;
 
-    let long_name = "#1234567".to_string();
-    let req = test::TestRequest::put()
-        .uri(&format!("/api/actions/{}", action.id))
-        .set_json(ActionUpdateRequest {
-            name: "action_after_update_route".to_string(),
-            description: None,
-            trackable: None,
-            color: Some(long_name),
-        })
-        .to_request();
-    req.extensions_mut().insert(user.clone());
+    #[actix_web::test]
+    async fn long_name() -> Result<(), DbErr> {
+        let Connections { app, db, .. } = init_app().await?;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
 
-    let res = test::call_service(&app, req).await;
-    assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
+        let long_name = "#1234567".to_string();
+        let req = test::TestRequest::put()
+            .uri(&format!("/api/actions/{}", action.id))
+            .set_json(ActionUpdateRequest {
+                name: "action_after_update_route".to_string(),
+                description: None,
+                trackable: None,
+                color: Some(long_name),
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
 
-    let short_name = "#12345".to_string();
-    let req = test::TestRequest::put()
-        .uri(&format!("/api/actions/{}", action.id))
-        .set_json(ActionUpdateRequest {
-            name: "action_after_update_route".to_string(),
-            description: None,
-            trackable: None,
-            color: Some(short_name),
-        })
-        .to_request();
-    req.extensions_mut().insert(user.clone());
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
 
-    let res = test::call_service(&app, req).await;
-    assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
+        Ok(())
+    }
 
-    let bad_format = "$ffffff".to_string();
-    let req = test::TestRequest::put()
-        .uri(&format!("/api/actions/{}", action.id))
-        .set_json(ActionUpdateRequest {
-            name: "action_after_update_route".to_string(),
-            description: None,
-            trackable: None,
-            color: Some(bad_format),
-        })
-        .to_request();
-    req.extensions_mut().insert(user.clone());
+    #[actix_web::test]
+    async fn short_name() -> Result<(), DbErr> {
+        let Connections { app, db, .. } = init_app().await?;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
 
-    let res = test::call_service(&app, req).await;
-    assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
+        let short_name = "#12345".to_string();
+        let req = test::TestRequest::put()
+            .uri(&format!("/api/actions/{}", action.id))
+            .set_json(ActionUpdateRequest {
+                name: "action_after_update_route".to_string(),
+                description: None,
+                trackable: None,
+                color: Some(short_name),
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
 
-    let bad_character = "#gggggg".to_string();
-    let req = test::TestRequest::put()
-        .uri(&format!("/api/actions/{}", action.id))
-        .set_json(ActionUpdateRequest {
-            name: "action_after_update_route".to_string(),
-            description: None,
-            trackable: None,
-            color: Some(bad_character),
-        })
-        .to_request();
-    req.extensions_mut().insert(user.clone());
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
 
-    let res = test::call_service(&app, req).await;
-    assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
+        Ok(())
+    }
 
-    Ok(())
+    #[actix_web::test]
+    async fn bad_format() -> Result<(), DbErr> {
+        let Connections { app, db, .. } = init_app().await?;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
+
+        let bad_format = "$ffffff".to_string();
+        let req = test::TestRequest::put()
+            .uri(&format!("/api/actions/{}", action.id))
+            .set_json(ActionUpdateRequest {
+                name: "action_after_update_route".to_string(),
+                description: None,
+                trackable: None,
+                color: Some(bad_format),
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn bad_character() -> Result<(), DbErr> {
+        let Connections { app, db, .. } = init_app().await?;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
+
+        let bad_character = "#gggggg".to_string();
+        let req = test::TestRequest::put()
+            .uri(&format!("/api/actions/{}", action.id))
+            .set_json(ActionUpdateRequest {
+                name: "action_after_update_route".to_string(),
+                description: None,
+                trackable: None,
+                color: Some(bad_character),
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
+
+        Ok(())
+    }
 }

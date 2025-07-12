@@ -18,7 +18,7 @@ enum QueryAs {
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let (_, tag_0) = factory::action(user.id)
         .name("action_0".to_string())
@@ -70,7 +70,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let Connections { app, ..} = init_app().await?;
+    let Connections { app, .. } = init_app().await?;
 
     let req = test::TestRequest::post()
         .uri("/api/diaries")
@@ -90,7 +90,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn conflict_if_duplicate_exists() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let _existing_diary = factory::diary(user.id)
         .date(chrono::NaiveDate::from_ymd_opt(2025, 3, 19).unwrap())
@@ -116,7 +116,7 @@ async fn conflict_if_duplicate_exists() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let today = chrono::Utc::now().date_naive();
 
@@ -136,37 +136,50 @@ async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
     Ok(())
 }
 
-#[actix_web::test]
-async fn validation_errors() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let today = chrono::Utc::now().date_naive();
+mod validation_errors {
+    use super::*;
 
-    let score_too_large_req = test::TestRequest::post()
-        .uri("/api/diaries")
-        .set_json(DiaryCreateRequest {
-            text: None,
-            date: today,
-            score: Some(6),
-            tag_ids: vec![],
-        })
-        .to_request();
-    score_too_large_req.extensions_mut().insert(user.clone());
-    let res = test::call_service(&app, score_too_large_req).await;
-    assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
+    #[actix_web::test]
+    async fn too_large_score() -> Result<(), DbErr> {
+        let Connections { app, db, .. } = init_app().await?;
+        let user = factory::user().insert(&db).await?;
+        let today = chrono::Utc::now().date_naive();
 
-    let score_too_small_req = test::TestRequest::post()
-        .uri("/api/diaries")
-        .set_json(DiaryCreateRequest {
-            text: None,
-            date: today,
-            score: Some(0),
-            tag_ids: vec![],
-        })
-        .to_request();
-    score_too_small_req.extensions_mut().insert(user.clone());
-    let res = test::call_service(&app, score_too_small_req).await;
-    assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
+        let score_too_large_req = test::TestRequest::post()
+            .uri("/api/diaries")
+            .set_json(DiaryCreateRequest {
+                text: None,
+                date: today,
+                score: Some(6),
+                tag_ids: vec![],
+            })
+            .to_request();
+        score_too_large_req.extensions_mut().insert(user.clone());
+        let res = test::call_service(&app, score_too_large_req).await;
+        assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
 
-    Ok(())
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn too_small_score() -> Result<(), DbErr> {
+        let Connections { app, db, .. } = init_app().await?;
+        let user = factory::user().insert(&db).await?;
+        let today = chrono::Utc::now().date_naive();
+
+        let score_too_small_req = test::TestRequest::post()
+            .uri("/api/diaries")
+            .set_json(DiaryCreateRequest {
+                text: None,
+                date: today,
+                score: Some(0),
+                tag_ids: vec![],
+            })
+            .to_request();
+        score_too_small_req.extensions_mut().insert(user.clone());
+        let res = test::call_service(&app, score_too_small_req).await;
+        assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
+
+        Ok(())
+    }
 }
