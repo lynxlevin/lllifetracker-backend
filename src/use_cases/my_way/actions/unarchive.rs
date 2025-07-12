@@ -1,14 +1,13 @@
-use chrono::{DateTime, FixedOffset};
 use uuid::Uuid;
 
-use crate::{my_way::actions::types::ActionVisible, UseCaseError};
+use crate::{
+    my_way::actions::types::ActionVisible,
+    users::first_track_at_synchronizer::FirstTrackAtSynchronizer, UseCaseError,
+};
 use db_adapters::{
     action_adapter::{ActionAdapter, ActionFilter, ActionMutation, ActionQuery},
-    action_track_adapter::{
-        ActionTrackAdapter, ActionTrackFilter, ActionTrackLimit, ActionTrackOrder, ActionTrackQuery,
-    },
-    user_adapter::{UserAdapter, UserMutation},
-    Order::Asc,
+    action_track_adapter::ActionTrackAdapter,
+    user_adapter::UserAdapter,
 };
 use entities::user as user_entity;
 
@@ -34,36 +33,9 @@ pub async fn unarchive_action<'a>(
         .await
         .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
 
-    if user.first_track_at.is_some() {
-        let action_tracks = action_track_adapter
-            .filter_eq_user(&user)
-            .filter_eq_archived_action(false)
-            .order_by_started_at(Asc)
-            .limit(1)
-            .get_all()
-            .await
-            .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
+    FirstTrackAtSynchronizer::init(action_track_adapter, user_adapter, user)
+        .update_user_first_track_at(None, None)
+        .await?;
 
-        if action_tracks.len() > 0 {
-            if user.first_track_at.unwrap() != action_tracks[0].started_at {
-                _update_first_track_at(user_adapter, user, Some(action_tracks[0].started_at))
-                    .await?;
-            }
-        } else {
-            _update_first_track_at(user_adapter, user, None).await?;
-        };
-    }
     Ok(ActionVisible::from(action))
-}
-
-async fn _update_first_track_at<'a>(
-    user_adapter: UserAdapter<'a>,
-    user: user_entity::Model,
-    first_track_at: Option<DateTime<FixedOffset>>,
-) -> Result<(), UseCaseError> {
-    user_adapter
-        .update_first_track_at(user, first_track_at)
-        .await
-        .map(|_| ())
-        .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
 }

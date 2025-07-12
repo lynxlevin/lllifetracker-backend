@@ -3,12 +3,13 @@ use sea_orm::DbErr;
 
 use crate::{
     my_way::action_tracks::types::{ActionTrackCreateRequest, ActionTrackVisible},
+    users::first_track_at_synchronizer::FirstTrackAtSynchronizer,
     UseCaseError,
 };
 use db_adapters::{
     action_adapter::{ActionAdapter, ActionFilter, ActionQuery},
     action_track_adapter::{ActionTrackAdapter, ActionTrackMutation, CreateActionTrackParams},
-    user_adapter::{UserAdapter, UserMutation},
+    user_adapter::UserAdapter,
     CustomDbErr,
 };
 use entities::{sea_orm_active_enums::ActionTrackType, user as user_entity};
@@ -46,6 +47,7 @@ pub async fn create_action_track<'a>(
         },
     };
     let action_track = action_track_adapter
+        .clone()
         .create(params)
         .await
         .map_err(|e| match &e {
@@ -58,15 +60,9 @@ pub async fn create_action_track<'a>(
             _ => UseCaseError::InternalServerError(format!("{:?}", e)),
         })?;
 
-    if user
-        .first_track_at
-        .is_none_or(|timestamp| timestamp > action_track.started_at)
-    {
-        user_adapter
-            .update_first_track_at(user, Some(action_track.started_at))
-            .await
-            .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
-    }
+    FirstTrackAtSynchronizer::init(action_track_adapter, user_adapter, user)
+        .update_user_first_track_at(None, Some(action_track.clone()))
+        .await?;
 
     Ok(ActionTrackVisible::from(action_track))
 }

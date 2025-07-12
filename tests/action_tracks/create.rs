@@ -12,12 +12,7 @@ use entities::{sea_orm_active_enums::*, *};
 #[actix_web::test]
 async fn happy_path_time_span_type() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let original_first_track_at =
-        Some(DateTime::parse_from_rfc3339("2025-01-01T00:00:00Z").unwrap());
-    let user = factory::user()
-        .first_track_at(original_first_track_at)
-        .insert(&db)
-        .await?;
+    let user = factory::user().insert(&db).await?;
     let action = factory::action(user.id).insert(&db).await?;
 
     let started_at: chrono::DateTime<chrono::FixedOffset> = Utc::now().into();
@@ -47,21 +42,13 @@ async fn happy_path_time_span_type() -> Result<(), DbErr> {
     assert_eq!(action_track_in_db.user_id, user.id);
     assert_eq!(ActionTrackVisible::from(action_track_in_db), res);
 
-    let user_in_db = user::Entity::find_by_id(user.id).one(&db).await?.unwrap();
-    assert_eq!(user_in_db.first_track_at, original_first_track_at);
-
     Ok(())
 }
 
 #[actix_web::test]
 async fn happy_path_count_type() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let original_first_track_at =
-        Some(DateTime::parse_from_rfc3339("2025-01-01T00:00:00Z").unwrap());
-    let user = factory::user()
-        .first_track_at(original_first_track_at)
-        .insert(&db)
-        .await?;
+    let user = factory::user().insert(&db).await?;
     let action = factory::action(user.id)
         .track_type(ActionTrackType::Count)
         .insert(&db)
@@ -93,40 +80,6 @@ async fn happy_path_count_type() -> Result<(), DbErr> {
         .unwrap();
     assert_eq!(action_track_in_db.user_id, user.id);
     assert_eq!(ActionTrackVisible::from(action_track_in_db), res);
-
-    let user_in_db = user::Entity::find_by_id(user.id).one(&db).await?.unwrap();
-    assert_eq!(user_in_db.first_track_at, original_first_track_at);
-
-    Ok(())
-}
-
-#[actix_web::test]
-async fn happy_path_update_user_first_track_at() -> Result<(), DbErr> {
-    let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user()
-        .first_track_at(Some(
-            DateTime::parse_from_rfc3339("2025-07-08T00:00:00Z").unwrap(),
-        ))
-        .insert(&db)
-        .await?;
-    let action = factory::action(user.id).insert(&db).await?;
-
-    let started_at = DateTime::parse_from_rfc3339("2025-01-01T00:00:00Z").unwrap();
-
-    let req = test::TestRequest::post()
-        .uri("/api/action_tracks")
-        .set_json(ActionTrackCreateRequest {
-            started_at,
-            action_id: action.id,
-        })
-        .to_request();
-    req.extensions_mut().insert(user.clone());
-
-    let res = test::call_service(&app, req).await;
-    assert_eq!(res.status(), http::StatusCode::CREATED);
-
-    let user_in_db = user::Entity::find_by_id(user.id).one(&db).await?.unwrap();
-    assert_eq!(user_in_db.first_track_at, Some(started_at.trunc_subsecs(0)));
 
     Ok(())
 }
@@ -172,4 +125,98 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     assert_eq!(res.status(), http::StatusCode::UNAUTHORIZED);
 
     Ok(())
+}
+
+#[cfg(test)]
+mod user_first_track_at_update {
+    use super::*;
+
+    #[actix_web::test]
+    async fn creating_for_user_without_first_track_at_updates_first_track_at() -> Result<(), DbErr>
+    {
+        let Connections { app, db, .. } = init_app().await?;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
+
+        let started_at: chrono::DateTime<chrono::FixedOffset> = Utc::now().into();
+
+        let req = test::TestRequest::post()
+            .uri("/api/action_tracks")
+            .set_json(ActionTrackCreateRequest {
+                started_at,
+                action_id: action.id,
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::CREATED);
+
+        let user_in_db = user::Entity::find_by_id(user.id).one(&db).await?.unwrap();
+        assert_eq!(user_in_db.first_track_at, Some(started_at.trunc_subsecs(0)));
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn newer_started_at_than_first_track_at_makes_no_change() -> Result<(), DbErr> {
+        let Connections { app, db, .. } = init_app().await?;
+        let original_first_track_at =
+            Some(DateTime::parse_from_rfc3339("2025-01-01T00:00:00Z").unwrap());
+        let user = factory::user()
+            .first_track_at(original_first_track_at)
+            .insert(&db)
+            .await?;
+        let action = factory::action(user.id).insert(&db).await?;
+
+        let started_at: chrono::DateTime<chrono::FixedOffset> = Utc::now().into();
+
+        let req = test::TestRequest::post()
+            .uri("/api/action_tracks")
+            .set_json(ActionTrackCreateRequest {
+                started_at,
+                action_id: action.id,
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::CREATED);
+
+        let user_in_db = user::Entity::find_by_id(user.id).one(&db).await?.unwrap();
+        assert_eq!(user_in_db.first_track_at, original_first_track_at);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn older_started_at_than_first_track_at_updates_first_track_at() -> Result<(), DbErr> {
+        let Connections { app, db, .. } = init_app().await?;
+        let user = factory::user()
+            .first_track_at(Some(
+                DateTime::parse_from_rfc3339("2025-07-08T00:00:00Z").unwrap(),
+            ))
+            .insert(&db)
+            .await?;
+        let action = factory::action(user.id).insert(&db).await?;
+
+        let started_at = DateTime::parse_from_rfc3339("2025-01-01T00:00:00Z").unwrap();
+
+        let req = test::TestRequest::post()
+            .uri("/api/action_tracks")
+            .set_json(ActionTrackCreateRequest {
+                started_at,
+                action_id: action.id,
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::CREATED);
+
+        let user_in_db = user::Entity::find_by_id(user.id).one(&db).await?.unwrap();
+        assert_eq!(user_in_db.first_track_at, Some(started_at.trunc_subsecs(0)));
+
+        Ok(())
+    }
 }

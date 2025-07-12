@@ -49,45 +49,49 @@ async fn block_too_many_attempts_on_incorrect_password() -> Result<(), DbErr> {
     Ok(())
 }
 
-#[actix_web::test]
-async fn not_found_on_incorrect_email() -> Result<(), DbErr> {
-    let Connections { app, .. } = init_app().await?;
-    let password = "password";
+mod not_found {
+    use super::*;
 
-    let req = test::TestRequest::post()
-        .uri("/api/users/login")
-        .set_json(LoginRequest {
-            email: format!("{}@test.com", Uuid::now_v7()),
-            password: password.to_string(),
-        })
-        .to_request();
+    #[actix_web::test]
+    async fn incorrect_email() -> Result<(), DbErr> {
+        let Connections { app, .. } = init_app().await?;
+        let password = "password";
 
-    let res = test::call_service(&app, req).await;
-    assert_eq!(res.status(), http::StatusCode::NOT_FOUND);
+        let req = test::TestRequest::post()
+            .uri("/api/users/login")
+            .set_json(LoginRequest {
+                email: format!("{}@test.com", Uuid::now_v7()),
+                password: password.to_string(),
+            })
+            .to_request();
 
-    Ok(())
-}
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::NOT_FOUND);
 
-#[actix_web::test]
-async fn not_found_on_incorrect_password() -> Result<(), DbErr> {
-    let Connections { app, db, .. } = init_app().await?;
-    let incorrect_password = "passworda";
-    let hashed_password = "$argon2id$v=19$m=19456,t=2,p=1$r07vWFCaKrbNPrSgUrG/+Q$/2lBaeRWeox6ROMu6qAwOYmttdGXA3o4Uw2YHC/fvfY";
-    let user = factory::user()
-        .password(hashed_password)
-        .insert(&db)
-        .await?;
+        Ok(())
+    }
 
-    let req = test::TestRequest::post()
-        .uri("/api/users/login")
-        .set_json(LoginRequest {
-            email: user.email.to_string(),
-            password: incorrect_password.to_string(),
-        })
-        .to_request();
+    #[actix_web::test]
+    async fn incorrect_password() -> Result<(), DbErr> {
+        let Connections { app, db, .. } = init_app().await?;
+        let incorrect_password = "passworda";
+        let hashed_password = "$argon2id$v=19$m=19456,t=2,p=1$r07vWFCaKrbNPrSgUrG/+Q$/2lBaeRWeox6ROMu6qAwOYmttdGXA3o4Uw2YHC/fvfY";
+        let user = factory::user()
+            .password(hashed_password)
+            .insert(&db)
+            .await?;
 
-    let res = test::call_service(&app, req).await;
-    assert_eq!(res.status(), http::StatusCode::NOT_FOUND);
+        let req = test::TestRequest::post()
+            .uri("/api/users/login")
+            .set_json(LoginRequest {
+                email: user.email.to_string(),
+                password: incorrect_password.to_string(),
+            })
+            .to_request();
 
-    Ok(())
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::NOT_FOUND);
+
+        Ok(())
+    }
 }
