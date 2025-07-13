@@ -15,9 +15,7 @@ pub async fn update_action<'a>(
     action_id: Uuid,
     action_adapter: ActionAdapter<'a>,
 ) -> Result<ActionVisible, UseCaseError> {
-    if let Err(message) = _validate_params(&params) {
-        return Err(UseCaseError::BadRequest(message));
-    }
+    let params = _parse_params(params)?;
 
     let action = action_adapter
         .clone()
@@ -44,20 +42,26 @@ pub async fn update_action<'a>(
         .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
 }
 
-fn _validate_params(params: &ActionUpdateRequest) -> Result<(), String> {
+fn _parse_params(params: ActionUpdateRequest) -> Result<ActionUpdateRequest, UseCaseError> {
     if let Some(color) = &params.color {
         if color.len() != 7 {
-            return Err("color must be 7 characters long.".to_string());
+            return Err(UseCaseError::BadRequest(
+                "color must be 7 characters long.".to_string(),
+            ));
         }
         if !color.starts_with('#') {
-            return Err("color must be hex color code.".to_string());
+            return Err(UseCaseError::BadRequest(
+                "color must be hex color code.".to_string(),
+            ));
         }
         for c in color.split_at(1).1.chars() {
             if !c.is_ascii_hexdigit() {
-                return Err("color must be hex color code.".to_string());
+                return Err(UseCaseError::BadRequest(
+                    "color must be hex color code.".to_string(),
+                ));
             }
         }
     }
 
-    Ok(())
+    Ok(params)
 }
