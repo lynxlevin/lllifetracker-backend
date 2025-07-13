@@ -1,3 +1,6 @@
 [alias]
 tt = "test --no-fail-fast --all-targets --workspace"
 ttq = "test -q --no-fail-fast --all-targets --workspace"
+
+[target.x86_64-unknown-linux-musl]
+linker = "x86_64-linux-musl-gcc"
