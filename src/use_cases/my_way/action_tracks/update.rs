@@ -24,6 +24,8 @@ pub async fn update_action_track<'a>(
     action_track_adapter: ActionTrackAdapter<'a>,
     user_adapter: UserAdapter<'a>,
 ) -> Result<ActionTrackVisible, UseCaseError> {
+    let params = _parse_params(params)?;
+
     let action_track = action_track_adapter
         .clone()
         .filter_eq_user(&user)
@@ -69,4 +71,19 @@ pub async fn update_action_track<'a>(
         .await?;
 
     Ok(ActionTrackVisible::from(new_action_track))
+}
+
+fn _parse_params(
+    params: ActionTrackUpdateRequest,
+) -> Result<ActionTrackUpdateRequest, UseCaseError> {
+    if params
+        .ended_at
+        .is_some_and(|ended_at| ended_at < params.started_at)
+    {
+        return Err(UseCaseError::BadRequest(
+            "Ended_at must be later than started_at.".to_string(),
+        ));
+    }
+
+    Ok(params)
 }

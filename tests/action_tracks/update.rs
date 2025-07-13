@@ -295,3 +295,37 @@ mod user_first_track_at_update {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod validation_errors {
+    use chrono::Duration;
+
+    use super::*;
+
+    #[actix_web::test]
+    async fn ended_at_earlier_than_started_at() -> Result<(), DbErr> {
+        let Connections { app, db, .. } = init_app().await?;
+        let user = factory::user().insert(&db).await?;
+        let action = factory::action(user.id).insert(&db).await?;
+        let action_track = factory::action_track(user.id)
+            .action_id(action.id)
+            .insert(&db)
+            .await?;
+        let ended_at = action_track.started_at - Duration::seconds(1);
+
+        let req = test::TestRequest::put()
+            .uri(&format!("/api/action_tracks/{}", action_track.id))
+            .set_json(ActionTrackUpdateRequest {
+                action_id: action.id,
+                started_at: action_track.started_at,
+                ended_at: Some(ended_at),
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
+
+        Ok(())
+    }
+}

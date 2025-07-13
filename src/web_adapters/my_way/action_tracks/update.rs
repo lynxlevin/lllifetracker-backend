@@ -5,7 +5,7 @@ use actix_web::{
 };
 use sea_orm::DbConn;
 
-use crate::utils::{response_401, response_404, response_409, response_500};
+use crate::utils::{response_400, response_401, response_404, response_409, response_500};
 use db_adapters::{action_track_adapter::ActionTrackAdapter, user_adapter::UserAdapter};
 use entities::user as user_entity;
 use use_cases::{
@@ -39,6 +39,7 @@ pub async fn update_action_track_endpoint(
             {
                 Ok(res) => HttpResponse::Ok().json(res),
                 Err(e) => match &e {
+                    UseCaseError::BadRequest(message) => response_400(message),
                     UseCaseError::NotFound(message) => response_404(message),
                     UseCaseError::Conflict(message) => response_409(message),
                     _ => response_500(e),
