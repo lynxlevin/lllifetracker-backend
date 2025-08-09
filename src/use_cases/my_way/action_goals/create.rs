@@ -2,11 +2,15 @@ use crate::{
     my_way::action_goals::types::{ActionGoalCreateRequest, ActionGoalVisible},
     UseCaseError,
 };
+use chrono::Utc;
 use db_adapters::{
     action_adapter::{ActionAdapter, ActionFilter, ActionQuery},
     action_goal_adapter::{ActionGoalAdapter, ActionGoalMutation, CreateActionGoalParams},
 };
-use entities::{action, sea_orm_active_enums::ActionTrackType, user as user_entity};
+use entities::{
+    action, custom_methods::user::UserTimezoneTrait, sea_orm_active_enums::ActionTrackType,
+    user as user_entity,
+};
 
 pub async fn create_action_goal<'a>(
     user: user_entity::Model,
@@ -52,8 +56,10 @@ fn _parse_params(
         }
     }
 
+    let user_today = user.to_user_timezone(Utc::now()).date_naive();
+
     Ok(CreateActionGoalParams {
-        from_date: params.from_date,
+        from_date: user_today,
         duration_seconds: params.duration_seconds,
         count: params.count,
         action_id: params.action_id,

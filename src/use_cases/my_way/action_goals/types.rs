@@ -36,7 +36,6 @@ impl From<action_goal::Model> for ActionGoalVisible {
 #[derive(Deserialize, Debug, Serialize)]
 pub struct ActionGoalCreateRequest {
     pub action_id: Uuid,
-    pub from_date: NaiveDate,
     pub duration_seconds: Option<i32>,
     pub count: Option<i32>,
 }
