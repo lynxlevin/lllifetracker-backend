@@ -2,10 +2,13 @@ use crate::{
     my_way::action_goals::types::{ActionGoalCreateRequest, ActionGoalVisible},
     UseCaseError,
 };
-use chrono::Utc;
+use chrono::{Duration, Utc};
 use db_adapters::{
     action_adapter::{ActionAdapter, ActionFilter, ActionQuery},
-    action_goal_adapter::{ActionGoalAdapter, ActionGoalMutation, CreateActionGoalParams},
+    action_goal_adapter::{
+        ActionGoalAdapter, ActionGoalFilter, ActionGoalMutation, ActionGoalQuery,
+        CreateActionGoalParams,
+    },
 };
 use entities::{
     action, custom_methods::user::UserTimezoneTrait, sea_orm_active_enums::ActionTrackType,
@@ -24,7 +27,27 @@ pub async fn create_action_goal<'a>(
         .await
         .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
 
-    let parsed_params = _parse_params(params, action, &user)?;
+    let (parsed_params, action) = _parse_params(params, action, &user)?;
+
+    let active_action_goal = action_goal_adapter
+        .clone()
+        .filter_eq_user(&user)
+        .filter_eq_action(&action)
+        .filter_to_date_null()
+        .get_one()
+        .await
+        .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
+
+    if active_action_goal.is_some() {
+        action_goal_adapter
+            .clone()
+            .update_to_date(
+                active_action_goal.unwrap(),
+                Some(parsed_params.from_date - Duration::days(1)),
+            )
+            .await
+            .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
+    }
 
     action_goal_adapter
         .create(parsed_params)
@@ -37,7 +60,7 @@ fn _parse_params(
     params: ActionGoalCreateRequest,
     action: Option<action::Model>,
     user: &user_entity::Model,
-) -> Result<CreateActionGoalParams, UseCaseError> {
+) -> Result<(CreateActionGoalParams, action::Model), UseCaseError> {
     let action = action.ok_or(UseCaseError::NotFound("This action not found.".to_string()))?;
     match action.track_type {
         ActionTrackType::TimeSpan => {
@@ -58,11 +81,14 @@ fn _parse_params(
 
     let user_today = user.to_user_timezone(Utc::now()).date_naive();
 
-    Ok(CreateActionGoalParams {
-        from_date: user_today,
-        duration_seconds: params.duration_seconds,
-        count: params.count,
-        action_id: params.action_id,
-        user_id: user.id,
-    })
+    Ok((
+        CreateActionGoalParams {
+            from_date: user_today,
+            duration_seconds: params.duration_seconds,
+            count: params.count,
+            action_id: params.action_id,
+            user_id: user.id,
+        },
+        action,
+    ))
 }

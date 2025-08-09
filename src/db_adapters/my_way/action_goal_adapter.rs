@@ -1,6 +1,6 @@
 use std::future::Future;
 
-use chrono::{NaiveDate, Utc};
+use chrono::{DateTime, FixedOffset, NaiveDate, Utc};
 use sea_orm::{
     sea_query::NullOrdering::Last, ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait,
     IntoActiveModel, ModelTrait, Order, QueryFilter, QueryOrder, Select, Set, TransactionError,
@@ -8,7 +8,11 @@ use sea_orm::{
 };
 use uuid::Uuid;
 
-use entities::action_goal::{ActiveModel, Column, Entity, Model};
+use entities::{
+    action,
+    action_goal::{ActiveModel, Column, Entity, Model},
+    user,
+};
 
 #[derive(Clone)]
 pub struct ActionGoalAdapter<'a> {
@@ -25,28 +29,28 @@ impl<'a> ActionGoalAdapter<'a> {
     }
 }
 
-// pub trait ActionGoalFilter {
-//     fn filter_eq_user(self, user: &user::Model) -> Self;
-//     fn filter_eq_archived(self, archived: bool) -> Self;
-//     fn filter_in_ids(self, ids: Vec<Uuid>) -> Self;
-// }
+pub trait ActionGoalFilter {
+    fn filter_eq_user(self, user: &user::Model) -> Self;
+    fn filter_eq_action(self, action: &action::Model) -> Self;
+    fn filter_to_date_null(self) -> Self;
+}
 
-// impl ActionGoalFilter for ActionGoalAdapter<'_> {
-//     fn filter_eq_user(mut self, user: &user::Model) -> Self {
-//         self.query = self.query.filter(Column::UserId.eq(user.id));
-//         self
-//     }
+impl ActionGoalFilter for ActionGoalAdapter<'_> {
+    fn filter_eq_user(mut self, user: &user::Model) -> Self {
+        self.query = self.query.filter(Column::UserId.eq(user.id));
+        self
+    }
 
-//     fn filter_eq_archived(mut self, archived: bool) -> Self {
-//         self.query = self.query.filter(Column::Archived.eq(archived));
-//         self
-//     }
+    fn filter_eq_action(mut self, action: &action::Model) -> Self {
+        self.query = self.query.filter(Column::ActionId.eq(action.id));
+        self
+    }
 
-//     fn filter_in_ids(mut self, ids: Vec<Uuid>) -> Self {
-//         self.query = self.query.filter(Column::Id.is_in(ids));
-//         self
-//     }
-// }
+    fn filter_to_date_null(mut self) -> Self {
+        self.query = self.query.filter(Column::ToDate.is_null());
+        self
+    }
+}
 
 // pub trait ActionGoalOrder {
 //     fn order_by_ordering_nulls_last(self, order: Order) -> Self;
@@ -67,30 +71,25 @@ impl<'a> ActionGoalAdapter<'a> {
 //     }
 // }
 
-// pub trait ActionGoalQuery {
-//     fn get_all(self) -> impl Future<Output = Result<Vec<Model>, DbErr>>;
-//     fn get_all_with_goal(
-//         self,
-//     ) -> impl Future<Output = Result<Vec<(Model, Option<action_goal::Model>)>, DbErr>>;
-//     fn get_by_id(self, id: Uuid) -> impl Future<Output = Result<Option<Model>, DbErr>>;
-// }
+pub trait ActionGoalQuery {
+    // fn get_all(self) -> impl Future<Output = Result<Vec<Model>, DbErr>>;
+    // fn get_by_id(self, id: Uuid) -> impl Future<Output = Result<Option<Model>, DbErr>>;
+    fn get_one(self) -> impl Future<Output = Result<Option<Model>, DbErr>>;
+}
 
-// impl ActionGoalQuery for ActionGoalAdapter<'_> {
-//     async fn get_all(self) -> Result<Vec<Model>, DbErr> {
-//         self.query.all(self.db).await
-//     }
+impl ActionGoalQuery for ActionGoalAdapter<'_> {
+    // async fn get_all(self) -> Result<Vec<Model>, DbErr> {
+    //     self.query.all(self.db).await
+    // }
 
-//     async fn get_all_with_goal(self) -> Result<Vec<(Model, Option<action_goal::Model>)>, DbErr> {
-//         self.query
-//             .find_also_related(action_goal::Entity)
-//             .all(self.db)
-//             .await
-//     }
+    // async fn get_by_id(self, id: Uuid) -> Result<Option<Model>, DbErr> {
+    //     self.query.filter(Column::Id.eq(id)).one(self.db).await
+    // }
 
-//     async fn get_by_id(self, id: Uuid) -> Result<Option<Model>, DbErr> {
-//         self.query.filter(Column::Id.eq(id)).one(self.db).await
-//     }
-// }
+    async fn get_one(self) -> Result<Option<Model>, DbErr> {
+        self.query.one(self.db).await
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct CreateActionGoalParams {
@@ -116,6 +115,11 @@ pub trait ActionGoalMutation {
     //         action: Model,
     //         params: UpdateActionGoalParams,
     //     ) -> impl Future<Output = Result<Model, DbErr>>;
+    fn update_to_date(
+        self,
+        action_goal: Model,
+        to_date: Option<NaiveDate>,
+    ) -> impl Future<Output = Result<Model, DbErr>>;
     //     fn delete(self, action: Model) -> impl Future<Output = Result<(), DbErr>>;
 }
 
@@ -148,6 +152,16 @@ impl ActionGoalMutation for ActionGoalAdapter<'_> {
     //         action.updated_at = Set(Utc::now().into());
     //         action.update(self.db).await
     //     }
+
+    async fn update_to_date(
+        self,
+        action_goal: Model,
+        to_date: Option<NaiveDate>,
+    ) -> Result<Model, DbErr> {
+        let mut action_goal = action_goal.into_active_model();
+        action_goal.to_date = Set(to_date);
+        action_goal.update(self.db).await
+    }
 
     //     async fn delete(self, action: Model) -> Result<(), DbErr> {
     //         action.delete(self.db).await.map(|_| ())
