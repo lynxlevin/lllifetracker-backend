@@ -1,5 +1,5 @@
 use crate::{
-    my_way::action_goals::types::{ActionGoalCreateRequest, ActionGoalVisible},
+    my_way::action_goals::types::{ActionGoalSetNewRequest, ActionGoalVisible},
     UseCaseError,
 };
 use chrono::{Duration, Utc};
@@ -15,9 +15,9 @@ use entities::{
     user as user_entity,
 };
 
-pub async fn create_action_goal<'a>(
+pub async fn set_new_action_goal<'a>(
     user: user_entity::Model,
-    params: ActionGoalCreateRequest,
+    params: ActionGoalSetNewRequest,
     action_adapter: ActionAdapter<'a>,
     action_goal_adapter: ActionGoalAdapter<'a>,
 ) -> Result<ActionGoalVisible, UseCaseError> {
@@ -74,7 +74,7 @@ pub async fn create_action_goal<'a>(
 }
 
 fn _parse_params(
-    params: ActionGoalCreateRequest,
+    params: ActionGoalSetNewRequest,
     action: Option<action::Model>,
     user: &user_entity::Model,
 ) -> Result<(CreateActionGoalParams, action::Model), UseCaseError> {

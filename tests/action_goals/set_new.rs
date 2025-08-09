@@ -1,7 +1,7 @@
 use actix_web::{http, test, HttpMessage};
 use chrono::{DateTime, Duration, FixedOffset, Utc};
 use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
-use use_cases::my_way::action_goals::types::{ActionGoalCreateRequest, ActionGoalVisible};
+use use_cases::my_way::action_goals::types::{ActionGoalSetNewRequest, ActionGoalVisible};
 use uuid::Uuid;
 
 use crate::utils::Connections;
@@ -23,7 +23,7 @@ async fn happy_path_time_span() -> Result<(), DbErr> {
 
     let req = test::TestRequest::post()
         .uri("/api/action_goals")
-        .set_json(ActionGoalCreateRequest {
+        .set_json(ActionGoalSetNewRequest {
             action_id: action.id,
             duration_seconds,
             count: None,
@@ -65,7 +65,7 @@ async fn happy_path_count() -> Result<(), DbErr> {
 
     let req = test::TestRequest::post()
         .uri("/api/action_goals")
-        .set_json(ActionGoalCreateRequest {
+        .set_json(ActionGoalSetNewRequest {
             action_id: action.id,
             duration_seconds: None,
             count,
@@ -111,7 +111,7 @@ async fn invalidate_existing_action_goal() -> Result<(), DbErr> {
 
     let req = test::TestRequest::post()
         .uri("/api/action_goals")
-        .set_json(ActionGoalCreateRequest {
+        .set_json(ActionGoalSetNewRequest {
             action_id: action.id,
             duration_seconds: Some(3600),
             count: None,
@@ -152,7 +152,7 @@ async fn duplicate_from_date() -> Result<(), DbErr> {
 
     let req = test::TestRequest::post()
         .uri("/api/action_goals")
-        .set_json(ActionGoalCreateRequest {
+        .set_json(ActionGoalSetNewRequest {
             action_id: action.id,
             duration_seconds: Some(3600),
             count: None,
@@ -182,7 +182,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 
     let req = test::TestRequest::post()
         .uri("/api/action_goals")
-        .set_json(ActionGoalCreateRequest {
+        .set_json(ActionGoalSetNewRequest {
             action_id: Uuid::now_v7(),
             duration_seconds: None,
             count: None,
@@ -207,7 +207,7 @@ mod not_found {
 
         let req = test::TestRequest::post()
             .uri("/api/action_goals")
-            .set_json(ActionGoalCreateRequest {
+            .set_json(ActionGoalSetNewRequest {
                 action_id: other_action.id,
                 duration_seconds: None,
                 count: None,
@@ -233,7 +233,7 @@ mod bad_request {
 
         let req = test::TestRequest::post()
             .uri("/api/action_goals")
-            .set_json(ActionGoalCreateRequest {
+            .set_json(ActionGoalSetNewRequest {
                 action_id: action.id,
                 duration_seconds: None,
                 count: None,
@@ -255,7 +255,7 @@ mod bad_request {
 
         let req = test::TestRequest::post()
             .uri("/api/action_goals")
-            .set_json(ActionGoalCreateRequest {
+            .set_json(ActionGoalSetNewRequest {
                 action_id: action.id,
                 duration_seconds: None,
                 count: Some(5),
@@ -280,7 +280,7 @@ mod bad_request {
 
         let req = test::TestRequest::post()
             .uri("/api/action_goals")
-            .set_json(ActionGoalCreateRequest {
+            .set_json(ActionGoalSetNewRequest {
                 action_id: action.id,
                 duration_seconds: None,
                 count: None,
@@ -305,7 +305,7 @@ mod bad_request {
 
         let req = test::TestRequest::post()
             .uri("/api/action_goals")
-            .set_json(ActionGoalCreateRequest {
+            .set_json(ActionGoalSetNewRequest {
                 action_id: action.id,
                 duration_seconds: Some(3600),
                 count: None,

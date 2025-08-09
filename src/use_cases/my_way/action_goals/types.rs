@@ -34,7 +34,7 @@ impl From<action_goal::Model> for ActionGoalVisible {
 }
 
 #[derive(Deserialize, Debug, Serialize)]
-pub struct ActionGoalCreateRequest {
+pub struct ActionGoalSetNewRequest {
     pub action_id: Uuid,
     pub duration_seconds: Option<i32>,
     pub count: Option<i32>,
