@@ -33,6 +33,11 @@ impl From<action_goal::Model> for ActionGoalVisible {
     }
 }
 
+#[derive(Deserialize, Debug)]
+pub struct ActionGoalRemoveQuery {
+    pub action_id: Uuid,
+}
+
 #[derive(Deserialize, Debug, Serialize)]
 pub struct ActionGoalSetNewRequest {
     pub action_id: Uuid,

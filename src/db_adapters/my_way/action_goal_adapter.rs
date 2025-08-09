@@ -114,7 +114,7 @@ pub trait ActionGoalMutation {
         params: UpdateActionGoalParams,
         action_goal: Model,
     ) -> impl Future<Output = Result<Model, DbErr>>;
-    //     fn delete(self, action: Model) -> impl Future<Output = Result<(), DbErr>>;
+    fn delete(self, action_goal: Model) -> impl Future<Output = Result<(), DbErr>>;
 }
 
 impl ActionGoalMutation for ActionGoalAdapter<'_> {
@@ -145,7 +145,7 @@ impl ActionGoalMutation for ActionGoalAdapter<'_> {
         action_goal.update(self.db).await
     }
 
-    //     async fn delete(self, action: Model) -> Result<(), DbErr> {
-    //         action.delete(self.db).await.map(|_| ())
-    //     }
+    async fn delete(self, action_goal: Model) -> Result<(), DbErr> {
+        action_goal.delete(self.db).await.map(|_| ())
+    }
 }

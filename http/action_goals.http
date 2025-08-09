@@ -26,6 +26,7 @@ Content-Type: application/json
   "count": null
 }
 
-# ###
-# # @name delete
-# DELETE {{endpoint}}/api/action_goals/{{action_id}}
+###
+# @name remove
+DELETE {{endpoint}}/api/action_goals?action_id={{action_id}}
+
