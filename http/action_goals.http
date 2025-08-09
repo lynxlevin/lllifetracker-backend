@@ -1,0 +1,43 @@
+# Turn on debug to use these.
+###
+# @name login
+POST {{endpoint}}/api/users/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "password"
+}
+
+# ###
+# # @name list
+# GET {{endpoint}}/api/action_goals
+
+@action_id=9420a11f-a1fa-46e2-82fe-a5a79bd79a75
+
+###
+# @name create
+POST {{endpoint}}/api/action_goals
+Content-Type: application/json
+
+{
+  "action_id": "{{action_id}}",
+  "duration_seconds": 3600,
+  "count": 15
+}
+
+# ###
+# # @name update
+# PUT {{endpoint}}/api/action_goals/{{action_id}}
+# Content-Type: application/json
+
+# {
+#   "name": "My action edited",
+#   "description": "Description added",
+#   "trackable": null,
+#   "color": "#adfadf"
+# # }
+
+# ###
+# # @name delete
+# DELETE {{endpoint}}/api/action_goals/{{action_id}}

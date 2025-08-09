@@ -100,25 +100,19 @@ pub struct CreateActionGoalParams {
     pub user_id: Uuid,
 }
 
-// #[derive(Debug, Clone)]
-// pub struct UpdateActionGoalParams {
-//     pub name: String,
-//     pub description: Option<String>,
-//     pub trackable: Option<bool>,
-//     pub color: Option<String>,
-// }
+#[derive(Debug, Clone)]
+pub struct UpdateActionGoalParams {
+    pub to_date: Option<NaiveDate>,
+    pub duration_seconds: Option<i32>,
+    pub count: Option<i32>,
+}
 
 pub trait ActionGoalMutation {
     fn create(self, params: CreateActionGoalParams) -> impl Future<Output = Result<Model, DbErr>>;
-    //     fn update(
-    //         self,
-    //         action: Model,
-    //         params: UpdateActionGoalParams,
-    //     ) -> impl Future<Output = Result<Model, DbErr>>;
-    fn update_to_date(
+    fn update(
         self,
+        params: UpdateActionGoalParams,
         action_goal: Model,
-        to_date: Option<NaiveDate>,
     ) -> impl Future<Output = Result<Model, DbErr>>;
     //     fn delete(self, action: Model) -> impl Future<Output = Result<(), DbErr>>;
 }
@@ -139,27 +133,15 @@ impl ActionGoalMutation for ActionGoalAdapter<'_> {
         .await
     }
 
-    //     async fn update(self, action: Model, params: UpdateActionGoalParams) -> Result<Model, DbErr> {
-    //         let mut action = action.into_active_model();
-    //         action.name = Set(params.name);
-    //         action.description = Set(params.description);
-    //         if let Some(trackable) = params.trackable {
-    //             action.trackable = Set(trackable);
-    //         }
-    //         if let Some(color) = params.color {
-    //             action.color = Set(color);
-    //         }
-    //         action.updated_at = Set(Utc::now().into());
-    //         action.update(self.db).await
-    //     }
-
-    async fn update_to_date(
+    async fn update(
         self,
+        params: UpdateActionGoalParams,
         action_goal: Model,
-        to_date: Option<NaiveDate>,
     ) -> Result<Model, DbErr> {
         let mut action_goal = action_goal.into_active_model();
-        action_goal.to_date = Set(to_date);
+        action_goal.to_date = Set(params.to_date);
+        action_goal.duration_seconds = Set(params.duration_seconds);
+        action_goal.count = Set(params.count);
         action_goal.update(self.db).await
     }
 

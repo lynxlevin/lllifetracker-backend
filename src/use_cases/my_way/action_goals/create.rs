@@ -7,7 +7,7 @@ use db_adapters::{
     action_adapter::{ActionAdapter, ActionFilter, ActionQuery},
     action_goal_adapter::{
         ActionGoalAdapter, ActionGoalFilter, ActionGoalMutation, ActionGoalQuery,
-        CreateActionGoalParams,
+        CreateActionGoalParams, UpdateActionGoalParams,
     },
 };
 use entities::{
@@ -38,22 +38,39 @@ pub async fn create_action_goal<'a>(
         .await
         .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
 
-    if active_action_goal.is_some() {
-        action_goal_adapter
-            .clone()
-            .update_to_date(
-                active_action_goal.unwrap(),
-                Some(parsed_params.from_date - Duration::days(1)),
-            )
-            .await
-            .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
+    match active_action_goal {
+        Some(active_action_goal) => {
+            if active_action_goal.from_date == parsed_params.from_date {
+                action_goal_adapter
+                    .update(
+                        UpdateActionGoalParams {
+                            duration_seconds: parsed_params.duration_seconds,
+                            count: parsed_params.count,
+                            to_date: None,
+                        },
+                        active_action_goal,
+                    )
+                    .await
+                    .map(|action_goal| ActionGoalVisible::from(action_goal))
+                    .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
+            } else {
+                action_goal_adapter
+                    .clone()
+                    .update(
+                        UpdateActionGoalParams {
+                            duration_seconds: active_action_goal.duration_seconds,
+                            count: active_action_goal.count,
+                            to_date: Some(parsed_params.from_date - Duration::days(1)),
+                        },
+                        active_action_goal,
+                    )
+                    .await
+                    .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
+                _create_action_goal(action_goal_adapter, parsed_params).await
+            }
+        }
+        None => _create_action_goal(action_goal_adapter, parsed_params).await,
     }
-
-    action_goal_adapter
-        .create(parsed_params)
-        .await
-        .map(|action_goal| ActionGoalVisible::from(action_goal))
-        .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
 }
 
 fn _parse_params(
@@ -91,4 +108,15 @@ fn _parse_params(
         },
         action,
     ))
+}
+
+async fn _create_action_goal<'a>(
+    action_goal_adapter: ActionGoalAdapter<'a>,
+    params: CreateActionGoalParams,
+) -> Result<ActionGoalVisible, UseCaseError> {
+    action_goal_adapter
+        .create(params)
+        .await
+        .map(|action_goal| ActionGoalVisible::from(action_goal))
+        .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
 }
