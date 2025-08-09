@@ -5,7 +5,7 @@ use actix_session::{
 use actix_web::{cookie, web::scope, Scope};
 use common::settings::types::Settings;
 use web_adapters::{
-    action_routes, action_track_routes, ambition_routes, auth_routes,
+    action_goal_routes, action_routes, action_track_routes, ambition_routes, auth_routes,
     desired_state_category_routes, desired_state_routes, diary_routes, reading_note_routes,
     tag_routes,
 };
@@ -56,6 +56,7 @@ pub fn get_routes() -> Scope {
         .configure(action_track_routes)
         .configure(diary_routes)
         .configure(desired_state_category_routes)
+        .configure(action_goal_routes)
 }
 
 #[actix_web::get("/health-check")]

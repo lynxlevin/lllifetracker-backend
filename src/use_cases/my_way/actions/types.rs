@@ -1,13 +1,11 @@
-use chrono::{DateTime, FixedOffset, NaiveDate};
+use chrono::{DateTime, FixedOffset};
 use sea_orm::{DerivePartialModel, FromQueryResult};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use entities::{
-    action, action_goal,
-    prelude::{Action, ActionGoal},
-    sea_orm_active_enums::ActionTrackType,
-};
+use entities::{action, action_goal, prelude::Action, sea_orm_active_enums::ActionTrackType};
+
+use crate::my_way::action_goals::types::ActionGoalVisible;
 
 #[derive(Serialize, Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug)]
 #[sea_orm(entity = "Action")]
@@ -40,34 +38,6 @@ impl From<&action::Model> for ActionVisible {
 impl From<action::Model> for ActionVisible {
     fn from(item: action::Model) -> Self {
         ActionVisible::from(&item)
-    }
-}
-
-#[derive(Serialize, Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug)]
-#[sea_orm(entity = "ActionGoal")]
-pub struct ActionGoalVisible {
-    pub id: Uuid,
-    pub from_date: NaiveDate,
-    pub to_date: Option<NaiveDate>,
-    pub duration_seconds: Option<i32>,
-    pub count: Option<i32>,
-}
-
-impl From<&action_goal::Model> for ActionGoalVisible {
-    fn from(value: &action_goal::Model) -> Self {
-        ActionGoalVisible {
-            id: value.id,
-            from_date: value.from_date,
-            to_date: value.to_date,
-            duration_seconds: value.duration_seconds,
-            count: value.count,
-        }
-    }
-}
-
-impl From<action_goal::Model> for ActionGoalVisible {
-    fn from(value: action_goal::Model) -> Self {
-        ActionGoalVisible::from(&value)
     }
 }
 
