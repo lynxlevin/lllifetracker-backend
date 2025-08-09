@@ -5,8 +5,9 @@ edition = "2021"
 
 [lib]
 name = "entities"
-path = "mod.rs"
+path = "lib.rs"
 
 [dependencies]
+chrono.workspace = true
 sea-orm.workspace = true
 serde.workspace = true
