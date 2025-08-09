@@ -41,7 +41,7 @@ impl MigrationTrait for Migration {
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk-action_goal-action_id")
-                            .from(ActionGoal::Table, ActionGoal::UserId)
+                            .from(ActionGoal::Table, ActionGoal::ActionId)
                             .to(Action::Table, Action::Id)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
