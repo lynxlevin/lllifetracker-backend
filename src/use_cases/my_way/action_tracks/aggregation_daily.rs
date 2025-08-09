@@ -14,7 +14,10 @@ use db_adapters::{
     },
     Order,
 };
-use entities::{sea_orm_active_enums::TimezoneEnum, user as user_entity};
+use entities::{
+    custom_methods::user::UserTimezoneTrait, sea_orm_active_enums::TimezoneEnum,
+    user as user_entity,
+};
 
 pub async fn aggregate_daily_action_tracks<'a>(
     user: user_entity::Model,
@@ -36,10 +39,7 @@ pub async fn aggregate_daily_action_tracks<'a>(
 
     let mut aggregation_items: Vec<ActionTrackDailyAggregationItem> = vec![];
     for track in action_tracks {
-        let date = match user.timezone {
-            TimezoneEnum::AsiaTokyo => (track.started_at + Duration::hours(9)).day(),
-            TimezoneEnum::Utc => track.started_at.day(),
-        };
+        let date = user.to_user_timezone(track.started_at.to_utc()).day();
         if aggregation_items.is_empty() || aggregation_items.last().unwrap().date != date {
             aggregation_items.push(ActionTrackDailyAggregationItem {
                 date,
