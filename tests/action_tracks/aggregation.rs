@@ -17,33 +17,33 @@ async fn happy_path() -> Result<(), DbErr> {
     let action_0 = factory::action(user.id).insert(&db).await?;
     let action_1 = factory::action(user.id).insert(&db).await?;
     let _action_2 = factory::action(user.id).insert(&db).await?;
-    let now = Utc::now();
+    let jst_now = Utc::now().with_timezone(&FixedOffset::east_opt(9 * 3600).unwrap());
     let action_0_track_0 = factory::action_track(user.id)
-        .started_at((now - Duration::days(1)).into())
+        .started_at(jst_now - Duration::days(1))
         .duration(Some(120))
         .action_id(action_0.id)
         .insert(&db)
         .await?;
     let _action_0_track_1 = factory::action_track(user.id)
-        .started_at((now).into())
+        .started_at(jst_now)
         .duration(Some(180))
         .action_id(action_0.id)
         .insert(&db)
         .await?;
     let action_0_track_2 = factory::action_track(user.id)
-        .started_at((now + Duration::days(1)).into())
+        .started_at(jst_now + Duration::days(1))
         .duration(Some(300))
         .action_id(action_0.id)
         .insert(&db)
         .await?;
     let _action_0_track_3 = factory::action_track(user.id)
-        .started_at((now + Duration::days(2)).into())
+        .started_at(jst_now + Duration::days(2))
         .duration(Some(550))
         .action_id(action_0.id)
         .insert(&db)
         .await?;
     let action_1_track_0 = factory::action_track(user.id)
-        .started_at((now + Duration::days(1)).into())
+        .started_at(jst_now + Duration::days(1))
         .duration(Some(350))
         .action_id(action_1.id)
         .insert(&db)
@@ -52,9 +52,8 @@ async fn happy_path() -> Result<(), DbErr> {
     let req = test::TestRequest::get()
         .uri(&format!(
             "/api/action_tracks/aggregation?dates={},{}",
-            // FIXME: These are naive datetimes, so maybe flakey.
-            (now - Duration::days(1)).date_naive().format("%Y%m%d"),
-            (now + Duration::days(1)).date_naive().format("%Y%m%d"),
+            (jst_now - Duration::days(1)).date_naive().format("%Y%m%d"),
+            (jst_now + Duration::days(1)).date_naive().format("%Y%m%d"),
         ))
         .to_request();
     req.extensions_mut().insert(user.clone());
