@@ -10,6 +10,7 @@ use uuid::Uuid;
 
 use entities::{
     action::{ActiveModel, Column, Entity, Model},
+    action_goal,
     sea_orm_active_enums::ActionTrackType,
     tag, user,
 };
@@ -73,12 +74,22 @@ impl ActionOrder for ActionAdapter<'_> {
 
 pub trait ActionQuery {
     fn get_all(self) -> impl Future<Output = Result<Vec<Model>, DbErr>>;
+    fn get_all_with_goal(
+        self,
+    ) -> impl Future<Output = Result<Vec<(Model, Option<action_goal::Model>)>, DbErr>>;
     fn get_by_id(self, id: Uuid) -> impl Future<Output = Result<Option<Model>, DbErr>>;
 }
 
 impl ActionQuery for ActionAdapter<'_> {
     async fn get_all(self) -> Result<Vec<Model>, DbErr> {
         self.query.all(self.db).await
+    }
+
+    async fn get_all_with_goal(self) -> Result<Vec<(Model, Option<action_goal::Model>)>, DbErr> {
+        self.query
+            .find_also_related(action_goal::Entity)
+            .all(self.db)
+            .await
     }
 
     async fn get_by_id(self, id: Uuid) -> Result<Option<Model>, DbErr> {
