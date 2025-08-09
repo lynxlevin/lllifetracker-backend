@@ -27,7 +27,7 @@ pub async fn create_action_goal<'a>(
         .await
         .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
 
-    let (parsed_params, action) = _parse_params(params, action, &user)?;
+    let (params, action) = _parse_params(params, action, &user)?;
 
     let active_action_goal = action_goal_adapter
         .clone()
@@ -40,12 +40,12 @@ pub async fn create_action_goal<'a>(
 
     match active_action_goal {
         Some(active_action_goal) => {
-            if active_action_goal.from_date == parsed_params.from_date {
+            if active_action_goal.from_date == params.from_date {
                 action_goal_adapter
                     .update(
                         UpdateActionGoalParams {
-                            duration_seconds: parsed_params.duration_seconds,
-                            count: parsed_params.count,
+                            duration_seconds: params.duration_seconds,
+                            count: params.count,
                             to_date: None,
                         },
                         active_action_goal,
@@ -60,16 +60,16 @@ pub async fn create_action_goal<'a>(
                         UpdateActionGoalParams {
                             duration_seconds: active_action_goal.duration_seconds,
                             count: active_action_goal.count,
-                            to_date: Some(parsed_params.from_date - Duration::days(1)),
+                            to_date: Some(params.from_date - Duration::days(1)),
                         },
                         active_action_goal,
                     )
                     .await
                     .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
-                _create_action_goal(action_goal_adapter, parsed_params).await
+                _create_action_goal(action_goal_adapter, params).await
             }
         }
-        None => _create_action_goal(action_goal_adapter, parsed_params).await,
+        None => _create_action_goal(action_goal_adapter, params).await,
     }
 }
 
@@ -79,21 +79,30 @@ fn _parse_params(
     user: &user_entity::Model,
 ) -> Result<(CreateActionGoalParams, action::Model), UseCaseError> {
     let action = action.ok_or(UseCaseError::NotFound("This action not found.".to_string()))?;
+
+    let mut bad_request_message: Option<&str> = None;
     match action.track_type {
         ActionTrackType::TimeSpan => {
-            if params.duration_seconds.is_none() || params.count.is_some() {
-                return Err(UseCaseError::BadRequest(
-                    "duration_seconds cannot be empty".to_string(),
-                ));
+            if params.duration_seconds.is_none() {
+                bad_request_message = Some("duration_seconds cannot be empty for this action.");
+            }
+            if params.count.is_some() {
+                bad_request_message = Some("count must be empty for this action.");
             }
         }
         ActionTrackType::Count => {
-            if params.count.is_none() || params.duration_seconds.is_some() {
-                return Err(UseCaseError::BadRequest(
-                    "count cannot be empty".to_string(),
-                ));
+            if params.count.is_none() {
+                bad_request_message = Some("count cannot be empty for this action.");
+            }
+            if params.duration_seconds.is_some() {
+                bad_request_message = Some("duration_seconds must be empty for this action.");
             }
         }
+    }
+    if bad_request_message.is_some() {
+        return Err(UseCaseError::BadRequest(
+            bad_request_message.unwrap().to_string(),
+        ));
     }
 
     let user_today = user.to_user_timezone(Utc::now()).date_naive();
