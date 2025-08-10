@@ -1,10 +1,9 @@
 use std::future::Future;
 
-use chrono::{DateTime, FixedOffset, NaiveDate, Utc};
+use chrono::NaiveDate;
 use sea_orm::{
-    sea_query::NullOrdering::Last, ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait,
-    IntoActiveModel, ModelTrait, Order, QueryFilter, QueryOrder, Select, Set, TransactionError,
-    TransactionTrait,
+    ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel, ModelTrait,
+    QueryFilter, Select, Set,
 };
 use uuid::Uuid;
 
@@ -52,40 +51,11 @@ impl ActionGoalFilter for ActionGoalAdapter<'_> {
     }
 }
 
-// pub trait ActionGoalOrder {
-//     fn order_by_ordering_nulls_last(self, order: Order) -> Self;
-//     fn order_by_created_at(self, order: Order) -> Self;
-// }
-
-// impl ActionGoalOrder for ActionGoalAdapter<'_> {
-//     fn order_by_ordering_nulls_last(mut self, order: Order) -> Self {
-//         self.query = self
-//             .query
-//             .order_by_with_nulls(Column::Ordering, order, Last);
-//         self
-//     }
-
-//     fn order_by_created_at(mut self, order: Order) -> Self {
-//         self.query = self.query.order_by(Column::CreatedAt, order);
-//         self
-//     }
-// }
-
 pub trait ActionGoalQuery {
-    // fn get_all(self) -> impl Future<Output = Result<Vec<Model>, DbErr>>;
-    // fn get_by_id(self, id: Uuid) -> impl Future<Output = Result<Option<Model>, DbErr>>;
     fn get_one(self) -> impl Future<Output = Result<Option<Model>, DbErr>>;
 }
 
 impl ActionGoalQuery for ActionGoalAdapter<'_> {
-    // async fn get_all(self) -> Result<Vec<Model>, DbErr> {
-    //     self.query.all(self.db).await
-    // }
-
-    // async fn get_by_id(self, id: Uuid) -> Result<Option<Model>, DbErr> {
-    //     self.query.filter(Column::Id.eq(id)).one(self.db).await
-    // }
-
     async fn get_one(self) -> Result<Option<Model>, DbErr> {
         self.query.one(self.db).await
     }

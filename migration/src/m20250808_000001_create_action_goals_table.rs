@@ -21,6 +21,7 @@ impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
             .create_table(
+                // MYMEMO: unique constraint user, action, from_date/to_date
                 Table::create()
                     .table(ActionGoal::Table)
                     .if_not_exists()

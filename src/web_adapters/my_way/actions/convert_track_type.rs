@@ -3,7 +3,7 @@ use actix_web::{
     web::{Data, Json, Path, ReqData},
     HttpResponse,
 };
-use db_adapters::action_adapter::ActionAdapter;
+use db_adapters::{action_adapter::ActionAdapter, action_goal_adapter::ActionGoalAdapter};
 use entities::user as user_entity;
 use sea_orm::DbConn;
 use use_cases::{
@@ -35,6 +35,7 @@ pub async fn convert_action_track_type_endpoint(
                 req.into_inner(),
                 path_param.action_id,
                 ActionAdapter::init(&db),
+                ActionGoalAdapter::init(&db),
             )
             .await
             {

@@ -99,10 +99,8 @@ fn _parse_params(
             }
         }
     }
-    if bad_request_message.is_some() {
-        return Err(UseCaseError::BadRequest(
-            bad_request_message.unwrap().to_string(),
-        ));
+    if let Some(message) = bad_request_message {
+        return Err(UseCaseError::BadRequest(message.to_string()));
     }
 
     let user_today = user.to_user_timezone(Utc::now()).date_naive();
