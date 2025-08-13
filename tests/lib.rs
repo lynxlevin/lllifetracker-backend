@@ -1,4 +1,5 @@
 #![cfg(test)]
+mod action_goals;
 mod action_tracks;
 mod actions;
 mod ambitions;

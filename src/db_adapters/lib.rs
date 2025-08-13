@@ -5,8 +5,8 @@ pub mod user_adapter;
 
 pub use journal::{diary_adapter, reading_note_adapter};
 pub use my_way::{
-    action_adapter, action_track_adapter, ambition_adapter, desired_state_adapter,
-    desired_state_category_adapter,
+    action_adapter, action_goal_adapter, action_track_adapter, ambition_adapter,
+    desired_state_adapter, desired_state_category_adapter,
 };
 
 use core::fmt;

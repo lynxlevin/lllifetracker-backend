@@ -39,6 +39,8 @@ mod m20250614_000001_remove_mindset_table;
 mod m20250626_000001_add_focus_to_desired_state_table;
 mod m20250708_000001_add_first_track_at_to_users_table;
 mod m20250712_000001_remove_score_from_diaries_table;
+mod m20250808_000001_create_action_goals_table;
+mod m20250813_000001_unique_constraint_for_action_goals_table;
 mod m_seed_data;
 
 pub struct Migrator;
@@ -91,6 +93,8 @@ impl MigratorTrait for Migrator {
             Box::new(m20250626_000001_add_focus_to_desired_state_table::Migration),
             Box::new(m20250708_000001_add_first_track_at_to_users_table::Migration),
             Box::new(m20250712_000001_remove_score_from_diaries_table::Migration),
+            Box::new(m20250808_000001_create_action_goals_table::Migration),
+            Box::new(m20250813_000001_unique_constraint_for_action_goals_table::Migration),
         ]
     }
 }
