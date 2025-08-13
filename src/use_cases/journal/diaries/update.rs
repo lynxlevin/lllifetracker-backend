@@ -1,6 +1,7 @@
 use db_adapters::{
     diary_adapter::{
-        DiaryAdapter, DiaryFilter, DiaryMutation, DiaryQuery, DiaryUpdateKey, UpdateDiaryParams,
+        DiaryAdapter, DiaryFilter, DiaryJoin, DiaryMutation, DiaryQuery, DiaryUpdateKey,
+        UpdateDiaryParams,
     },
     CustomDbErr,
 };
@@ -21,8 +22,10 @@ pub async fn update_diary<'a>(
 ) -> Result<DiaryVisible, UseCaseError> {
     let (diary, linked_tags) = diary_adapter
         .clone()
+        .join_my_way_tags()
+        .filter_eq_id(diary_id)
         .filter_eq_user(&user)
-        .get_with_tags_by_id(diary_id)
+        .get_with_tags()
         .await
         .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?
         .ok_or(UseCaseError::NotFound(
