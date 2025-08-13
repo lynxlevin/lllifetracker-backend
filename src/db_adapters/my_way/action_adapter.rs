@@ -34,6 +34,7 @@ pub trait ActionFilter {
     fn filter_eq_user(self, user: &user::Model) -> Self;
     fn filter_eq_archived(self, archived: bool) -> Self;
     fn filter_in_ids(self, ids: Vec<Uuid>) -> Self;
+    fn exclude_inactive_goals(self) -> Self;
 }
 
 impl ActionFilter for ActionAdapter<'_> {
@@ -49,6 +50,11 @@ impl ActionFilter for ActionAdapter<'_> {
 
     fn filter_in_ids(mut self, ids: Vec<Uuid>) -> Self {
         self.query = self.query.filter(Column::Id.is_in(ids));
+        self
+    }
+
+    fn exclude_inactive_goals(mut self) -> Self {
+        self.query = self.query.filter(action_goal::Column::ToDate.is_null());
         self
     }
 }
