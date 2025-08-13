@@ -19,7 +19,8 @@ pub async fn list_reading_notes<'a>(
 ) -> Result<Vec<ReadingNoteVisibleWithTags>, UseCaseError> {
     let reading_notes = reading_note_adapter
         .filter_eq_user(&user)
-        .join_my_way_tags()
+        .join_tags()
+        .join_my_way_via_tags()
         .order_by_date(Desc)
         .order_by_created_at(Desc)
         .order_by_ambition_created_at_nulls_last(Asc)

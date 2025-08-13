@@ -33,15 +33,21 @@ impl<'a> DiaryAdapter<'a> {
 }
 
 pub trait DiaryJoin {
-    fn join_my_way_tags(self) -> Self;
+    fn join_tags(self) -> Self;
+    fn join_my_way_via_tags(self) -> Self;
 }
 
 impl DiaryJoin for DiaryAdapter<'_> {
-    fn join_my_way_tags(mut self) -> Self {
+    fn join_tags(mut self) -> Self {
         self.query = self
             .query
             .join_rev(LeftJoin, diaries_tags::Relation::Diary.def())
-            .join(LeftJoin, diaries_tags::Relation::Tag.def())
+            .join(LeftJoin, diaries_tags::Relation::Tag.def());
+        self
+    }
+    fn join_my_way_via_tags(mut self) -> Self {
+        self.query = self
+            .query
             .join(LeftJoin, tag::Relation::Ambition.def())
             .join(LeftJoin, tag::Relation::DesiredState.def())
             .join(LeftJoin, tag::Relation::Action.def());

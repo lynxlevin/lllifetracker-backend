@@ -22,7 +22,7 @@ pub async fn update_reading_note<'a>(
 ) -> Result<ReadingNoteVisible, UseCaseError> {
     let (reading_note, linked_tags) = reading_note_adapter
         .clone()
-        .join_my_way_tags()
+        .join_tags()
         .filter_eq_id(reading_note_id)
         .filter_eq_user(&user)
         .get_with_tags()

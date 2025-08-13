@@ -33,15 +33,22 @@ impl<'a> ReadingNoteAdapter<'a> {
 }
 
 pub trait ReadingNoteJoin {
-    fn join_my_way_tags(self) -> Self;
+    fn join_tags(self) -> Self;
+    fn join_my_way_via_tags(self) -> Self;
 }
 
 impl ReadingNoteJoin for ReadingNoteAdapter<'_> {
-    fn join_my_way_tags(mut self) -> Self {
+    fn join_tags(mut self) -> Self {
         self.query = self
             .query
             .join_rev(LeftJoin, reading_notes_tags::Relation::ReadingNote.def())
-            .join(LeftJoin, reading_notes_tags::Relation::Tag.def())
+            .join(LeftJoin, reading_notes_tags::Relation::Tag.def());
+        self
+    }
+
+    fn join_my_way_via_tags(mut self) -> Self {
+        self.query = self
+            .query
             .join(LeftJoin, tag::Relation::Ambition.def())
             .join(LeftJoin, tag::Relation::DesiredState.def())
             .join(LeftJoin, tag::Relation::Action.def());

@@ -22,7 +22,7 @@ pub async fn update_diary<'a>(
 ) -> Result<DiaryVisible, UseCaseError> {
     let (diary, linked_tags) = diary_adapter
         .clone()
-        .join_my_way_tags()
+        .join_tags()
         .filter_eq_id(diary_id)
         .filter_eq_user(&user)
         .get_with_tags()

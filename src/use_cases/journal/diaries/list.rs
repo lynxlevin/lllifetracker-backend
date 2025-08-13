@@ -15,7 +15,8 @@ pub async fn list_diaries<'a>(
     diary_adapter: DiaryAdapter<'a>,
 ) -> Result<Vec<DiaryVisibleWithTags>, UseCaseError> {
     let diaries = diary_adapter
-        .join_my_way_tags()
+        .join_tags()
+        .join_my_way_via_tags()
         .filter_eq_user(&user)
         .order_by_date(Desc)
         .order_by_ambition_created_at_nulls_last(Asc)
