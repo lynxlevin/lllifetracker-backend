@@ -2,14 +2,16 @@ use std::future::Future;
 
 use chrono::Utc;
 use sea_orm::{
-    sea_query::NullOrdering::Last, ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait,
-    IntoActiveModel, ModelTrait, Order, QueryFilter, QueryOrder, Select, Set, TransactionError,
-    TransactionTrait,
+    sea_query::{IntoCondition, NullOrdering::Last},
+    ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel,
+    JoinType::LeftJoin,
+    ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait, Select, Set,
+    TransactionError, TransactionTrait,
 };
 use uuid::Uuid;
 
 use entities::{
-    action::{ActiveModel, Column, Entity, Model},
+    action::{ActiveModel, Column, Entity, Model, Relation},
     action_goal,
     sea_orm_active_enums::ActionTrackType,
     tag, user,
@@ -30,11 +32,26 @@ impl<'a> ActionAdapter<'a> {
     }
 }
 
+pub trait ActionJoin {
+    fn join_active_goal(self) -> Self;
+}
+
+impl ActionJoin for ActionAdapter<'_> {
+    fn join_active_goal(mut self) -> Self {
+        self.query = self.query.join(
+            LeftJoin,
+            Relation::ActionGoal.def().on_condition(|_left, _right| {
+                action_goal::Column::ToDate.is_null().into_condition()
+            }),
+        );
+        self
+    }
+}
+
 pub trait ActionFilter {
     fn filter_eq_user(self, user: &user::Model) -> Self;
     fn filter_eq_archived(self, archived: bool) -> Self;
     fn filter_in_ids(self, ids: Vec<Uuid>) -> Self;
-    fn exclude_inactive_goals(self) -> Self;
 }
 
 impl ActionFilter for ActionAdapter<'_> {
@@ -50,11 +67,6 @@ impl ActionFilter for ActionAdapter<'_> {
 
     fn filter_in_ids(mut self, ids: Vec<Uuid>) -> Self {
         self.query = self.query.filter(Column::Id.is_in(ids));
-        self
-    }
-
-    fn exclude_inactive_goals(mut self) -> Self {
-        self.query = self.query.filter(action_goal::Column::ToDate.is_null());
         self
     }
 }
@@ -93,7 +105,7 @@ impl ActionQuery for ActionAdapter<'_> {
 
     async fn get_all_with_goal(self) -> Result<Vec<(Model, Option<action_goal::Model>)>, DbErr> {
         self.query
-            .find_also_related(action_goal::Entity)
+            .select_also(action_goal::Entity)
             .all(self.db)
             .await
     }
