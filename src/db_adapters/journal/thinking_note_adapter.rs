@@ -32,28 +32,28 @@ impl<'a> ThinkingNoteAdapter<'a> {
     }
 }
 
-// pub trait ThinkingNoteJoin {
-//     fn join_tags(self) -> Self;
-//     fn join_my_way_via_tags(self) -> Self;
-// }
+pub trait ThinkingNoteJoin {
+    fn join_tags(self) -> Self;
+    //     fn join_my_way_via_tags(self) -> Self;
+}
 
-// impl ThinkingNoteJoin for ThinkingNoteAdapter<'_> {
-//     fn join_tags(mut self) -> Self {
-//         self.query = self
-//             .query
-//             .join_rev(LeftJoin, thinking_note_tags::Relation::Diary.def())
-//             .join(LeftJoin, thinking_note_tags::Relation::Tag.def());
-//         self
-//     }
-//     fn join_my_way_via_tags(mut self) -> Self {
-//         self.query = self
-//             .query
-//             .join(LeftJoin, tag::Relation::Ambition.def())
-//             .join(LeftJoin, tag::Relation::DesiredState.def())
-//             .join(LeftJoin, tag::Relation::Action.def());
-//         self
-//     }
-// }
+impl ThinkingNoteJoin for ThinkingNoteAdapter<'_> {
+    fn join_tags(mut self) -> Self {
+        self.query = self
+            .query
+            .join_rev(LeftJoin, thinking_note_tags::Relation::ThinkingNote.def())
+            .join(LeftJoin, thinking_note_tags::Relation::Tag.def());
+        self
+    }
+    //     fn join_my_way_via_tags(mut self) -> Self {
+    //         self.query = self
+    //             .query
+    //             .join(LeftJoin, tag::Relation::Ambition.def())
+    //             .join(LeftJoin, tag::Relation::DesiredState.def())
+    //             .join(LeftJoin, tag::Relation::Action.def());
+    //         self
+    //     }
+}
 
 pub trait ThinkingNoteFilter {
     fn filter_eq_id(self, id: Uuid) -> Self;
@@ -132,8 +132,8 @@ impl ThinkingNoteFilter for ThinkingNoteAdapter<'_> {
 pub trait ThinkingNoteQuery {
     // fn get_all_with_tags(self) -> impl Future<Output = Result<Vec<ThinkingNoteWithTag>, DbErr>>;
     fn get_by_id(self, id: Uuid) -> impl Future<Output = Result<Option<Model>, DbErr>>;
-    // fn get_with_tags(self)
-    //     -> impl Future<Output = Result<Option<(Model, Vec<tag::Model>)>, DbErr>>;
+    fn get_with_tags(self)
+        -> impl Future<Output = Result<Option<(Model, Vec<tag::Model>)>, DbErr>>;
 }
 
 impl ThinkingNoteQuery for ThinkingNoteAdapter<'_> {
@@ -154,15 +154,15 @@ impl ThinkingNoteQuery for ThinkingNoteAdapter<'_> {
         self.query.filter(Column::Id.eq(id)).one(self.db).await
     }
 
-    // async fn get_with_tags(self) -> Result<Option<(Model, Vec<tag::Model>)>, DbErr> {
-    //     match self.query.select_with(tag::Entity).all(self.db).await {
-    //         Ok(diaries) => match diaries.len() > 0 {
-    //             true => Ok(diaries.into_iter().nth(0)),
-    //             false => Ok(None),
-    //         },
-    //         Err(e) => Err(e),
-    //     }
-    // }
+    async fn get_with_tags(self) -> Result<Option<(Model, Vec<tag::Model>)>, DbErr> {
+        match self.query.select_with(tag::Entity).all(self.db).await {
+            Ok(thinking_notes) => match thinking_notes.len() > 0 {
+                true => Ok(thinking_notes.into_iter().nth(0)),
+                false => Ok(None),
+            },
+            Err(e) => Err(e),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -173,39 +173,34 @@ pub struct CreateThinkingNoteParams {
     pub user_id: Uuid,
 }
 
-// #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
-// pub enum ThinkingNoteUpdateKey {
-//     Text,
-//     Date,
-//     TagIds, // FIXME: remove this key after removing from frontend
-// }
-
-// #[derive(Debug, Clone)]
-// pub struct UpdateDiaryParams {
-//     pub text: Option<String>,
-//     pub date: NaiveDate,
-//     pub update_keys: Vec<DiaryUpdateKey>,
-// }
+#[derive(Debug, Clone)]
+pub struct UpdateThinkingNoteParams {
+    pub question: Option<String>,
+    pub thought: Option<String>,
+    pub answer: Option<String>,
+    pub resolved_at: Option<DateTime<FixedOffset>>,
+    pub archived_at: Option<DateTime<FixedOffset>>,
+}
 
 pub trait ThinkingNoteMutation {
     fn create(self, params: CreateThinkingNoteParams)
         -> impl Future<Output = Result<Model, DbErr>>;
-    // fn partial_update(
-    //     self,
-    //     diary: Model,
-    //     params: UpdateDiaryParams,
-    // ) -> impl Future<Output = Result<Model, DbErr>>;
+    fn update(
+        self,
+        params: UpdateThinkingNoteParams,
+        thinking_note: Model,
+    ) -> impl Future<Output = Result<Model, DbErr>>;
     fn delete(self, thinking_note: Model) -> impl Future<Output = Result<(), DbErr>>;
     fn link_tags(
         &self,
         thinking_note: &Model,
         tag_ids: impl IntoIterator<Item = Uuid>,
     ) -> impl Future<Output = Result<(), DbErr>>;
-    // fn unlink_tags(
-    //     &self,
-    //     diary: &Model,
-    //     tag_ids: impl IntoIterator<Item = Uuid>,
-    // ) -> impl Future<Output = Result<(), DbErr>>;
+    fn unlink_tags(
+        &self,
+        thinking_note: &Model,
+        tag_ids: impl IntoIterator<Item = Uuid>,
+    ) -> impl Future<Output = Result<(), DbErr>>;
 }
 
 impl ThinkingNoteMutation for ThinkingNoteAdapter<'_> {
@@ -226,24 +221,20 @@ impl ThinkingNoteMutation for ThinkingNoteAdapter<'_> {
         .await
     }
 
-    // async fn partial_update(self, diary: Model, params: UpdateDiaryParams) -> Result<Model, DbErr> {
-    //     let mut diary = diary.into_active_model();
-    //     if params.update_keys.contains(&DiaryUpdateKey::Text) {
-    //         diary.text = Set(params.text);
-    //     }
-    //     if params.update_keys.contains(&DiaryUpdateKey::Date) {
-    //         diary.date = Set(params.date);
-    //     }
-    //     diary.update(self.db).await.map_err(|e| match &e {
-    //         DbErr::Query(SqlxError(Database(err))) => match err.constraint() {
-    //             Some("diaries_user_id_date_unique_index") => {
-    //                 DbErr::Custom(CustomDbErr::Duplicate.to_string())
-    //             }
-    //             _ => e,
-    //         },
-    //         _ => e,
-    //     })
-    // }
+    async fn update(
+        self,
+        params: UpdateThinkingNoteParams,
+        thinking_note: Model,
+    ) -> Result<Model, DbErr> {
+        let mut thinking_note = thinking_note.into_active_model();
+        thinking_note.question = Set(params.question);
+        thinking_note.thought = Set(params.thought);
+        thinking_note.answer = Set(params.answer);
+        thinking_note.resolved_at = Set(params.resolved_at);
+        thinking_note.archived_at = Set(params.archived_at);
+        thinking_note.updated_at = Set(Utc::now().into());
+        thinking_note.update(self.db).await
+    }
 
     async fn delete(self, thinking_note: Model) -> Result<(), DbErr> {
         thinking_note.delete(self.db).await.map(|_| ())
@@ -276,16 +267,16 @@ impl ThinkingNoteMutation for ThinkingNoteAdapter<'_> {
             })
     }
 
-    // async fn unlink_tags(
-    //     &self,
-    //     diary: &Model,
-    //     tag_ids: impl IntoIterator<Item = Uuid>,
-    // ) -> Result<(), DbErr> {
-    //     thinking_note_tags::Entity::delete_many()
-    //         .filter(thinking_note_tags::Column::DiaryId.eq(diary.id))
-    //         .filter(thinking_note_tags::Column::TagId.is_in(tag_ids))
-    //         .exec(self.db)
-    //         .await
-    //         .map(|_| ())
-    // }
+    async fn unlink_tags(
+        &self,
+        thinking_note: &Model,
+        tag_ids: impl IntoIterator<Item = Uuid>,
+    ) -> Result<(), DbErr> {
+        thinking_note_tags::Entity::delete_many()
+            .filter(thinking_note_tags::Column::ThinkingNoteId.eq(thinking_note.id))
+            .filter(thinking_note_tags::Column::TagId.is_in(tag_ids))
+            .exec(self.db)
+            .await
+            .map(|_| ())
+    }
 }

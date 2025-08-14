@@ -29,18 +29,19 @@ Content-Type: application/json
   "tag_ids": [{{tag_0_id}}, {{tag_1_id}}]
 }
 
-# ###
-# # @name update
-# PUT {{endpoint}}/api/thinking_notes/{{thinking_note_id}}
-# Content-Type: application/json
+###
+# @name update
+PUT {{endpoint}}/api/thinking_notes/{{thinking_note_id}}
+Content-Type: application/json
 
-# {
-#   "title": "Second memo edited",
-#   "page_number": 88,
-#   "text": "This is my second memo edited.",
-#   "date": null,
-#   "tag_ids": null
-# }
+{
+  "question": null,
+  "thought": null,
+  "answer": null,
+  "tag_ids": [{{tag_0_id}}, {{tag_1_id}}],
+  "resolved_at": null,
+  "archived_at": null
+}
 
 ###
 # @name delete

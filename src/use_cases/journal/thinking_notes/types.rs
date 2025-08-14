@@ -54,10 +54,20 @@ impl ThinkingNoteVisibleWithTags {
     }
 }
 
-#[derive(serde::Deserialize, Debug, serde::Serialize)]
+#[derive(serde::Deserialize, Debug, serde::Serialize, Default)]
 pub struct ThinkingNoteCreateRequest {
     pub question: Option<String>,
     pub thought: Option<String>,
     pub answer: Option<String>,
     pub tag_ids: Vec<uuid::Uuid>,
+}
+
+#[derive(serde::Deserialize, Debug, serde::Serialize, Default)]
+pub struct ThinkingNoteUpdateRequest {
+    pub question: Option<String>,
+    pub thought: Option<String>,
+    pub answer: Option<String>,
+    pub tag_ids: Vec<uuid::Uuid>,
+    pub resolved_at: Option<DateTime<FixedOffset>>,
+    pub archived_at: Option<DateTime<FixedOffset>>,
 }

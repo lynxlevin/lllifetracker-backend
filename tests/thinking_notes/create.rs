@@ -78,12 +78,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 
     let req = test::TestRequest::post()
         .uri("/api/thinking_notes")
-        .set_json(ThinkingNoteCreateRequest {
-            question: None,
-            thought: None,
-            answer: None,
-            tag_ids: vec![],
-        })
+        .set_json(ThinkingNoteCreateRequest::default())
         .to_request();
 
     let res = test::call_service(&app, req).await;
@@ -100,10 +95,8 @@ async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
     let non_existent_tag_req = test::TestRequest::post()
         .uri("/api/thinking_notes")
         .set_json(ThinkingNoteCreateRequest {
-            question: None,
-            thought: None,
-            answer: None,
             tag_ids: vec![Uuid::now_v7()],
+            ..Default::default()
         })
         .to_request();
     non_existent_tag_req.extensions_mut().insert(user.clone());
