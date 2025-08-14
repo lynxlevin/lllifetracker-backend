@@ -1,0 +1,47 @@
+# Turn on debug to use these.
+###
+# @name login
+POST {{endpoint}}/api/users/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "password"
+}
+
+# ###
+# # @name list
+# GET {{endpoint}}/api/thinking_notes
+
+@thinking_note_id=46b64201-f5fe-4dd2-8d09-e3f8c2071c6f
+@tag_0_id="8ae47c10-d248-46e2-9986-b17b1944ec70"
+@tag_1_id="73d61c99-3ab9-44b7-a732-f773c845b27d"
+
+###
+# @name create
+POST {{endpoint}}/api/thinking_notes
+Content-Type: application/json
+
+{
+  "question": null,
+  "thought": null,
+  "answer": null,
+  "tag_ids": [{{tag_0_id}}, {{tag_1_id}}]
+}
+
+# ###
+# # @name update
+# PUT {{endpoint}}/api/thinking_notes/{{thinking_note_id}}
+# Content-Type: application/json
+
+# {
+#   "title": "Second memo edited",
+#   "page_number": 88,
+#   "text": "This is my second memo edited.",
+#   "date": null,
+#   "tag_ids": null
+# }
+
+###
+# @name delete
+DELETE {{endpoint}}/api/thinking_notes/{{thinking_note_id}}

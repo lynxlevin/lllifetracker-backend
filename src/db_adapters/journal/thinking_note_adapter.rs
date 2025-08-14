@@ -55,22 +55,22 @@ impl<'a> ThinkingNoteAdapter<'a> {
 //     }
 // }
 
-// pub trait ThinkingNoteFilter {
-//     fn filter_eq_id(self, id: Uuid) -> Self;
-//     fn filter_eq_user(self, user: &user::Model) -> Self;
-// }
+pub trait ThinkingNoteFilter {
+    fn filter_eq_id(self, id: Uuid) -> Self;
+    fn filter_eq_user(self, user: &user::Model) -> Self;
+}
 
-// impl ThinkingNoteFilter for ThinkingNoteAdapter<'_> {
-//     fn filter_eq_id(mut self, id: Uuid) -> Self {
-//         self.query = self.query.filter(Column::Id.eq(id));
-//         self
-//     }
+impl ThinkingNoteFilter for ThinkingNoteAdapter<'_> {
+    fn filter_eq_id(mut self, id: Uuid) -> Self {
+        self.query = self.query.filter(Column::Id.eq(id));
+        self
+    }
 
-//     fn filter_eq_user(mut self, user: &user::Model) -> Self {
-//         self.query = self.query.filter(Column::UserId.eq(user.id));
-//         self
-//     }
-// }
+    fn filter_eq_user(mut self, user: &user::Model) -> Self {
+        self.query = self.query.filter(Column::UserId.eq(user.id));
+        self
+    }
+}
 
 // pub trait ThinkingNoteOrder {
 //     fn order_by_date(self, order: Order) -> Self;
@@ -129,41 +129,41 @@ impl<'a> ThinkingNoteAdapter<'a> {
 //     pub tag_created_at: Option<DateTime<FixedOffset>>,
 // }
 
-// pub trait ThinkingNoteQuery {
-//     fn get_all_with_tags(self) -> impl Future<Output = Result<Vec<ThinkingNoteWithTag>, DbErr>>;
-//     fn get_by_id(self, id: Uuid) -> impl Future<Output = Result<Option<Model>, DbErr>>;
-//     fn get_with_tags(self)
-//         -> impl Future<Output = Result<Option<(Model, Vec<tag::Model>)>, DbErr>>;
-// }
+pub trait ThinkingNoteQuery {
+    // fn get_all_with_tags(self) -> impl Future<Output = Result<Vec<ThinkingNoteWithTag>, DbErr>>;
+    fn get_by_id(self, id: Uuid) -> impl Future<Output = Result<Option<Model>, DbErr>>;
+    // fn get_with_tags(self)
+    //     -> impl Future<Output = Result<Option<(Model, Vec<tag::Model>)>, DbErr>>;
+}
 
-// impl ThinkingNoteQuery for ThinkingNoteAdapter<'_> {
-//     async fn get_all_with_tags(self) -> Result<Vec<ThinkingNoteWithTag>, DbErr> {
-//         self.query
-//             .column_as(tag::Column::Id, "tag_id")
-//             .column_as(tag::Column::Name, "tag_name")
-//             .column_as(tag::Column::CreatedAt, "tag_created_at")
-//             .column_as(ambition::Column::Name, "tag_ambition_name")
-//             .column_as(desired_state::Column::Name, "tag_desired_state_name")
-//             .column_as(action::Column::Name, "tag_action_name")
-//             .into_model::<ThinkingNoteWithTag>()
-//             .all(self.db)
-//             .await
-//     }
+impl ThinkingNoteQuery for ThinkingNoteAdapter<'_> {
+    // async fn get_all_with_tags(self) -> Result<Vec<ThinkingNoteWithTag>, DbErr> {
+    //     self.query
+    //         .column_as(tag::Column::Id, "tag_id")
+    //         .column_as(tag::Column::Name, "tag_name")
+    //         .column_as(tag::Column::CreatedAt, "tag_created_at")
+    //         .column_as(ambition::Column::Name, "tag_ambition_name")
+    //         .column_as(desired_state::Column::Name, "tag_desired_state_name")
+    //         .column_as(action::Column::Name, "tag_action_name")
+    //         .into_model::<ThinkingNoteWithTag>()
+    //         .all(self.db)
+    //         .await
+    // }
 
-//     async fn get_by_id(self, id: Uuid) -> Result<Option<Model>, DbErr> {
-//         self.query.filter(Column::Id.eq(id)).one(self.db).await
-//     }
+    async fn get_by_id(self, id: Uuid) -> Result<Option<Model>, DbErr> {
+        self.query.filter(Column::Id.eq(id)).one(self.db).await
+    }
 
-//     async fn get_with_tags(self) -> Result<Option<(Model, Vec<tag::Model>)>, DbErr> {
-//         match self.query.select_with(tag::Entity).all(self.db).await {
-//             Ok(diaries) => match diaries.len() > 0 {
-//                 true => Ok(diaries.into_iter().nth(0)),
-//                 false => Ok(None),
-//             },
-//             Err(e) => Err(e),
-//         }
-//     }
-// }
+    // async fn get_with_tags(self) -> Result<Option<(Model, Vec<tag::Model>)>, DbErr> {
+    //     match self.query.select_with(tag::Entity).all(self.db).await {
+    //         Ok(diaries) => match diaries.len() > 0 {
+    //             true => Ok(diaries.into_iter().nth(0)),
+    //             false => Ok(None),
+    //         },
+    //         Err(e) => Err(e),
+    //     }
+    // }
+}
 
 #[derive(Debug, Clone)]
 pub struct CreateThinkingNoteParams {
@@ -195,7 +195,7 @@ pub trait ThinkingNoteMutation {
     //     diary: Model,
     //     params: UpdateDiaryParams,
     // ) -> impl Future<Output = Result<Model, DbErr>>;
-    // fn delete(self, diary: Model) -> impl Future<Output = Result<(), DbErr>>;
+    fn delete(self, thinking_note: Model) -> impl Future<Output = Result<(), DbErr>>;
     fn link_tags(
         &self,
         thinking_note: &Model,
@@ -245,9 +245,9 @@ impl ThinkingNoteMutation for ThinkingNoteAdapter<'_> {
     //     })
     // }
 
-    // async fn delete(self, diary: Model) -> Result<(), DbErr> {
-    //     diary.delete(self.db).await.map(|_| ())
-    // }
+    async fn delete(self, thinking_note: Model) -> Result<(), DbErr> {
+        thinking_note.delete(self.db).await.map(|_| ())
+    }
 
     async fn link_tags(
         &self,
