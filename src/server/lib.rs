@@ -7,7 +7,7 @@ use common::settings::types::Settings;
 use web_adapters::{
     action_goal_routes, action_routes, action_track_routes, ambition_routes, auth_routes,
     desired_state_category_routes, desired_state_routes, diary_routes, reading_note_routes,
-    tag_routes,
+    tag_routes, thinking_note_routes,
 };
 
 pub use web_adapters::auth_middleware;
@@ -57,6 +57,7 @@ pub fn get_routes() -> Scope {
         .configure(diary_routes)
         .configure(desired_state_category_routes)
         .configure(action_goal_routes)
+        .configure(thinking_note_routes)
 }
 
 #[actix_web::get("/health-check")]
