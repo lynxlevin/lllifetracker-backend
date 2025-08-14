@@ -1,4 +1,4 @@
-use chrono::Utc;
+use chrono::{DateTime, FixedOffset, Utc};
 use entities::thinking_note;
 use sea_orm::Set;
 use uuid::Uuid;
@@ -20,11 +20,29 @@ pub fn thinking_note(user_id: Uuid) -> thinking_note::ActiveModel {
 
 pub trait ThinkingNoteFactory {
     fn question(self, question: Option<String>) -> thinking_note::ActiveModel;
+    fn resolved_at(self, resolved_at: Option<DateTime<FixedOffset>>) -> thinking_note::ActiveModel;
+    fn archived_at(self, archived_at: Option<DateTime<FixedOffset>>) -> thinking_note::ActiveModel;
 }
 
 impl ThinkingNoteFactory for thinking_note::ActiveModel {
     fn question(mut self, question: Option<String>) -> thinking_note::ActiveModel {
         self.question = Set(question);
+        self
+    }
+
+    fn resolved_at(
+        mut self,
+        resolved_at: Option<DateTime<FixedOffset>>,
+    ) -> thinking_note::ActiveModel {
+        self.resolved_at = Set(resolved_at);
+        self
+    }
+
+    fn archived_at(
+        mut self,
+        archived_at: Option<DateTime<FixedOffset>>,
+    ) -> thinking_note::ActiveModel {
+        self.archived_at = Set(archived_at);
         self
     }
 }

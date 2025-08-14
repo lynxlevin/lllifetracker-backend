@@ -1,6 +1,6 @@
 use std::future::Future;
 
-use chrono::{DateTime, FixedOffset, NaiveDate, Utc};
+use chrono::{DateTime, FixedOffset, Utc};
 use sea_orm::{
     sea_query::NullOrdering::Last, sqlx::error::Error::Database, ActiveModelTrait, ColumnTrait,
     DbConn, DbErr, EntityTrait, FromQueryResult, IntoActiveModel, JoinType::LeftJoin, ModelTrait,
@@ -34,7 +34,7 @@ impl<'a> ThinkingNoteAdapter<'a> {
 
 pub trait ThinkingNoteJoin {
     fn join_tags(self) -> Self;
-    //     fn join_my_way_via_tags(self) -> Self;
+    fn join_my_way_via_tags(self) -> Self;
 }
 
 impl ThinkingNoteJoin for ThinkingNoteAdapter<'_> {
@@ -45,19 +45,21 @@ impl ThinkingNoteJoin for ThinkingNoteAdapter<'_> {
             .join(LeftJoin, thinking_note_tags::Relation::Tag.def());
         self
     }
-    //     fn join_my_way_via_tags(mut self) -> Self {
-    //         self.query = self
-    //             .query
-    //             .join(LeftJoin, tag::Relation::Ambition.def())
-    //             .join(LeftJoin, tag::Relation::DesiredState.def())
-    //             .join(LeftJoin, tag::Relation::Action.def());
-    //         self
-    //     }
+    fn join_my_way_via_tags(mut self) -> Self {
+        self.query = self
+            .query
+            .join(LeftJoin, tag::Relation::Ambition.def())
+            .join(LeftJoin, tag::Relation::DesiredState.def())
+            .join(LeftJoin, tag::Relation::Action.def());
+        self
+    }
 }
 
 pub trait ThinkingNoteFilter {
     fn filter_eq_id(self, id: Uuid) -> Self;
     fn filter_eq_user(self, user: &user::Model) -> Self;
+    fn filter_null_resolved_at(self, is_null: bool) -> Self;
+    fn filter_null_archived_at(self, is_null: bool) -> Self;
 }
 
 impl ThinkingNoteFilter for ThinkingNoteAdapter<'_> {
@@ -70,85 +72,105 @@ impl ThinkingNoteFilter for ThinkingNoteAdapter<'_> {
         self.query = self.query.filter(Column::UserId.eq(user.id));
         self
     }
+
+    fn filter_null_resolved_at(mut self, is_null: bool) -> Self {
+        self.query = match is_null {
+            true => self.query.filter(Column::ResolvedAt.is_null()),
+            false => self.query.filter(Column::ResolvedAt.is_not_null()),
+        };
+        self
+    }
+
+    fn filter_null_archived_at(mut self, is_null: bool) -> Self {
+        self.query = match is_null {
+            true => self.query.filter(Column::ArchivedAt.is_null()),
+            false => self.query.filter(Column::ArchivedAt.is_not_null()),
+        };
+        self
+    }
 }
 
-// pub trait ThinkingNoteOrder {
-//     fn order_by_date(self, order: Order) -> Self;
-//     fn order_by_ambition_created_at_nulls_last(self, order: Order) -> Self;
-//     fn order_by_desired_state_created_at_nulls_last(self, order: Order) -> Self;
-//     fn order_by_action_created_at_nulls_last(self, order: Order) -> Self;
-//     fn order_by_tag_created_at_nulls_last(self, order: Order) -> Self;
-// }
+pub trait ThinkingNoteOrder {
+    fn order_by_updated_at(self, order: Order) -> Self;
+    fn order_by_ambition_created_at_nulls_last(self, order: Order) -> Self;
+    fn order_by_desired_state_created_at_nulls_last(self, order: Order) -> Self;
+    fn order_by_action_created_at_nulls_last(self, order: Order) -> Self;
+    fn order_by_tag_created_at_nulls_last(self, order: Order) -> Self;
+}
 
-// impl ThinkingNoteOrder for ThinkingNoteAdapter<'_> {
-//     fn order_by_date(mut self, order: Order) -> Self {
-//         self.query = self.query.order_by(Column::Date, order);
-//         self
-//     }
+impl ThinkingNoteOrder for ThinkingNoteAdapter<'_> {
+    fn order_by_updated_at(mut self, order: Order) -> Self {
+        self.query = self.query.order_by(Column::UpdatedAt, order);
+        self
+    }
 
-//     fn order_by_ambition_created_at_nulls_last(mut self, order: Order) -> Self {
-//         self.query = self
-//             .query
-//             .order_by_with_nulls(ambition::Column::CreatedAt, order, Last);
-//         self
-//     }
+    fn order_by_ambition_created_at_nulls_last(mut self, order: Order) -> Self {
+        self.query = self
+            .query
+            .order_by_with_nulls(ambition::Column::CreatedAt, order, Last);
+        self
+    }
 
-//     fn order_by_desired_state_created_at_nulls_last(mut self, order: Order) -> Self {
-//         self.query = self
-//             .query
-//             .order_by_with_nulls(desired_state::Column::CreatedAt, order, Last);
-//         self
-//     }
+    fn order_by_desired_state_created_at_nulls_last(mut self, order: Order) -> Self {
+        self.query = self
+            .query
+            .order_by_with_nulls(desired_state::Column::CreatedAt, order, Last);
+        self
+    }
 
-//     fn order_by_action_created_at_nulls_last(mut self, order: Order) -> Self {
-//         self.query = self
-//             .query
-//             .order_by_with_nulls(action::Column::CreatedAt, order, Last);
-//         self
-//     }
+    fn order_by_action_created_at_nulls_last(mut self, order: Order) -> Self {
+        self.query = self
+            .query
+            .order_by_with_nulls(action::Column::CreatedAt, order, Last);
+        self
+    }
 
-//     fn order_by_tag_created_at_nulls_last(mut self, order: Order) -> Self {
-//         self.query = self
-//             .query
-//             .order_by_with_nulls(tag::Column::CreatedAt, order, Last);
-//         self
-//     }
-// }
+    fn order_by_tag_created_at_nulls_last(mut self, order: Order) -> Self {
+        self.query = self
+            .query
+            .order_by_with_nulls(tag::Column::CreatedAt, order, Last);
+        self
+    }
+}
 
-// #[derive(FromQueryResult, Debug, Serialize, Deserialize, PartialEq)]
-// pub struct ThinkingNoteWithTag {
-//     pub id: Uuid,
-//     pub question: Option<String>,
-//     pub thought: Option<String>,
-//     pub answer: Option<String>,
-//     pub tag_id: Option<Uuid>,
-//     pub tag_name: Option<String>,
-//     pub tag_ambition_name: Option<String>,
-//     pub tag_desired_state_name: Option<String>,
-//     pub tag_action_name: Option<String>,
-//     pub tag_created_at: Option<DateTime<FixedOffset>>,
-// }
+#[derive(FromQueryResult, Debug, Serialize, Deserialize, PartialEq)]
+pub struct ThinkingNoteWithTag {
+    pub id: Uuid,
+    pub question: Option<String>,
+    pub thought: Option<String>,
+    pub answer: Option<String>,
+    pub resolved_at: Option<DateTime<FixedOffset>>,
+    pub archived_at: Option<DateTime<FixedOffset>>,
+    pub created_at: DateTime<FixedOffset>,
+    pub updated_at: DateTime<FixedOffset>,
+    pub tag_id: Option<Uuid>,
+    pub tag_name: Option<String>,
+    pub tag_ambition_name: Option<String>,
+    pub tag_desired_state_name: Option<String>,
+    pub tag_action_name: Option<String>,
+    pub tag_created_at: Option<DateTime<FixedOffset>>,
+}
 
 pub trait ThinkingNoteQuery {
-    // fn get_all_with_tags(self) -> impl Future<Output = Result<Vec<ThinkingNoteWithTag>, DbErr>>;
+    fn get_all_with_tags(self) -> impl Future<Output = Result<Vec<ThinkingNoteWithTag>, DbErr>>;
     fn get_by_id(self, id: Uuid) -> impl Future<Output = Result<Option<Model>, DbErr>>;
     fn get_with_tags(self)
         -> impl Future<Output = Result<Option<(Model, Vec<tag::Model>)>, DbErr>>;
 }
 
 impl ThinkingNoteQuery for ThinkingNoteAdapter<'_> {
-    // async fn get_all_with_tags(self) -> Result<Vec<ThinkingNoteWithTag>, DbErr> {
-    //     self.query
-    //         .column_as(tag::Column::Id, "tag_id")
-    //         .column_as(tag::Column::Name, "tag_name")
-    //         .column_as(tag::Column::CreatedAt, "tag_created_at")
-    //         .column_as(ambition::Column::Name, "tag_ambition_name")
-    //         .column_as(desired_state::Column::Name, "tag_desired_state_name")
-    //         .column_as(action::Column::Name, "tag_action_name")
-    //         .into_model::<ThinkingNoteWithTag>()
-    //         .all(self.db)
-    //         .await
-    // }
+    async fn get_all_with_tags(self) -> Result<Vec<ThinkingNoteWithTag>, DbErr> {
+        self.query
+            .column_as(tag::Column::Id, "tag_id")
+            .column_as(tag::Column::Name, "tag_name")
+            .column_as(tag::Column::CreatedAt, "tag_created_at")
+            .column_as(ambition::Column::Name, "tag_ambition_name")
+            .column_as(desired_state::Column::Name, "tag_desired_state_name")
+            .column_as(action::Column::Name, "tag_action_name")
+            .into_model::<ThinkingNoteWithTag>()
+            .all(self.db)
+            .await
+    }
 
     async fn get_by_id(self, id: Uuid) -> Result<Option<Model>, DbErr> {
         self.query.filter(Column::Id.eq(id)).one(self.db).await

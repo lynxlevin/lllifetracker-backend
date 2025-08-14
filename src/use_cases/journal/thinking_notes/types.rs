@@ -1,13 +1,12 @@
 use chrono::{DateTime, FixedOffset};
 use entities::{prelude::ThinkingNote, thinking_note};
 use sea_orm::{DerivePartialModel, FromQueryResult};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::tags::types::TagVisible;
 
-#[derive(
-    serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug,
-)]
+#[derive(Serialize, Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug)]
 #[sea_orm(entity = "ThinkingNote")]
 pub struct ThinkingNoteVisible {
     pub id: Uuid,
@@ -35,7 +34,7 @@ impl From<thinking_note::Model> for ThinkingNoteVisible {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct ThinkingNoteVisibleWithTags {
     pub id: Uuid,
     pub question: Option<String>,
@@ -54,7 +53,13 @@ impl ThinkingNoteVisibleWithTags {
     }
 }
 
-#[derive(serde::Deserialize, Debug, serde::Serialize, Default)]
+#[derive(Deserialize, Debug)]
+pub struct ThinkingNoteListQuery {
+    pub resolved: Option<bool>,
+    pub archived: Option<bool>,
+}
+
+#[derive(Deserialize, Debug, Serialize, Default)]
 pub struct ThinkingNoteCreateRequest {
     pub question: Option<String>,
     pub thought: Option<String>,
@@ -62,7 +67,7 @@ pub struct ThinkingNoteCreateRequest {
     pub tag_ids: Vec<uuid::Uuid>,
 }
 
-#[derive(serde::Deserialize, Debug, serde::Serialize, Default)]
+#[derive(Deserialize, Debug, Serialize, Default)]
 pub struct ThinkingNoteUpdateRequest {
     pub question: Option<String>,
     pub thought: Option<String>,
