@@ -33,15 +33,21 @@ impl<'a> DiaryAdapter<'a> {
 }
 
 pub trait DiaryJoin {
-    fn join_my_way_tags(self) -> Self;
+    fn join_tags(self) -> Self;
+    fn join_my_way_via_tags(self) -> Self;
 }
 
 impl DiaryJoin for DiaryAdapter<'_> {
-    fn join_my_way_tags(mut self) -> Self {
+    fn join_tags(mut self) -> Self {
         self.query = self
             .query
             .join_rev(LeftJoin, diaries_tags::Relation::Diary.def())
-            .join(LeftJoin, diaries_tags::Relation::Tag.def())
+            .join(LeftJoin, diaries_tags::Relation::Tag.def());
+        self
+    }
+    fn join_my_way_via_tags(mut self) -> Self {
+        self.query = self
+            .query
             .join(LeftJoin, tag::Relation::Ambition.def())
             .join(LeftJoin, tag::Relation::DesiredState.def())
             .join(LeftJoin, tag::Relation::Action.def());
@@ -50,10 +56,16 @@ impl DiaryJoin for DiaryAdapter<'_> {
 }
 
 pub trait DiaryFilter {
+    fn filter_eq_id(self, id: Uuid) -> Self;
     fn filter_eq_user(self, user: &user::Model) -> Self;
 }
 
 impl DiaryFilter for DiaryAdapter<'_> {
+    fn filter_eq_id(mut self, id: Uuid) -> Self {
+        self.query = self.query.filter(Column::Id.eq(id));
+        self
+    }
+
     fn filter_eq_user(mut self, user: &user::Model) -> Self {
         self.query = self.query.filter(Column::UserId.eq(user.id));
         self
@@ -119,10 +131,8 @@ pub struct DiaryWithTag {
 pub trait DiaryQuery {
     fn get_all_with_tags(self) -> impl Future<Output = Result<Vec<DiaryWithTag>, DbErr>>;
     fn get_by_id(self, id: Uuid) -> impl Future<Output = Result<Option<Model>, DbErr>>;
-    fn get_with_tags_by_id(
-        self,
-        id: Uuid,
-    ) -> impl Future<Output = Result<Option<(Model, Vec<tag::Model>)>, DbErr>>;
+    fn get_with_tags(self)
+        -> impl Future<Output = Result<Option<(Model, Vec<tag::Model>)>, DbErr>>;
 }
 
 impl DiaryQuery for DiaryAdapter<'_> {
@@ -143,17 +153,8 @@ impl DiaryQuery for DiaryAdapter<'_> {
         self.query.filter(Column::Id.eq(id)).one(self.db).await
     }
 
-    async fn get_with_tags_by_id(
-        self,
-        id: Uuid,
-    ) -> Result<Option<(Model, Vec<tag::Model>)>, DbErr> {
-        match self
-            .query
-            .filter(Column::Id.eq(id))
-            .find_with_related(tag::Entity)
-            .all(self.db)
-            .await
-        {
+    async fn get_with_tags(self) -> Result<Option<(Model, Vec<tag::Model>)>, DbErr> {
+        match self.query.select_with(tag::Entity).all(self.db).await {
             Ok(diaries) => match diaries.len() > 0 {
                 true => Ok(diaries.into_iter().nth(0)),
                 false => Ok(None),
