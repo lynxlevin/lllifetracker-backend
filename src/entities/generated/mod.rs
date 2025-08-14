@@ -14,4 +14,6 @@ pub mod reading_note;
 pub mod reading_notes_tags;
 pub mod sea_orm_active_enums;
 pub mod tag;
+pub mod thinking_note;
+pub mod thinking_note_tags;
 pub mod user;

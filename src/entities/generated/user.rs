@@ -41,6 +41,8 @@ pub enum Relation {
     ReadingNote,
     #[sea_orm(has_many = "super::tag::Entity")]
     Tag,
+    #[sea_orm(has_many = "super::thinking_note::Entity")]
+    ThinkingNote,
 }
 
 impl Related<super::action::Entity> for Entity {
@@ -94,6 +96,12 @@ impl Related<super::reading_note::Entity> for Entity {
 impl Related<super::tag::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Tag.def()
+    }
+}
+
+impl Related<super::thinking_note::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::ThinkingNote.def()
     }
 }
 
