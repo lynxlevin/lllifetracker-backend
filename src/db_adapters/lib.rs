@@ -3,11 +3,8 @@ mod my_way;
 pub mod tag_adapter;
 pub mod user_adapter;
 
-pub use journal::{diary_adapter, reading_note_adapter};
-pub use my_way::{
-    action_adapter, action_goal_adapter, action_track_adapter, ambition_adapter,
-    desired_state_adapter, desired_state_category_adapter,
-};
+pub use journal::*;
+pub use my_way::*;
 
 use core::fmt;
 pub use sea_orm::Order;

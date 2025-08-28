@@ -49,6 +49,8 @@ pub enum Relation {
     DiariesTags,
     #[sea_orm(has_many = "super::reading_notes_tags::Entity")]
     ReadingNotesTags,
+    #[sea_orm(has_many = "super::thinking_note_tags::Entity")]
+    ThinkingNoteTags,
     #[sea_orm(
         belongs_to = "super::user::Entity",
         from = "Column::UserId",
@@ -89,6 +91,12 @@ impl Related<super::reading_notes_tags::Entity> for Entity {
     }
 }
 
+impl Related<super::thinking_note_tags::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::ThinkingNoteTags.def()
+    }
+}
+
 impl Related<super::user::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::User.def()
@@ -110,6 +118,15 @@ impl Related<super::reading_note::Entity> for Entity {
     }
     fn via() -> Option<RelationDef> {
         Some(super::reading_notes_tags::Relation::Tag.def().rev())
+    }
+}
+
+impl Related<super::thinking_note::Entity> for Entity {
+    fn to() -> RelationDef {
+        super::thinking_note_tags::Relation::ThinkingNote.def()
+    }
+    fn via() -> Option<RelationDef> {
+        Some(super::thinking_note_tags::Relation::Tag.def().rev())
     }
 }
 

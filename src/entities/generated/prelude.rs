@@ -11,4 +11,6 @@ pub use super::diary::Entity as Diary;
 pub use super::reading_note::Entity as ReadingNote;
 pub use super::reading_notes_tags::Entity as ReadingNotesTags;
 pub use super::tag::Entity as Tag;
+pub use super::thinking_note::Entity as ThinkingNote;
+pub use super::thinking_note_tags::Entity as ThinkingNoteTags;
 pub use super::user::Entity as User;
