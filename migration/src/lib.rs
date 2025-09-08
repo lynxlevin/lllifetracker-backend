@@ -42,6 +42,7 @@ mod m20250712_000001_remove_score_from_diaries_table;
 mod m20250808_000001_create_action_goals_table;
 mod m20250813_000001_unique_constraint_for_action_goals_table;
 mod m20250814_000001_create_thinking_notes_with_tags_table;
+mod m20250908_000001_add_type_to_tags_table;
 mod m_seed_data;
 
 pub struct Migrator;
@@ -97,6 +98,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20250808_000001_create_action_goals_table::Migration),
             Box::new(m20250813_000001_unique_constraint_for_action_goals_table::Migration),
             Box::new(m20250814_000001_create_thinking_notes_with_tags_table::Migration),
+            Box::new(m20250908_000001_add_type_to_tags_table::Migration),
         ]
     }
 }
