@@ -46,10 +46,25 @@ impl MigrationTrait for Migration {
             ",
         )
         .await?;
+
+        db.execute_unprepared(
+            "ALTER TABLE tag
+                ADD CONSTRAINT type_foreign_keys_compatibility
+                CHECK (
+                    (type = 'Ambition' AND ambition_id is not null AND desired_state_id is null AND action_id is null AND name is null) OR
+                    (type = 'DesiredState' AND desired_state_id is not null AND ambition_id is null AND action_id is null AND name is null) OR
+                    (type = 'Action' AND action_id is not null AND ambition_id is null AND desired_state_id is null AND name is null) OR
+                    (type = 'Plain' AND name is not null AND ambition_id is null AND desired_state_id is null AND action_id is null)
+                );
+            ",
+        ).await?;
         Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        let db = manager.get_connection();
+        db.execute_unprepared("ALTER TABLE tag DROP CONSTRAINT type_foreign_keys_compatibility;")
+            .await?;
         manager
             .alter_table(
                 Table::alter()
