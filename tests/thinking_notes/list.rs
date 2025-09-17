@@ -1,9 +1,9 @@
 use actix_web::{http, test, HttpMessage};
 use chrono::Utc;
+use entities::sea_orm_active_enums::TagType;
 use sea_orm::{ActiveModelTrait, DbErr};
 use use_cases::{
-    journal::thinking_notes::types::ThinkingNoteVisibleWithTags,
-    tags::types::{TagType, TagVisible},
+    journal::thinking_notes::types::ThinkingNoteVisibleWithTags, tags::types::TagVisible,
 };
 
 use crate::utils::Connections;
@@ -64,13 +64,13 @@ async fn happy_path_active_only() -> Result<(), DbErr> {
                 TagVisible {
                     id: desired_state_tag.id,
                     name: desired_state.name,
-                    tag_type: TagType::DesiredState,
+                    r#type: TagType::DesiredState,
                     created_at: desired_state_tag.created_at,
                 },
                 TagVisible {
                     id: action_tag.id,
                     name: action.name,
-                    tag_type: TagType::Action,
+                    r#type: TagType::Action,
                     created_at: action_tag.created_at,
                 },
             ],
@@ -88,13 +88,13 @@ async fn happy_path_active_only() -> Result<(), DbErr> {
                 TagVisible {
                     id: ambition_tag.id,
                     name: ambition.name,
-                    tag_type: TagType::Ambition,
+                    r#type: TagType::Ambition,
                     created_at: ambition_tag.created_at,
                 },
                 TagVisible {
                     id: plain_tag.id,
                     name: plain_tag.name.unwrap(),
-                    tag_type: TagType::Plain,
+                    r#type: TagType::Plain,
                     created_at: plain_tag.created_at,
                 },
             ],

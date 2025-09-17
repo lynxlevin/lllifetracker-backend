@@ -1,7 +1,7 @@
 use actix_web::{http, test, HttpMessage};
-use entities::tag;
+use entities::{sea_orm_active_enums::TagType, tag};
 use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
-use use_cases::tags::types::{TagCreateRequest, TagType, TagVisible};
+use use_cases::tags::types::{TagCreateRequest, TagVisible};
 
 use crate::utils::Connections;
 
@@ -10,7 +10,7 @@ use common::factory;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
 
     let req_body = TagCreateRequest {
@@ -28,7 +28,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
     let res: TagVisible = test::read_body_json(resp).await;
     assert_eq!(res.name, req_body.name.clone());
-    assert_eq!(res.tag_type, TagType::Plain);
+    assert_eq!(res.r#type, TagType::Plain);
 
     let tag_in_db = tag::Entity::find_by_id(res.id).one(&db).await?.unwrap();
     assert_eq!(tag_in_db.name, Some(req_body.name));
@@ -39,7 +39,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let Connections { app, ..} = init_app().await?;
+    let Connections { app, .. } = init_app().await?;
 
     let req = test::TestRequest::post()
         .uri("/api/tags/plain")
