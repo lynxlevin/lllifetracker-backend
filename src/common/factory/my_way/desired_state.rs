@@ -1,5 +1,5 @@
 use chrono::Utc;
-use entities::{desired_state, tag};
+use entities::{desired_state, sea_orm_active_enums::TagType, tag};
 use sea_orm::{ActiveModelTrait, ActiveValue::NotSet, DbConn, DbErr, Set};
 use std::future::Future;
 use uuid::Uuid;
@@ -61,6 +61,7 @@ impl DesiredStateFactory for desired_state::ActiveModel {
             id: Set(uuid::Uuid::now_v7()),
             user_id: Set(desired_state.user_id),
             desired_state_id: Set(Some(desired_state.id)),
+            r#type: Set(TagType::DesiredState),
             ..Default::default()
         }
         .insert(db)

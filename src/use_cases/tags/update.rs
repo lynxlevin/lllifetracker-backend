@@ -1,11 +1,11 @@
 use db_adapters::tag_adapter::{
     TagAdapter, TagFilter, TagMutation, TagQuery, UpdatePlainTagParams,
 };
-use entities::{tag, user as user_entity};
+use entities::{sea_orm_active_enums::TagType, user as user_entity};
 use uuid::Uuid;
 
 use crate::{
-    tags::types::{TagType, TagUpdateRequest, TagVisible},
+    tags::types::{TagUpdateRequest, TagVisible},
     UseCaseError,
 };
 
@@ -25,7 +25,7 @@ pub async fn update_plain_tag<'a>(
             "Tag with this id was not found".to_string(),
         ))?;
 
-    if !_is_plain_tag(&tag) {
+    if tag.r#type != TagType::Plain {
         return Err(UseCaseError::BadRequest(
             "Tag to update must be a plain tag.".to_string(),
         ));
@@ -42,15 +42,8 @@ pub async fn update_plain_tag<'a>(
         .map(|tag| TagVisible {
             id: tag.id,
             name: tag.name.unwrap(),
-            tag_type: TagType::Plain,
+            r#type: TagType::Plain,
             created_at: tag.created_at,
         })
         .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
-}
-
-fn _is_plain_tag(tag: &tag::Model) -> bool {
-    return tag.name.is_some()
-        && tag.ambition_id.is_none()
-        && tag.desired_state_id.is_none()
-        && tag.action_id.is_none();
 }

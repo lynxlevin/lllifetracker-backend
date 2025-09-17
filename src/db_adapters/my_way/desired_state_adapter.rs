@@ -10,6 +10,7 @@ use uuid::Uuid;
 
 use entities::{
     desired_state::{ActiveModel, Column, Entity, Model},
+    sea_orm_active_enums::TagType,
     tag, user,
 };
 
@@ -146,6 +147,7 @@ impl DesiredStateMutation for DesiredStateAdapter<'_> {
                         id: Set(uuid::Uuid::now_v7()),
                         user_id: Set(params.user_id),
                         desired_state_id: Set(Some(desired_state_id)),
+                        r#type: Set(TagType::DesiredState),
                         ..Default::default()
                     }
                     .insert(txn)

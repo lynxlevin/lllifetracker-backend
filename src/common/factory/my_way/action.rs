@@ -1,5 +1,9 @@
 use chrono::Utc;
-use entities::{action, sea_orm_active_enums::ActionTrackType, tag};
+use entities::{
+    action,
+    sea_orm_active_enums::{ActionTrackType, TagType},
+    tag,
+};
 use sea_orm::{ActiveModelTrait, ActiveValue::NotSet, DbConn, DbErr, Set};
 use std::future::Future;
 use uuid::Uuid;
@@ -65,6 +69,7 @@ impl ActionFactory for action::ActiveModel {
             id: Set(uuid::Uuid::now_v7()),
             user_id: Set(action.user_id),
             action_id: Set(Some(action.id)),
+            r#type: Set(TagType::Action),
             ..Default::default()
         }
         .insert(db)

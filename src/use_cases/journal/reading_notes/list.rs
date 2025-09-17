@@ -8,8 +8,7 @@ use db_adapters::{
 use entities::user as user_entity;
 
 use crate::{
-    journal::reading_notes::types::ReadingNoteVisibleWithTags,
-    tags::types::{TagType, TagVisible},
+    journal::reading_notes::types::ReadingNoteVisibleWithTags, tags::types::TagVisible,
     UseCaseError,
 };
 
@@ -33,51 +32,36 @@ pub async fn list_reading_notes<'a>(
 
     let mut res: Vec<ReadingNoteVisibleWithTags> = vec![];
     for reading_note in reading_notes {
-        if res.is_empty() || res.last().unwrap().id != reading_note.id {
-            let mut res_reading_note = ReadingNoteVisibleWithTags {
+        if first_to_process(&res, &reading_note) {
+            let tags = match reading_note.tag_id {
+                Some(_) => vec![Into::<TagVisible>::into(&reading_note)],
+                None => vec![],
+            };
+            let res_reading_note = ReadingNoteVisibleWithTags {
                 id: reading_note.id,
-                title: reading_note.title.clone(),
+                title: reading_note.title,
                 page_number: reading_note.page_number,
-                text: reading_note.text.clone(),
+                text: reading_note.text,
                 date: reading_note.date,
                 created_at: reading_note.created_at,
                 updated_at: reading_note.updated_at,
-                tags: vec![],
+                tags,
             };
-            if let Some(tag) = get_tag(&reading_note) {
-                res_reading_note.push_tag(tag);
-            }
             res.push(res_reading_note);
         } else {
-            if let Some(tag) = get_tag(&reading_note) {
-                res.last_mut().unwrap().push_tag(tag);
+            if let Some(_) = reading_note.tag_id {
+                res.last_mut()
+                    .unwrap()
+                    .push_tag(Into::<TagVisible>::into(&reading_note));
             }
         }
     }
     Ok(res)
 }
 
-fn get_tag(reading_note: &ReadingNoteWithTag) -> Option<TagVisible> {
-    if reading_note.tag_id.is_none() {
-        return None;
-    }
-
-    let (name, tag_type) = if let Some(name) = reading_note.tag_name.clone() {
-        (name, TagType::Plain)
-    } else if let Some(name) = reading_note.tag_ambition_name.clone() {
-        (name, TagType::Ambition)
-    } else if let Some(name) = reading_note.tag_desired_state_name.clone() {
-        (name, TagType::DesiredState)
-    } else if let Some(name) = reading_note.tag_action_name.clone() {
-        (name, TagType::Action)
-    } else {
-        panic!("Tag without name should not exist.");
-    };
-
-    Some(TagVisible {
-        id: reading_note.tag_id.unwrap(),
-        name,
-        tag_type,
-        created_at: reading_note.tag_created_at.unwrap(),
-    })
+fn first_to_process(
+    res: &Vec<ReadingNoteVisibleWithTags>,
+    reading_note: &ReadingNoteWithTag,
+) -> bool {
+    res.is_empty() || res.last().unwrap().id != reading_note.id
 }

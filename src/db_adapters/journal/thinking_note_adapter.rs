@@ -2,20 +2,23 @@ use std::future::Future;
 
 use chrono::{DateTime, FixedOffset, Utc};
 use sea_orm::{
-    sea_query::NullOrdering::Last, sqlx::error::Error::Database, ActiveModelTrait, ColumnTrait,
-    DbConn, DbErr, EntityTrait, FromQueryResult, IntoActiveModel, JoinType::LeftJoin, ModelTrait,
-    Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait, RuntimeErr::SqlxError, Select, Set,
+    prelude::Expr, sea_query::NullOrdering::Last, sqlx::error::Error::Database, ActiveModelTrait,
+    ColumnAsExpr, ColumnTrait, DbConn, DbErr, EntityTrait, FromQueryResult, IntoActiveModel,
+    JoinType::LeftJoin, ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
+    RuntimeErr::SqlxError, Select, Set,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use entities::{
-    action, ambition, desired_state, tag,
+    action, ambition, desired_state,
+    sea_orm_active_enums::TagType,
+    tag,
     thinking_note::{ActiveModel, Column, Entity, Model},
     thinking_note_tags, user,
 };
 
-use crate::CustomDbErr;
+use crate::{tag_adapter::TagWithName, CustomDbErr};
 
 #[derive(Clone)]
 pub struct ThinkingNoteAdapter<'a> {
@@ -145,10 +148,20 @@ pub struct ThinkingNoteWithTag {
     pub updated_at: DateTime<FixedOffset>,
     pub tag_id: Option<Uuid>,
     pub tag_name: Option<String>,
-    pub tag_ambition_name: Option<String>,
-    pub tag_desired_state_name: Option<String>,
-    pub tag_action_name: Option<String>,
+    pub tag_type: Option<TagType>,
     pub tag_created_at: Option<DateTime<FixedOffset>>,
+}
+
+impl Into<TagWithName> for &ThinkingNoteWithTag {
+    /// Unsafe: panics if tag_id, tag_name, tag_type, tag_created_at are None.
+    fn into(self) -> TagWithName {
+        TagWithName {
+            id: self.tag_id.unwrap(),
+            name: self.tag_name.clone().unwrap(),
+            r#type: self.tag_type.clone().unwrap(),
+            created_at: self.tag_created_at.unwrap(),
+        }
+    }
 }
 
 pub trait ThinkingNoteQuery {
@@ -162,11 +175,36 @@ impl ThinkingNoteQuery for ThinkingNoteAdapter<'_> {
     async fn get_all_with_tags(self) -> Result<Vec<ThinkingNoteWithTag>, DbErr> {
         self.query
             .column_as(tag::Column::Id, "tag_id")
-            .column_as(tag::Column::Name, "tag_name")
+            .expr_as(
+                Expr::case(
+                    Expr::col(tag::Column::Type)
+                        .cast_as("text")
+                        .eq(TagType::Ambition),
+                    ambition::Column::Name.into_column_as_expr(),
+                )
+                .case(
+                    Expr::col(tag::Column::Type)
+                        .cast_as("text")
+                        .eq(TagType::DesiredState),
+                    desired_state::Column::Name.into_column_as_expr(),
+                )
+                .case(
+                    Expr::col(tag::Column::Type)
+                        .cast_as("text")
+                        .eq(TagType::Action),
+                    action::Column::Name.into_column_as_expr(),
+                )
+                .case(
+                    Expr::col(tag::Column::Type)
+                        .cast_as("text")
+                        .eq(TagType::Plain),
+                    tag::Column::Name.into_column_as_expr(),
+                )
+                .finally("no_name"),
+                "tag_name",
+            )
+            .column_as(tag::Column::Type, "tag_type")
             .column_as(tag::Column::CreatedAt, "tag_created_at")
-            .column_as(ambition::Column::Name, "tag_ambition_name")
-            .column_as(desired_state::Column::Name, "tag_desired_state_name")
-            .column_as(action::Column::Name, "tag_action_name")
             .into_model::<ThinkingNoteWithTag>()
             .all(self.db)
             .await

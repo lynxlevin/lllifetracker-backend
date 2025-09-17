@@ -40,7 +40,7 @@ pasetors = { version = "^0.6.8", features = [
     "v4",
 ], default-features = false }
 once_cell = { version = "^1.19.0", default-features = false }
-sea-orm = { version = "~1.0", features = [
+sea-orm = { version = "~1.1", features = [
     "sqlx-postgres",
     "runtime-tokio-rustls",
     "macros",

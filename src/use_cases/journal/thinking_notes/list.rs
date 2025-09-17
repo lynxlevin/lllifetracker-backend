@@ -9,7 +9,7 @@ use entities::user as user_entity;
 
 use crate::{
     journal::thinking_notes::types::{ThinkingNoteListQuery, ThinkingNoteVisibleWithTags},
-    tags::types::{TagType, TagVisible},
+    tags::types::TagVisible,
     UseCaseError,
 };
 
@@ -35,16 +35,9 @@ pub async fn list_thinking_notes<'a>(
 
     let mut res: Vec<ThinkingNoteVisibleWithTags> = vec![];
     for thinking_note in thinking_notes {
-        let same_thinking_note_as_prev =
-            !res.is_empty() && res.last().unwrap().id == thinking_note.id;
-
-        if same_thinking_note_as_prev {
-            if let Some(tag) = _get_tag(&thinking_note) {
-                res.last_mut().unwrap().push_tag(tag);
-            }
-        } else {
-            let tags = match _get_tag(&thinking_note) {
-                Some(tag) => vec![tag],
+        if first_to_process(&res, &thinking_note) {
+            let tags = match thinking_note.tag_id {
+                Some(_) => vec![Into::<TagVisible>::into(&thinking_note)],
                 None => vec![],
             };
             let res_thinking_note = ThinkingNoteVisibleWithTags {
@@ -59,33 +52,21 @@ pub async fn list_thinking_notes<'a>(
                 tags,
             };
             res.push(res_thinking_note);
+        } else {
+            if let Some(_) = thinking_note.tag_id {
+                res.last_mut()
+                    .unwrap()
+                    .push_tag(Into::<TagVisible>::into(&thinking_note));
+            }
         }
     }
 
     Ok(res)
 }
 
-fn _get_tag(thinking_note: &ThinkingNoteWithTag) -> Option<TagVisible> {
-    if thinking_note.tag_id.is_none() {
-        return None;
-    }
-
-    let (name, tag_type) = if let Some(name) = thinking_note.tag_name.clone() {
-        (name, TagType::Plain)
-    } else if let Some(name) = thinking_note.tag_ambition_name.clone() {
-        (name, TagType::Ambition)
-    } else if let Some(name) = thinking_note.tag_desired_state_name.clone() {
-        (name, TagType::DesiredState)
-    } else if let Some(name) = thinking_note.tag_action_name.clone() {
-        (name, TagType::Action)
-    } else {
-        panic!("Tag without name should not exist.");
-    };
-
-    Some(TagVisible {
-        id: thinking_note.tag_id.unwrap(),
-        name,
-        tag_type,
-        created_at: thinking_note.tag_created_at.unwrap(),
-    })
+fn first_to_process(
+    res: &Vec<ThinkingNoteVisibleWithTags>,
+    thinking_note: &ThinkingNoteWithTag,
+) -> bool {
+    res.is_empty() || res.last().unwrap().id != thinking_note.id
 }

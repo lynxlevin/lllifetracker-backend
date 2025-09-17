@@ -1,15 +1,16 @@
 use std::future::Future;
 
 use sea_orm::{
-    sea_query::NullOrdering::Last, ActiveModelTrait, ColumnTrait, Condition, DbConn, DbErr,
-    EntityTrait, FromQueryResult, IntoActiveModel, JoinType::LeftJoin, ModelTrait, Order,
-    QueryFilter, QueryOrder, QuerySelect, RelationTrait, Select, Set,
+    prelude::Expr, sea_query::NullOrdering::Last, ActiveModelTrait, ColumnAsExpr, ColumnTrait,
+    Condition, DbConn, DbErr, EntityTrait, FromQueryResult, IntoActiveModel, JoinType::LeftJoin,
+    ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait, Select, Set,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use entities::{
     action, ambition, desired_state,
+    sea_orm_active_enums::TagType,
     tag::{ActiveModel, Column, Entity, Model, Relation},
     user,
 };
@@ -121,27 +122,46 @@ impl TagOrder for TagAdapter<'_> {
 }
 
 #[derive(FromQueryResult, Debug, Serialize, Deserialize, PartialEq)]
-pub struct TagWithNames {
+pub struct TagWithName {
     pub id: uuid::Uuid,
-    pub name: Option<String>,
-    pub ambition_name: Option<String>,
-    pub desired_state_name: Option<String>,
-    pub action_name: Option<String>,
+    pub name: String,
+    pub r#type: TagType,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
 }
 
 pub trait TagQuery {
-    fn get_all_tags_with_names(self) -> impl Future<Output = Result<Vec<TagWithNames>, DbErr>>;
+    fn get_all_tags(self) -> impl Future<Output = Result<Vec<TagWithName>, DbErr>>;
     fn get_by_id(self, id: Uuid) -> impl Future<Output = Result<Option<Model>, DbErr>>;
 }
 
 impl TagQuery for TagAdapter<'_> {
-    async fn get_all_tags_with_names(self) -> Result<Vec<TagWithNames>, DbErr> {
+    async fn get_all_tags(self) -> Result<Vec<TagWithName>, DbErr> {
         self.query
-            .column_as(ambition::Column::Name, "ambition_name")
-            .column_as(desired_state::Column::Name, "desired_state_name")
-            .column_as(action::Column::Name, "action_name")
-            .into_model::<TagWithNames>()
+            .expr_as(
+                Expr::case(
+                    Expr::col(Column::Type)
+                        .cast_as("text")
+                        .eq(TagType::Ambition),
+                    ambition::Column::Name.into_column_as_expr(),
+                )
+                .case(
+                    Expr::col(Column::Type)
+                        .cast_as("text")
+                        .eq(TagType::DesiredState),
+                    desired_state::Column::Name.into_column_as_expr(),
+                )
+                .case(
+                    Expr::col(Column::Type).cast_as("text").eq(TagType::Action),
+                    action::Column::Name.into_column_as_expr(),
+                )
+                .case(
+                    Expr::col(Column::Type).cast_as("text").eq(TagType::Plain),
+                    Column::Name.into_column_as_expr(),
+                )
+                .finally("no_name"),
+                "name",
+            )
+            .into_model::<TagWithName>()
             .all(self.db)
             .await
     }
