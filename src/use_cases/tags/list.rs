@@ -1,13 +1,10 @@
 use db_adapters::{
-    tag_adapter::{TagAdapter, TagFilter, TagJoin, TagOrder, TagQuery, TagWithNames},
+    tag_adapter::{TagAdapter, TagFilter, TagJoin, TagOrder, TagQuery},
     Order::Asc,
 };
 use entities::user as user_entity;
 
-use crate::{
-    tags::types::{TagType, TagVisible},
-    UseCaseError,
-};
+use crate::{tags::types::TagVisible, UseCaseError};
 
 pub async fn list_tags<'a>(
     user: user_entity::Model,
@@ -25,27 +22,10 @@ pub async fn list_tags<'a>(
         .order_by_created_at(Asc)
         .get_all_tags_with_names()
         .await
-        .map(|tags| tags.iter().map(convert_to_tag_visible).collect::<Vec<_>>())
+        .map(|tags| {
+            tags.into_iter()
+                .map(|tag| TagVisible::from(tag))
+                .collect::<Vec<_>>()
+        })
         .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
-}
-
-fn convert_to_tag_visible(item: &TagWithNames) -> TagVisible {
-    let (name, tag_type) = if let Some(name) = &item.name {
-        (name, TagType::Plain)
-    } else if let Some(name) = &item.ambition_name {
-        (name, TagType::Ambition)
-    } else if let Some(name) = &item.desired_state_name {
-        (name, TagType::DesiredState)
-    } else if let Some(name) = &item.action_name {
-        (name, TagType::Action)
-    } else {
-        panic!("Tag without name should not exist.");
-    };
-
-    TagVisible {
-        id: item.id,
-        name: name.clone(),
-        tag_type,
-        created_at: item.created_at,
-    }
 }

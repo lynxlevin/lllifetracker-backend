@@ -10,6 +10,7 @@ use uuid::Uuid;
 
 use entities::{
     action, ambition, desired_state,
+    sea_orm_active_enums::TagType,
     tag::{ActiveModel, Column, Entity, Model, Relation},
     user,
 };
@@ -127,6 +128,7 @@ pub struct TagWithNames {
     pub ambition_name: Option<String>,
     pub desired_state_name: Option<String>,
     pub action_name: Option<String>,
+    pub r#type: TagType,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
 }
 
