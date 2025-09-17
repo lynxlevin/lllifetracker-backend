@@ -3,7 +3,6 @@ use db_adapters::{
         ReadingNoteAdapter, ReadingNoteFilter, ReadingNoteJoin, ReadingNoteOrder, ReadingNoteQuery,
         ReadingNoteWithTag,
     },
-    tag_adapter::TagWithName,
     Order::{Asc, Desc},
 };
 use entities::user as user_entity;
@@ -35,7 +34,7 @@ pub async fn list_reading_notes<'a>(
     for reading_note in reading_notes {
         if first_to_process(&res, &reading_note) {
             let tags = match reading_note.tag_id {
-                Some(_) => vec![TagVisible::from(Into::<TagWithName>::into(&reading_note))],
+                Some(_) => vec![Into::<TagVisible>::into(&reading_note)],
                 None => vec![],
             };
             let res_reading_note = ReadingNoteVisibleWithTags {
@@ -53,7 +52,7 @@ pub async fn list_reading_notes<'a>(
             if let Some(_) = reading_note.tag_id {
                 res.last_mut()
                     .unwrap()
-                    .push_tag(TagVisible::from(Into::<TagWithName>::into(&reading_note)));
+                    .push_tag(Into::<TagVisible>::into(&reading_note));
             }
         }
     }

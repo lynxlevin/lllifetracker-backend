@@ -1,5 +1,4 @@
 use db_adapters::{
-    tag_adapter::TagWithName,
     thinking_note_adapter::{
         ThinkingNoteAdapter, ThinkingNoteFilter, ThinkingNoteJoin, ThinkingNoteOrder,
         ThinkingNoteQuery, ThinkingNoteWithTag,
@@ -38,7 +37,7 @@ pub async fn list_thinking_notes<'a>(
     for thinking_note in thinking_notes {
         if first_to_process(&res, &thinking_note) {
             let tags = match thinking_note.tag_id {
-                Some(_) => vec![TagVisible::from(Into::<TagWithName>::into(&thinking_note))],
+                Some(_) => vec![Into::<TagVisible>::into(&thinking_note)],
                 None => vec![],
             };
             let res_thinking_note = ThinkingNoteVisibleWithTags {
@@ -57,7 +56,7 @@ pub async fn list_thinking_notes<'a>(
             if let Some(_) = thinking_note.tag_id {
                 res.last_mut()
                     .unwrap()
-                    .push_tag(TagVisible::from(Into::<TagWithName>::into(&thinking_note)));
+                    .push_tag(Into::<TagVisible>::into(&thinking_note));
             }
         }
     }
