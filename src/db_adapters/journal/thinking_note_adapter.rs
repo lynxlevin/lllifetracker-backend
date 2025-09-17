@@ -10,12 +10,14 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use entities::{
-    action, ambition, desired_state, tag,
+    action, ambition, desired_state,
+    sea_orm_active_enums::TagType,
+    tag,
     thinking_note::{ActiveModel, Column, Entity, Model},
     thinking_note_tags, user,
 };
 
-use crate::CustomDbErr;
+use crate::{tag_adapter::TagWithNames, CustomDbErr};
 
 #[derive(Clone)]
 pub struct ThinkingNoteAdapter<'a> {
@@ -148,7 +150,23 @@ pub struct ThinkingNoteWithTag {
     pub tag_ambition_name: Option<String>,
     pub tag_desired_state_name: Option<String>,
     pub tag_action_name: Option<String>,
+    pub tag_type: Option<TagType>,
     pub tag_created_at: Option<DateTime<FixedOffset>>,
+}
+
+impl Into<TagWithNames> for &ThinkingNoteWithTag {
+    /// Unsafe: panics if tag_id, tag_type, tag_created_at are None.
+    fn into(self) -> TagWithNames {
+        TagWithNames {
+            id: self.tag_id.unwrap(),
+            name: self.tag_name.clone(),
+            ambition_name: self.tag_ambition_name.clone(),
+            desired_state_name: self.tag_desired_state_name.clone(),
+            action_name: self.tag_action_name.clone(),
+            r#type: self.tag_type.clone().unwrap(),
+            created_at: self.tag_created_at.unwrap(),
+        }
+    }
 }
 
 pub trait ThinkingNoteQuery {
@@ -163,6 +181,7 @@ impl ThinkingNoteQuery for ThinkingNoteAdapter<'_> {
         self.query
             .column_as(tag::Column::Id, "tag_id")
             .column_as(tag::Column::Name, "tag_name")
+            .column_as(tag::Column::Type, "tag_type")
             .column_as(tag::Column::CreatedAt, "tag_created_at")
             .column_as(ambition::Column::Name, "tag_ambition_name")
             .column_as(desired_state::Column::Name, "tag_desired_state_name")

@@ -1,5 +1,5 @@
 use chrono::Utc;
-use entities::{ambition, tag};
+use entities::{ambition, sea_orm_active_enums::TagType, tag};
 use sea_orm::{ActiveModelTrait, ActiveValue::NotSet, DbConn, DbErr, Set};
 use std::future::Future;
 use uuid::Uuid;
@@ -56,6 +56,7 @@ impl AmbitionFactory for ambition::ActiveModel {
             id: Set(uuid::Uuid::now_v7()),
             user_id: Set(ambition.user_id),
             ambition_id: Set(Some(ambition.id)),
+            r#type: Set(TagType::Ambition),
             ..Default::default()
         }
         .insert(db)
