@@ -123,17 +123,17 @@ pub struct DiaryWithTag {
     pub text: Option<String>,
     pub date: NaiveDate,
     pub tag_id: Option<Uuid>,
-    pub tag_name: String,
+    pub tag_name: Option<String>,
     pub tag_type: Option<TagType>,
     pub tag_created_at: Option<DateTime<FixedOffset>>,
 }
 
 impl Into<TagWithName> for &DiaryWithTag {
-    /// Unsafe: panics if tag_id, tag_type, tag_created_at are None.
+    /// Unsafe: panics if tag_id, tag_name, tag_type, tag_created_at are None.
     fn into(self) -> TagWithName {
         TagWithName {
             id: self.tag_id.unwrap(),
-            name: self.tag_name.clone(),
+            name: self.tag_name.clone().unwrap(),
             r#type: self.tag_type.clone().unwrap(),
             created_at: self.tag_created_at.unwrap(),
         }
