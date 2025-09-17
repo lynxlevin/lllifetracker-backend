@@ -20,7 +20,7 @@ pub async fn list_tags<'a>(
         .order_by_desired_state_created_at_nulls_last(Asc)
         .order_by_action_created_at_nulls_last(Asc)
         .order_by_created_at(Asc)
-        .get_all_tags_with_names()
+        .get_all_tags()
         .await
         .map(|tags| {
             tags.into_iter()

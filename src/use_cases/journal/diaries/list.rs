@@ -1,6 +1,6 @@
 use db_adapters::{
     diary_adapter::{DiaryAdapter, DiaryFilter, DiaryJoin, DiaryOrder, DiaryQuery, DiaryWithTag},
-    tag_adapter::TagWithNames,
+    tag_adapter::TagWithName,
     Order::{Asc, Desc},
 };
 use entities::user as user_entity;
@@ -28,7 +28,7 @@ pub async fn list_diaries<'a>(
     for diary in diaries {
         if first_to_process(&res, &diary) {
             let tags = match diary.tag_id {
-                Some(_) => vec![TagVisible::from(Into::<TagWithNames>::into(&diary))],
+                Some(_) => vec![TagVisible::from(Into::<TagWithName>::into(&diary))],
                 None => vec![],
             };
             let res_diary = DiaryVisibleWithTags {
@@ -42,7 +42,7 @@ pub async fn list_diaries<'a>(
             if let Some(_) = diary.tag_id {
                 res.last_mut()
                     .unwrap()
-                    .push_tag(TagVisible::from(Into::<TagWithNames>::into(&diary)));
+                    .push_tag(TagVisible::from(Into::<TagWithName>::into(&diary)));
             }
         }
     }

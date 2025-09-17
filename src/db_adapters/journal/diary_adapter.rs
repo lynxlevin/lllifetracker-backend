@@ -2,9 +2,10 @@ use std::future::Future;
 
 use chrono::{DateTime, FixedOffset, NaiveDate};
 use sea_orm::{
-    sea_query::NullOrdering::Last, sqlx::error::Error::Database, ActiveModelTrait, ColumnTrait,
-    DbConn, DbErr, EntityTrait, FromQueryResult, IntoActiveModel, JoinType::LeftJoin, ModelTrait,
-    Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait, RuntimeErr::SqlxError, Select, Set,
+    prelude::Expr, sea_query::NullOrdering::Last, sqlx::error::Error::Database, ActiveModelTrait,
+    ColumnAsExpr, ColumnTrait, DbConn, DbErr, EntityTrait, FromQueryResult, IntoActiveModel,
+    JoinType::LeftJoin, ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
+    RuntimeErr::SqlxError, Select, Set,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -16,7 +17,7 @@ use entities::{
     tag, user,
 };
 
-use crate::{tag_adapter::TagWithNames, CustomDbErr};
+use crate::{tag_adapter::TagWithName, CustomDbErr};
 
 #[derive(Clone)]
 pub struct DiaryAdapter<'a> {
@@ -122,23 +123,17 @@ pub struct DiaryWithTag {
     pub text: Option<String>,
     pub date: NaiveDate,
     pub tag_id: Option<Uuid>,
-    pub tag_name: Option<String>,
-    pub tag_ambition_name: Option<String>,
-    pub tag_desired_state_name: Option<String>,
-    pub tag_action_name: Option<String>,
+    pub tag_name: String,
     pub tag_type: Option<TagType>,
     pub tag_created_at: Option<DateTime<FixedOffset>>,
 }
 
-impl Into<TagWithNames> for &DiaryWithTag {
+impl Into<TagWithName> for &DiaryWithTag {
     /// Unsafe: panics if tag_id, tag_type, tag_created_at are None.
-    fn into(self) -> TagWithNames {
-        TagWithNames {
+    fn into(self) -> TagWithName {
+        TagWithName {
             id: self.tag_id.unwrap(),
             name: self.tag_name.clone(),
-            ambition_name: self.tag_ambition_name.clone(),
-            desired_state_name: self.tag_desired_state_name.clone(),
-            action_name: self.tag_action_name.clone(),
             r#type: self.tag_type.clone().unwrap(),
             created_at: self.tag_created_at.unwrap(),
         }
@@ -156,12 +151,36 @@ impl DiaryQuery for DiaryAdapter<'_> {
     async fn get_all_with_tags(self) -> Result<Vec<DiaryWithTag>, DbErr> {
         self.query
             .column_as(tag::Column::Id, "tag_id")
-            .column_as(tag::Column::Name, "tag_name")
+            .expr_as(
+                Expr::case(
+                    Expr::col(tag::Column::Type)
+                        .cast_as("text")
+                        .eq(TagType::Ambition),
+                    ambition::Column::Name.into_column_as_expr(),
+                )
+                .case(
+                    Expr::col(tag::Column::Type)
+                        .cast_as("text")
+                        .eq(TagType::DesiredState),
+                    desired_state::Column::Name.into_column_as_expr(),
+                )
+                .case(
+                    Expr::col(tag::Column::Type)
+                        .cast_as("text")
+                        .eq(TagType::Action),
+                    action::Column::Name.into_column_as_expr(),
+                )
+                .case(
+                    Expr::col(tag::Column::Type)
+                        .cast_as("text")
+                        .eq(TagType::Plain),
+                    tag::Column::Name.into_column_as_expr(),
+                )
+                .finally("no_name"),
+                "tag_name",
+            )
             .column_as(tag::Column::Type, "tag_type")
             .column_as(tag::Column::CreatedAt, "tag_created_at")
-            .column_as(ambition::Column::Name, "tag_ambition_name")
-            .column_as(desired_state::Column::Name, "tag_desired_state_name")
-            .column_as(action::Column::Name, "tag_action_name")
             .into_model::<DiaryWithTag>()
             .all(self.db)
             .await
