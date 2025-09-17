@@ -6,11 +6,11 @@ use crate::utils::Connections;
 
 use super::super::utils::init_app;
 use common::factory;
-use entities::{ambition, tag};
+use entities::{ambition, sea_orm_active_enums::TagType, tag};
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
 
     let name = "Test create_ambition route".to_string();
@@ -43,6 +43,7 @@ async fn happy_path() -> Result<(), DbErr> {
         .filter(tag::Column::AmbitionId.eq(res.id))
         .filter(tag::Column::DesiredStateId.is_null())
         .filter(tag::Column::ActionId.is_null())
+        .filter(tag::Column::Type.eq(TagType::Ambition))
         .one(&db)
         .await?;
     assert!(tag_in_db.is_some());
@@ -52,7 +53,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn happy_path_no_description() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
 
     let name = "Test create_ambition route".to_string();
@@ -84,6 +85,7 @@ async fn happy_path_no_description() -> Result<(), DbErr> {
         .filter(tag::Column::AmbitionId.eq(res.id))
         .filter(tag::Column::DesiredStateId.is_null())
         .filter(tag::Column::ActionId.is_null())
+        .filter(tag::Column::Type.eq(TagType::Ambition))
         .one(&db)
         .await?;
     assert!(tag_in_db.is_some());
@@ -93,7 +95,7 @@ async fn happy_path_no_description() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let Connections { app, ..} = init_app().await?;
+    let Connections { app, .. } = init_app().await?;
 
     let req = test::TestRequest::post()
         .uri("/api/ambitions")

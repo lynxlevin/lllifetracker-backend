@@ -10,6 +10,7 @@ use uuid::Uuid;
 
 use entities::{
     ambition::{ActiveModel, Column, Entity, Model},
+    sea_orm_active_enums::TagType,
     tag, user,
 };
 
@@ -140,6 +141,7 @@ impl AmbitionMutation for AmbitionAdapter<'_> {
                         id: Set(uuid::Uuid::now_v7()),
                         user_id: Set(params.user_id),
                         ambition_id: Set(Some(ambition_id)),
+                        r#type: Set(TagType::Ambition),
                         ..Default::default()
                     }
                     .insert(txn)

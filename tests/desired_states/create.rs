@@ -7,7 +7,7 @@ use crate::utils::Connections;
 
 use super::super::utils::init_app;
 use common::factory;
-use entities::{desired_state, tag};
+use entities::{desired_state, sea_orm_active_enums::TagType, tag};
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
@@ -50,6 +50,7 @@ async fn happy_path() -> Result<(), DbErr> {
         .filter(tag::Column::DesiredStateId.eq(res.id))
         .filter(tag::Column::ActionId.is_null())
         .filter(tag::Column::UserId.eq(user.id))
+        .filter(tag::Column::Type.eq(TagType::DesiredState))
         .one(&db)
         .await?;
     assert!(tag_in_db.is_some());

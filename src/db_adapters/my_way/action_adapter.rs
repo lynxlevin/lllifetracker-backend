@@ -13,7 +13,7 @@ use uuid::Uuid;
 use entities::{
     action::{ActiveModel, Column, Entity, Model, Relation},
     action_goal,
-    sea_orm_active_enums::ActionTrackType,
+    sea_orm_active_enums::{ActionTrackType, TagType},
     tag, user,
 };
 
@@ -179,6 +179,7 @@ impl ActionMutation for ActionAdapter<'_> {
                         id: Set(uuid::Uuid::now_v7()),
                         user_id: Set(params.user_id),
                         action_id: Set(Some(action_id)),
+                        r#type: Set(TagType::Action),
                         ..Default::default()
                     }
                     .insert(txn)
