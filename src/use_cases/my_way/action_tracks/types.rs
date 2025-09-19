@@ -35,6 +35,7 @@ impl From<&action_track::Model> for ActionTrackVisible {
 pub struct ActionTrackListQuery {
     pub active_only: Option<bool>,
     pub started_at_gte: Option<DateTime<FixedOffset>>,
+    pub started_at_lte: Option<DateTime<FixedOffset>>,
 }
 
 #[derive(Deserialize, Debug)]
