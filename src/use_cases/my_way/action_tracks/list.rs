@@ -26,6 +26,9 @@ pub async fn list_action_tracks<'a>(
     if let Some(started_at_gte) = params.started_at_gte {
         query = query.filter_started_at_gte(started_at_gte);
     }
+    if let Some(started_at_lte) = params.started_at_lte {
+        query = query.filter_started_at_lte(started_at_lte);
+    }
     let action_tracks = query
         .order_by_started_at(Order::Desc)
         .get_all()
