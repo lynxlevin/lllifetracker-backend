@@ -73,6 +73,7 @@ fn merge_env(s: Settings) -> Result<Settings, String> {
             login_attempts_cool_time_seconds: get_env_var("LOGIN_ATTEMPTS_COOL_TIME_SECONDS")?
                 .parse::<u64>()
                 .map_err(|e| e.to_string())?,
+            vapid_private_key: get_env_var("VAPID_PRIVATE_KEY")?,
             ..s.application
         },
         database: DatabaseSettings {
