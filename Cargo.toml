@@ -17,7 +17,9 @@ default-members = ["src/life_tracker"]
 actix-http = "3.*"
 actix-session = { version = "^0.10.0", features = ["redis-session"] }
 actix-web = "^4.8.0"
+aes-gcm = "0.10.3"
 argon2 = { version = "^0.5.3", default-features = false }
+base64 = "0.22.1"
 chrono = "^0.4.40"
 config = { version = "^0.14.0", features = ["yaml"] }
 deadpool-redis = "^0.18.0"

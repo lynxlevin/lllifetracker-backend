@@ -78,6 +78,8 @@ fn merge_env(s: Settings) -> Result<Settings, String> {
         },
         database: DatabaseSettings {
             url: get_env_var("DATABASE_URL")?,
+            encryption_key: get_env_var("DATABASE_ENCRYPTION_KEY")?,
+            encryption_nonce: get_env_var("DATABASE_ENCRYPTION_NONCE")?,
         },
         debug: match env::var("APP_DEBUG") {
             Ok(debug) => &debug == "true",

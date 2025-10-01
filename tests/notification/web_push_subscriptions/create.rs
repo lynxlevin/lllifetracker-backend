@@ -6,11 +6,14 @@ use use_cases::notification::web_push_subscription::types::{
 };
 
 use crate::utils::{init_app, Connections};
-use common::factory;
+use common::{
+    db::{decode_and_decrypt, encrypt_and_encode},
+    factory,
+};
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let Connections { app, db, .. } = init_app().await?;
+    let Connections { app, db, settings } = init_app().await?;
     let user = factory::user().insert(&db).await?;
 
     let req_body = WebPushSubscriptionCreateRequest {
@@ -40,16 +43,34 @@ async fn happy_path() -> Result<(), DbErr> {
         .await?
         .unwrap();
     assert_eq!(sub_in_db.device_name, req_body.device_name);
-    assert_eq!(sub_in_db.endpoint, req_body.endpoint);
-    // MYMEMO: Check this is encrypted
     assert_eq!(
         sub_in_db.expiration_epoch_time,
         req_body.expiration_epoch_time
     );
-    // MYMEMO: Check this is encrypted
-    assert_eq!(sub_in_db.p256dh_key, req_body.p256dh_key);
-    // MYMEMO: Check this is encrypted
-    assert_eq!(sub_in_db.auth_key, req_body.auth_key);
+    assert_eq!(
+        sub_in_db.endpoint,
+        encrypt_and_encode(req_body.endpoint.clone(), &settings).unwrap()
+    );
+    assert_eq!(
+        sub_in_db.p256dh_key,
+        encrypt_and_encode(req_body.p256dh_key.clone(), &settings).unwrap()
+    );
+    assert_eq!(
+        sub_in_db.auth_key,
+        encrypt_and_encode(req_body.auth_key.clone(), &settings).unwrap()
+    );
+    assert_eq!(
+        decode_and_decrypt(sub_in_db.endpoint, &settings).unwrap(),
+        req_body.endpoint,
+    );
+    assert_eq!(
+        decode_and_decrypt(sub_in_db.p256dh_key, &settings).unwrap(),
+        req_body.p256dh_key,
+    );
+    assert_eq!(
+        decode_and_decrypt(sub_in_db.auth_key, &settings).unwrap(),
+        req_body.auth_key,
+    );
 
     Ok(())
 }

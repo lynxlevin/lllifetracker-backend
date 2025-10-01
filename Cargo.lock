@@ -901,6 +901,8 @@ name = "common"
 version = "0.1.0"
 dependencies = [
  "actix-web",
+ "aes-gcm",
+ "base64 0.22.1",
  "chrono",
  "deadpool-redis",
  "dotenvy",
@@ -4037,6 +4039,7 @@ name = "use_cases"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "common",
  "db_adapters",
  "entities",
  "sea-orm",

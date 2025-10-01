@@ -6,6 +6,7 @@
     "deadpool",
     "dotenv",
     "dotenvy",
+    "encryptor",
     "hmac",
     "Iden",
     "lettre",
