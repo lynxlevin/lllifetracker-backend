@@ -53,7 +53,7 @@ pub trait WebPushSubscriptionMutation {
         self,
         params: CreateWebPushSubscriptionParams,
     ) -> impl Future<Output = Result<Model, DbErr>>;
-    fn delete(self, desired_state: Model) -> impl Future<Output = Result<(), DbErr>>;
+    fn delete(self, web_push_subscription: Model) -> impl Future<Output = Result<(), DbErr>>;
 }
 
 impl WebPushSubscriptionMutation for WebPushSubscriptionAdapter<'_> {
@@ -71,7 +71,7 @@ impl WebPushSubscriptionMutation for WebPushSubscriptionAdapter<'_> {
         .await
     }
 
-    async fn delete(self, desired_state: Model) -> Result<(), DbErr> {
-        desired_state.delete(self.db).await.map(|_| ())
+    async fn delete(self, web_push_subscription: Model) -> Result<(), DbErr> {
+        web_push_subscription.delete(self.db).await.map(|_| ())
     }
 }
