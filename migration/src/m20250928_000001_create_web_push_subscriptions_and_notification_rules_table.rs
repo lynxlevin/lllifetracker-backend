@@ -6,7 +6,7 @@ use sea_orm_migration::{
         ColumnDef, DbErr, DeriveMigrationName, Expr, ForeignKey, ForeignKeyAction, Index,
         MigrationTrait, SchemaManager, Table,
     },
-    schema::{big_integer, small_integer, string, string_len, time, uuid},
+    schema::{big_integer_null, small_integer, string, string_len, time, uuid},
     sea_orm::{Condition, DbBackend, Schema},
 };
 
@@ -32,7 +32,7 @@ impl MigrationTrait for Migration {
                     .col(uuid(WebPushSubscription::UserId).unique_key())
                     .col(string_len(WebPushSubscription::DeviceName, 64))
                     .col(string(WebPushSubscription::Endpoint))
-                    .col(big_integer(WebPushSubscription::ExpirationEpochTime))
+                    .col(big_integer_null(WebPushSubscription::ExpirationEpochTime))
                     .col(string(WebPushSubscription::P256dhKey))
                     .col(string(WebPushSubscription::AuthKey))
                     .foreign_key(

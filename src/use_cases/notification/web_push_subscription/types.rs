@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 #[sea_orm(entity = "WebPushSubscription")]
 pub struct WebPushSubscriptionVisible {
     pub device_name: String,
-    pub expiration_epoch_time: i64,
+    pub expiration_epoch_time: Option<i64>,
 }
 
 impl From<&web_push_subscription::Model> for WebPushSubscriptionVisible {
@@ -29,7 +29,7 @@ impl From<web_push_subscription::Model> for WebPushSubscriptionVisible {
 pub struct WebPushSubscriptionCreateRequest {
     pub device_name: String,
     pub endpoint: String,
-    pub expiration_epoch_time: i64,
+    pub expiration_epoch_time: Option<i64>,
     pub p256dh_key: String,
     pub auth_key: String,
 }

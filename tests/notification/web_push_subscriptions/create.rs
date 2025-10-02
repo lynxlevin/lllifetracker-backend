@@ -19,7 +19,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let req_body = WebPushSubscriptionCreateRequest {
         device_name: "My iPhone".to_string(),
         endpoint: "https://sample.push.com".to_string(),
-        expiration_epoch_time: 1759125917,
+        expiration_epoch_time: Some(1759125917),
         p256dh_key: "p256key".to_string(),
         auth_key: "auth_key".to_string(),
     };
