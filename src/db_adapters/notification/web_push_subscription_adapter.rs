@@ -1,7 +1,8 @@
 use std::future::Future;
 
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, ModelTrait, QueryFilter, Select, Set,
+    sea_query::OnConflict, ColumnTrait, DbConn, DbErr, EntityTrait, ModelTrait, QueryFilter,
+    Select, Set,
 };
 use uuid::Uuid;
 
@@ -49,7 +50,7 @@ pub struct CreateWebPushSubscriptionParams {
 }
 
 pub trait WebPushSubscriptionMutation {
-    fn create(
+    fn upsert(
         self,
         params: CreateWebPushSubscriptionParams,
     ) -> impl Future<Output = Result<Model, DbErr>>;
@@ -57,18 +58,39 @@ pub trait WebPushSubscriptionMutation {
 }
 
 impl WebPushSubscriptionMutation for WebPushSubscriptionAdapter<'_> {
-    async fn create(self, params: CreateWebPushSubscriptionParams) -> Result<Model, DbErr> {
-        ActiveModel {
+    async fn upsert(self, params: CreateWebPushSubscriptionParams) -> Result<Model, DbErr> {
+        let subscription = ActiveModel {
             id: Set(Uuid::now_v7()),
             user_id: Set(params.user_id),
-            device_name: Set(params.device_name),
-            endpoint: Set(params.endpoint),
+            device_name: Set(params.device_name.clone()),
+            endpoint: Set(params.endpoint.clone()),
             expiration_epoch_time: Set(params.expiration_epoch_time),
-            p256dh_key: Set(params.p256dh_key),
-            auth_key: Set(params.auth_key),
-        }
-        .insert(self.db)
-        .await
+            p256dh_key: Set(params.p256dh_key.clone()),
+            auth_key: Set(params.auth_key.clone()),
+        };
+        Entity::insert(subscription)
+            .on_conflict(
+                OnConflict::column(Column::UserId)
+                    .update_columns([
+                        Column::DeviceName,
+                        Column::Endpoint,
+                        Column::ExpirationEpochTime,
+                        Column::P256dhKey,
+                        Column::AuthKey,
+                    ])
+                    .to_owned(),
+            )
+            .exec(self.db)
+            .await
+            .map(|res| Model {
+                id: res.last_insert_id,
+                user_id: params.user_id,
+                device_name: params.device_name,
+                endpoint: params.endpoint,
+                expiration_epoch_time: params.expiration_epoch_time,
+                p256dh_key: params.p256dh_key,
+                auth_key: params.auth_key,
+            })
     }
 
     async fn delete(self, web_push_subscription: Model) -> Result<(), DbErr> {

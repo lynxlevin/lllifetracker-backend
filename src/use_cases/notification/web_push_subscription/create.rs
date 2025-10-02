@@ -24,7 +24,7 @@ pub async fn create_web_push_subscription<'a>(
     let encrypted_auth_key = encrypt_and_encode(params.auth_key.clone(), settings)
         .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
     web_push_subscription_adapter
-        .create(CreateWebPushSubscriptionParams {
+        .upsert(CreateWebPushSubscriptionParams {
             user_id: user.id,
             device_name: params.device_name.clone(),
             endpoint: encrypted_endpoint,
