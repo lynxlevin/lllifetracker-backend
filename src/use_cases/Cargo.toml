@@ -12,7 +12,13 @@ common = { path = "../common", features = ["db", "settings"]}
 db_adapters = { path = "../db_adapters" }
 entities = { path = "../entities" }
 
+actix-tls.workspace = true
+awc.workspace = true
+base64.workspace = true
 chrono.workspace = true
+ece.workspace = true
+http.workspace = true
+jwt-simple.workspace = true
 sea-orm.workspace = true
 serde.workspace = true
 uuid.workspace = true
