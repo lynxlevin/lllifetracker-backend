@@ -16,7 +16,10 @@ use use_cases::{
 
 use crate::utils::{response_401, response_404, response_500};
 
-#[tracing::instrument(name = "Registering a web push subscription", skip(db, user, settings))]
+#[tracing::instrument(
+    name = "Registering a web push subscription",
+    skip(db, user, settings, req)
+)]
 #[post("")]
 pub async fn create_web_push_subscription_endpoint(
     db: Data<DbConn>,
