@@ -3,25 +3,82 @@ use std::{collections::BTreeMap, sync::Arc};
 use actix_tls::connect::rustls_0_23;
 use base64::{prelude::BASE64_URL_SAFE_NO_PAD, Engine};
 use common::{db::decode_and_decrypt, settings::types::Settings};
-use db_adapters::web_push_subscription_adapter::{
-    WebPushSubscriptionAdapter, WebPushSubscriptionQuery,
+use db_adapters::{
+    ambition_adapter::{AmbitionAdapter, AmbitionFilter, AmbitionQuery},
+    desired_state_adapter::{DesiredStateAdapter, DesiredStateFilter, DesiredStateQuery},
+    web_push_subscription_adapter::{WebPushSubscriptionAdapter, WebPushSubscriptionQuery},
 };
 use ece::encrypt;
 use entities::{user as user_entity, web_push_subscription};
 use http::Uri;
-use jwt_simple::prelude::{
-    Claims, Duration, ECDSAP256KeyPairLike, ECDSAP256PublicKeyLike, ES256KeyPair,
+use jwt_simple::{
+    prelude::{Claims, Duration, ECDSAP256KeyPairLike, ECDSAP256PublicKeyLike, ES256KeyPair},
+    reexports::rand::{seq::SliceRandom, thread_rng},
 };
+use serde::Serialize;
+use serde_json::json;
 
 use crate::UseCaseError;
 
 const TTL_SECONDS: u64 = 60 * 60 * 23;
 
+enum NotificationChoice {
+    Ambition,
+    DesiredState,
+}
+
+#[derive(Serialize)]
+struct Message {
+    body: String,
+}
+
 pub async fn send_web_push<'a>(
     user: user_entity::Model,
     settings: &Settings,
     web_push_subscription_adapter: WebPushSubscriptionAdapter<'a>,
+    ambition_adapter: AmbitionAdapter<'a>,
+    desired_state_adapter: DesiredStateAdapter<'a>,
 ) -> Result<(), UseCaseError> {
+    let choices = [
+        NotificationChoice::Ambition,
+        NotificationChoice::DesiredState,
+    ];
+    let choice = choices.choose(&mut thread_rng()).unwrap();
+    let message = match choice {
+        NotificationChoice::Ambition => {
+            let ambition = ambition_adapter
+                .filter_eq_user(&user)
+                .get_random()
+                .await
+                .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?
+                .ok_or(UseCaseError::NotFound(
+                    "You don't have any ambition.".to_string(),
+                ))?;
+            Message {
+                body: match ambition.description {
+                    Some(description) => format!("{}:\n{}", ambition.name, description),
+                    None => ambition.name,
+                },
+            }
+        }
+        NotificationChoice::DesiredState => {
+            let desired_state = desired_state_adapter
+                .filter_eq_user(&user)
+                .get_random()
+                .await
+                .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?
+                .ok_or(UseCaseError::NotFound(
+                    "You don't have any desired_state.".to_string(),
+                ))?;
+            Message {
+                body: match desired_state.description {
+                    Some(description) => format!("{}:\n{}", desired_state.name, description),
+                    None => desired_state.name,
+                },
+            }
+        }
+    };
+
     let subscription = web_push_subscription_adapter
         .get_by_user(&user)
         .await
@@ -32,18 +89,19 @@ pub async fn send_web_push<'a>(
     let endpoint = decode_and_decrypt(subscription.endpoint.clone(), &settings)
         .map_err(|e| UseCaseError::InternalServerError(e))?;
 
-    let message = "{\"body\": \"Hi, this message came through your web push subscription.\"}";
-    let encrypted_message = encrypt_message(message, &subscription, &settings)?;
+    let encrypted_message = encrypt_message(json!(message).to_string(), &subscription, &settings)?;
 
     let authorization_header = get_authorization_header(&endpoint, &settings)?;
 
     send_push_request(encrypted_message, &endpoint, &authorization_header).await?;
 
+    dbg!(json!(message).to_string());
+
     Ok(())
 }
 
 fn encrypt_message(
-    message: &str,
+    message: String,
     subscription: &web_push_subscription::Model,
     settings: &Settings,
 ) -> Result<Vec<u8>, UseCaseError> {

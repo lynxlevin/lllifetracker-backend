@@ -4,7 +4,10 @@ use actix_web::{
     HttpResponse,
 };
 use common::settings::types::Settings;
-use db_adapters::web_push_subscription_adapter::WebPushSubscriptionAdapter;
+use db_adapters::{
+    ambition_adapter::AmbitionAdapter, desired_state_adapter::DesiredStateAdapter,
+    web_push_subscription_adapter::WebPushSubscriptionAdapter,
+};
 use entities::user as user_entity;
 use sea_orm::DbConn;
 use use_cases::{notification::web_push_subscription::send::send_web_push, UseCaseError};
@@ -24,6 +27,8 @@ pub async fn send_web_push_endpoint(
                 user.into_inner(),
                 &settings,
                 WebPushSubscriptionAdapter::init(&db),
+                AmbitionAdapter::init(&db),
+                DesiredStateAdapter::init(&db),
             )
             .await
             {

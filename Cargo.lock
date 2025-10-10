@@ -4486,6 +4486,7 @@ dependencies = [
  "jwt-simple",
  "sea-orm",
  "serde",
+ "serde_json",
  "uuid",
 ]
 
