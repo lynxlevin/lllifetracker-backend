@@ -13,10 +13,19 @@ pub struct Model {
     pub r#type: NotificationType,
     pub weekday: i16,
     pub utc_time: Time,
+    pub action_id: Option<Uuid>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
+    #[sea_orm(
+        belongs_to = "super::action::Entity",
+        from = "Column::ActionId",
+        to = "super::action::Column::Id",
+        on_update = "NoAction",
+        on_delete = "Cascade"
+    )]
+    Action,
     #[sea_orm(
         belongs_to = "super::user::Entity",
         from = "Column::UserId",
@@ -25,6 +34,12 @@ pub enum Relation {
         on_delete = "Cascade"
     )]
     User,
+}
+
+impl Related<super::action::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Action.def()
+    }
 }
 
 impl Related<super::user::Entity> for Entity {

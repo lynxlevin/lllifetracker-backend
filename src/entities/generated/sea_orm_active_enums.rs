@@ -14,8 +14,12 @@ pub enum ActionTrackType {
 #[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum, Serialize, Deserialize)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "notification_type")]
 pub enum NotificationType {
+    #[sea_orm(string_value = "Action")]
+    Action,
     #[sea_orm(string_value = "Ambition")]
     Ambition,
+    #[sea_orm(string_value = "AmbitionOrDesiredState")]
+    AmbitionOrDesiredState,
     #[sea_orm(string_value = "DesiredState")]
     DesiredState,
 }

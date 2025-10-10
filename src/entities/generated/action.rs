@@ -27,6 +27,8 @@ pub enum Relation {
     ActionGoal,
     #[sea_orm(has_many = "super::action_track::Entity")]
     ActionTrack,
+    #[sea_orm(has_many = "super::notification_rule::Entity")]
+    NotificationRule,
     #[sea_orm(has_one = "super::tag::Entity")]
     Tag,
     #[sea_orm(
@@ -48,6 +50,12 @@ impl Related<super::action_goal::Entity> for Entity {
 impl Related<super::action_track::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::ActionTrack.def()
+    }
+}
+
+impl Related<super::notification_rule::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::NotificationRule.def()
     }
 }
 

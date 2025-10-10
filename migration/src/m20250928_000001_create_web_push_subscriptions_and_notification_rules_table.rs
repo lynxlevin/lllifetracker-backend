@@ -6,7 +6,7 @@ use sea_orm_migration::{
         ColumnDef, DbErr, DeriveMigrationName, Expr, ForeignKey, ForeignKeyAction, Index,
         MigrationTrait, SchemaManager, Table,
     },
-    schema::{big_integer_null, small_integer, string, string_len, time, uuid},
+    schema::{big_integer_null, small_integer, string, string_len, time, uuid, uuid_null},
     sea_orm::{Condition, DbBackend, Schema},
 };
 
@@ -76,11 +76,19 @@ impl MigrationTrait for Migration {
                             .comment("Starts from Monday=0"),
                     )
                     .col(time(NotificationRule::UtcTime))
+                    .col(uuid_null(NotificationRule::ActionId))
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk-notification_rule-user_id")
                             .from(NotificationRule::Table, NotificationRule::UserId)
                             .to(User::Table, User::Id)
+                            .on_delete(ForeignKeyAction::Cascade),
+                    )
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("fk-notification_rule-action_id")
+                            .from(NotificationRule::Table, NotificationRule::ActionId)
+                            .to(Action::Table, Action::Id)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
                     .to_owned(),
@@ -148,10 +156,17 @@ pub enum NotificationRule {
     Type,
     Weekday,
     UtcTime,
+    ActionId,
 }
 
 #[derive(DeriveIden)]
 pub enum User {
+    Table,
+    Id,
+}
+
+#[derive(DeriveIden)]
+pub enum Action {
     Table,
     Id,
 }
@@ -163,4 +178,8 @@ enum NotificationType {
     Ambition,
     #[sea_orm(string_value = "DesiredState")]
     DesiredState,
+    #[sea_orm(string_value = "Action")]
+    Action,
+    #[sea_orm(string_value = "AmbitionOrDesiredState")]
+    AmbitionOrDesiredState,
 }
