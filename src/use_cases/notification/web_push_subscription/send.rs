@@ -56,6 +56,7 @@ pub async fn send_web_push<'a>(
         NotificationChoice::Ambition => {
             let ambition = ambition_adapter
                 .filter_eq_user(&user)
+                .filter_eq_archived(false)
                 .get_random()
                 .await
                 .map_err(error_500)?
@@ -72,6 +73,7 @@ pub async fn send_web_push<'a>(
         NotificationChoice::DesiredState => {
             let desired_state = desired_state_adapter
                 .filter_eq_user(&user)
+                .filter_eq_archived(false)
                 .get_random()
                 .await
                 .map_err(error_500)?
