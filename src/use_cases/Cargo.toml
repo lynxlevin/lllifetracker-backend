@@ -13,13 +13,16 @@ db_adapters = { path = "../db_adapters" }
 entities = { path = "../entities" }
 
 actix-tls.workspace = true
+aes-gcm.workspace = true
 awc.workspace = true
 base64.workspace = true
 chrono.workspace = true
-ece.workspace = true
 http.workspace = true
+hkdf.workspace = true
 jwt-simple.workspace = true
+p256.workspace = true
 sea-orm.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+sha2.workspace = true
 uuid.workspace = true
