@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 pub mod journal;
 pub mod my_way;
 pub mod notification;
@@ -12,4 +14,8 @@ pub enum UseCaseError {
     NotFound(String),            // 404
     Conflict(String),            // 409
     InternalServerError(String), // 500
+}
+
+pub(crate) fn error_500(e: impl Debug) -> UseCaseError {
+    UseCaseError::InternalServerError(format!("{:?}", e))
 }

@@ -8,7 +8,7 @@ name = "use_cases"
 path = "lib.rs"
 
 [dependencies]
-common = { path = "../common", features = ["db", "settings"]}
+common = { path = "../common", features = ["db", "settings"] }
 db_adapters = { path = "../db_adapters" }
 entities = { path = "../entities" }
 
@@ -26,3 +26,8 @@ serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
 uuid.workspace = true
+
+[dev-dependencies]
+common = { path = "../common", features = ["db", "settings", "factory"] }
+
+ece.workspace = true
