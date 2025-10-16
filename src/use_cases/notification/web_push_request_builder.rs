@@ -15,6 +15,8 @@ use jwt_simple::prelude::{
     Claims, Duration, ECDSAP256KeyPairLike, ECDSAP256PublicKeyLike, ES256KeyPair,
 };
 use p256::elliptic_curve::sec1::ToEncodedPoint;
+use serde::Serialize;
+use serde_json::json;
 use sha2::Sha256;
 use std::{collections::BTreeMap, sync::Arc};
 
@@ -22,12 +24,15 @@ use crate::{error_500, UseCaseError};
 
 const TTL_SECONDS: u64 = 60 * 60 * 23;
 
+#[derive(Serialize)]
+struct Message {
+    body: String,
+}
+
 pub struct WebPushRequestBuilder {
     endpoint: String,
-    p256dh_key: Vec<u8>,
-    auth_key: Vec<u8>,
-    vapid_private_key: Vec<u8>,
-    app_owner_email: String,
+    message_encryptor: MessageEncryptor,
+    vapid_signature_builder: VapidSignatureBuilder,
 }
 
 impl WebPushRequestBuilder {
@@ -38,6 +43,47 @@ impl WebPushRequestBuilder {
         Ok(Self {
             endpoint: decode_and_decrypt(subscription.endpoint.clone(), &settings)
                 .map_err(error_500)?,
+            message_encryptor: MessageEncryptor::new(subscription, settings)?,
+            vapid_signature_builder: VapidSignatureBuilder::new(settings)?,
+        })
+    }
+
+    pub fn encrypt_message(&self, message: String) -> Result<Vec<u8>, UseCaseError> {
+        let message = json!(Message { body: message }).to_string();
+        self.message_encryptor.encrypt(message)
+    }
+
+    pub fn get_awc_client(&self, ttl_seconds: Option<u64>) -> Result<ClientRequest, UseCaseError> {
+        let config = rustls_0_23::reexports::ClientConfig::builder()
+            .with_root_certificates(rustls_0_23::webpki_roots_cert_store())
+            .with_no_client_auth();
+        let client = awc::Client::builder()
+            .connector(awc::Connector::new().rustls_0_23(Arc::new(config)))
+            .finish();
+        Ok(client
+            .post(&self.endpoint)
+            .content_type("application/octet-stream")
+            .insert_header((
+                "Authorization",
+                self.vapid_signature_builder.build(&self.endpoint)?,
+            ))
+            .insert_header(("Content-Encoding", "aes128gcm"))
+            .insert_header(("TTL", ttl_seconds.unwrap_or(TTL_SECONDS)))
+            .insert_header(("Urgency", "normal")))
+    }
+}
+
+struct MessageEncryptor {
+    p256dh_key: Vec<u8>,
+    auth_key: Vec<u8>,
+}
+
+impl MessageEncryptor {
+    fn new(
+        subscription: &web_push_subscription::Model,
+        settings: &Settings,
+    ) -> Result<Self, UseCaseError> {
+        Ok(Self {
             p256dh_key: BASE64_URL_SAFE_NO_PAD
                 .decode(
                     decode_and_decrypt(subscription.p256dh_key.clone(), &settings)
@@ -50,14 +96,55 @@ impl WebPushRequestBuilder {
                         .map_err(error_500)?,
                 )
                 .map_err(error_500)?,
-            vapid_private_key: BASE64_URL_SAFE_NO_PAD
-                .decode(settings.application.vapid_private_key.clone())
-                .map_err(error_500)?,
-            app_owner_email: settings.application.app_owner_email.clone(),
         })
     }
 
-    pub fn encrypt_message(&self, message: Vec<u8>) -> Result<Vec<u8>, UseCaseError> {
+    fn derive_key<IKM: AsRef<[u8]>>(&self, salt: [u8; 16], ikm: IKM) -> Key<Aes128Gcm> {
+        let mut okm = [0u8; 16];
+        let hk = Hkdf::<Sha256>::new(Some(&salt), ikm.as_ref());
+        hk.expand(b"Content-Encoding: aes128gcm\0", &mut okm)
+            .expect("okm length is always 16, impossible for it to be too large");
+        Key::<Aes128Gcm>::from(okm)
+    }
+
+    fn derive_nonce<IKM: AsRef<[u8]>>(
+        &self,
+        salt: [u8; 16],
+        ikm: IKM,
+        seq: [u8; 12],
+    ) -> Nonce<aes_gcm_consts::U12> {
+        let mut okm = [0u8; 12];
+        let hk = Hkdf::<Sha256>::new(Some(&salt), ikm.as_ref());
+        hk.expand(b"Content-Encoding: nonce\0", &mut okm)
+            .expect("okm length is always 16, impossible for it to be too large");
+        for i in 0..12 {
+            okm[i] ^= seq[i]
+        }
+        Nonce::from(okm)
+    }
+
+    fn encrypt_record<B: Buffer>(
+        &self,
+        key: &Key<Aes128Gcm>,
+        nonce: &Nonce<aes_gcm_consts::U12>,
+        mut record: B,
+        encrypted_record_size: u32,
+    ) -> Result<B, UseCaseError> {
+        let plain_record_size: u32 = record.len().try_into().map_err(error_500)?;
+        if plain_record_size >= encrypted_record_size - 16 {
+            return Err(error_500("RecordLengthInvalid".to_string()));
+        }
+
+        record.extend_from_slice(b"\x02").map_err(error_500)?;
+
+        Aes128Gcm::new(key)
+            .encrypt_in_place(nonce, b"", &mut record)
+            .map_err(error_500)?;
+        Ok(record)
+    }
+
+    fn encrypt(&self, message: String) -> Result<Vec<u8>, UseCaseError> {
+        let message: Vec<u8> = message.as_bytes().into();
         let p256_public_key =
             p256::PublicKey::from_sec1_bytes(&self.p256dh_key).map_err(error_500)?;
         let auth = generic_array::GenericArray::<u8, generic_array::typenum::U16>::clone_from_slice(
@@ -92,8 +179,8 @@ impl WebPushRequestBuilder {
 
         let mut seq = [0u8; 12];
         seq[4..].copy_from_slice(&0_usize.to_be_bytes());
-        let key = derive_key(salt, ikm.as_ref());
-        let nonce = derive_nonce(salt, ikm.as_ref(), seq);
+        let key = self.derive_key(salt, ikm.as_ref());
+        let nonce = self.derive_nonce(salt, ikm.as_ref(), seq);
 
         let mut output = vec![];
         output.extend_from_slice(&salt);
@@ -101,22 +188,38 @@ impl WebPushRequestBuilder {
         output.push(key_id.len().try_into().map_err(error_500)?);
         output.extend_from_slice(key_id.as_ref());
 
-        let record =
-            encrypt_record(&key, &nonce, message, encrypted_record_length).map_err(error_500)?;
+        let record = self
+            .encrypt_record(&key, &nonce, message, encrypted_record_length)
+            .map_err(error_500)?;
         output.extend_from_slice(&record);
 
         Ok(output)
     }
+}
 
-    pub fn get_authorization_header(&self) -> Result<String, UseCaseError> {
+struct VapidSignatureBuilder {
+    vapid_private_key: Vec<u8>,
+    app_owner_email: String,
+}
+
+impl VapidSignatureBuilder {
+    fn new(settings: &Settings) -> Result<Self, UseCaseError> {
+        Ok(Self {
+            vapid_private_key: BASE64_URL_SAFE_NO_PAD
+                .decode(settings.application.vapid_private_key.clone())
+                .map_err(error_500)?,
+            app_owner_email: settings.application.app_owner_email.clone(),
+        })
+    }
+
+    fn build_jwt(&self, endpoint: Uri) -> Result<String, UseCaseError> {
         let vapid_key = ES256KeyPair::from_bytes(&self.vapid_private_key).map_err(error_500)?;
 
-        let mut jwt_token_claims = Claims::with_custom_claims(
+        let mut jwt_claims = Claims::with_custom_claims(
             BTreeMap::<String, String>::new(),
             Duration::from_secs(TTL_SECONDS),
         );
-        let endpoint: Uri = (&self.endpoint).try_into().map_err(error_500)?;
-        jwt_token_claims.custom.insert(
+        jwt_claims.custom.insert(
             "aud".to_string(),
             format!(
                 "{}://{}",
@@ -125,81 +228,24 @@ impl WebPushRequestBuilder {
             )
             .into(),
         );
-        jwt_token_claims.custom.insert(
+        jwt_claims.custom.insert(
             "sub".to_string(),
             format!("mailto:{}", &self.app_owner_email),
         );
-        let jwt_token = vapid_key.sign(jwt_token_claims).map_err(error_500)?;
+        vapid_key.sign(jwt_claims).map_err(error_500)
+    }
+
+    fn build(&self, endpoint: &str) -> Result<String, UseCaseError> {
+        let vapid_key = ES256KeyPair::from_bytes(&self.vapid_private_key).map_err(error_500)?;
+        let jwt = self.build_jwt(endpoint.try_into().map_err(error_500)?)?;
 
         Ok(format!(
             "vapid t={}, k={}",
-            jwt_token,
+            jwt,
             BASE64_URL_SAFE_NO_PAD
                 .encode(&vapid_key.public_key().public_key().to_bytes_uncompressed()),
         ))
     }
-
-    pub fn get_awc_client(
-        &self,
-        authorization_header: String,
-        ttl_seconds: Option<u64>,
-    ) -> ClientRequest {
-        let config = rustls_0_23::reexports::ClientConfig::builder()
-            .with_root_certificates(rustls_0_23::webpki_roots_cert_store())
-            .with_no_client_auth();
-        let client = awc::Client::builder()
-            .connector(awc::Connector::new().rustls_0_23(Arc::new(config)))
-            .finish();
-        client
-            .post(&self.endpoint)
-            .content_type("application/octet-stream")
-            .insert_header(("Authorization", authorization_header))
-            .insert_header(("Content-Encoding", "aes128gcm"))
-            .insert_header(("TTL", ttl_seconds.unwrap_or(TTL_SECONDS)))
-            .insert_header(("Urgency", "normal"))
-    }
-}
-
-fn derive_key<IKM: AsRef<[u8]>>(salt: [u8; 16], ikm: IKM) -> Key<Aes128Gcm> {
-    let mut okm = [0u8; 16];
-    let hk = Hkdf::<Sha256>::new(Some(&salt), ikm.as_ref());
-    hk.expand(b"Content-Encoding: aes128gcm\0", &mut okm)
-        .expect("okm length is always 16, impossible for it to be too large");
-    Key::<Aes128Gcm>::from(okm)
-}
-
-fn derive_nonce<IKM: AsRef<[u8]>>(
-    salt: [u8; 16],
-    ikm: IKM,
-    seq: [u8; 12],
-) -> Nonce<aes_gcm_consts::U12> {
-    let mut okm = [0u8; 12];
-    let hk = Hkdf::<Sha256>::new(Some(&salt), ikm.as_ref());
-    hk.expand(b"Content-Encoding: nonce\0", &mut okm)
-        .expect("okm length is always 16, impossible for it to be too large");
-    for i in 0..12 {
-        okm[i] ^= seq[i]
-    }
-    Nonce::from(okm)
-}
-
-fn encrypt_record<B: Buffer>(
-    key: &Key<Aes128Gcm>,
-    nonce: &Nonce<aes_gcm_consts::U12>,
-    mut record: B,
-    encrypted_record_size: u32,
-) -> Result<B, UseCaseError> {
-    let plain_record_size: u32 = record.len().try_into().map_err(error_500)?;
-    if plain_record_size >= encrypted_record_size - 16 {
-        return Err(error_500("RecordLengthInvalid".to_string()));
-    }
-
-    record.extend_from_slice(b"\x02").map_err(error_500)?;
-
-    Aes128Gcm::new(key)
-        .encrypt_in_place(nonce, b"", &mut record)
-        .map_err(error_500)?;
-    Ok(record)
 }
 
 #[cfg(test)]
@@ -224,8 +270,8 @@ mod tests {
             .get_model();
         let message = "Encrypt this message, please.";
 
-        let builder = WebPushRequestBuilder::new(&subscription, &settings).unwrap();
-        let encrypted = builder.encrypt_message(message.as_bytes().into()).unwrap();
+        let encryptor = MessageEncryptor::new(&subscription, &settings).unwrap();
+        let encrypted = encryptor.encrypt(message.to_string()).unwrap();
 
         assert_eq!(
             message.as_bytes(),

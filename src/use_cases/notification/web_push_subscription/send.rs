@@ -6,8 +6,6 @@ use db_adapters::{
 };
 use entities::user as user_entity;
 use jwt_simple::reexports::rand::{seq::SliceRandom, thread_rng};
-use serde::Serialize;
-use serde_json::json;
 
 use crate::{
     error_500, notification::web_push_request_builder::WebPushRequestBuilder, UseCaseError,
@@ -16,11 +14,6 @@ use crate::{
 enum NotificationChoice {
     Ambition,
     DesiredState,
-}
-
-#[derive(Serialize)]
-struct Message {
-    body: String,
 }
 
 pub async fn send_web_push<'a>(
@@ -46,11 +39,9 @@ pub async fn send_web_push<'a>(
                 .ok_or(UseCaseError::NotFound(
                     "You don't have any ambition.".to_string(),
                 ))?;
-            Message {
-                body: match ambition.description {
-                    Some(description) => format!("{}:\n{}", ambition.name, description),
-                    None => ambition.name,
-                },
+            match ambition.description {
+                Some(description) => format!("{}:\n{}", ambition.name, description),
+                None => ambition.name,
             }
         }
         NotificationChoice::DesiredState => {
@@ -63,11 +54,9 @@ pub async fn send_web_push<'a>(
                 .ok_or(UseCaseError::NotFound(
                     "You don't have any desired_state.".to_string(),
                 ))?;
-            Message {
-                body: match desired_state.description {
-                    Some(description) => format!("{}:\n{}", desired_state.name, description),
-                    None => desired_state.name,
-                },
+            match desired_state.description {
+                Some(description) => format!("{}:\n{}", desired_state.name, description),
+                None => desired_state.name,
             }
         }
     };
@@ -81,10 +70,8 @@ pub async fn send_web_push<'a>(
         ))?;
 
     let builder = WebPushRequestBuilder::new(&subscription, &settings)?;
-    let encrypted_message =
-        builder.encrypt_message(json!(message).to_string().as_bytes().into())?;
-    let authorization_header = builder.get_authorization_header()?;
-    let request = builder.get_awc_client(authorization_header, None);
+    let encrypted_message = builder.encrypt_message(message)?;
+    let request = builder.get_awc_client(None)?;
     request
         .send_body(encrypted_message)
         .await
