@@ -11,9 +11,8 @@ use common::{db::decode_and_decrypt, settings::types::Settings};
 use entities::web_push_subscription;
 use hkdf::Hkdf;
 use http::Uri;
-use jwt_simple::{
-    claims::JWTClaims,
-    prelude::{Claims, Duration, ECDSAP256KeyPairLike, ECDSAP256PublicKeyLike, ES256KeyPair},
+use jwt_simple::prelude::{
+    Claims, Duration, ECDSAP256KeyPairLike, ECDSAP256PublicKeyLike, ES256KeyPair,
 };
 use p256::elliptic_curve::sec1::ToEncodedPoint;
 use sha2::Sha256;
@@ -58,7 +57,7 @@ impl WebPushRequestBuilder {
         })
     }
 
-    pub fn encrypt_message(&self, message: String) -> Result<Vec<u8>, UseCaseError> {
+    pub fn encrypt_message(&self, message: Vec<u8>) -> Result<Vec<u8>, UseCaseError> {
         let p256_public_key =
             p256::PublicKey::from_sec1_bytes(&self.p256dh_key).map_err(error_500)?;
         let auth = generic_array::GenericArray::<u8, generic_array::typenum::U16>::clone_from_slice(
@@ -67,63 +66,70 @@ impl WebPushRequestBuilder {
 
         let mut salt = [0u8; 16];
         OsRng.fill_bytes(&mut salt);
+
         let as_secret = p256::SecretKey::random(&mut OsRng);
         let as_public = as_secret.public_key();
-        let shared =
-            p256::ecdh::diffie_hellman(as_secret.to_nonzero_scalar(), p256_public_key.as_affine());
+
         let mut info = vec![];
-        info.extend_from_slice(&b"WebPush: info"[..]);
+        info.extend_from_slice(b"WebPush: info");
         info.push(0u8);
         info.extend_from_slice(
-            &p256_public_key
+            p256_public_key
                 .as_affine()
                 .to_encoded_point(false)
                 .as_bytes(),
         );
-        info.extend_from_slice(&as_public.as_affine().to_encoded_point(false).as_bytes());
+        info.extend_from_slice(as_public.as_affine().to_encoded_point(false).as_bytes());
+
         let mut ikm = [0u8; 32];
+        let shared =
+            p256::ecdh::diffie_hellman(as_secret.to_nonzero_scalar(), p256_public_key.as_affine());
         let hk = Hkdf::<Sha256>::new(Some(&auth), &shared.raw_secret_bytes().as_ref());
         hk.expand(&info, &mut ikm).map_err(error_500)?;
+
         let key_id = as_public.as_affine().to_encoded_point(false);
         let encrypted_record_length: u32 = (message.len() + 17).try_into().map_err(error_500)?;
 
-        let message: Vec<u8> = message.as_bytes().into();
-        let records = Some(message).into_iter().enumerate().map(|(n, record)| {
-            let mut seq = [0u8; 12];
-            seq[4..].copy_from_slice(&n.to_be_bytes());
-            let key = derive_key(salt, ikm.as_ref());
-            let nonce = derive_nonce(salt, ikm.as_ref(), seq);
-            (key, nonce, record)
-        });
+        let mut seq = [0u8; 12];
+        seq[4..].copy_from_slice(&0_usize.to_be_bytes());
+        let key = derive_key(salt, ikm.as_ref());
+        let nonce = derive_nonce(salt, ikm.as_ref(), seq);
+
         let mut output = vec![];
-        let mut header = vec![];
-        header.extend_from_slice(&salt[..]);
-        header.extend_from_slice(&encrypted_record_length.to_be_bytes());
-        header.push(key_id.as_ref().len().try_into().map_err(error_500)?);
-        header.extend_from_slice(key_id.as_ref());
-        output.extend_from_slice(&header);
-        let mut peekable = records.peekable();
-        while let Some((key, nonce, record)) = peekable.next() {
-            let is_last_record = peekable.peek().is_none();
-            let record = encrypt_record(
-                &key,
-                &nonce,
-                record,
-                encrypted_record_length,
-                is_last_record,
-            )
-            .map_err(error_500)?;
-            output.extend_from_slice(&record);
-        }
+        output.extend_from_slice(&salt);
+        output.extend_from_slice(&encrypted_record_length.to_be_bytes());
+        output.push(key_id.len().try_into().map_err(error_500)?);
+        output.extend_from_slice(key_id.as_ref());
+
+        let record =
+            encrypt_record(&key, &nonce, message, encrypted_record_length).map_err(error_500)?;
+        output.extend_from_slice(&record);
 
         Ok(output)
     }
 
     pub fn get_authorization_header(&self) -> Result<String, UseCaseError> {
         let vapid_key = ES256KeyPair::from_bytes(&self.vapid_private_key).map_err(error_500)?;
-        let jwt_token = vapid_key
-            .sign(get_jwt_claims(&self.endpoint, &self.app_owner_email)?)
-            .map_err(error_500)?;
+
+        let mut jwt_token_claims = Claims::with_custom_claims(
+            BTreeMap::<String, String>::new(),
+            Duration::from_secs(TTL_SECONDS),
+        );
+        let endpoint: Uri = (&self.endpoint).try_into().map_err(error_500)?;
+        jwt_token_claims.custom.insert(
+            "aud".to_string(),
+            format!(
+                "{}://{}",
+                endpoint.scheme_str().unwrap(),
+                endpoint.host().unwrap()
+            )
+            .into(),
+        );
+        jwt_token_claims.custom.insert(
+            "sub".to_string(),
+            format!("mailto:{}", &self.app_owner_email),
+        );
+        let jwt_token = vapid_key.sign(jwt_token_claims).map_err(error_500)?;
 
         Ok(format!(
             "vapid t={}, k={}",
@@ -182,57 +188,18 @@ fn encrypt_record<B: Buffer>(
     nonce: &Nonce<aes_gcm_consts::U12>,
     mut record: B,
     encrypted_record_size: u32,
-    is_last: bool,
 ) -> Result<B, UseCaseError> {
     let plain_record_size: u32 = record.len().try_into().map_err(error_500)?;
     if plain_record_size >= encrypted_record_size - 16 {
         return Err(error_500("RecordLengthInvalid".to_string()));
     }
 
-    if is_last {
-        record.extend_from_slice(b"\x02").map_err(error_500)?;
-    } else {
-        let pad_len = encrypted_record_size - plain_record_size - 16;
-        record.extend_from_slice(b"\x01").map_err(error_500)?;
-        record
-            .extend_from_slice(
-                &b"\x00".repeat(
-                    (pad_len - 1).try_into().expect(
-                        "padding length is between 0 and 15 which wil always fit into usize",
-                    ),
-                ),
-            )
-            .map_err(error_500)?;
-    }
+    record.extend_from_slice(b"\x02").map_err(error_500)?;
+
     Aes128Gcm::new(key)
         .encrypt_in_place(nonce, b"", &mut record)
         .map_err(error_500)?;
     Ok(record)
-}
-
-fn get_jwt_claims(
-    endpoint: &str,
-    app_owner_email: &str,
-) -> Result<JWTClaims<BTreeMap<String, String>>, UseCaseError> {
-    let mut jwt_token_claims = Claims::with_custom_claims(
-        BTreeMap::<String, String>::new(),
-        Duration::from_secs(TTL_SECONDS),
-    );
-
-    let endpoint: Uri = endpoint.try_into().map_err(error_500)?;
-    jwt_token_claims.custom.insert(
-        "aud".to_string(),
-        format!(
-            "{}://{}",
-            endpoint.scheme_str().unwrap(),
-            endpoint.host().unwrap()
-        )
-        .into(),
-    );
-    jwt_token_claims
-        .custom
-        .insert("sub".to_string(), format!("mailto:{}", app_owner_email));
-    Ok(jwt_token_claims)
 }
 
 #[cfg(test)]
@@ -258,7 +225,7 @@ mod tests {
         let message = "Encrypt this message, please.";
 
         let builder = WebPushRequestBuilder::new(&subscription, &settings).unwrap();
-        let encrypted = builder.encrypt_message(message.to_string()).unwrap();
+        let encrypted = builder.encrypt_message(message.as_bytes().into()).unwrap();
 
         assert_eq!(
             message.as_bytes(),

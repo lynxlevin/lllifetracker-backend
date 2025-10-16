@@ -81,7 +81,8 @@ pub async fn send_web_push<'a>(
         ))?;
 
     let builder = WebPushRequestBuilder::new(&subscription, &settings)?;
-    let encrypted_message = builder.encrypt_message(json!(message).to_string())?;
+    let encrypted_message =
+        builder.encrypt_message(json!(message).to_string().as_bytes().into())?;
     let authorization_header = builder.get_authorization_header()?;
     let request = builder.get_awc_client(authorization_header, None);
     request
