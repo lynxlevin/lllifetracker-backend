@@ -2,9 +2,9 @@ use std::future::Future;
 
 use chrono::Utc;
 use sea_orm::{
-    sea_query::NullOrdering::Last, ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait,
-    IntoActiveModel, ModelTrait, Order, QueryFilter, QueryOrder, Select, Set, TransactionError,
-    TransactionTrait,
+    sea_query::{Func, NullOrdering::Last, SimpleExpr},
+    ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel, ModelTrait, Order,
+    QueryFilter, QueryOrder, QuerySelect, Select, Set, TransactionError, TransactionTrait,
 };
 use uuid::Uuid;
 
@@ -74,6 +74,7 @@ impl DesiredStateOrder for DesiredStateAdapter<'_> {
 pub trait DesiredStateQuery {
     fn get_all(self) -> impl Future<Output = Result<Vec<Model>, DbErr>>;
     fn get_by_id(self, id: Uuid) -> impl Future<Output = Result<Option<Model>, DbErr>>;
+    fn get_random(self) -> impl Future<Output = Result<Option<Model>, DbErr>>;
 }
 
 impl DesiredStateQuery for DesiredStateAdapter<'_> {
@@ -83,6 +84,14 @@ impl DesiredStateQuery for DesiredStateAdapter<'_> {
 
     async fn get_by_id(self, id: Uuid) -> Result<Option<Model>, DbErr> {
         self.query.filter(Column::Id.eq(id)).one(self.db).await
+    }
+
+    async fn get_random(self) -> Result<Option<Model>, DbErr> {
+        self.query
+            .order_by(SimpleExpr::FunctionCall(Func::random()), Order::Asc)
+            .limit(1)
+            .one(self.db)
+            .await
     }
 }
 

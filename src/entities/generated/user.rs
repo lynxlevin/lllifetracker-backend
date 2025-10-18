@@ -37,12 +37,16 @@ pub enum Relation {
     DesiredStateCategory,
     #[sea_orm(has_many = "super::diary::Entity")]
     Diary,
+    #[sea_orm(has_many = "super::notification_rule::Entity")]
+    NotificationRule,
     #[sea_orm(has_many = "super::reading_note::Entity")]
     ReadingNote,
     #[sea_orm(has_many = "super::tag::Entity")]
     Tag,
     #[sea_orm(has_many = "super::thinking_note::Entity")]
     ThinkingNote,
+    #[sea_orm(has_one = "super::web_push_subscription::Entity")]
+    WebPushSubscription,
 }
 
 impl Related<super::action::Entity> for Entity {
@@ -87,6 +91,12 @@ impl Related<super::diary::Entity> for Entity {
     }
 }
 
+impl Related<super::notification_rule::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::NotificationRule.def()
+    }
+}
+
 impl Related<super::reading_note::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::ReadingNote.def()
@@ -102,6 +112,12 @@ impl Related<super::tag::Entity> for Entity {
 impl Related<super::thinking_note::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::ThinkingNote.def()
+    }
+}
+
+impl Related<super::web_push_subscription::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::WebPushSubscription.def()
     }
 }
 
