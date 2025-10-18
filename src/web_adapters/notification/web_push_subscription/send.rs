@@ -12,7 +12,7 @@ use entities::user as user_entity;
 use sea_orm::DbConn;
 use use_cases::{notification::web_push_subscription::send::send_web_push, UseCaseError};
 
-use crate::utils::{response_401, response_404, response_500};
+use crate::utils::{response_401, response_404, response_410, response_500};
 
 #[tracing::instrument(name = "Sending web push notification", skip(db, user, settings))]
 #[post("/send")]
@@ -35,6 +35,7 @@ pub async fn send_web_push_endpoint(
                 Ok(_) => HttpResponse::Accepted().finish(),
                 Err(e) => match &e {
                     UseCaseError::NotFound(message) => response_404(message),
+                    UseCaseError::Gone => response_410(),
                     _ => response_500(e),
                 },
             }

@@ -40,6 +40,11 @@ pub fn response_409(error_message: &str) -> HttpResponse {
     })
 }
 
+/// Gone
+pub fn response_410() -> HttpResponse {
+    HttpResponse::Gone().finish()
+}
+
 /// Internal Server Error: with logging
 pub fn response_500<T: Debug>(e: T) -> HttpResponse {
     event!(target: "backend", Level::ERROR, "{:?}", e);

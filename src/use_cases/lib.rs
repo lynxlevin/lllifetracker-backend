@@ -13,6 +13,7 @@ pub enum UseCaseError {
     Forbidden,                   // 403
     NotFound(String),            // 404
     Conflict(String),            // 409
+    Gone,                        // 410
     InternalServerError(String), // 500
 }
 

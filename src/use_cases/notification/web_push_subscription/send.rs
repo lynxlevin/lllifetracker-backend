@@ -1,8 +1,11 @@
+use awc::http::StatusCode;
 use common::settings::types::Settings;
 use db_adapters::{
     ambition_adapter::{AmbitionAdapter, AmbitionFilter, AmbitionQuery},
     desired_state_adapter::{DesiredStateAdapter, DesiredStateFilter, DesiredStateQuery},
-    web_push_subscription_adapter::{WebPushSubscriptionAdapter, WebPushSubscriptionQuery},
+    web_push_subscription_adapter::{
+        WebPushSubscriptionAdapter, WebPushSubscriptionMutation, WebPushSubscriptionQuery,
+    },
 };
 use entities::user as user_entity;
 use jwt_simple::reexports::rand::{seq::SliceRandom, thread_rng};
@@ -62,6 +65,7 @@ pub async fn send_web_push<'a>(
     };
 
     let subscription = web_push_subscription_adapter
+        .clone()
         .get_by_user(&user)
         .await
         .map_err(error_500)?
@@ -72,10 +76,20 @@ pub async fn send_web_push<'a>(
     let builder = WebPushRequestBuilder::new(&subscription, &settings)?;
     let encrypted_message = builder.encrypt_message(message)?;
     let request = builder.get_awc_client(None)?;
-    request
+    let res = request
         .send_body(encrypted_message)
         .await
         .map_err(error_500)?;
 
-    Ok(())
+    match res.status() {
+        StatusCode::NOT_FOUND | StatusCode::GONE => {
+            // NOTE: iOS returns 201 even when it's unsubscribed.
+            web_push_subscription_adapter
+                .delete(subscription)
+                .await
+                .map_err(error_500)?;
+            Err(UseCaseError::Gone)
+        }
+        _ => Ok(()),
+    }
 }
