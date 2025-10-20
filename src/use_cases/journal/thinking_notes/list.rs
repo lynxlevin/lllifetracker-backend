@@ -18,12 +18,19 @@ pub async fn list_thinking_notes<'a>(
     params: ThinkingNoteListQuery,
     thinking_note_adapter: ThinkingNoteAdapter<'a>,
 ) -> Result<Vec<ThinkingNoteVisibleWithTags>, UseCaseError> {
-    let thinking_notes = thinking_note_adapter
+    let query = thinking_note_adapter
         .join_tags()
         .join_my_way_via_tags()
-        .filter_eq_user(&user)
-        .filter_null_resolved_at(!params.resolved.unwrap_or(false))
-        .filter_null_archived_at(!params.archived.unwrap_or(false))
+        .filter_eq_user(&user);
+    let query = match params.resolved {
+        Some(resolved) => query.filter_null_resolved_at(!resolved),
+        None => query,
+    };
+    let query = match params.archived {
+        Some(archived) => query.filter_null_archived_at(!archived),
+        None => query,
+    };
+    let thinking_notes = query
         .order_by_resolved_at_nulls_first(Desc)
         .order_by_updated_at(Desc)
         .order_by_ambition_created_at_nulls_last(Asc)
