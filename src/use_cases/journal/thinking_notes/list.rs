@@ -24,6 +24,7 @@ pub async fn list_thinking_notes<'a>(
         .filter_eq_user(&user)
         .filter_null_resolved_at(!params.resolved.unwrap_or(false))
         .filter_null_archived_at(!params.archived.unwrap_or(false))
+        .order_by_resolved_at_nulls_first(Desc)
         .order_by_updated_at(Desc)
         .order_by_ambition_created_at_nulls_last(Asc)
         .order_by_desired_state_created_at_nulls_last(Asc)
