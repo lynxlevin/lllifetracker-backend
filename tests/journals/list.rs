@@ -133,7 +133,89 @@ async fn test_order() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn test_tag_query() -> Result<(), DbErr> {
-    todo!();
+    let Connections { app, db, .. } = init_app().await?;
+    let user = factory::user().insert(&db).await?;
+    let tagged_thinking_note = factory::thinking_note(user.id).insert(&db).await?;
+    let _thinking_note = factory::thinking_note(user.id).insert(&db).await?;
+    let _tagged_archived_thinking_note = factory::thinking_note(user.id)
+        .archived_at(Some(Utc::now().into()))
+        .insert(&db)
+        .await?;
+    let different_tagged_thinking_note = factory::thinking_note(user.id).insert(&db).await?;
+    let tagged_diary = factory::diary(user.id).insert(&db).await?;
+    let _diary = factory::diary(user.id).insert(&db).await?;
+    let tagged_reading_note = factory::reading_note(user.id).insert(&db).await?;
+    let _reading_note = factory::reading_note(user.id).insert(&db).await?;
+    let plain_tag_0 = factory::tag(user.id).insert(&db).await?;
+    let plain_tag_1 = factory::tag(user.id).insert(&db).await?;
+    let plain_tag_2 = factory::tag(user.id).insert(&db).await?;
+    factory::link_thinking_note_tag(&db, tagged_thinking_note.id, plain_tag_0.id).await?;
+    factory::link_diary_tag(&db, tagged_diary.id, plain_tag_0.id).await?;
+    factory::link_reading_note_tag(&db, tagged_reading_note.id, plain_tag_1.id).await?;
+    factory::link_thinking_note_tag(&db, different_tagged_thinking_note.id, plain_tag_2.id).await?;
+
+    let req = test::TestRequest::get()
+        .uri(&format!(
+            "/api/journals?tag_id_or={}&tag_id_or={}",
+            plain_tag_0.id, plain_tag_1.id
+        ))
+        .to_request();
+    req.extensions_mut().insert(user.clone());
+
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), http::StatusCode::OK);
+
+    let body: Vec<JournalVisibleWithTags> = test::read_body_json(resp).await;
+    let expected = vec![
+        JournalVisibleWithTags {
+            diary: None,
+            reading_note: None,
+            thinking_note: Some(ThinkingNoteVisibleWithTags {
+                id: tagged_thinking_note.id,
+                question: tagged_thinking_note.question,
+                thought: tagged_thinking_note.thought,
+                answer: tagged_thinking_note.answer,
+                resolved_at: tagged_thinking_note.resolved_at,
+                archived_at: tagged_thinking_note.archived_at,
+                created_at: tagged_thinking_note.created_at,
+                updated_at: tagged_thinking_note.updated_at,
+                // MYMEMO: add tag
+                tags: vec![],
+            }),
+        },
+        JournalVisibleWithTags {
+            diary: Some(DiaryVisibleWithTags {
+                id: tagged_diary.id,
+                text: tagged_diary.text.clone(),
+                date: tagged_diary.date,
+                tags: vec![],
+            }),
+            reading_note: None,
+            thinking_note: None,
+        },
+        JournalVisibleWithTags {
+            diary: None,
+            reading_note: Some(ReadingNoteVisibleWithTags {
+                id: tagged_reading_note.id,
+                title: tagged_reading_note.title.clone(),
+                page_number: tagged_reading_note.page_number,
+                text: tagged_reading_note.text.clone(),
+                date: tagged_reading_note.date,
+                created_at: tagged_reading_note.created_at,
+                updated_at: tagged_reading_note.updated_at,
+                tags: vec![],
+            }),
+            thinking_note: None,
+        },
+    ];
+
+    assert_eq!(body.len(), expected.len());
+    for i in 0..body.len() {
+        dbg!(i);
+        assert_eq!(body[i], expected[i]);
+    }
+
+    Ok(())
 }
 
 #[actix_web::test]
