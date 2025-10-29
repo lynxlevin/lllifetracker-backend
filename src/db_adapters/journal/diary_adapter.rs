@@ -76,6 +76,7 @@ impl DiaryFilter for DiaryAdapter<'_> {
 
 pub trait DiaryOrder {
     fn order_by_date(self, order: Order) -> Self;
+    fn order_by_id(self, order: Order) -> Self;
     fn order_by_ambition_created_at_nulls_last(self, order: Order) -> Self;
     fn order_by_desired_state_created_at_nulls_last(self, order: Order) -> Self;
     fn order_by_action_created_at_nulls_last(self, order: Order) -> Self;
@@ -85,6 +86,12 @@ pub trait DiaryOrder {
 impl DiaryOrder for DiaryAdapter<'_> {
     fn order_by_date(mut self, order: Order) -> Self {
         self.query = self.query.order_by(Column::Date, order);
+        self
+    }
+
+    fn order_by_id(mut self, order: Order) -> Self {
+        // NOTE: Using Id in place of created_at timestamp because diary does not have timestamps.
+        self.query = self.query.order_by(Column::Id, order);
         self
     }
 
