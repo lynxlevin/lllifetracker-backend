@@ -15,6 +15,7 @@ pub async fn list_diaries<'a>(
         .join_my_way_via_tags()
         .filter_eq_user(&user)
         .order_by_date(Desc)
+        .order_by_id(Desc)
         .order_by_ambition_created_at_nulls_last(Asc)
         .order_by_desired_state_created_at_nulls_last(Asc)
         .order_by_action_created_at_nulls_last(Asc)
