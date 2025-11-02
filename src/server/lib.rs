@@ -6,8 +6,8 @@ use actix_web::{cookie, web::scope, Scope};
 use common::settings::types::Settings;
 use web_adapters::{
     action_goal_routes, action_routes, action_track_routes, ambition_routes, auth_routes,
-    desired_state_category_routes, desired_state_routes, diary_routes, reading_note_routes,
-    tag_routes, thinking_note_routes, web_push_subscription_routes,
+    desired_state_category_routes, desired_state_routes, diary_routes, journal_routes,
+    reading_note_routes, tag_routes, thinking_note_routes, web_push_subscription_routes,
 };
 
 pub use web_adapters::auth_middleware;
@@ -54,6 +54,7 @@ pub fn get_routes() -> Scope {
         .configure(reading_note_routes)
         .configure(tag_routes)
         .configure(action_track_routes)
+        .configure(journal_routes)
         .configure(diary_routes)
         .configure(desired_state_category_routes)
         .configure(action_goal_routes)

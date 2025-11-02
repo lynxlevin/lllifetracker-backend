@@ -24,7 +24,7 @@ async fn test_order() -> Result<(), DbErr> {
     let diary = factory::diary(user.id).text(None).insert(&db).await?;
     // NOTE: resolved_thinking_note order is desc by resolved_at
     let resolved_thinking_note_0 = factory::thinking_note(user.id)
-        .updated_at((now - Duration::days(3)).into())
+        .updated_at((now - Duration::days(1)).into())
         .resolved_at(Some((now - Duration::days(1)).into()))
         .insert(&db)
         .await?;
@@ -34,7 +34,7 @@ async fn test_order() -> Result<(), DbErr> {
         .insert(&db)
         .await?;
     let resolved_thinking_note_1 = factory::thinking_note(user.id)
-        .updated_at((now - Duration::days(1)).into())
+        .updated_at((now - Duration::days(3)).into())
         .resolved_at(Some((now - Duration::days(3)).into()))
         .insert(&db)
         .await?;
@@ -156,7 +156,7 @@ async fn test_tag_query() -> Result<(), DbErr> {
 
     let req = test::TestRequest::get()
         .uri(&format!(
-            "/api/journals?tag_id_or={}&tag_id_or={}",
+            "/api/journals?tag_id_or={},{}",
             plain_tag_0.id, plain_tag_1.id
         ))
         .to_request();
