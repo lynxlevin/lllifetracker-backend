@@ -8,7 +8,10 @@ use db_adapters::{
 use entities::user as user_entity;
 
 use crate::{
-    journal::reading_notes::types::ReadingNoteVisibleWithTags, tags::types::TagVisible,
+    journal::{
+        reading_notes::types::ReadingNoteVisibleWithTags, types::IntoJournalVisibleWithTags,
+    },
+    tags::types::TagVisible,
     UseCaseError,
 };
 

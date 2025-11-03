@@ -8,7 +8,10 @@ use db_adapters::{
 use entities::user as user_entity;
 
 use crate::{
-    journal::thinking_notes::types::{ThinkingNoteListQuery, ThinkingNoteVisibleWithTags},
+    journal::{
+        thinking_notes::types::{ThinkingNoteListQuery, ThinkingNoteVisibleWithTags},
+        types::IntoJournalVisibleWithTags,
+    },
     tags::types::TagVisible,
     UseCaseError,
 };

@@ -8,13 +8,10 @@ use entities::user as user_entity;
 
 use crate::{
     journal::{
-        diaries::{list::list_diaries, types::DiaryVisibleWithTags},
-        reading_notes::{self, list::list_reading_notes, types::ReadingNoteVisibleWithTags},
-        thinking_notes::{
-            list::list_thinking_notes,
-            types::{ThinkingNoteListQuery, ThinkingNoteVisibleWithTags},
-        },
-        types::{JournalListQuery, JournalVisibleWithTags},
+        diaries::list::list_diaries,
+        reading_notes::list::list_reading_notes,
+        thinking_notes::{list::list_thinking_notes, types::ThinkingNoteListQuery},
+        types::{IntoJournalVisibleWithTags, JournalListQuery, JournalVisibleWithTags},
     },
     UseCaseError,
 };
@@ -54,7 +51,7 @@ pub async fn list_journals<'a>(
             .front()
             .is_some_and(|t| t.resolved_at.is_none());
         if first_thinking_note_is_unresolved {
-            res.push(JournalVisibleWithTags::from(thinking_notes.pop_front()));
+            res.push(thinking_notes.pop_front().unwrap().into());
             continue;
         }
 
@@ -63,19 +60,17 @@ pub async fn list_journals<'a>(
         let thinking_note_remains = thinking_notes.len() > 0;
 
         let first = match (diary_remains, reading_note_remains, thinking_note_remains) {
-            (true, false, false) => JournalVisibleWithTags::from(diaries.pop_front()),
-            (false, true, false) => JournalVisibleWithTags::from(reading_notes.pop_front()),
-            (false, false, true) => JournalVisibleWithTags::from(thinking_notes.pop_front()),
-            (true, true, false) => pop_diary_or_reading_note(&mut diaries, &mut reading_notes),
-            (true, false, true) => pop_diary_or_thinking_note(&mut diaries, &mut thinking_notes),
-            (false, true, true) => {
-                pop_reading_note_or_thinking_note(&mut reading_notes, &mut thinking_notes)
-            }
+            (true, false, false) => diaries.pop_front().unwrap().into(),
+            (false, true, false) => reading_notes.pop_front().unwrap().into(),
+            (false, false, true) => thinking_notes.pop_front().unwrap().into(),
+            (true, true, false) => pop_front_from_newer(&mut diaries, &mut reading_notes),
+            (true, false, true) => pop_front_from_newer(&mut diaries, &mut thinking_notes),
+            (false, true, true) => pop_front_from_newer(&mut reading_notes, &mut thinking_notes),
             (true, true, true) => {
-                if diaries.front().unwrap().date >= reading_notes.front().unwrap().date {
-                    pop_diary_or_thinking_note(&mut diaries, &mut thinking_notes)
+                if a_is_newer(&diaries, &reading_notes) {
+                    pop_front_from_newer(&mut diaries, &mut thinking_notes)
                 } else {
-                    pop_reading_note_or_thinking_note(&mut reading_notes, &mut thinking_notes)
+                    pop_front_from_newer(&mut reading_notes, &mut thinking_notes)
                 }
             }
             (false, false, false) => unreachable!("This should not happen, (None, None, None)."),
@@ -86,38 +81,23 @@ pub async fn list_journals<'a>(
     Ok(res)
 }
 
-// MYMEMO implement Journal trait and use those to merge these methods.
-fn pop_diary_or_reading_note(
-    diaries: &mut VecDeque<DiaryVisibleWithTags>,
-    reading_notes: &mut VecDeque<ReadingNoteVisibleWithTags>,
-) -> JournalVisibleWithTags {
-    if diaries.front().unwrap().date >= reading_notes.front().unwrap().date {
-        JournalVisibleWithTags::from(diaries.pop_front())
-    } else {
-        JournalVisibleWithTags::from(reading_notes.pop_front())
-    }
+fn a_is_newer<T: IntoJournalVisibleWithTags, U: IntoJournalVisibleWithTags>(
+    a: &VecDeque<T>,
+    b: &VecDeque<U>,
+) -> bool {
+    a.front().unwrap().is_newer_or_eq(b.front().unwrap())
 }
 
-fn pop_diary_or_thinking_note(
-    diaries: &mut VecDeque<DiaryVisibleWithTags>,
-    thinking_notes: &mut VecDeque<ThinkingNoteVisibleWithTags>,
+fn pop_front_from_newer<
+    T: IntoJournalVisibleWithTags + Into<JournalVisibleWithTags>,
+    U: IntoJournalVisibleWithTags + Into<JournalVisibleWithTags>,
+>(
+    a: &mut VecDeque<T>,
+    b: &mut VecDeque<U>,
 ) -> JournalVisibleWithTags {
-    if diaries.front().unwrap().date >= thinking_notes.front().unwrap().updated_at.date_naive() {
-        JournalVisibleWithTags::from(diaries.pop_front())
+    if a_is_newer(&a, &b) {
+        a.pop_front().unwrap().into()
     } else {
-        JournalVisibleWithTags::from(thinking_notes.pop_front())
-    }
-}
-
-fn pop_reading_note_or_thinking_note(
-    reading_notes: &mut VecDeque<ReadingNoteVisibleWithTags>,
-    thinking_notes: &mut VecDeque<ThinkingNoteVisibleWithTags>,
-) -> JournalVisibleWithTags {
-    if reading_notes.front().unwrap().date
-        >= thinking_notes.front().unwrap().updated_at.date_naive()
-    {
-        JournalVisibleWithTags::from(reading_notes.pop_front())
-    } else {
-        JournalVisibleWithTags::from(thinking_notes.pop_front())
+        b.pop_front().unwrap().into()
     }
 }

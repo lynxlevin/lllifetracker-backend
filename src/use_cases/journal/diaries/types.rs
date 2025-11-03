@@ -2,7 +2,10 @@ use db_adapters::diary_adapter::DiaryUpdateKey;
 use entities::{diary, prelude::Diary};
 use sea_orm::{DerivePartialModel, FromQueryResult};
 
-use crate::tags::types::TagVisible;
+use crate::{
+    journal::types::{IntoJournalVisibleWithTags, JournalVisibleWithTags},
+    tags::types::TagVisible,
+};
 
 #[derive(
     serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug,
@@ -32,9 +35,27 @@ pub struct DiaryVisibleWithTags {
     pub tags: Vec<TagVisible>,
 }
 
-impl DiaryVisibleWithTags {
-    pub fn push_tag(&mut self, tag: TagVisible) {
+impl IntoJournalVisibleWithTags for DiaryVisibleWithTags {
+    fn push_tag(&mut self, tag: TagVisible) {
         self.tags.push(tag);
+    }
+
+    fn sort_key(&self) -> chrono::NaiveDate {
+        self.date
+    }
+
+    fn is_newer_or_eq<T: IntoJournalVisibleWithTags>(&self, other: &T) -> bool {
+        self.sort_key() >= other.sort_key()
+    }
+}
+
+impl Into<JournalVisibleWithTags> for DiaryVisibleWithTags {
+    fn into(self) -> JournalVisibleWithTags {
+        JournalVisibleWithTags {
+            diary: Some(self),
+            reading_note: None,
+            thinking_note: None,
+        }
     }
 }
 

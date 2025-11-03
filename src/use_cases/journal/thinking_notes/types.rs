@@ -4,7 +4,10 @@ use sea_orm::{DerivePartialModel, FromQueryResult};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::tags::types::TagVisible;
+use crate::{
+    journal::types::{IntoJournalVisibleWithTags, JournalVisibleWithTags},
+    tags::types::TagVisible,
+};
 
 #[derive(Serialize, Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug)]
 #[sea_orm(entity = "ThinkingNote")]
@@ -47,9 +50,27 @@ pub struct ThinkingNoteVisibleWithTags {
     pub tags: Vec<TagVisible>,
 }
 
-impl ThinkingNoteVisibleWithTags {
-    pub fn push_tag(&mut self, tag: TagVisible) {
+impl IntoJournalVisibleWithTags for ThinkingNoteVisibleWithTags {
+    fn push_tag(&mut self, tag: TagVisible) {
         self.tags.push(tag);
+    }
+
+    fn sort_key(&self) -> chrono::NaiveDate {
+        self.updated_at.date_naive()
+    }
+
+    fn is_newer_or_eq<T: IntoJournalVisibleWithTags>(&self, other: &T) -> bool {
+        self.sort_key() >= other.sort_key()
+    }
+}
+
+impl Into<JournalVisibleWithTags> for ThinkingNoteVisibleWithTags {
+    fn into(self) -> JournalVisibleWithTags {
+        JournalVisibleWithTags {
+            diary: None,
+            reading_note: None,
+            thinking_note: Some(self),
+        }
     }
 }
 

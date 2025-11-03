@@ -4,7 +4,11 @@ use db_adapters::{
 };
 use entities::user as user_entity;
 
-use crate::{journal::diaries::types::DiaryVisibleWithTags, tags::types::TagVisible, UseCaseError};
+use crate::{
+    journal::{diaries::types::DiaryVisibleWithTags, types::IntoJournalVisibleWithTags},
+    tags::types::TagVisible,
+    UseCaseError,
+};
 
 pub async fn list_diaries<'a>(
     user: user_entity::Model,
