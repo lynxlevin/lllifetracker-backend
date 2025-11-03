@@ -46,12 +46,16 @@ pub async fn list_journals<'a>(
     let mut res = vec![];
     let count = diaries.len() + reading_notes.len() + thinking_notes.len();
 
+    let mut first_thinking_note_is_unresolved = thinking_notes
+        .front()
+        .is_some_and(|t| t.resolved_at.is_none());
+
     for _ in 0..count {
-        let first_thinking_note_is_unresolved = thinking_notes
-            .front()
-            .is_some_and(|t| t.resolved_at.is_none());
         if first_thinking_note_is_unresolved {
             res.push(thinking_notes.pop_front().unwrap().into());
+            first_thinking_note_is_unresolved = thinking_notes
+                .front()
+                .is_some_and(|t| t.resolved_at.is_none());
             continue;
         }
 
