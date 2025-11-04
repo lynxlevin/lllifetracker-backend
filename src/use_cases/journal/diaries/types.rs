@@ -1,15 +1,14 @@
 use db_adapters::diary_adapter::DiaryUpdateKey;
 use entities::{diary, prelude::Diary};
 use sea_orm::{DerivePartialModel, FromQueryResult};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     journal::types::{IntoJournalVisibleWithTags, JournalVisibleWithTags},
     tags::types::TagVisible,
 };
 
-#[derive(
-    serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug,
-)]
+#[derive(Serialize, Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug)]
 #[sea_orm(entity = "Diary")]
 pub struct DiaryVisible {
     pub id: uuid::Uuid,
@@ -27,7 +26,7 @@ impl From<diary::Model> for DiaryVisible {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct DiaryVisibleWithTags {
     pub id: uuid::Uuid,
     pub text: Option<String>,
@@ -59,14 +58,19 @@ impl Into<JournalVisibleWithTags> for DiaryVisibleWithTags {
     }
 }
 
-#[derive(serde::Deserialize, Debug, serde::Serialize)]
+#[derive(Deserialize, Debug)]
+pub struct DiaryListQuery {
+    pub tag_id_or: Option<String>,
+}
+
+#[derive(Deserialize, Debug, Serialize)]
 pub struct DiaryCreateRequest {
     pub text: Option<String>,
     pub date: chrono::NaiveDate,
     pub tag_ids: Vec<uuid::Uuid>,
 }
 
-#[derive(serde::Deserialize, Debug, serde::Serialize)]
+#[derive(Deserialize, Debug, Serialize)]
 pub struct DiaryUpdateRequest {
     pub text: Option<String>,
     pub date: chrono::NaiveDate,

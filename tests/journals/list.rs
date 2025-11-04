@@ -1,9 +1,12 @@
 use actix_web::{http, test, HttpMessage};
 use chrono::{Duration, Utc};
 use sea_orm::{ActiveModelTrait, DbErr};
-use use_cases::journal::{
-    diaries::types::DiaryVisibleWithTags, reading_notes::types::ReadingNoteVisibleWithTags,
-    thinking_notes::types::ThinkingNoteVisibleWithTags, types::JournalVisibleWithTags,
+use use_cases::{
+    journal::{
+        diaries::types::DiaryVisibleWithTags, reading_notes::types::ReadingNoteVisibleWithTags,
+        thinking_notes::types::ThinkingNoteVisibleWithTags, types::JournalVisibleWithTags,
+    },
+    tags::types::TagVisible,
 };
 
 use crate::utils::Connections;
@@ -179,8 +182,12 @@ async fn test_tag_query() -> Result<(), DbErr> {
                 archived_at: tagged_thinking_note.archived_at,
                 created_at: tagged_thinking_note.created_at,
                 updated_at: tagged_thinking_note.updated_at,
-                // MYMEMO: add tag
-                tags: vec![],
+                tags: vec![TagVisible {
+                    id: plain_tag_0.id,
+                    name: plain_tag_0.name.clone().unwrap(),
+                    r#type: plain_tag_0.r#type.clone(),
+                    created_at: plain_tag_0.created_at,
+                }],
             }),
         },
         JournalVisibleWithTags {
@@ -188,7 +195,12 @@ async fn test_tag_query() -> Result<(), DbErr> {
                 id: tagged_diary.id,
                 text: tagged_diary.text.clone(),
                 date: tagged_diary.date,
-                tags: vec![],
+                tags: vec![TagVisible {
+                    id: plain_tag_0.id,
+                    name: plain_tag_0.name.unwrap(),
+                    r#type: plain_tag_0.r#type,
+                    created_at: plain_tag_0.created_at,
+                }],
             }),
             reading_note: None,
             thinking_note: None,
@@ -203,7 +215,12 @@ async fn test_tag_query() -> Result<(), DbErr> {
                 date: tagged_reading_note.date,
                 created_at: tagged_reading_note.created_at,
                 updated_at: tagged_reading_note.updated_at,
-                tags: vec![],
+                tags: vec![TagVisible {
+                    id: plain_tag_1.id,
+                    name: plain_tag_1.name.unwrap(),
+                    r#type: plain_tag_1.r#type,
+                    created_at: plain_tag_1.created_at,
+                }],
             }),
             thinking_note: None,
         },

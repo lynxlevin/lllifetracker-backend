@@ -6,10 +6,12 @@ use db_adapters::{
     Order::{Asc, Desc},
 };
 use entities::user as user_entity;
+use uuid::Uuid;
 
 use crate::{
     journal::{
-        reading_notes::types::ReadingNoteVisibleWithTags, types::IntoJournalVisibleWithTags,
+        reading_notes::types::{ReadingNoteListQuery, ReadingNoteVisibleWithTags},
+        types::IntoJournalVisibleWithTags,
     },
     tags::types::TagVisible,
     UseCaseError,
@@ -18,11 +20,19 @@ use crate::{
 pub async fn list_reading_notes<'a>(
     user: user_entity::Model,
     reading_note_adapter: ReadingNoteAdapter<'a>,
+    params: ReadingNoteListQuery,
 ) -> Result<Vec<ReadingNoteVisibleWithTags>, UseCaseError> {
-    let reading_notes = reading_note_adapter
-        .filter_eq_user(&user)
+    let params = validate_params(params)?;
+    let mut query = reading_note_adapter
         .join_tags()
         .join_my_way_via_tags()
+        .filter_eq_user(&user);
+
+    if let Some(tag_id_or) = params.tag_id_or {
+        query = query.filter_in_tag_ids_or(tag_id_or);
+    }
+
+    let reading_notes = query
         .order_by_date(Desc)
         .order_by_created_at(Desc)
         .order_by_ambition_created_at_nulls_last(Asc)
@@ -60,6 +70,28 @@ pub async fn list_reading_notes<'a>(
         }
     }
     Ok(res)
+}
+
+struct QueryParam {
+    tag_id_or: Option<Vec<Uuid>>,
+}
+
+fn validate_params(params: ReadingNoteListQuery) -> Result<QueryParam, UseCaseError> {
+    let tag_id_or: Option<Vec<Uuid>> = params.tag_id_or.and_then(|tag_id_or| {
+        Some(
+            tag_id_or
+                .split(',')
+                .map(|tag_id| {
+                    Uuid::parse_str(tag_id)
+                        .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
+                })
+                .filter(|tag_id| tag_id.is_ok())
+                .map(|tag_id| tag_id.unwrap())
+                .collect(),
+        )
+    });
+
+    Ok(QueryParam { tag_id_or })
 }
 
 fn first_to_process(

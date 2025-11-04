@@ -78,6 +78,7 @@ impl Into<JournalVisibleWithTags> for ThinkingNoteVisibleWithTags {
 pub struct ThinkingNoteListQuery {
     pub resolved: Option<bool>,
     pub archived: Option<bool>,
+    pub tag_id_or: Option<String>,
 }
 
 #[derive(Deserialize, Debug, Serialize, Default)]

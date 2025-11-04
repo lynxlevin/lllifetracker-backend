@@ -68,6 +68,7 @@ pub trait ThinkingNoteFilter {
     fn filter_eq_user(self, user: &user::Model) -> Self;
     fn filter_null_resolved_at(self, is_null: bool) -> Self;
     fn filter_null_archived_at(self, is_null: bool) -> Self;
+    fn filter_in_tag_ids_or(self, tag_ids: Vec<Uuid>) -> Self;
 }
 
 impl ThinkingNoteFilter for ThinkingNoteAdapter<'_> {
@@ -94,6 +95,13 @@ impl ThinkingNoteFilter for ThinkingNoteAdapter<'_> {
             true => self.query.filter(Column::ArchivedAt.is_null()),
             false => self.query.filter(Column::ArchivedAt.is_not_null()),
         };
+        self
+    }
+
+    fn filter_in_tag_ids_or(mut self, tag_ids: Vec<Uuid>) -> Self {
+        self.query = self
+            .query
+            .filter(thinking_note_tags::Column::TagId.is_in(tag_ids));
         self
     }
 }

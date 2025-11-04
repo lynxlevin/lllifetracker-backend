@@ -6,6 +6,7 @@ use db_adapters::{
     Order::{Asc, Desc},
 };
 use entities::user as user_entity;
+use uuid::Uuid;
 
 use crate::{
     journal::{
@@ -21,18 +22,22 @@ pub async fn list_thinking_notes<'a>(
     params: ThinkingNoteListQuery,
     thinking_note_adapter: ThinkingNoteAdapter<'a>,
 ) -> Result<Vec<ThinkingNoteVisibleWithTags>, UseCaseError> {
-    let query = thinking_note_adapter
+    let params = validate_params(params)?;
+    let mut query = thinking_note_adapter
         .join_tags()
         .join_my_way_via_tags()
         .filter_eq_user(&user);
-    let query = match params.resolved {
-        Some(resolved) => query.filter_null_resolved_at(!resolved),
-        None => query,
-    };
-    let query = match params.archived {
-        Some(archived) => query.filter_null_archived_at(!archived),
-        None => query,
-    };
+
+    if let Some(resolved) = params.resolved {
+        query = query.filter_null_resolved_at(!resolved);
+    }
+    if let Some(archived) = params.archived {
+        query = query.filter_null_archived_at(!archived);
+    }
+    if let Some(tag_id_or) = params.tag_id_or {
+        query = query.filter_in_tag_ids_or(tag_id_or);
+    }
+
     let thinking_notes = query
         .order_by_resolved_at_nulls_first(Desc)
         .order_by_updated_at(Desc)
@@ -73,6 +78,34 @@ pub async fn list_thinking_notes<'a>(
     }
 
     Ok(res)
+}
+
+struct QueryParam {
+    resolved: Option<bool>,
+    archived: Option<bool>,
+    tag_id_or: Option<Vec<Uuid>>,
+}
+
+fn validate_params(params: ThinkingNoteListQuery) -> Result<QueryParam, UseCaseError> {
+    let tag_id_or: Option<Vec<Uuid>> = params.tag_id_or.and_then(|tag_id_or| {
+        Some(
+            tag_id_or
+                .split(',')
+                .map(|tag_id| {
+                    Uuid::parse_str(tag_id)
+                        .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
+                })
+                .filter(|tag_id| tag_id.is_ok())
+                .map(|tag_id| tag_id.unwrap())
+                .collect(),
+        )
+    });
+
+    Ok(QueryParam {
+        tag_id_or,
+        resolved: params.resolved,
+        archived: params.archived,
+    })
 }
 
 fn first_to_process(

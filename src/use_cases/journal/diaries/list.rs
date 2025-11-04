@@ -3,9 +3,13 @@ use db_adapters::{
     Order::{Asc, Desc},
 };
 use entities::user as user_entity;
+use uuid::Uuid;
 
 use crate::{
-    journal::{diaries::types::DiaryVisibleWithTags, types::IntoJournalVisibleWithTags},
+    journal::{
+        diaries::types::{DiaryListQuery, DiaryVisibleWithTags},
+        types::IntoJournalVisibleWithTags,
+    },
     tags::types::TagVisible,
     UseCaseError,
 };
@@ -13,11 +17,19 @@ use crate::{
 pub async fn list_diaries<'a>(
     user: user_entity::Model,
     diary_adapter: DiaryAdapter<'a>,
+    params: DiaryListQuery,
 ) -> Result<Vec<DiaryVisibleWithTags>, UseCaseError> {
-    let diaries = diary_adapter
+    let params = validate_params(params)?;
+    let mut query = diary_adapter
         .join_tags()
         .join_my_way_via_tags()
-        .filter_eq_user(&user)
+        .filter_eq_user(&user);
+
+    if let Some(tag_id_or) = params.tag_id_or {
+        query = query.filter_in_tag_ids_or(tag_id_or);
+    }
+
+    let diaries = query
         .order_by_date(Desc)
         .order_by_id(Desc)
         .order_by_ambition_created_at_nulls_last(Asc)
@@ -51,6 +63,28 @@ pub async fn list_diaries<'a>(
         }
     }
     Ok(res)
+}
+
+struct QueryParam {
+    tag_id_or: Option<Vec<Uuid>>,
+}
+
+fn validate_params(params: DiaryListQuery) -> Result<QueryParam, UseCaseError> {
+    let tag_id_or: Option<Vec<Uuid>> = params.tag_id_or.and_then(|tag_id_or| {
+        Some(
+            tag_id_or
+                .split(',')
+                .map(|tag_id| {
+                    Uuid::parse_str(tag_id)
+                        .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
+                })
+                .filter(|tag_id| tag_id.is_ok())
+                .map(|tag_id| tag_id.unwrap())
+                .collect(),
+        )
+    });
+
+    Ok(QueryParam { tag_id_or })
 }
 
 fn first_to_process(res: &Vec<DiaryVisibleWithTags>, diary: &DiaryWithTag) -> bool {

@@ -6,7 +6,7 @@ use actix_web::{
 use db_adapters::reading_note_adapter::ReadingNoteAdapter;
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use use_cases::journal::reading_notes::list::list_reading_notes;
+use use_cases::journal::reading_notes::{list::list_reading_notes, types::ReadingNoteListQuery};
 
 use crate::utils::{response_401, response_500};
 
@@ -18,7 +18,13 @@ pub async fn list_reading_notes_endpoint(
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            match list_reading_notes(user.into_inner(), ReadingNoteAdapter::init(&db)).await {
+            match list_reading_notes(
+                user.into_inner(),
+                ReadingNoteAdapter::init(&db),
+                ReadingNoteListQuery { tag_id_or: None },
+            )
+            .await
+            {
                 Ok(res) => HttpResponse::Ok().json(res),
                 Err(e) => response_500(e),
             }
