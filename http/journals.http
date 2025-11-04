@@ -6,10 +6,19 @@ POST {{endpoint}}/api/users/login
 Content-Type: application/json
 
 {
-  "email": "test@test.com",
-  "password": "password"
+  "email": "masahiro.yamamoto0403@gmail.com",
+  "password": "Chihirodaisuki"
 }
 
 ###
 # @name list
 GET {{endpoint}}/api/journals
+
+@tag_id_0=7778da27-ea6f-4008-9d96-42a667fd4b56
+@tag_id_1=b07e5479-d2df-427f-9454-b57af3f552a1
+
+###
+# @name list_with_tag_query
+GET {{endpoint}}/api/journals?tag_id_or={{tag_id_0}},{{tag_id_1}}
+
+
