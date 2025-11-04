@@ -23,16 +23,10 @@ pub async fn list_reading_notes<'a>(
     params: ReadingNoteListQuery,
 ) -> Result<Vec<ReadingNoteVisibleWithTags>, UseCaseError> {
     let params = validate_params(params)?;
-    let mut query = reading_note_adapter
+    let reading_notes = reading_note_adapter
         .join_tags()
         .join_my_way_via_tags()
-        .filter_eq_user(&user);
-
-    if let Some(tag_id_or) = params.tag_id_or {
-        query = query.filter_in_tag_ids_or(tag_id_or);
-    }
-
-    let reading_notes = query
+        .filter_eq_user(&user)
         .order_by_date(Desc)
         .order_by_created_at(Desc)
         .order_by_ambition_created_at_nulls_last(Asc)
@@ -69,6 +63,22 @@ pub async fn list_reading_notes<'a>(
             }
         }
     }
+
+    // NOTE: This filtering cannot be done in Db query.
+    // If done in DB query, tags not in tag_id_or will be returned.
+    if let Some(tag_id_or) = params.tag_id_or {
+        res = res
+            .into_iter()
+            .filter(|reading_note| {
+                reading_note
+                    .tags
+                    .iter()
+                    .find(|tag| tag_id_or.contains(&tag.id))
+                    .is_some()
+            })
+            .collect();
+    }
+
     Ok(res)
 }
 

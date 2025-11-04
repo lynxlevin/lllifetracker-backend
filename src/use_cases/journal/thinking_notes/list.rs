@@ -34,9 +34,6 @@ pub async fn list_thinking_notes<'a>(
     if let Some(archived) = params.archived {
         query = query.filter_null_archived_at(!archived);
     }
-    if let Some(tag_id_or) = params.tag_id_or {
-        query = query.filter_in_tag_ids_or(tag_id_or);
-    }
 
     let thinking_notes = query
         .order_by_resolved_at_nulls_first(Desc)
@@ -75,6 +72,21 @@ pub async fn list_thinking_notes<'a>(
                     .push_tag(Into::<TagVisible>::into(&thinking_note));
             }
         }
+    }
+
+    // NOTE: This filtering cannot be done in Db query.
+    // If done in DB query, tags not in tag_id_or will be returned.
+    if let Some(tag_id_or) = params.tag_id_or {
+        res = res
+            .into_iter()
+            .filter(|thinking_note| {
+                thinking_note
+                    .tags
+                    .iter()
+                    .find(|tag| tag_id_or.contains(&tag.id))
+                    .is_some()
+            })
+            .collect();
     }
 
     Ok(res)

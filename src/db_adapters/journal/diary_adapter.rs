@@ -60,7 +60,6 @@ impl DiaryJoin for DiaryAdapter<'_> {
 pub trait DiaryFilter {
     fn filter_eq_id(self, id: Uuid) -> Self;
     fn filter_eq_user(self, user: &user::Model) -> Self;
-    fn filter_in_tag_ids_or(self, tag_ids: Vec<Uuid>) -> Self;
 }
 
 impl DiaryFilter for DiaryAdapter<'_> {
@@ -71,13 +70,6 @@ impl DiaryFilter for DiaryAdapter<'_> {
 
     fn filter_eq_user(mut self, user: &user::Model) -> Self {
         self.query = self.query.filter(Column::UserId.eq(user.id));
-        self
-    }
-
-    fn filter_in_tag_ids_or(mut self, tag_ids: Vec<Uuid>) -> Self {
-        self.query = self
-            .query
-            .filter(diaries_tags::Column::TagId.is_in(tag_ids));
         self
     }
 }

@@ -153,6 +153,7 @@ async fn test_tag_query() -> Result<(), DbErr> {
     let plain_tag_1 = factory::tag(user.id).insert(&db).await?;
     let plain_tag_2 = factory::tag(user.id).insert(&db).await?;
     factory::link_thinking_note_tag(&db, tagged_thinking_note.id, plain_tag_0.id).await?;
+    factory::link_thinking_note_tag(&db, tagged_thinking_note.id, plain_tag_2.id).await?;
     factory::link_diary_tag(&db, tagged_diary.id, plain_tag_0.id).await?;
     factory::link_reading_note_tag(&db, tagged_reading_note.id, plain_tag_1.id).await?;
     factory::link_thinking_note_tag(&db, different_tagged_thinking_note.id, plain_tag_2.id).await?;
@@ -182,12 +183,20 @@ async fn test_tag_query() -> Result<(), DbErr> {
                 archived_at: tagged_thinking_note.archived_at,
                 created_at: tagged_thinking_note.created_at,
                 updated_at: tagged_thinking_note.updated_at,
-                tags: vec![TagVisible {
-                    id: plain_tag_0.id,
-                    name: plain_tag_0.name.clone().unwrap(),
-                    r#type: plain_tag_0.r#type.clone(),
-                    created_at: plain_tag_0.created_at,
-                }],
+                tags: vec![
+                    TagVisible {
+                        id: plain_tag_0.id,
+                        name: plain_tag_0.name.clone().unwrap(),
+                        r#type: plain_tag_0.r#type.clone(),
+                        created_at: plain_tag_0.created_at,
+                    },
+                    TagVisible {
+                        id: plain_tag_2.id,
+                        name: plain_tag_2.name.unwrap(),
+                        r#type: plain_tag_2.r#type,
+                        created_at: plain_tag_2.created_at,
+                    },
+                ],
             }),
         },
         JournalVisibleWithTags {
