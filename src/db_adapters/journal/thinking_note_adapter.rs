@@ -2,10 +2,15 @@ use std::future::Future;
 
 use chrono::{DateTime, FixedOffset, Utc};
 use sea_orm::{
-    prelude::Expr, sea_query::NullOrdering::Last, sqlx::error::Error::Database, ActiveModelTrait,
-    ColumnAsExpr, ColumnTrait, DbConn, DbErr, EntityTrait, FromQueryResult, IntoActiveModel,
-    JoinType::LeftJoin, ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
-    RuntimeErr::SqlxError, Select, Set,
+    prelude::Expr,
+    sea_query::NullOrdering::{First, Last},
+    sqlx::error::Error::Database,
+    ActiveModelTrait, ColumnAsExpr, ColumnTrait, DbConn, DbErr, EntityTrait, FromQueryResult,
+    IntoActiveModel,
+    JoinType::LeftJoin,
+    ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
+    RuntimeErr::SqlxError,
+    Select, Set,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -94,6 +99,7 @@ impl ThinkingNoteFilter for ThinkingNoteAdapter<'_> {
 }
 
 pub trait ThinkingNoteOrder {
+    fn order_by_resolved_at_nulls_first(self, order: Order) -> Self;
     fn order_by_updated_at(self, order: Order) -> Self;
     fn order_by_ambition_created_at_nulls_last(self, order: Order) -> Self;
     fn order_by_desired_state_created_at_nulls_last(self, order: Order) -> Self;
@@ -102,6 +108,13 @@ pub trait ThinkingNoteOrder {
 }
 
 impl ThinkingNoteOrder for ThinkingNoteAdapter<'_> {
+    fn order_by_resolved_at_nulls_first(mut self, order: Order) -> Self {
+        self.query = self
+            .query
+            .order_by_with_nulls(Column::ResolvedAt, order, First);
+        self
+    }
+
     fn order_by_updated_at(mut self, order: Order) -> Self {
         self.query = self.query.order_by(Column::UpdatedAt, order);
         self

@@ -42,7 +42,7 @@ async fn happy_path_active_only() -> Result<(), DbErr> {
     factory::link_thinking_note_tag(&db, thinking_note_1.id, action_tag.id).await?;
 
     let req = test::TestRequest::get()
-        .uri("/api/thinking_notes")
+        .uri("/api/thinking_notes?resolved=false&archived=false")
         .to_request();
     req.extensions_mut().insert(user.clone());
 

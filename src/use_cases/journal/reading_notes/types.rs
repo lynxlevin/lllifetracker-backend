@@ -1,11 +1,13 @@
 use entities::{prelude::ReadingNote, reading_note};
 use sea_orm::{DerivePartialModel, FromQueryResult};
+use serde::{Deserialize, Serialize};
 
-use crate::tags::types::TagVisible;
+use crate::{
+    journal::types::{IntoJournalVisibleWithTags, JournalVisibleWithTags},
+    tags::types::TagVisible,
+};
 
-#[derive(
-    serde::Serialize, serde::Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug,
-)]
+#[derive(Serialize, Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug)]
 #[sea_orm(entity = "ReadingNote")]
 pub struct ReadingNoteVisible {
     pub id: uuid::Uuid,
@@ -31,7 +33,7 @@ impl From<reading_note::Model> for ReadingNoteVisible {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct ReadingNoteVisibleWithTags {
     pub id: uuid::Uuid,
     pub title: String,
@@ -43,13 +45,36 @@ pub struct ReadingNoteVisibleWithTags {
     pub tags: Vec<TagVisible>,
 }
 
-impl ReadingNoteVisibleWithTags {
-    pub fn push_tag(&mut self, tag: TagVisible) {
+impl IntoJournalVisibleWithTags for ReadingNoteVisibleWithTags {
+    fn push_tag(&mut self, tag: TagVisible) {
         self.tags.push(tag);
+    }
+
+    fn sort_key(&self) -> chrono::NaiveDate {
+        self.date
+    }
+
+    fn is_newer_or_eq<T: IntoJournalVisibleWithTags>(&self, other: &T) -> bool {
+        self.sort_key() >= other.sort_key()
     }
 }
 
-#[derive(serde::Deserialize, Debug, serde::Serialize)]
+impl Into<JournalVisibleWithTags> for ReadingNoteVisibleWithTags {
+    fn into(self) -> JournalVisibleWithTags {
+        JournalVisibleWithTags {
+            diary: None,
+            reading_note: Some(self),
+            thinking_note: None,
+        }
+    }
+}
+
+#[derive(Deserialize, Debug)]
+pub struct ReadingNoteListQuery {
+    pub tag_id_or: Option<String>,
+}
+
+#[derive(Deserialize, Debug, Serialize)]
 pub struct ReadingNoteCreateRequest {
     pub title: String,
     pub page_number: i16,
@@ -58,7 +83,7 @@ pub struct ReadingNoteCreateRequest {
     pub tag_ids: Vec<uuid::Uuid>,
 }
 
-#[derive(serde::Deserialize, Debug, serde::Serialize)]
+#[derive(Deserialize, Debug, Serialize)]
 pub struct ReadingNoteUpdateRequest {
     pub title: Option<String>,
     pub page_number: Option<i16>,

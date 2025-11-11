@@ -22,6 +22,7 @@ pub trait ThinkingNoteFactory {
     fn question(self, question: Option<String>) -> thinking_note::ActiveModel;
     fn resolved_at(self, resolved_at: Option<DateTime<FixedOffset>>) -> thinking_note::ActiveModel;
     fn archived_at(self, archived_at: Option<DateTime<FixedOffset>>) -> thinking_note::ActiveModel;
+    fn updated_at(self, archived_at: DateTime<FixedOffset>) -> thinking_note::ActiveModel;
 }
 
 impl ThinkingNoteFactory for thinking_note::ActiveModel {
@@ -43,6 +44,11 @@ impl ThinkingNoteFactory for thinking_note::ActiveModel {
         archived_at: Option<DateTime<FixedOffset>>,
     ) -> thinking_note::ActiveModel {
         self.archived_at = Set(archived_at);
+        self
+    }
+
+    fn updated_at(mut self, updated_at: DateTime<FixedOffset>) -> thinking_note::ActiveModel {
+        self.updated_at = Set(updated_at);
         self
     }
 }

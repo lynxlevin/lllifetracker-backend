@@ -3,13 +3,23 @@ use db_adapters::{
     Order::{Asc, Desc},
 };
 use entities::user as user_entity;
+use uuid::Uuid;
 
-use crate::{journal::diaries::types::DiaryVisibleWithTags, tags::types::TagVisible, UseCaseError};
+use crate::{
+    journal::{
+        diaries::types::{DiaryListQuery, DiaryVisibleWithTags},
+        types::IntoJournalVisibleWithTags,
+    },
+    tags::types::TagVisible,
+    UseCaseError,
+};
 
 pub async fn list_diaries<'a>(
     user: user_entity::Model,
     diary_adapter: DiaryAdapter<'a>,
+    params: DiaryListQuery,
 ) -> Result<Vec<DiaryVisibleWithTags>, UseCaseError> {
+    let params = validate_params(params)?;
     let diaries = diary_adapter
         .join_tags()
         .join_my_way_via_tags()
@@ -46,7 +56,45 @@ pub async fn list_diaries<'a>(
             }
         }
     }
+
+    // NOTE: This filtering cannot be done in Db query.
+    // If done in DB query, tags not in tag_id_or will be returned.
+    if let Some(tag_id_or) = params.tag_id_or {
+        res = res
+            .into_iter()
+            .filter(|diary| {
+                diary
+                    .tags
+                    .iter()
+                    .find(|tag| tag_id_or.contains(&tag.id))
+                    .is_some()
+            })
+            .collect();
+    }
+
     Ok(res)
+}
+
+struct QueryParam {
+    tag_id_or: Option<Vec<Uuid>>,
+}
+
+fn validate_params(params: DiaryListQuery) -> Result<QueryParam, UseCaseError> {
+    let tag_id_or: Option<Vec<Uuid>> = params.tag_id_or.and_then(|tag_id_or| {
+        Some(
+            tag_id_or
+                .split(',')
+                .map(|tag_id| {
+                    Uuid::parse_str(tag_id)
+                        .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
+                })
+                .filter(|tag_id| tag_id.is_ok())
+                .map(|tag_id| tag_id.unwrap())
+                .collect(),
+        )
+    });
+
+    Ok(QueryParam { tag_id_or })
 }
 
 fn first_to_process(res: &Vec<DiaryVisibleWithTags>, diary: &DiaryWithTag) -> bool {

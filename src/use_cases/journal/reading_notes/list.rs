@@ -6,20 +6,27 @@ use db_adapters::{
     Order::{Asc, Desc},
 };
 use entities::user as user_entity;
+use uuid::Uuid;
 
 use crate::{
-    journal::reading_notes::types::ReadingNoteVisibleWithTags, tags::types::TagVisible,
+    journal::{
+        reading_notes::types::{ReadingNoteListQuery, ReadingNoteVisibleWithTags},
+        types::IntoJournalVisibleWithTags,
+    },
+    tags::types::TagVisible,
     UseCaseError,
 };
 
 pub async fn list_reading_notes<'a>(
     user: user_entity::Model,
     reading_note_adapter: ReadingNoteAdapter<'a>,
+    params: ReadingNoteListQuery,
 ) -> Result<Vec<ReadingNoteVisibleWithTags>, UseCaseError> {
+    let params = validate_params(params)?;
     let reading_notes = reading_note_adapter
-        .filter_eq_user(&user)
         .join_tags()
         .join_my_way_via_tags()
+        .filter_eq_user(&user)
         .order_by_date(Desc)
         .order_by_created_at(Desc)
         .order_by_ambition_created_at_nulls_last(Asc)
@@ -56,7 +63,45 @@ pub async fn list_reading_notes<'a>(
             }
         }
     }
+
+    // NOTE: This filtering cannot be done in Db query.
+    // If done in DB query, tags not in tag_id_or will be returned.
+    if let Some(tag_id_or) = params.tag_id_or {
+        res = res
+            .into_iter()
+            .filter(|reading_note| {
+                reading_note
+                    .tags
+                    .iter()
+                    .find(|tag| tag_id_or.contains(&tag.id))
+                    .is_some()
+            })
+            .collect();
+    }
+
     Ok(res)
+}
+
+struct QueryParam {
+    tag_id_or: Option<Vec<Uuid>>,
+}
+
+fn validate_params(params: ReadingNoteListQuery) -> Result<QueryParam, UseCaseError> {
+    let tag_id_or: Option<Vec<Uuid>> = params.tag_id_or.and_then(|tag_id_or| {
+        Some(
+            tag_id_or
+                .split(',')
+                .map(|tag_id| {
+                    Uuid::parse_str(tag_id)
+                        .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
+                })
+                .filter(|tag_id| tag_id.is_ok())
+                .map(|tag_id| tag_id.unwrap())
+                .collect(),
+        )
+    });
+
+    Ok(QueryParam { tag_id_or })
 }
 
 fn first_to_process(
