@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    journal::types::{IntoJournalVisibleWithTags, JournalVisibleWithTags},
+    journal::types::{IntoJournalVisibleWithTags, JournalKind, JournalVisibleWithTags},
     tags::types::TagVisible,
 };
 
@@ -17,7 +17,6 @@ pub struct ThinkingNoteVisible {
     pub thought: Option<String>,
     pub answer: Option<String>,
     pub resolved_at: Option<DateTime<FixedOffset>>,
-    pub archived_at: Option<DateTime<FixedOffset>>,
     pub created_at: DateTime<FixedOffset>,
     pub updated_at: DateTime<FixedOffset>,
 }
@@ -30,7 +29,6 @@ impl From<thinking_note::Model> for ThinkingNoteVisible {
             thought: item.thought,
             answer: item.answer,
             resolved_at: item.resolved_at,
-            archived_at: item.archived_at,
             created_at: item.created_at,
             updated_at: item.updated_at,
         }
@@ -44,7 +42,6 @@ pub struct ThinkingNoteVisibleWithTags {
     pub thought: Option<String>,
     pub answer: Option<String>,
     pub resolved_at: Option<DateTime<FixedOffset>>,
-    pub archived_at: Option<DateTime<FixedOffset>>,
     pub created_at: DateTime<FixedOffset>,
     pub updated_at: DateTime<FixedOffset>,
     pub tags: Vec<TagVisible>,
@@ -70,6 +67,7 @@ impl Into<JournalVisibleWithTags> for ThinkingNoteVisibleWithTags {
             diary: None,
             reading_note: None,
             thinking_note: Some(self),
+            kind: JournalKind::ThinkingNote,
         }
     }
 }
@@ -77,7 +75,6 @@ impl Into<JournalVisibleWithTags> for ThinkingNoteVisibleWithTags {
 #[derive(Deserialize, Debug)]
 pub struct ThinkingNoteListQuery {
     pub resolved: Option<bool>,
-    pub archived: Option<bool>,
     pub tag_id_or: Option<String>,
 }
 
@@ -96,5 +93,4 @@ pub struct ThinkingNoteUpdateRequest {
     pub answer: Option<String>,
     pub tag_ids: Vec<uuid::Uuid>,
     pub resolved_at: Option<DateTime<FixedOffset>>,
-    pub archived_at: Option<DateTime<FixedOffset>>,
 }

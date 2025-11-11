@@ -30,7 +30,6 @@ async fn happy_path() -> Result<(), DbErr> {
         answer: Some("Maybe A? Not sure yet.".to_string()),
         tag_ids: vec![ambition_tag.id],
         resolved_at: None,
-        archived_at: None,
     };
 
     let req = test::TestRequest::put()
@@ -47,7 +46,6 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(res.thought, form.thought);
     assert_eq!(res.answer, form.answer);
     assert_eq!(res.resolved_at, form.resolved_at);
-    assert_eq!(res.archived_at, form.archived_at);
     assert_eq!(res.created_at, thinking_note.created_at);
     assert!(res.updated_at > thinking_note.updated_at);
 

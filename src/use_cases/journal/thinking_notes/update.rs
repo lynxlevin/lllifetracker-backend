@@ -40,7 +40,6 @@ pub async fn update_thinking_note<'a>(
                 thought: params.thought,
                 answer: params.answer,
                 resolved_at: params.resolved_at,
-                archived_at: params.archived_at,
             },
             thinking_note,
         )

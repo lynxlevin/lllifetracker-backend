@@ -10,10 +10,18 @@ use crate::{
 };
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+pub enum JournalKind {
+    Diary,
+    ReadingNote,
+    ThinkingNote,
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct JournalVisibleWithTags {
     pub diary: Option<DiaryVisibleWithTags>,
     pub reading_note: Option<ReadingNoteVisibleWithTags>,
     pub thinking_note: Option<ThinkingNoteVisibleWithTags>,
+    pub kind: JournalKind,
 }
 
 pub trait IntoJournalVisibleWithTags {
