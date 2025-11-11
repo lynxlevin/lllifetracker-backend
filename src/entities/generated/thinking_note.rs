@@ -14,7 +14,6 @@ pub struct Model {
     pub thought: Option<String>,
     pub answer: Option<String>,
     pub resolved_at: Option<DateTimeWithTimeZone>,
-    pub archived_at: Option<DateTimeWithTimeZone>,
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
 }
