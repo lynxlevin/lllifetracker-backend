@@ -39,8 +39,7 @@ Content-Type: application/json
   "thought": null,
   "answer": null,
   "tag_ids": ["{{tag_0_id}}"],
-  "resolved_at": null,
-  "archived_at": null
+  "resolved_at": null
 }
 
 ###

@@ -41,10 +41,6 @@ async fn test_order() -> Result<(), DbErr> {
         .resolved_at(Some((now - Duration::days(3)).into()))
         .insert(&db)
         .await?;
-    let _archived_thinking_note = factory::thinking_note(user.id)
-        .archived_at(Some(Utc::now().into()))
-        .insert(&db)
-        .await?;
 
     let req = test::TestRequest::get().uri("/api/journals").to_request();
     req.extensions_mut().insert(user.clone());
@@ -63,7 +59,6 @@ async fn test_order() -> Result<(), DbErr> {
                 thought: thinking_note.thought,
                 answer: thinking_note.answer,
                 resolved_at: thinking_note.resolved_at,
-                archived_at: thinking_note.archived_at,
                 created_at: thinking_note.created_at,
                 updated_at: thinking_note.updated_at,
                 tags: vec![],
@@ -88,7 +83,6 @@ async fn test_order() -> Result<(), DbErr> {
                 thought: resolved_thinking_note_0.thought,
                 answer: resolved_thinking_note_0.answer,
                 resolved_at: resolved_thinking_note_0.resolved_at,
-                archived_at: resolved_thinking_note_0.archived_at,
                 created_at: resolved_thinking_note_0.created_at,
                 updated_at: resolved_thinking_note_0.updated_at,
                 tags: vec![],
@@ -117,7 +111,6 @@ async fn test_order() -> Result<(), DbErr> {
                 thought: resolved_thinking_note_1.thought,
                 answer: resolved_thinking_note_1.answer,
                 resolved_at: resolved_thinking_note_1.resolved_at,
-                archived_at: resolved_thinking_note_1.archived_at,
                 created_at: resolved_thinking_note_1.created_at,
                 updated_at: resolved_thinking_note_1.updated_at,
                 tags: vec![],
@@ -140,10 +133,6 @@ async fn test_tag_query() -> Result<(), DbErr> {
     let user = factory::user().insert(&db).await?;
     let tagged_thinking_note = factory::thinking_note(user.id).insert(&db).await?;
     let _thinking_note = factory::thinking_note(user.id).insert(&db).await?;
-    let _tagged_archived_thinking_note = factory::thinking_note(user.id)
-        .archived_at(Some(Utc::now().into()))
-        .insert(&db)
-        .await?;
     let different_tagged_thinking_note = factory::thinking_note(user.id).insert(&db).await?;
     let tagged_diary = factory::diary(user.id).insert(&db).await?;
     let _diary = factory::diary(user.id).insert(&db).await?;
@@ -180,7 +169,6 @@ async fn test_tag_query() -> Result<(), DbErr> {
                 thought: tagged_thinking_note.thought,
                 answer: tagged_thinking_note.answer,
                 resolved_at: tagged_thinking_note.resolved_at,
-                archived_at: tagged_thinking_note.archived_at,
                 created_at: tagged_thinking_note.created_at,
                 updated_at: tagged_thinking_note.updated_at,
                 tags: vec![

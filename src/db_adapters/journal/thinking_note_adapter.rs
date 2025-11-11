@@ -67,7 +67,6 @@ pub trait ThinkingNoteFilter {
     fn filter_eq_id(self, id: Uuid) -> Self;
     fn filter_eq_user(self, user: &user::Model) -> Self;
     fn filter_null_resolved_at(self, is_null: bool) -> Self;
-    fn filter_null_archived_at(self, is_null: bool) -> Self;
 }
 
 impl ThinkingNoteFilter for ThinkingNoteAdapter<'_> {
@@ -85,14 +84,6 @@ impl ThinkingNoteFilter for ThinkingNoteAdapter<'_> {
         self.query = match is_null {
             true => self.query.filter(Column::ResolvedAt.is_null()),
             false => self.query.filter(Column::ResolvedAt.is_not_null()),
-        };
-        self
-    }
-
-    fn filter_null_archived_at(mut self, is_null: bool) -> Self {
-        self.query = match is_null {
-            true => self.query.filter(Column::ArchivedAt.is_null()),
-            false => self.query.filter(Column::ArchivedAt.is_not_null()),
         };
         self
     }
@@ -156,7 +147,6 @@ pub struct ThinkingNoteWithTag {
     pub thought: Option<String>,
     pub answer: Option<String>,
     pub resolved_at: Option<DateTime<FixedOffset>>,
-    pub archived_at: Option<DateTime<FixedOffset>>,
     pub created_at: DateTime<FixedOffset>,
     pub updated_at: DateTime<FixedOffset>,
     pub tag_id: Option<Uuid>,
@@ -252,7 +242,6 @@ pub struct UpdateThinkingNoteParams {
     pub thought: Option<String>,
     pub answer: Option<String>,
     pub resolved_at: Option<DateTime<FixedOffset>>,
-    pub archived_at: Option<DateTime<FixedOffset>>,
 }
 
 pub trait ThinkingNoteMutation {
@@ -286,7 +275,6 @@ impl ThinkingNoteMutation for ThinkingNoteAdapter<'_> {
             thought: Set(params.thought),
             answer: Set(params.answer),
             resolved_at: Set(None),
-            archived_at: Set(None),
             created_at: Set(now.into()),
             updated_at: Set(now.into()),
         }
@@ -304,7 +292,6 @@ impl ThinkingNoteMutation for ThinkingNoteAdapter<'_> {
         thinking_note.thought = Set(params.thought);
         thinking_note.answer = Set(params.answer);
         thinking_note.resolved_at = Set(params.resolved_at);
-        thinking_note.archived_at = Set(params.archived_at);
         thinking_note.updated_at = Set(Utc::now().into());
         thinking_note.update(self.db).await
     }

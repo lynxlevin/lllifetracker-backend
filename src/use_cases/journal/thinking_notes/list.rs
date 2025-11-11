@@ -31,9 +31,6 @@ pub async fn list_thinking_notes<'a>(
     if let Some(resolved) = params.resolved {
         query = query.filter_null_resolved_at(!resolved);
     }
-    if let Some(archived) = params.archived {
-        query = query.filter_null_archived_at(!archived);
-    }
 
     let thinking_notes = query
         .order_by_resolved_at_nulls_first(Desc)
@@ -59,7 +56,6 @@ pub async fn list_thinking_notes<'a>(
                 thought: thinking_note.thought,
                 answer: thinking_note.answer,
                 resolved_at: thinking_note.resolved_at,
-                archived_at: thinking_note.archived_at,
                 created_at: thinking_note.created_at,
                 updated_at: thinking_note.updated_at,
                 tags,
@@ -94,7 +90,6 @@ pub async fn list_thinking_notes<'a>(
 
 struct QueryParam {
     resolved: Option<bool>,
-    archived: Option<bool>,
     tag_id_or: Option<Vec<Uuid>>,
 }
 
@@ -116,7 +111,6 @@ fn validate_params(params: ThinkingNoteListQuery) -> Result<QueryParam, UseCaseE
     Ok(QueryParam {
         tag_id_or,
         resolved: params.resolved,
-        archived: params.archived,
     })
 }
 

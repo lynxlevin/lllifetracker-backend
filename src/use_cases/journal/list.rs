@@ -47,7 +47,6 @@ pub async fn list_journals<'a>(
         user.clone(),
         ThinkingNoteListQuery {
             resolved: None,
-            archived: Some(false),
             tag_id_or: query.tag_id_or,
         },
         thinking_note_adapter,
