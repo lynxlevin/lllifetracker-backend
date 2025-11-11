@@ -3,8 +3,10 @@ use chrono::{Duration, Utc};
 use sea_orm::{ActiveModelTrait, DbErr};
 use use_cases::{
     journal::{
-        diaries::types::DiaryVisibleWithTags, reading_notes::types::ReadingNoteVisibleWithTags,
-        thinking_notes::types::ThinkingNoteVisibleWithTags, types::JournalVisibleWithTags,
+        diaries::types::DiaryVisibleWithTags,
+        reading_notes::types::ReadingNoteVisibleWithTags,
+        thinking_notes::types::ThinkingNoteVisibleWithTags,
+        types::{JournalKind, JournalVisibleWithTags},
     },
     tags::types::TagVisible,
 };
@@ -63,6 +65,7 @@ async fn test_order() -> Result<(), DbErr> {
                 updated_at: thinking_note.updated_at,
                 tags: vec![],
             }),
+            kind: JournalKind::ThinkingNote,
         },
         JournalVisibleWithTags {
             diary: Some(DiaryVisibleWithTags {
@@ -73,6 +76,7 @@ async fn test_order() -> Result<(), DbErr> {
             }),
             reading_note: None,
             thinking_note: None,
+            kind: JournalKind::Diary,
         },
         JournalVisibleWithTags {
             diary: None,
@@ -87,6 +91,7 @@ async fn test_order() -> Result<(), DbErr> {
                 updated_at: resolved_thinking_note_0.updated_at,
                 tags: vec![],
             }),
+            kind: JournalKind::ThinkingNote,
         },
         JournalVisibleWithTags {
             diary: None,
@@ -101,6 +106,7 @@ async fn test_order() -> Result<(), DbErr> {
                 tags: vec![],
             }),
             thinking_note: None,
+            kind: JournalKind::ReadingNote,
         },
         JournalVisibleWithTags {
             diary: None,
@@ -115,6 +121,7 @@ async fn test_order() -> Result<(), DbErr> {
                 updated_at: resolved_thinking_note_1.updated_at,
                 tags: vec![],
             }),
+            kind: JournalKind::ThinkingNote,
         },
     ];
 
@@ -186,6 +193,7 @@ async fn test_tag_query() -> Result<(), DbErr> {
                     },
                 ],
             }),
+            kind: JournalKind::ThinkingNote,
         },
         JournalVisibleWithTags {
             diary: Some(DiaryVisibleWithTags {
@@ -201,6 +209,7 @@ async fn test_tag_query() -> Result<(), DbErr> {
             }),
             reading_note: None,
             thinking_note: None,
+            kind: JournalKind::Diary,
         },
         JournalVisibleWithTags {
             diary: None,
@@ -220,6 +229,7 @@ async fn test_tag_query() -> Result<(), DbErr> {
                 }],
             }),
             thinking_note: None,
+            kind: JournalKind::ReadingNote,
         },
     ];
 

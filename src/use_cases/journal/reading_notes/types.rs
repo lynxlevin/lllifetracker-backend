@@ -3,7 +3,7 @@ use sea_orm::{DerivePartialModel, FromQueryResult};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    journal::types::{IntoJournalVisibleWithTags, JournalVisibleWithTags},
+    journal::types::{IntoJournalVisibleWithTags, JournalKind, JournalVisibleWithTags},
     tags::types::TagVisible,
 };
 
@@ -65,6 +65,7 @@ impl Into<JournalVisibleWithTags> for ReadingNoteVisibleWithTags {
             diary: None,
             reading_note: Some(self),
             thinking_note: None,
+            kind: JournalKind::ReadingNote,
         }
     }
 }

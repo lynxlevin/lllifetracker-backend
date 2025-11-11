@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    journal::types::{IntoJournalVisibleWithTags, JournalVisibleWithTags},
+    journal::types::{IntoJournalVisibleWithTags, JournalKind, JournalVisibleWithTags},
     tags::types::TagVisible,
 };
 
@@ -67,6 +67,7 @@ impl Into<JournalVisibleWithTags> for ThinkingNoteVisibleWithTags {
             diary: None,
             reading_note: None,
             thinking_note: Some(self),
+            kind: JournalKind::ThinkingNote,
         }
     }
 }
