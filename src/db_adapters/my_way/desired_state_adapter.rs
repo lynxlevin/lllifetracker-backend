@@ -3,13 +3,16 @@ use std::future::Future;
 use chrono::Utc;
 use sea_orm::{
     sea_query::{Func, NullOrdering::Last, SimpleExpr},
-    ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel, ModelTrait, Order,
-    QueryFilter, QueryOrder, QuerySelect, Select, Set, TransactionError, TransactionTrait,
+    ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel,
+    JoinType::LeftJoin,
+    ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait, Select, Set,
+    TransactionError, TransactionTrait,
 };
 use uuid::Uuid;
 
 use entities::{
-    desired_state::{ActiveModel, Column, Entity, Model},
+    desired_state::{ActiveModel, Column, Entity, Model, Relation},
+    desired_state_category,
     sea_orm_active_enums::TagType,
     tag, user,
 };
@@ -26,6 +29,19 @@ impl<'a> DesiredStateAdapter<'a> {
             db,
             query: Entity::find(),
         }
+    }
+}
+
+pub trait DesiredStateJoin {
+    fn join_category(self) -> Self;
+}
+
+impl DesiredStateJoin for DesiredStateAdapter<'_> {
+    fn join_category(mut self) -> Self {
+        self.query = self
+            .query
+            .join(LeftJoin, Relation::DesiredStateCategory.def());
+        self
     }
 }
 
@@ -53,11 +69,19 @@ impl DesiredStateFilter for DesiredStateAdapter<'_> {
 }
 
 pub trait DesiredStateOrder {
+    fn order_by_category_ordering_nulls_last(self, order: Order) -> Self;
     fn order_by_ordering_nulls_last(self, order: Order) -> Self;
     fn order_by_created_at(self, order: Order) -> Self;
 }
 
 impl DesiredStateOrder for DesiredStateAdapter<'_> {
+    fn order_by_category_ordering_nulls_last(mut self, order: Order) -> Self {
+        self.query =
+            self.query
+                .order_by_with_nulls(desired_state_category::Column::Ordering, order, Last);
+        self
+    }
+
     fn order_by_ordering_nulls_last(mut self, order: Order) -> Self {
         self.query = self
             .query
