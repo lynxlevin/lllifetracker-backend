@@ -25,6 +25,7 @@ pub trait DesiredStateFactory {
     fn description(self, description: Option<String>) -> desired_state::ActiveModel;
     fn archived(self, archived: bool) -> desired_state::ActiveModel;
     fn ordering(self, ordering: Option<i32>) -> desired_state::ActiveModel;
+    fn category_id(self, category_id: Option<Uuid>) -> desired_state::ActiveModel;
     fn insert_with_tag(
         self,
         db: &DbConn,
@@ -49,6 +50,11 @@ impl DesiredStateFactory for desired_state::ActiveModel {
 
     fn ordering(mut self, ordering: Option<i32>) -> desired_state::ActiveModel {
         self.ordering = Set(ordering);
+        self
+    }
+
+    fn category_id(mut self, category_id: Option<Uuid>) -> desired_state::ActiveModel {
+        self.category_id = Set(category_id);
         self
     }
 

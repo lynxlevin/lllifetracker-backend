@@ -1,8 +1,8 @@
 use std::future::Future;
 
 use sea_orm::{
-    sea_query::NullOrdering::Last, ActiveModelTrait, ActiveValue::NotSet, ColumnTrait, DbConn,
-    DbErr, EntityTrait, IntoActiveModel, ModelTrait, Order, QueryFilter, QueryOrder, Select, Set,
+    sea_query::NullOrdering::Last, ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait,
+    IntoActiveModel, ModelTrait, Order, PaginatorTrait, QueryFilter, QueryOrder, Select, Set,
 };
 use uuid::Uuid;
 
@@ -65,6 +65,7 @@ impl DesiredStateCategoryOrder for DesiredStateCategoryAdapter<'_> {
 pub trait DesiredStateCategoryQuery {
     fn get_all(self) -> impl Future<Output = Result<Vec<Model>, DbErr>>;
     fn get_by_id(self, id: Uuid) -> impl Future<Output = Result<Option<Model>, DbErr>>;
+    fn get_count(self) -> impl Future<Output = Result<u64, DbErr>>;
 }
 
 impl DesiredStateCategoryQuery for DesiredStateCategoryAdapter<'_> {
@@ -75,11 +76,16 @@ impl DesiredStateCategoryQuery for DesiredStateCategoryAdapter<'_> {
     async fn get_by_id(self, id: Uuid) -> Result<Option<Model>, DbErr> {
         self.query.filter(Column::Id.eq(id)).one(self.db).await
     }
+
+    async fn get_count(self) -> Result<u64, DbErr> {
+        self.query.count(self.db).await
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct CreateDesiredStateCategoryParams {
     pub name: String,
+    pub ordering: Option<i32>,
     pub user_id: Uuid,
 }
 
@@ -111,7 +117,7 @@ impl DesiredStateCategoryMutation for DesiredStateCategoryAdapter<'_> {
             id: Set(uuid::Uuid::now_v7()),
             user_id: Set(params.user_id),
             name: Set(params.name),
-            ordering: NotSet,
+            ordering: Set(params.ordering),
         }
         .insert(self.db)
         .await
