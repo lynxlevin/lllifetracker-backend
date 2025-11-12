@@ -7,13 +7,18 @@ use use_cases::my_way::desired_state_categories::types::{
 use crate::utils::Connections;
 
 use super::super::utils::init_app;
-use common::factory;
+use common::factory::{self, *};
 use entities::desired_state_category;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
+    let _other_category = factory::desired_state_category(user.id)
+        .ordering(Some(1))
+        .insert(&db)
+        .await?;
+    let _null_ordering_category = factory::desired_state_category(user.id).insert(&db).await?;
     let name = "new_category".to_string();
 
     let req = test::TestRequest::post()
@@ -33,7 +38,7 @@ async fn happy_path() -> Result<(), DbErr> {
         .await?
         .unwrap();
     assert_eq!(category_in_db.user_id, user.id);
-    assert_eq!(category_in_db.ordering, None);
+    assert_eq!(category_in_db.ordering, Some(3));
     assert_eq!(DesiredStateCategoryVisible::from(category_in_db), res);
 
     Ok(())
