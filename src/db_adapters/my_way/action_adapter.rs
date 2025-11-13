@@ -127,7 +127,6 @@ pub struct CreateActionParams {
 pub struct UpdateActionParams {
     pub name: String,
     pub description: Option<String>,
-    pub trackable: Option<bool>,
     pub color: Option<String>,
 }
 
@@ -195,9 +194,6 @@ impl ActionMutation for ActionAdapter<'_> {
         let mut action = action.into_active_model();
         action.name = Set(params.name);
         action.description = Set(params.description);
-        if let Some(trackable) = params.trackable {
-            action.trackable = Set(trackable);
-        }
         if let Some(color) = params.color {
             action.color = Set(color);
         }

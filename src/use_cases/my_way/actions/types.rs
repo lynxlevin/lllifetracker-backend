@@ -13,7 +13,6 @@ pub struct ActionVisible {
     pub id: Uuid,
     pub name: String,
     pub description: Option<String>,
-    pub trackable: bool,
     pub color: String,
     pub track_type: ActionTrackType,
     pub created_at: DateTime<FixedOffset>,
@@ -26,7 +25,6 @@ impl From<&action::Model> for ActionVisible {
             id: item.id,
             name: item.name.clone(),
             description: item.description.clone(),
-            trackable: item.trackable,
             color: item.color.clone(),
             track_type: item.track_type.clone(),
             created_at: item.created_at,
@@ -46,7 +44,6 @@ pub struct ActionVisibleWithGoal {
     pub id: Uuid,
     pub name: String,
     pub description: Option<String>,
-    pub trackable: bool,
     pub color: String,
     pub track_type: ActionTrackType,
     pub goal: Option<ActionGoalVisible>,
@@ -60,7 +57,6 @@ impl From<&(action::Model, Option<action_goal::Model>)> for ActionVisibleWithGoa
             id: value.0.id,
             name: value.0.name.clone(),
             description: value.0.description.clone(),
-            trackable: value.0.trackable,
             color: value.0.color.clone(),
             track_type: value.0.track_type.clone(),
             goal: value
@@ -95,7 +91,6 @@ pub struct ActionCreateRequest {
 pub struct ActionUpdateRequest {
     pub name: String,
     pub description: Option<String>,
-    pub trackable: Option<bool>,
     pub color: Option<String>,
 }
 

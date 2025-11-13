@@ -16,7 +16,6 @@ pub struct Model {
     pub description: Option<String>,
     pub archived: bool,
     pub ordering: Option<i32>,
-    pub trackable: bool,
     pub color: String,
     pub track_type: ActionTrackType,
 }

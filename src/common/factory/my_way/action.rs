@@ -17,7 +17,6 @@ pub fn action(user_id: Uuid) -> action::ActiveModel {
         description: Set(None),
         archived: Set(false),
         ordering: NotSet,
-        trackable: Set(true),
         color: Set("#212121".to_string()),
         track_type: Set(ActionTrackType::TimeSpan),
         created_at: Set(now.into()),
