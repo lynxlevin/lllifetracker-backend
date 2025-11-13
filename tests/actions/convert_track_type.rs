@@ -33,7 +33,6 @@ async fn happy_path_time_span_to_count() -> Result<(), DbErr> {
     assert_eq!(res.id, action.id);
     assert_eq!(res.name, action.name);
     assert_eq!(res.description, action.description);
-    assert_eq!(res.trackable, action.trackable);
     assert_eq!(res.color, action.color);
     assert_eq!(res.track_type, ActionTrackType::Count);
     assert_eq!(res.created_at, action.created_at);
@@ -74,7 +73,6 @@ async fn happy_path_count_to_time_span() -> Result<(), DbErr> {
     assert_eq!(res.id, action.id);
     assert_eq!(res.name, action.name);
     assert_eq!(res.description, action.description);
-    assert_eq!(res.trackable, action.trackable);
     assert_eq!(res.color, action.color);
     assert_eq!(res.track_type, ActionTrackType::TimeSpan);
     assert_eq!(res.created_at, action.created_at);
@@ -115,7 +113,6 @@ async fn happy_path_no_change() -> Result<(), DbErr> {
     assert_eq!(res.id, action.id);
     assert_eq!(res.name, action.name);
     assert_eq!(res.description, action.description);
-    assert_eq!(res.trackable, action.trackable);
     assert_eq!(res.color, action.color);
     assert_eq!(res.track_type, ActionTrackType::TimeSpan);
     assert_eq!(res.created_at, action.created_at);
