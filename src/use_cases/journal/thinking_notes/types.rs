@@ -53,7 +53,10 @@ impl IntoJournalVisibleWithTags for ThinkingNoteVisibleWithTags {
     }
 
     fn sort_key(&self) -> chrono::NaiveDate {
-        self.updated_at.date_naive()
+        match self.resolved_at {
+            Some(datetime) => datetime.date_naive(),
+            None => self.updated_at.date_naive(),
+        }
     }
 
     fn is_newer_or_eq<T: IntoJournalVisibleWithTags>(&self, other: &T) -> bool {
