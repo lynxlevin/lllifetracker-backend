@@ -8,6 +8,7 @@ pub enum RecurrenceType {
     Everyday,
     Weekday,
     Weekend,
+    Unknown,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]

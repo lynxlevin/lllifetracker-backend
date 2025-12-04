@@ -3,10 +3,10 @@ use actix_web::{
     web::{Data, ReqData},
     HttpResponse,
 };
-use db_adapters::web_push_subscription_adapter::WebPushSubscriptionAdapter;
+use db_adapters::notification_rule_adapter::NotificationRuleAdapter;
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use use_cases::notification::web_push_subscription::list::list_web_push_subscription;
+use use_cases::notification::notification_rule::list::list_notification_rules;
 
 use crate::utils::{response_401, response_500};
 
@@ -18,11 +18,8 @@ pub async fn list_notification_rules_endpoint(
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            match list_web_push_subscription(
-                user.into_inner(),
-                WebPushSubscriptionAdapter::init(&db),
-            )
-            .await
+            match list_notification_rules(user.into_inner(), NotificationRuleAdapter::init(&db))
+                .await
             {
                 Ok(res) => HttpResponse::Ok().json(res),
                 Err(e) => response_500(e),
