@@ -1,6 +1,9 @@
-use chrono::{NaiveTime, Weekday};
+use chrono::{
+    NaiveTime,
+    Weekday::{self, Fri, Mon, Sat, Sun, Thu, Tue, Wed},
+};
 use entities::{notification_rule, sea_orm_active_enums::NotificationType};
-use sea_orm::{ActiveModelTrait, ActiveValue::NotSet, DbConn, DbErr, Set};
+use sea_orm::{ActiveValue::NotSet, DbConn, DbErr, EntityTrait, Set};
 use uuid::Uuid;
 
 pub fn notification_rule(user_id: Uuid) -> notification_rule::ActiveModel {
@@ -52,17 +55,20 @@ pub async fn create_everyday_rules(
     db: &DbConn,
     r#type: NotificationType,
     utc_time: NaiveTime,
-) -> Result<NotificationRuleSet, DbErr> {
-    let base = notification_rule(user_id).r#type(r#type).utc_time(utc_time);
-    Ok(NotificationRuleSet {
-        sunday: Some(base.clone().weekday(Weekday::Sun).insert(db).await?),
-        monday: Some(base.clone().weekday(Weekday::Mon).insert(db).await?),
-        tuesday: Some(base.clone().weekday(Weekday::Tue).insert(db).await?),
-        wednesday: Some(base.clone().weekday(Weekday::Wed).insert(db).await?),
-        thursday: Some(base.clone().weekday(Weekday::Thu).insert(db).await?),
-        friday: Some(base.clone().weekday(Weekday::Fri).insert(db).await?),
-        saturday: Some(base.clone().weekday(Weekday::Sat).insert(db).await?),
-    })
+) -> Result<(), DbErr> {
+    let mut rules = vec![];
+    for weekday in [Mon, Tue, Wed, Thu, Fri, Sat, Sun] {
+        rules.push(
+            notification_rule(user_id)
+                .r#type(r#type.clone())
+                .utc_time(utc_time)
+                .weekday(weekday),
+        );
+    }
+    notification_rule::Entity::insert_many(rules)
+        .exec(db)
+        .await?;
+    Ok(())
 }
 
 pub async fn create_weekday_rules(
@@ -71,29 +77,25 @@ pub async fn create_weekday_rules(
     r#type: NotificationType,
     utc_time: NaiveTime,
     is_prev_day_in_utc: bool,
-) -> Result<NotificationRuleSet, DbErr> {
-    let base = notification_rule(user_id).r#type(r#type).utc_time(utc_time);
-    if is_prev_day_in_utc {
-        Ok(NotificationRuleSet {
-            sunday: Some(base.clone().weekday(Weekday::Sun).insert(db).await?),
-            monday: Some(base.clone().weekday(Weekday::Mon).insert(db).await?),
-            tuesday: Some(base.clone().weekday(Weekday::Tue).insert(db).await?),
-            wednesday: Some(base.clone().weekday(Weekday::Wed).insert(db).await?),
-            thursday: Some(base.clone().weekday(Weekday::Thu).insert(db).await?),
-            friday: None,
-            saturday: None,
-        })
+) -> Result<(), DbErr> {
+    let mut rules = vec![];
+    let weekdays = if is_prev_day_in_utc {
+        [Mon, Tue, Wed, Thu, Sun]
     } else {
-        Ok(NotificationRuleSet {
-            sunday: None,
-            monday: Some(base.clone().weekday(Weekday::Mon).insert(db).await?),
-            tuesday: Some(base.clone().weekday(Weekday::Tue).insert(db).await?),
-            wednesday: Some(base.clone().weekday(Weekday::Wed).insert(db).await?),
-            thursday: Some(base.clone().weekday(Weekday::Thu).insert(db).await?),
-            friday: Some(base.clone().weekday(Weekday::Fri).insert(db).await?),
-            saturday: None,
-        })
+        [Mon, Tue, Wed, Thu, Fri]
+    };
+    for weekday in weekdays {
+        rules.push(
+            notification_rule(user_id)
+                .r#type(r#type.clone())
+                .utc_time(utc_time)
+                .weekday(weekday),
+        );
     }
+    notification_rule::Entity::insert_many(rules)
+        .exec(db)
+        .await?;
+    Ok(())
 }
 
 pub async fn create_weekend_rules(
@@ -102,27 +104,23 @@ pub async fn create_weekend_rules(
     r#type: NotificationType,
     utc_time: NaiveTime,
     is_prev_day_in_utc: bool,
-) -> Result<NotificationRuleSet, DbErr> {
-    let base = notification_rule(user_id).r#type(r#type).utc_time(utc_time);
-    if is_prev_day_in_utc {
-        Ok(NotificationRuleSet {
-            sunday: None,
-            monday: None,
-            tuesday: None,
-            wednesday: None,
-            thursday: None,
-            friday: Some(base.clone().weekday(Weekday::Fri).insert(db).await?),
-            saturday: Some(base.clone().weekday(Weekday::Sat).insert(db).await?),
-        })
+) -> Result<(), DbErr> {
+    let mut rules = vec![];
+    let weekdays = if is_prev_day_in_utc {
+        [Fri, Sat]
     } else {
-        Ok(NotificationRuleSet {
-            sunday: Some(base.clone().weekday(Weekday::Sun).insert(db).await?),
-            monday: None,
-            tuesday: None,
-            wednesday: None,
-            thursday: None,
-            friday: None,
-            saturday: Some(base.clone().weekday(Weekday::Sat).insert(db).await?),
-        })
+        [Sat, Sun]
+    };
+    for weekday in weekdays {
+        rules.push(
+            notification_rule(user_id)
+                .r#type(r#type.clone())
+                .utc_time(utc_time)
+                .weekday(weekday),
+        );
     }
+    notification_rule::Entity::insert_many(rules)
+        .exec(db)
+        .await?;
+    Ok(())
 }
