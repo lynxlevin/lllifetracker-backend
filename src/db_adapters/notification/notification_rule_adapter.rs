@@ -1,9 +1,10 @@
 use std::future::Future;
 
-use sea_orm::{ColumnTrait, DbConn, DbErr, EntityTrait, QueryFilter, Select};
+use sea_orm::{ColumnTrait, DbConn, DbErr, EntityTrait, ModelTrait, QueryFilter, Select};
 
 use entities::{
     notification_rule::{Column, Entity, Model},
+    sea_orm_active_enums::NotificationType,
     user,
 };
 
@@ -24,11 +25,17 @@ impl<'a> NotificationRuleAdapter<'a> {
 
 pub trait NotificationRuleFilter {
     fn filter_eq_user(self, user: &user::Model) -> Self;
+    fn filter_eq_type(self, r#type: NotificationType) -> Self;
 }
 
 impl NotificationRuleFilter for NotificationRuleAdapter<'_> {
     fn filter_eq_user(mut self, user: &user::Model) -> Self {
         self.query = self.query.filter(Column::UserId.eq(user.id));
+        self
+    }
+
+    fn filter_eq_type(mut self, r#type: NotificationType) -> Self {
+        self.query = self.query.filter(Column::Type.eq(r#type));
         self
     }
 }
@@ -53,51 +60,57 @@ impl NotificationRuleQuery for NotificationRuleAdapter<'_> {
 //     pub auth_key: String,
 // }
 
-// pub trait NotificationRuleMutation {
-//     fn upsert(
-//         self,
-//         params: CreateNotificationRuleParams,
-//     ) -> impl Future<Output = Result<Model, DbErr>>;
-//     fn delete(self, web_push_subscription: Model) -> impl Future<Output = Result<(), DbErr>>;
-// }
+pub trait NotificationRuleMutation {
+    //     fn upsert(
+    //         self,
+    //         params: CreateNotificationRuleParams,
+    //     ) -> impl Future<Output = Result<Model, DbErr>>;
+    fn delete_many(self, notification_rules: Vec<Model>)
+        -> impl Future<Output = Result<(), DbErr>>;
+}
 
-// impl NotificationRuleMutation for NotificationRuleAdapter<'_> {
-//     async fn upsert(self, params: CreateNotificationRuleParams) -> Result<Model, DbErr> {
-//         let subscription = ActiveModel {
-//             id: Set(Uuid::now_v7()),
-//             user_id: Set(params.user_id),
-//             device_name: Set(params.device_name.clone()),
-//             endpoint: Set(params.endpoint.clone()),
-//             expiration_epoch_time: Set(params.expiration_epoch_time),
-//             p256dh_key: Set(params.p256dh_key.clone()),
-//             auth_key: Set(params.auth_key.clone()),
-//         };
-//         Entity::insert(subscription)
-//             .on_conflict(
-//                 OnConflict::column(Column::UserId)
-//                     .update_columns([
-//                         Column::DeviceName,
-//                         Column::Endpoint,
-//                         Column::ExpirationEpochTime,
-//                         Column::P256dhKey,
-//                         Column::AuthKey,
-//                     ])
-//                     .to_owned(),
-//             )
-//             .exec(self.db)
-//             .await
-//             .map(|res| Model {
-//                 id: res.last_insert_id,
-//                 user_id: params.user_id,
-//                 device_name: params.device_name,
-//                 endpoint: params.endpoint,
-//                 expiration_epoch_time: params.expiration_epoch_time,
-//                 p256dh_key: params.p256dh_key,
-//                 auth_key: params.auth_key,
-//             })
-//     }
+impl NotificationRuleMutation for NotificationRuleAdapter<'_> {
+    //     async fn upsert(self, params: CreateNotificationRuleParams) -> Result<Model, DbErr> {
+    //         let subscription = ActiveModel {
+    //             id: Set(Uuid::now_v7()),
+    //             user_id: Set(params.user_id),
+    //             device_name: Set(params.device_name.clone()),
+    //             endpoint: Set(params.endpoint.clone()),
+    //             expiration_epoch_time: Set(params.expiration_epoch_time),
+    //             p256dh_key: Set(params.p256dh_key.clone()),
+    //             auth_key: Set(params.auth_key.clone()),
+    //         };
+    //         Entity::insert(subscription)
+    //             .on_conflict(
+    //                 OnConflict::column(Column::UserId)
+    //                     .update_columns([
+    //                         Column::DeviceName,
+    //                         Column::Endpoint,
+    //                         Column::ExpirationEpochTime,
+    //                         Column::P256dhKey,
+    //                         Column::AuthKey,
+    //                     ])
+    //                     .to_owned(),
+    //             )
+    //             .exec(self.db)
+    //             .await
+    //             .map(|res| Model {
+    //                 id: res.last_insert_id,
+    //                 user_id: params.user_id,
+    //                 device_name: params.device_name,
+    //                 endpoint: params.endpoint,
+    //                 expiration_epoch_time: params.expiration_epoch_time,
+    //                 p256dh_key: params.p256dh_key,
+    //                 auth_key: params.auth_key,
+    //             })
+    //     }
 
-//     async fn delete(self, web_push_subscription: Model) -> Result<(), DbErr> {
-//         web_push_subscription.delete(self.db).await.map(|_| ())
-//     }
-// }
+    async fn delete_many(self, notification_rules: Vec<Model>) -> Result<(), DbErr> {
+        // FIXME: SeaOrm delete_many methods needs filters to be chained after,
+        //        find a way to incorporate into this adapter.
+        for rule in notification_rules {
+            rule.delete(self.db).await.map(|_| ())?
+        }
+        Ok(())
+    }
+}

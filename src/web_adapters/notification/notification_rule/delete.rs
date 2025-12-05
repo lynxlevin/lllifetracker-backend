@@ -1,12 +1,14 @@
 use actix_web::{
-    delete, get,
+    delete,
     web::{Data, Query, ReqData},
     HttpResponse,
 };
 use db_adapters::notification_rule_adapter::NotificationRuleAdapter;
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use use_cases::notification::notification_rule::delete::delete_notification_rules;
+use use_cases::notification::notification_rule::{
+    delete::delete_notification_rules, types::NotificationRuleDeleteQuery,
+};
 
 use crate::utils::{response_401, response_500};
 
@@ -26,7 +28,7 @@ pub async fn delete_notification_rules_endpoint(
             )
             .await
             {
-                Ok(res) => HttpResponse::Ok().json(res),
+                Ok(_) => HttpResponse::NoContent().finish(),
                 Err(e) => response_500(e),
             }
         }

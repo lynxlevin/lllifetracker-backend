@@ -24,3 +24,8 @@ pub struct NotificationRuleCreateRequest {
     pub recurrence_type: RecurrenceType,
     pub time: NaiveTime,
 }
+
+#[derive(Deserialize, Debug, Serialize, Clone)]
+pub struct NotificationRuleDeleteQuery {
+    pub r#type: NotificationType,
+}
