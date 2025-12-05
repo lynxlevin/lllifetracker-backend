@@ -50,7 +50,7 @@ pub async fn list_notification_rules<'a>(
         .into_iter()
         .map(|rule_sets| {
             let mut weekdays = rule_sets.1;
-            weekdays.sort_by_key(|weekday| weekday.number_from_monday());
+            weekdays.sort_by_key(|weekday| weekday.num_days_from_monday());
             let recurrence_type = match weekdays.as_slice() {
                 [Mon, Tue, Wed, Thu, Fri, Sat, Sun] => RecurrenceType::Everyday,
                 [Mon, Tue, Wed, Thu, Fri] => RecurrenceType::Weekday,

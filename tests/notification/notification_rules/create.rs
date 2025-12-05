@@ -102,7 +102,7 @@ async fn happy_path_weekend_utc_plus_9() -> Result<(), DbErr> {
 
     let req_body = NotificationRuleCreateRequest {
         r#type: NotificationType::Ambition,
-        recurrence_type: RecurrenceType::Weekday,
+        recurrence_type: RecurrenceType::Weekend,
         time: NaiveTime::from_hms_opt(8, 0, 0).unwrap(),
     };
 
