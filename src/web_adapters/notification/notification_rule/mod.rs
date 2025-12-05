@@ -1,3 +1,4 @@
+pub mod create;
 pub mod delete;
 pub mod list;
 
@@ -7,6 +8,7 @@ pub fn notification_rule_routes(cfg: &mut ServiceConfig) {
     cfg.service(
         scope("/notification_rules")
             .service(list::list_notification_rules_endpoint)
+            .service(create::create_notification_rules_endpoint)
             .service(delete::delete_notification_rules_endpoint),
     );
 }
