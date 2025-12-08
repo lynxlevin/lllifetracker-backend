@@ -20,17 +20,18 @@ pub async fn create_notification_rules<'a>(
     user: user_entity::Model,
     notification_rule_adapter: NotificationRuleAdapter<'a>,
     params: NotificationRuleCreateRequest,
-) -> Result<(), UseCaseError> {
-    let params = parse_params(params, notification_rule_adapter.clone(), &user).await?;
+) -> Result<NotificationRuleCreateRequest, UseCaseError> {
+    let parsed_params =
+        parse_params(params.clone(), notification_rule_adapter.clone(), &user).await?;
 
-    let notification_rule_params = params
+    let notification_rule_params = parsed_params
         .weekdays
         .into_iter()
         .map(|weekday| CreateNotificationRuleParams {
             user_id: user.id,
-            r#type: params.r#type.clone(),
+            r#type: parsed_params.r#type.clone(),
             weekday,
-            utc_time: params.utc_time,
+            utc_time: parsed_params.utc_time,
             action_id: None,
         })
         .collect::<Vec<_>>();
@@ -38,7 +39,7 @@ pub async fn create_notification_rules<'a>(
     notification_rule_adapter
         .create_many(notification_rule_params)
         .await
-        .map(|_| ())
+        .map(|_| params)
         .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
 }
 
