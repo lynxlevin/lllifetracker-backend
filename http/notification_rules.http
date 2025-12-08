@@ -1,0 +1,37 @@
+# Turn on debug to use these.
+###
+# @name login
+POST {{endpoint}}/api/users/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "password"
+}
+
+###
+# @name list
+GET {{endpoint}}/api/notification_rules
+
+###
+# @name create
+POST {{endpoint}}/api/notification_rules
+Content-Type: application/json
+
+{
+  "type": "DesiredState",
+  "recurrence_type": "Weekend",
+  "time": "12:30:00"
+}
+
+###
+# @name delete_type_ambition
+DELETE {{endpoint}}/api/notification_rules?type=Ambition
+
+###
+# @name delete_type_ambition_or_desired_state
+DELETE {{endpoint}}/api/notification_rules?type=AmbitionOrDesiredState
+
+###
+# @name delete_type_desired_state
+DELETE {{endpoint}}/api/notification_rules?type=DesiredState
