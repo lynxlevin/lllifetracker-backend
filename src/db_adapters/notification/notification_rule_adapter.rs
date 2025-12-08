@@ -2,7 +2,8 @@ use std::future::Future;
 
 use chrono::{NaiveTime, Weekday};
 use sea_orm::{
-    ActiveValue::Set, ColumnTrait, DbConn, DbErr, EntityTrait, ModelTrait, QueryFilter, Select,
+    ActiveValue::Set, ColumnTrait, DbConn, DbErr, EntityTrait, ModelTrait, PaginatorTrait,
+    QueryFilter, Select,
 };
 
 use entities::{
@@ -46,11 +47,16 @@ impl NotificationRuleFilter for NotificationRuleAdapter<'_> {
 
 pub trait NotificationRuleQuery {
     fn get_all(self) -> impl Future<Output = Result<Vec<Model>, DbErr>>;
+    fn get_count(self) -> impl Future<Output = Result<u64, DbErr>>;
 }
 
 impl NotificationRuleQuery for NotificationRuleAdapter<'_> {
     async fn get_all(self) -> Result<Vec<Model>, DbErr> {
         self.query.all(self.db).await
+    }
+
+    async fn get_count(self) -> Result<u64, DbErr> {
+        self.query.count(self.db).await
     }
 }
 
