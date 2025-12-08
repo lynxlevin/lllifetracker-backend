@@ -13,7 +13,7 @@ use use_cases::{
     UseCaseError,
 };
 
-use crate::utils::{response_401, response_409, response_500};
+use crate::utils::{response_400, response_401, response_409, response_500};
 
 #[tracing::instrument(name = "Creating user's notification_rules.", skip(db, user))]
 #[post("")]
@@ -33,6 +33,7 @@ pub async fn create_notification_rules_endpoint(
             {
                 Ok(res) => HttpResponse::Created().json(res),
                 Err(e) => match &e {
+                    UseCaseError::BadRequest(message) => response_400(message),
                     UseCaseError::Conflict(message) => response_409(message),
                     _ => response_500(e),
                 },

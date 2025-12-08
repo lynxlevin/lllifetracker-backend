@@ -1,5 +1,5 @@
 use chrono::{
-    NaiveTime, TimeDelta,
+    NaiveTime, TimeDelta, Timelike,
     Weekday::{self, Fri, Mon, Sat, Sun, Thu, Tue, Wed},
 };
 use db_adapters::notification_rule_adapter::{
@@ -53,8 +53,6 @@ async fn parse_params<'a>(
     adapter: NotificationRuleAdapter<'a>,
     user: &user_entity::Model,
 ) -> Result<ParsedParam, UseCaseError> {
-    // MYMEMO: add validation for minutes and seconds
-
     let exists_same_type_rules = adapter
         .filter_eq_user(user)
         .filter_eq_type(params.r#type.clone())
@@ -72,6 +70,18 @@ async fn parse_params<'a>(
     let (utc_time, overflow) = params
         .time
         .overflowing_sub_signed(TimeDelta::hours(user_timezone_offset.into()));
+
+    if utc_time.second() != 0 {
+        return Err(UseCaseError::BadRequest(
+            "Seconds in time fields must be zero.".to_string(),
+        ));
+    }
+    if utc_time.minute() % 10 != 0 {
+        return Err(UseCaseError::BadRequest(
+            "Minutes in time fields must be multiples of ten.".to_string(),
+        ));
+    }
+
     let weekdays = match params.recurrence_type {
         RecurrenceType::Everyday => vec![Mon, Tue, Wed, Thu, Fri, Sat, Sun],
         RecurrenceType::Weekday => {

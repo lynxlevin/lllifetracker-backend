@@ -33,7 +33,7 @@ async fn happy_path_everyday_utc_plus_9() -> Result<(), DbErr> {
     req.extensions_mut().insert(user.clone());
 
     let resp = test::call_service(&app, req).await;
-    assert_eq!(resp.status(), http::StatusCode::CREATED);
+    assert_eq!(resp.status(), http::StatusCode::NO_CONTENT);
 
     let rules_in_db_ambition = Entity::find()
         .filter(Column::UserId.eq(user.id))
@@ -73,7 +73,7 @@ async fn happy_path_weekday_utc_plus_9() -> Result<(), DbErr> {
     req.extensions_mut().insert(user.clone());
 
     let resp = test::call_service(&app, req).await;
-    assert_eq!(resp.status(), http::StatusCode::CREATED);
+    assert_eq!(resp.status(), http::StatusCode::NO_CONTENT);
 
     let rules_in_db_ambition = Entity::find()
         .filter(Column::UserId.eq(user.id))
@@ -113,7 +113,7 @@ async fn happy_path_weekend_utc_plus_9() -> Result<(), DbErr> {
     req.extensions_mut().insert(user.clone());
 
     let resp = test::call_service(&app, req).await;
-    assert_eq!(resp.status(), http::StatusCode::CREATED);
+    assert_eq!(resp.status(), http::StatusCode::NO_CONTENT);
 
     let rules_in_db_ambition = Entity::find()
         .filter(Column::UserId.eq(user.id))
@@ -152,4 +152,88 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     assert_eq!(resp.status(), http::StatusCode::UNAUTHORIZED);
 
     Ok(())
+}
+
+mod db_validations {
+    use super::*;
+
+    #[actix_web::test]
+    async fn same_type_exists() -> Result<(), DbErr> {
+        let Connections { app, db, .. } = init_app().await?;
+        let user = factory::user().insert(&db).await?;
+        factory::create_everyday_rules(
+            user.id,
+            &db,
+            NotificationType::Ambition,
+            NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
+        )
+        .await?;
+
+        let req_body = NotificationRuleCreateRequest {
+            r#type: NotificationType::Ambition,
+            recurrence_type: RecurrenceType::Weekend,
+            time: NaiveTime::from_hms_opt(8, 0, 0).unwrap(),
+        };
+
+        let req = test::TestRequest::post()
+            .set_json(req_body.clone())
+            .uri("/api/notification_rules")
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), http::StatusCode::CONFLICT);
+
+        Ok(())
+    }
+}
+
+mod params_validations {
+    use super::*;
+
+    #[actix_web::test]
+    async fn time_seconds_must_be_zero() -> Result<(), DbErr> {
+        let Connections { app, db, .. } = init_app().await?;
+        let user = factory::user().insert(&db).await?;
+
+        let req_body = NotificationRuleCreateRequest {
+            r#type: NotificationType::Ambition,
+            recurrence_type: RecurrenceType::Weekend,
+            time: NaiveTime::from_hms_opt(8, 0, 30).unwrap(),
+        };
+
+        let req = test::TestRequest::post()
+            .set_json(req_body.clone())
+            .uri("/api/notification_rules")
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), http::StatusCode::BAD_REQUEST);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn time_minutes_must_be_multiples_of_10() -> Result<(), DbErr> {
+        let Connections { app, db, .. } = init_app().await?;
+        let user = factory::user().insert(&db).await?;
+
+        let req_body = NotificationRuleCreateRequest {
+            r#type: NotificationType::Ambition,
+            recurrence_type: RecurrenceType::Weekend,
+            time: NaiveTime::from_hms_opt(8, 5, 0).unwrap(),
+        };
+
+        let req = test::TestRequest::post()
+            .set_json(req_body.clone())
+            .uri("/api/notification_rules")
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), http::StatusCode::BAD_REQUEST);
+
+        Ok(())
+    }
 }
