@@ -33,7 +33,7 @@ async fn happy_path_everyday_utc_plus_9() -> Result<(), DbErr> {
     req.extensions_mut().insert(user.clone());
 
     let resp = test::call_service(&app, req).await;
-    assert_eq!(resp.status(), http::StatusCode::NO_CONTENT);
+    assert_eq!(resp.status(), http::StatusCode::CREATED);
 
     let rules_in_db_ambition = Entity::find()
         .filter(Column::UserId.eq(user.id))
@@ -73,7 +73,7 @@ async fn happy_path_weekday_utc_plus_9() -> Result<(), DbErr> {
     req.extensions_mut().insert(user.clone());
 
     let resp = test::call_service(&app, req).await;
-    assert_eq!(resp.status(), http::StatusCode::NO_CONTENT);
+    assert_eq!(resp.status(), http::StatusCode::CREATED);
 
     let rules_in_db_ambition = Entity::find()
         .filter(Column::UserId.eq(user.id))
@@ -113,7 +113,7 @@ async fn happy_path_weekend_utc_plus_9() -> Result<(), DbErr> {
     req.extensions_mut().insert(user.clone());
 
     let resp = test::call_service(&app, req).await;
-    assert_eq!(resp.status(), http::StatusCode::NO_CONTENT);
+    assert_eq!(resp.status(), http::StatusCode::CREATED);
 
     let rules_in_db_ambition = Entity::find()
         .filter(Column::UserId.eq(user.id))
