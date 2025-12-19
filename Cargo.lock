@@ -1098,6 +1098,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "cron_processes"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "db_adapters",
+ "entities",
+]
+
+[[package]]
 name = "crossbeam-channel"
 version = "0.5.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"

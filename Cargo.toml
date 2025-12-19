@@ -8,6 +8,7 @@ members = [
     "src/db_adapters",
     "src/web_adapters",
     "src/server",
+    "src/cron_processes",
     "src/life_tracker",
     "tests",
 ]
