@@ -16,7 +16,3 @@ pub enum UseCaseError {
     Gone,                        // 410
     InternalServerError(String), // 500
 }
-
-pub(crate) fn error_500(e: impl Debug) -> UseCaseError {
-    UseCaseError::InternalServerError(format!("{:?}", e))
-}
