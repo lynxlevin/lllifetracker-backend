@@ -11,7 +11,6 @@ path = "lib.rs"
 entities = { path = "../entities", optional = true }
 migration = { path = "../../migration", optional = true }
 
-actix-web = { workspace = true, optional = true }
 aes-gcm = { workspace = true, optional = true }
 base64 = { workspace = true, optional = true }
 chrono = { workspace = true, optional = true }
