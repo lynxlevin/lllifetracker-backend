@@ -7,8 +7,6 @@ use aes_gcm::{
 };
 use awc::ClientRequest;
 use base64::{prelude::BASE64_URL_SAFE_NO_PAD, Engine};
-use common::{db::decode_and_decrypt, settings::types::Settings};
-use entities::web_push_subscription;
 use hkdf::Hkdf;
 use http::Uri;
 use jwt_simple::prelude::{
@@ -19,6 +17,9 @@ use serde::Serialize;
 use serde_json::json;
 use sha2::Sha256;
 use std::{collections::BTreeMap, error::Error, fmt::Display, sync::Arc};
+
+use common::{db::decode_and_decrypt, settings::types::Settings};
+use entities::web_push_subscription;
 
 const TTL_SECONDS: u64 = 60 * 60 * 23;
 
