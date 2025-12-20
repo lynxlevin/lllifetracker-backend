@@ -26,8 +26,20 @@ impl<'a> WebPushSubscriptionAdapter<'a> {
     }
 }
 
+pub trait WebPushSubscriptionFilter {
+    fn filter_in_user_ids(self, user_ids: Vec<Uuid>) -> Self;
+}
+
+impl WebPushSubscriptionFilter for WebPushSubscriptionAdapter<'_> {
+    fn filter_in_user_ids(mut self, user_ids: Vec<Uuid>) -> Self {
+        self.query = self.query.filter(Column::UserId.is_in(user_ids));
+        self
+    }
+}
+
 pub trait WebPushSubscriptionQuery {
     fn get_by_user(self, user: &user::Model) -> impl Future<Output = Result<Option<Model>, DbErr>>;
+    fn get_all(self) -> impl Future<Output = Result<Vec<Model>, DbErr>>;
 }
 
 impl WebPushSubscriptionQuery for WebPushSubscriptionAdapter<'_> {
@@ -36,6 +48,10 @@ impl WebPushSubscriptionQuery for WebPushSubscriptionAdapter<'_> {
             .filter(Column::UserId.eq(user.id))
             .one(self.db)
             .await
+    }
+
+    async fn get_all(self) -> Result<Vec<Model>, DbErr> {
+        self.query.all(self.db).await
     }
 }
 

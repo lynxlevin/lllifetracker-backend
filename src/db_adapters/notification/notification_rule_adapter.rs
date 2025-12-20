@@ -3,7 +3,7 @@ use std::future::Future;
 use chrono::{NaiveTime, Weekday};
 use sea_orm::{
     ActiveValue::Set, ColumnTrait, DbConn, DbErr, EntityTrait, ModelTrait, PaginatorTrait,
-    QueryFilter, Select,
+    QueryFilter, QueryOrder, Select,
 };
 
 use entities::{
@@ -31,6 +31,9 @@ impl<'a> NotificationRuleAdapter<'a> {
 pub trait NotificationRuleFilter {
     fn filter_eq_user(self, user: &user::Model) -> Self;
     fn filter_eq_type(self, r#type: NotificationType) -> Self;
+    fn filter_in_types(self, types: Vec<NotificationType>) -> Self;
+    fn filter_eq_weekday(self, weekday: Weekday) -> Self;
+    fn filter_eq_utc_time(self, utc_time: NaiveTime) -> Self;
 }
 
 impl NotificationRuleFilter for NotificationRuleAdapter<'_> {
@@ -41,6 +44,34 @@ impl NotificationRuleFilter for NotificationRuleAdapter<'_> {
 
     fn filter_eq_type(mut self, r#type: NotificationType) -> Self {
         self.query = self.query.filter(Column::Type.eq(r#type));
+        self
+    }
+
+    fn filter_in_types(mut self, types: Vec<NotificationType>) -> Self {
+        self.query = self.query.filter(Column::Type.is_in(types));
+        self
+    }
+
+    fn filter_eq_weekday(mut self, weekday: Weekday) -> Self {
+        self.query = self
+            .query
+            .filter(Column::Weekday.eq(weekday.num_days_from_monday()));
+        self
+    }
+
+    fn filter_eq_utc_time(mut self, utc_time: NaiveTime) -> Self {
+        self.query = self.query.filter(Column::UtcTime.eq(utc_time));
+        self
+    }
+}
+
+pub trait NotificationRuleOrder {
+    fn order_by_user_id(self) -> Self;
+}
+
+impl NotificationRuleOrder for NotificationRuleAdapter<'_> {
+    fn order_by_user_id(mut self) -> Self {
+        self.query = self.query.order_by(Column::UserId, sea_orm::Order::Asc);
         self
     }
 }

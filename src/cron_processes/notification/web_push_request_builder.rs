@@ -70,8 +70,14 @@ impl WebPushRequestBuilder {
         })
     }
 
-    pub fn encrypt_message(&self, message: String) -> Result<Vec<u8>, WebPushRequestBuilderError> {
-        let message = json!(Message { body: message }).to_string();
+    pub fn encrypt_message(
+        &self,
+        message: impl ToString,
+    ) -> Result<Vec<u8>, WebPushRequestBuilderError> {
+        let message = json!(Message {
+            body: message.to_string()
+        })
+        .to_string();
         self.message_encryptor.encrypt(message)
     }
 

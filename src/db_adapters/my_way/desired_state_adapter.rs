@@ -46,12 +46,18 @@ impl DesiredStateJoin for DesiredStateAdapter<'_> {
 }
 
 pub trait DesiredStateFilter {
+    fn filter_eq_user_id(self, user_id: Uuid) -> Self;
     fn filter_eq_user(self, user: &user::Model) -> Self;
     fn filter_eq_archived(self, archived: bool) -> Self;
     fn filter_in_ids(self, ids: Vec<Uuid>) -> Self;
 }
 
 impl DesiredStateFilter for DesiredStateAdapter<'_> {
+    fn filter_eq_user_id(mut self, user_id: Uuid) -> Self {
+        self.query = self.query.filter(Column::UserId.eq(user_id));
+        self
+    }
+
     fn filter_eq_user(mut self, user: &user::Model) -> Self {
         self.query = self.query.filter(Column::UserId.eq(user.id));
         self
