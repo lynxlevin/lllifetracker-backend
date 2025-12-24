@@ -5,7 +5,7 @@ use aes_gcm::{
     },
     Aes128Gcm, Key, KeyInit, Nonce,
 };
-use awc::{http::StatusCode, ClientRequest};
+use awc::http::StatusCode;
 use base64::{prelude::BASE64_URL_SAFE_NO_PAD, Engine};
 use hkdf::Hkdf;
 use http::Uri;

@@ -1,6 +1,7 @@
 use chrono::{Datelike, NaiveTime, Timelike};
 use jwt_simple::reexports::rand::{seq::IteratorRandom, thread_rng};
 use sea_orm::{prelude::DateTimeUtc, DbConn};
+use tracing::{event, instrument, Level};
 use uuid::Uuid;
 
 use crate::notification::utils::{send_messages, Message};
@@ -15,24 +16,35 @@ use db_adapters::{
 };
 use entities::{notification_rule, sea_orm_active_enums::NotificationType};
 
+#[derive(Debug)]
 enum NotificationChoice {
     Ambition,
     DesiredState,
 }
 
+#[instrument(skip(settings, db))]
 pub async fn my_way_reminder(settings: &Settings, db: &DbConn, datetime: DateTimeUtc) -> () {
+    event!(Level::INFO, "Starting my_way_reminder.");
     let notification_rules = match get_notification_rules(db, datetime).await {
         Ok(notification_rules) => notification_rules,
         Err(_) => {
             return ();
         }
     };
+    event!(
+        Level::INFO,
+        "Will process {} notification_rules",
+        notification_rules.len()
+    );
     let messages = get_messages(db, notification_rules).await;
+    event!(Level::INFO, "Will process {} messages", messages.len());
     send_messages(messages, settings, db).await;
+    event!(Level::INFO, "Finishing my_way_reminder.");
     ()
 }
 
 // MYMEMO: test
+#[instrument(skip(db))]
 async fn get_notification_rules(
     db: &DbConn,
     datetime: DateTimeUtc,
@@ -40,8 +52,7 @@ async fn get_notification_rules(
     let utc_time = match NaiveTime::from_hms_opt(datetime.hour(), datetime.minute() % 10 * 10, 0) {
         Some(time) => time,
         None => {
-            // MYMEMO: error log.
-            // "Error on parsing datetime."
+            event!(Level::ERROR, "Error on parsing datetime.");
             return Err(());
         }
     };
@@ -57,12 +68,12 @@ async fn get_notification_rules(
         .get_all()
         .await
         .map_err(|e| {
-            // MYMEMO: error log.
-            // format!("Error on get_notification_rules: {:?}", e)
+            event!(Level::ERROR, %e);
             ()
         })
 }
 
+#[instrument(skip(db))]
 async fn get_messages(
     db: &DbConn,
     notification_rules: Vec<notification_rule::Model>,
@@ -81,15 +92,31 @@ async fn get_messages(
             NotificationType::Ambition => NotificationChoice::Ambition,
             NotificationType::DesiredState => NotificationChoice::DesiredState,
             _ => {
-                // MYMEMO: log error, this should not happen.
+                event!(
+                    Level::ERROR,
+                    "This type of notification should not be passed to this function. type: {:?}",
+                    rule.r#type
+                );
                 continue;
             }
         };
-        match get_message(choice, rule.user_id, db).await {
-            Ok(message) => messages.push(message),
-            Err(_) => {
-                // MYMEMO: error log.
-                continue;
+        match get_message(&choice, rule.user_id, db).await {
+            Some(message) => messages.push(message),
+            None => {
+                if rule.r#type == NotificationType::AmbitionOrDesiredState {
+                    event!(
+                        Level::INFO,
+                        "type is AmbitionOrDesiredState, falling back to another choice."
+                    );
+                    let choice = match choice {
+                        NotificationChoice::Ambition => NotificationChoice::DesiredState,
+                        NotificationChoice::DesiredState => NotificationChoice::Ambition,
+                    };
+                    match get_message(&choice, rule.user_id, db).await {
+                        Some(message) => messages.push(message),
+                        None => (),
+                    }
+                }
             }
         }
     }
@@ -97,44 +124,55 @@ async fn get_messages(
 }
 
 // MYMEMO: Add test
+#[instrument(skip(db))]
 async fn get_message(
-    notification_choice: NotificationChoice,
+    notification_choice: &NotificationChoice,
     user_id: Uuid,
     db: &DbConn,
-) -> Result<Message, String> {
+) -> Option<Message> {
     let text = match notification_choice {
         NotificationChoice::Ambition => {
-            let ambition = AmbitionAdapter::init(db)
+            let ambition = match AmbitionAdapter::init(db)
                 .filter_eq_user_id(user_id)
                 .filter_eq_archived(false)
                 .get_random()
                 .await
-                .map_err(|e| format!("Error on get_message for user_id: {}: {:?}", user_id, e))?
-                .ok_or(format!(
-                    "Ambition not found on get_message for user_id: {}",
-                    user_id
-                ))?;
+                .unwrap_or_else(|e| {
+                    event!(Level::ERROR, %e);
+                    return None;
+                }) {
+                Some(ambition) => ambition,
+                None => {
+                    event!(Level::WARN, "Ambition not found.");
+                    return None;
+                }
+            };
             match ambition.description {
                 Some(description) => format!("{}:\n{}", ambition.name, description),
                 None => ambition.name,
             }
         }
         NotificationChoice::DesiredState => {
-            let desired_state = DesiredStateAdapter::init(db)
+            let desired_state = match DesiredStateAdapter::init(db)
                 .filter_eq_user_id(user_id)
                 .filter_eq_archived(false)
                 .get_random()
                 .await
-                .map_err(|e| format!("Error on get_message for user_id: {}: {:?}", user_id, e))?
-                .ok_or(format!(
-                    "Ambition not found on get_message for user_id: {}",
-                    user_id
-                ))?;
+                .unwrap_or_else(|e| {
+                    event!(Level::ERROR, %e);
+                    return None;
+                }) {
+                Some(ambition) => ambition,
+                None => {
+                    event!(Level::WARN, "DesiredState not found.");
+                    return None;
+                }
+            };
             match desired_state.description {
                 Some(description) => format!("{}:\n{}", desired_state.name, description),
                 None => desired_state.name,
             }
         }
     };
-    Ok(Message { text, user_id })
+    Some(Message { text, user_id })
 }
