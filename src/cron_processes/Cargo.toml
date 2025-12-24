@@ -31,5 +31,6 @@ uuid.workspace = true
 [dev-dependencies]
 common = { path = "../common", features = ["db", "settings", "factory"] }
 
+actix-web.workspace = true
 ece.workspace = true
 uuid.workspace = true

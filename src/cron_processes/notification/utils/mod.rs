@@ -20,7 +20,7 @@ pub struct Message {
     pub user_id: Uuid,
 }
 
-// MYMEMO: nice to have a test, but to do that, need to create a messenger_builder.
+// MYMEMO: nice to have a test, but to do that, need to create a messenger_builder to DI.
 #[instrument(skip(messages, settings, db))]
 pub async fn send_messages(messages: Vec<Message>, settings: &Settings, db: &DbConn) -> () {
     let mut user_ids = messages

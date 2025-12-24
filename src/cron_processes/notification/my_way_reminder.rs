@@ -43,7 +43,6 @@ pub async fn my_way_reminder(settings: &Settings, db: &DbConn, datetime: DateTim
     ()
 }
 
-// MYMEMO: test
 #[instrument(skip(db))]
 async fn get_notification_rules(
     db: &DbConn,
@@ -100,7 +99,7 @@ async fn get_messages(
                 continue;
             }
         };
-        match get_message(&choice, rule.user_id, db).await {
+        match get_random_message(&choice, rule.user_id, db).await {
             Some(message) => messages.push(message),
             None => {
                 if rule.r#type == NotificationType::AmbitionOrDesiredState {
@@ -112,7 +111,7 @@ async fn get_messages(
                         NotificationChoice::Ambition => NotificationChoice::DesiredState,
                         NotificationChoice::DesiredState => NotificationChoice::Ambition,
                     };
-                    match get_message(&choice, rule.user_id, db).await {
+                    match get_random_message(&choice, rule.user_id, db).await {
                         Some(message) => messages.push(message),
                         None => (),
                     }
@@ -123,9 +122,8 @@ async fn get_messages(
     messages
 }
 
-// MYMEMO: Add test
 #[instrument(skip(db))]
-async fn get_message(
+async fn get_random_message(
     notification_choice: &NotificationChoice,
     user_id: Uuid,
     db: &DbConn,
@@ -175,4 +173,165 @@ async fn get_message(
         }
     };
     Some(Message { text, user_id })
+}
+
+#[cfg(test)]
+mod tests {
+    use common::{
+        db::init_db,
+        factory::{self, *},
+        settings::get_test_settings,
+    };
+    use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
+
+    use super::*;
+
+    fn default_notification_rule(
+        user_id: Uuid,
+        datetime: DateTimeUtc,
+    ) -> notification_rule::ActiveModel {
+        factory::notification_rule(user_id)
+            .r#type(NotificationType::Ambition)
+            .weekday(datetime.weekday())
+            .utc_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
+    }
+
+    #[actix_web::test]
+    async fn test_get_notification_rules() -> Result<(), DbErr> {
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
+        let user = factory::user().insert(&db).await?;
+        let datetime_query = DateTimeUtc::from_timestamp(1431648000, 0).unwrap();
+        // FIXME: This has to be done in a better way.
+        notification_rule::Entity::delete_many().exec(&db).await?;
+        let notification_rule_0 = default_notification_rule(user.id, datetime_query)
+            .insert(&db)
+            .await?;
+        let notification_rule_1 = default_notification_rule(user.id, datetime_query)
+            .r#type(NotificationType::DesiredState)
+            .insert(&db)
+            .await?;
+        let notification_rule_2 = default_notification_rule(user.id, datetime_query)
+            .r#type(NotificationType::AmbitionOrDesiredState)
+            .insert(&db)
+            .await?;
+        let no_use_notification_rule_0 =
+            default_notification_rule(user.id, datetime_query).r#type(NotificationType::Action);
+        let no_use_notification_rule_1 = default_notification_rule(user.id, datetime_query)
+            .weekday(datetime_query.weekday().succ());
+        let no_use_notification_rule_2 = default_notification_rule(user.id, datetime_query)
+            .weekday(datetime_query.weekday().pred());
+        let no_use_notification_rule_3 = default_notification_rule(user.id, datetime_query)
+            .utc_time(NaiveTime::from_hms_opt(0, 10, 0).unwrap());
+        let no_use_notification_rule_4 = default_notification_rule(user.id, datetime_query)
+            .utc_time(NaiveTime::from_hms_opt(1, 0, 0).unwrap());
+        notification_rule::Entity::insert_many([
+            no_use_notification_rule_0,
+            no_use_notification_rule_1,
+            no_use_notification_rule_2,
+            no_use_notification_rule_3,
+            no_use_notification_rule_4,
+        ])
+        .exec(&db)
+        .await?;
+
+        let res = get_notification_rules(&db, datetime_query).await;
+        assert!(res.is_ok());
+        let res = res.unwrap();
+
+        assert_eq!(res.len(), 3);
+        assert!(res.contains(&notification_rule_0));
+        assert!(res.contains(&notification_rule_1));
+        assert!(res.contains(&notification_rule_2));
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn test_get_random_message_case_ambition_no_description() -> Result<(), DbErr> {
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
+        let user = factory::user().insert(&db).await?;
+        let ambition = factory::ambition(user.id).insert(&db).await?;
+        let _desired_state = factory::desired_state(user.id).insert(&db).await?;
+
+        let res = get_random_message(&NotificationChoice::Ambition, user.id, &db).await;
+        assert!(res.is_some());
+        let res = res.unwrap();
+
+        assert_eq!(res.text, ambition.name);
+        assert_eq!(res.user_id, user.id);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn test_get_random_message_case_ambition_with_description() -> Result<(), DbErr> {
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
+        let user = factory::user().insert(&db).await?;
+        let ambition = factory::ambition(user.id)
+            .description(Some("Description".to_string()))
+            .insert(&db)
+            .await?;
+        let _desired_state = factory::desired_state(user.id).insert(&db).await?;
+
+        let res = get_random_message(&NotificationChoice::Ambition, user.id, &db).await;
+        assert!(res.is_some());
+        let res = res.unwrap();
+
+        assert_eq!(
+            res.text,
+            format!("{}:\n{}", ambition.name, ambition.description.unwrap())
+        );
+        assert_eq!(res.user_id, user.id);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn test_get_random_message_case_desired_state_no_description() -> Result<(), DbErr> {
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
+        let user = factory::user().insert(&db).await?;
+        let _ambition = factory::ambition(user.id).insert(&db).await?;
+        let desired_state = factory::desired_state(user.id).insert(&db).await?;
+
+        let res = get_random_message(&NotificationChoice::DesiredState, user.id, &db).await;
+        assert!(res.is_some());
+        let res = res.unwrap();
+
+        assert_eq!(res.text, desired_state.name);
+        assert_eq!(res.user_id, user.id);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn test_get_random_message_case_desired_state_with_description() -> Result<(), DbErr> {
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
+        let user = factory::user().insert(&db).await?;
+        let _ambition = factory::ambition(user.id).insert(&db).await?;
+        let desired_state = factory::desired_state(user.id)
+            .description(Some("Description".to_string()))
+            .insert(&db)
+            .await?;
+
+        let res = get_random_message(&NotificationChoice::DesiredState, user.id, &db).await;
+        assert!(res.is_some());
+        let res = res.unwrap();
+
+        assert_eq!(
+            res.text,
+            format!(
+                "{}:\n{}",
+                desired_state.name,
+                desired_state.description.unwrap()
+            )
+        );
+        assert_eq!(res.user_id, user.id);
+
+        Ok(())
+    }
 }

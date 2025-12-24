@@ -1102,6 +1102,7 @@ name = "cron_processes"
 version = "0.1.0"
 dependencies = [
  "actix-tls",
+ "actix-web",
  "aes-gcm",
  "awc",
  "base64 0.22.1",
