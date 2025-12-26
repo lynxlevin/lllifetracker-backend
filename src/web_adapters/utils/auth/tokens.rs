@@ -134,8 +134,6 @@ pub async fn verify_confirmation_token_pasetor(
                 };
 
                 if redis_connection
-                    // Ignore this type error "expected Option<String>, found String" as it's a wrong error.
-                    // https://github.com/rust-lang/rust-analyzer/issues/16336#issuecomment-2254346433
                     .get::<_, Option<String>>(redis_key.clone())
                     .await
                     .map_err(|e| format!("{}", e))?
