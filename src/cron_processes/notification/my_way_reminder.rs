@@ -1,6 +1,6 @@
-use chrono::{Datelike, NaiveTime, Timelike};
+use chrono::{NaiveTime, Weekday};
 use jwt_simple::reexports::rand::{seq::IteratorRandom, thread_rng};
-use sea_orm::{prelude::DateTimeUtc, DbConn};
+use sea_orm::DbConn;
 use tracing::{event, instrument, Level};
 use uuid::Uuid;
 
@@ -22,10 +22,20 @@ enum NotificationChoice {
     DesiredState,
 }
 
-#[instrument(skip(settings, db))]
-pub async fn my_way_reminder(settings: &Settings, db: &DbConn, datetime: DateTimeUtc) -> () {
-    event!(Level::INFO, "Starting my_way_reminder.");
-    let notification_rules = match get_notification_rules(db, datetime).await {
+#[instrument(skip_all)]
+pub async fn my_way_reminder(
+    settings: &Settings,
+    db: &DbConn,
+    weekday: Weekday,
+    utc_time: NaiveTime,
+) -> () {
+    event!(
+        Level::INFO,
+        "Starting my_way_reminder. weekday: {}, utc_time: {}",
+        weekday,
+        utc_time
+    );
+    let notification_rules = match get_notification_rules(db, weekday, utc_time).await {
         Ok(notification_rules) => notification_rules,
         Err(_) => {
             return ();
@@ -43,25 +53,19 @@ pub async fn my_way_reminder(settings: &Settings, db: &DbConn, datetime: DateTim
     ()
 }
 
-#[instrument(skip(db))]
+#[instrument(skip_all)]
 async fn get_notification_rules(
     db: &DbConn,
-    datetime: DateTimeUtc,
+    weekday: Weekday,
+    utc_time: NaiveTime,
 ) -> Result<Vec<notification_rule::Model>, ()> {
-    let utc_time = match NaiveTime::from_hms_opt(datetime.hour(), datetime.minute() % 10 * 10, 0) {
-        Some(time) => time,
-        None => {
-            event!(Level::ERROR, "Error on parsing datetime.");
-            return Err(());
-        }
-    };
     NotificationRuleAdapter::init(db)
         .filter_in_types(vec![
             NotificationType::AmbitionOrDesiredState,
             NotificationType::Ambition,
             NotificationType::DesiredState,
         ])
-        .filter_eq_weekday(datetime.weekday())
+        .filter_eq_weekday(weekday)
         .filter_eq_utc_time(utc_time)
         .order_by_user_id()
         .get_all()
@@ -72,7 +76,7 @@ async fn get_notification_rules(
         })
 }
 
-#[instrument(skip(db))]
+#[instrument(skip_all)]
 async fn get_messages(
     db: &DbConn,
     notification_rules: Vec<notification_rule::Model>,
@@ -188,12 +192,13 @@ mod tests {
 
     fn default_notification_rule(
         user_id: Uuid,
-        datetime: DateTimeUtc,
+        weekday: Weekday,
+        time: NaiveTime,
     ) -> notification_rule::ActiveModel {
         factory::notification_rule(user_id)
             .r#type(NotificationType::Ambition)
-            .weekday(datetime.weekday())
-            .utc_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
+            .weekday(weekday)
+            .utc_time(time)
     }
 
     #[actix_web::test]
@@ -201,30 +206,36 @@ mod tests {
         let settings = get_test_settings();
         let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
-        let datetime_query = DateTimeUtc::from_timestamp(1431648000, 0).unwrap();
+        let weekday = Weekday::Mon;
+        let time = NaiveTime::from_hms_opt(0, 0, 0).unwrap();
         // FIXME: This has to be done in a better way.
         notification_rule::Entity::delete_many().exec(&db).await?;
-        let notification_rule_0 = default_notification_rule(user.id, datetime_query)
+        let notification_rule_0 = default_notification_rule(user.id, weekday.clone(), time.clone())
             .insert(&db)
             .await?;
-        let notification_rule_1 = default_notification_rule(user.id, datetime_query)
+        let notification_rule_1 = default_notification_rule(user.id, weekday.clone(), time.clone())
             .r#type(NotificationType::DesiredState)
             .insert(&db)
             .await?;
-        let notification_rule_2 = default_notification_rule(user.id, datetime_query)
+        let notification_rule_2 = default_notification_rule(user.id, weekday.clone(), time.clone())
             .r#type(NotificationType::AmbitionOrDesiredState)
             .insert(&db)
             .await?;
         let no_use_notification_rule_0 =
-            default_notification_rule(user.id, datetime_query).r#type(NotificationType::Action);
-        let no_use_notification_rule_1 = default_notification_rule(user.id, datetime_query)
-            .weekday(datetime_query.weekday().succ());
-        let no_use_notification_rule_2 = default_notification_rule(user.id, datetime_query)
-            .weekday(datetime_query.weekday().pred());
-        let no_use_notification_rule_3 = default_notification_rule(user.id, datetime_query)
-            .utc_time(NaiveTime::from_hms_opt(0, 10, 0).unwrap());
-        let no_use_notification_rule_4 = default_notification_rule(user.id, datetime_query)
-            .utc_time(NaiveTime::from_hms_opt(1, 0, 0).unwrap());
+            default_notification_rule(user.id, weekday.clone(), time.clone())
+                .r#type(NotificationType::Action);
+        let no_use_notification_rule_1 =
+            default_notification_rule(user.id, weekday.clone(), time.clone())
+                .weekday(weekday.succ());
+        let no_use_notification_rule_2 =
+            default_notification_rule(user.id, weekday.clone(), time.clone())
+                .weekday(weekday.pred());
+        let no_use_notification_rule_3 =
+            default_notification_rule(user.id, weekday.clone(), time.clone())
+                .utc_time(NaiveTime::from_hms_opt(0, 10, 0).unwrap());
+        let no_use_notification_rule_4 =
+            default_notification_rule(user.id, weekday.clone(), time.clone())
+                .utc_time(NaiveTime::from_hms_opt(1, 0, 0).unwrap());
         notification_rule::Entity::insert_many([
             no_use_notification_rule_0,
             no_use_notification_rule_1,
@@ -235,7 +246,7 @@ mod tests {
         .exec(&db)
         .await?;
 
-        let res = get_notification_rules(&db, datetime_query).await;
+        let res = get_notification_rules(&db, weekday, time).await;
         assert!(res.is_ok());
         let res = res.unwrap();
 

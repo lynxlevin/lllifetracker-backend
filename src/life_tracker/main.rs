@@ -1,4 +1,5 @@
 use common::settings::get_settings;
+use cron_processes::notification::run_cron_processes;
 
 mod startup;
 mod telemetry;
@@ -12,6 +13,8 @@ async fn main() -> std::io::Result<()> {
     // - Logs should be more readable.
     // - More system info should be collected automatically.
     let _guard = telemetry::init_subscriber(settings.debug, settings.application.max_log_files);
+
+    run_cron_processes(&settings).await;
 
     let application = startup::Application::build(settings).await?;
 

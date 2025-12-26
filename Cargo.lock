@@ -2388,6 +2388,7 @@ dependencies = [
  "actix-session",
  "actix-web",
  "common",
+ "cron_processes",
  "sea-orm",
  "server",
  "tracing",

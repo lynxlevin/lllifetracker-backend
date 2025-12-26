@@ -21,7 +21,7 @@ pub struct Message {
 }
 
 // MYMEMO: nice to have a test, but to do that, need to create a messenger_builder to DI.
-#[instrument(skip(messages, settings, db))]
+#[instrument(skip_all)]
 pub async fn send_messages(messages: Vec<Message>, settings: &Settings, db: &DbConn) -> () {
     let mut user_ids = messages
         .iter()
@@ -56,7 +56,7 @@ pub async fn send_messages(messages: Vec<Message>, settings: &Settings, db: &DbC
     ()
 }
 
-#[instrument(skip(web_push_subscriptions_by_user_id, settings, db))]
+#[instrument(skip_all)]
 async fn send_web_push(
     message: Message,
     web_push_subscriptions_by_user_id: &mut HashMap<Uuid, web_push_subscription::Model>,
@@ -78,9 +78,14 @@ async fn send_web_push(
             return ();
         }
     };
-    match messenger.send_message(message.text).await {
+    match messenger.send_message(&message.text).await {
         Ok(result) => match result {
             WebPushMessengerResult::OK => {
+                event!(
+                    Level::INFO,
+                    "Successfully sent message: {}",
+                    message.user_id
+                );
                 web_push_subscriptions_by_user_id.insert(subscription.user_id, subscription);
             }
             WebPushMessengerResult::InvalidSubscription => {
