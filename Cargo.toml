@@ -17,16 +17,9 @@ default-members = ["src/life_tracker"]
 [workspace.dependencies]
 actix-http = "3.*"
 actix-session = { version = "^0.10.0", features = ["redis-session"] }
-actix-tls = { version = "3.4.0", default-features = false, features = [
-    "connect",
-    "rustls-0_23",
-] }
 actix-web = "^4.8.0"
 aes-gcm = { version = "0.10.3", default-features = false, features = ["aes", "alloc", "getrandom", "rand_core"]}
 argon2 = { version = "^0.5.3", default-features = false }
-awc = { version = "3.8.1", default-features = false, features = [
-    "rustls-0_23-webpki-roots",
-] }
 base64 = { version = "0.22.1", default-features = false }
 chrono = "^0.4.40"
 deadpool-redis = "^0.18.0"
@@ -56,6 +49,7 @@ pasetors = { version = "^0.6.8", features = [
 ], default-features = false }
 once_cell = { version = "^1.19.0", default-features = false }
 p256 = { version = "0.13.2", features = ["ecdh"] }
+reqwest = { version = "0.12.28", default-features = false, features = ["rustls-tls-webpki-roots"]}
 sea-orm = { version = "~1.1", features = [
     "sqlx-postgres",
     "runtime-tokio-rustls",

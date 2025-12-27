@@ -17,12 +17,14 @@
     "minijinja",
     "pasetor",
     "pasetors",
+    "reqwest",
     "rustls",
     "serde",
     "sqlx",
     "Subsec",
     "subsecs",
-    "trunc"
+    "trunc",
+    "webpki"
   ],
   "rest-client.followredirect": false,
   "[rust]": {

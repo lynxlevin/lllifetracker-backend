@@ -1,14 +1,15 @@
-use actix_tls::connect::rustls_0_23;
 use aes_gcm::{
     aead::{
         consts as aes_gcm_consts, generic_array, rand_core::RngCore, AeadMutInPlace, Buffer, OsRng,
     },
     Aes128Gcm, Key, KeyInit, Nonce,
 };
-use awc::http::StatusCode;
 use base64::{prelude::BASE64_URL_SAFE_NO_PAD, Engine};
 use hkdf::Hkdf;
-use http::Uri;
+use http::{
+    header::{AUTHORIZATION, CONTENT_ENCODING, CONTENT_TYPE},
+    HeaderMap, StatusCode, Uri,
+};
 use jwt_simple::prelude::{
     Claims, Duration, ECDSAP256KeyPairLike, ECDSAP256PublicKeyLike, ES256KeyPair,
 };
@@ -16,7 +17,7 @@ use p256::elliptic_curve::sec1::ToEncodedPoint;
 use serde::Serialize;
 use serde_json::json;
 use sha2::Sha256;
-use std::{collections::BTreeMap, error::Error, fmt::Display, sync::Arc};
+use std::{collections::BTreeMap, error::Error, fmt::Display};
 
 use common::{db::decode_and_decrypt, settings::types::Settings};
 use entities::web_push_subscription;
@@ -82,36 +83,35 @@ impl WebPushMessenger {
     ) -> Result<WebPushMessengerResult, WebPushMessengerError> {
         let encrypted_message = self.encrypt_message(message)?;
 
-        let config = rustls_0_23::reexports::ClientConfig::builder()
-            .with_root_certificates(rustls_0_23::webpki_roots_cert_store())
-            .with_no_client_auth();
-        let client = awc::Client::builder()
-            .connector(awc::Connector::new().rustls_0_23(Arc::new(config)))
-            .finish();
-
-        let request = client
+        // NOTE: Http client cannot be awc because it causes "future is not Send" error in run_cron_processes.
+        // This is inevitable though not ideal because reqwest is hyper-based whereas actix-web is tokio-based.
+        let client = reqwest::Client::new();
+        let mut headers = HeaderMap::new();
+        // FIXME: handle errors after parse.
+        headers.insert(CONTENT_TYPE, "application/octet-stream".parse().unwrap());
+        headers.insert(
+            AUTHORIZATION,
+            self.vapid_signature_builder
+                .build(&self.endpoint)?
+                .parse()
+                .unwrap(),
+        );
+        headers.insert(CONTENT_ENCODING, "aes128gcm".parse().unwrap());
+        headers.insert("TTL", TTL_SECONDS.to_string().parse().unwrap());
+        headers.insert("Urgency", "normal".parse().unwrap());
+        client
             .post(&self.endpoint)
-            .content_type("application/octet-stream")
-            .insert_header((
-                "Authorization",
-                self.vapid_signature_builder.build(&self.endpoint)?,
-            ))
-            .insert_header(("Content-Encoding", "aes128gcm"))
-            .insert_header(("TTL", TTL_SECONDS))
-            .insert_header(("Urgency", "normal"));
-
-        // FIXME: request.send_body causes an error related to Send in the cron process
-        Err(WebPushMessengerError::new("adfa", "asf"))
-        // request
-        //     .send_body(encrypted_message)
-        //     .await
-        //     .map(|res| match res.status() {
-        //         StatusCode::NOT_FOUND | StatusCode::GONE => {
-        //             WebPushMessengerResult::InvalidSubscription
-        //         }
-        //         _ => WebPushMessengerResult::OK,
-        //     })
-        //     .map_err(|e| WebPushMessengerError::new("WebPushMessenger::send_message", e))
+            .headers(headers)
+            .body(encrypted_message)
+            .send()
+            .await
+            .map(|res| match res.status() {
+                StatusCode::NOT_FOUND | StatusCode::GONE => {
+                    WebPushMessengerResult::InvalidSubscription
+                }
+                _ => WebPushMessengerResult::OK,
+            })
+            .map_err(|e| WebPushMessengerError::new("WebPushMessenger::send_message", e))
     }
 
     pub fn encrypt_message(
