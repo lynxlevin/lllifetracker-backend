@@ -32,7 +32,7 @@ pub async fn run_cron_processes(settings: Settings) -> () {
 
     if let Err(e) = scheduler
         .add(
-            Job::new_async("0 0,10,20,30,40,50, *, *, *, *", move |_, _| {
+            Job::new_async("0 0,10,20,30,40,50, * * * *", move |_, _| {
                 let params = (
                     settings.clone(),
                     db.clone(),
