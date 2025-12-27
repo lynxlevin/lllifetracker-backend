@@ -14,7 +14,7 @@ async fn main() -> std::io::Result<()> {
     // - More system info should be collected automatically.
     let _guard = telemetry::init_subscriber(settings.debug, settings.application.max_log_files);
 
-    run_cron_processes(&settings).await;
+    run_cron_processes(settings.clone()).await;
 
     let application = startup::Application::build(settings).await?;
 

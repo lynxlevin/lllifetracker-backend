@@ -99,16 +99,19 @@ impl WebPushMessenger {
             .insert_header(("Content-Encoding", "aes128gcm"))
             .insert_header(("TTL", TTL_SECONDS))
             .insert_header(("Urgency", "normal"));
-        request
-            .send_body(encrypted_message)
-            .await
-            .map(|res| match res.status() {
-                StatusCode::NOT_FOUND | StatusCode::GONE => {
-                    WebPushMessengerResult::InvalidSubscription
-                }
-                _ => WebPushMessengerResult::OK,
-            })
-            .map_err(|e| WebPushMessengerError::new("WebPushMessenger::send_message", e))
+
+        // FIXME: request.send_body causes an error related to Send in the cron process
+        Err(WebPushMessengerError::new("adfa", "asf"))
+        // request
+        //     .send_body(encrypted_message)
+        //     .await
+        //     .map(|res| match res.status() {
+        //         StatusCode::NOT_FOUND | StatusCode::GONE => {
+        //             WebPushMessengerResult::InvalidSubscription
+        //         }
+        //         _ => WebPushMessengerResult::OK,
+        //     })
+        //     .map_err(|e| WebPushMessengerError::new("WebPushMessenger::send_message", e))
     }
 
     pub fn encrypt_message(
