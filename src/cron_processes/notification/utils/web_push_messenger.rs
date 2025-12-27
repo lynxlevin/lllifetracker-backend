@@ -7,8 +7,8 @@ use aes_gcm::{
 use base64::{prelude::BASE64_URL_SAFE_NO_PAD, Engine};
 use hkdf::Hkdf;
 use http::{
-    header::{AUTHORIZATION, CONTENT_ENCODING, CONTENT_TYPE},
-    HeaderMap, StatusCode, Uri,
+    header::{InvalidHeaderValue, AUTHORIZATION, CONTENT_ENCODING, CONTENT_TYPE},
+    HeaderMap, HeaderValue, StatusCode, Uri,
 };
 use jwt_simple::prelude::{
     Claims, Duration, ECDSAP256KeyPairLike, ECDSAP256PublicKeyLike, ES256KeyPair,
@@ -87,18 +87,27 @@ impl WebPushMessenger {
         // This is inevitable though not ideal because reqwest is hyper-based whereas actix-web is tokio-based.
         let client = reqwest::Client::new();
         let mut headers = HeaderMap::new();
-        // FIXME: handle errors after parse.
-        headers.insert(CONTENT_TYPE, "application/octet-stream".parse().unwrap());
+        headers.insert(
+            CONTENT_TYPE,
+            HeaderValue::from_str("application/octet-stream")
+                .map_err(|e| WebPushMessengerError::new("WebPushMessenger::send_message", e))?,
+        );
         headers.insert(
             AUTHORIZATION,
-            self.vapid_signature_builder
-                .build(&self.endpoint)?
-                .parse()
-                .unwrap(),
+            HeaderValue::from_str(&self.vapid_signature_builder.build(&self.endpoint)?)
+                .map_err(|e| WebPushMessengerError::new("WebPushMessenger::send_message", e))?,
         );
-        headers.insert(CONTENT_ENCODING, "aes128gcm".parse().unwrap());
-        headers.insert("TTL", TTL_SECONDS.to_string().parse().unwrap());
-        headers.insert("Urgency", "normal".parse().unwrap());
+        headers.insert(
+            CONTENT_ENCODING,
+            HeaderValue::from_str("aes128gcm")
+                .map_err(|e| WebPushMessengerError::new("WebPushMessenger::send_message", e))?,
+        );
+        headers.insert("TTL", HeaderValue::from(TTL_SECONDS));
+        headers.insert(
+            "Urgency",
+            HeaderValue::from_str("normal")
+                .map_err(|e| WebPushMessengerError::new("WebPushMessenger::send_message", e))?,
+        );
         client
             .post(&self.endpoint)
             .headers(headers)
