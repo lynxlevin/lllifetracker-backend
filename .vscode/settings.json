@@ -23,8 +23,7 @@
     "sqlx",
     "Subsec",
     "subsecs",
-    "trunc",
-    "webpki"
+    "trunc"
   ],
   "rest-client.followredirect": false,
   "[rust]": {
