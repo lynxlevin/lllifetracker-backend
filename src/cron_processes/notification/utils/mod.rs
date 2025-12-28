@@ -7,23 +7,38 @@ use db_adapters::web_push_subscription_adapter::{
 };
 use entities::web_push_subscription;
 use sea_orm::DbConn;
-use tracing::{event, instrument, Level};
+use tracing::{Level, event, instrument};
 use uuid::Uuid;
 
-use crate::notification::utils::web_push_messenger::{WebPushMessenger, WebPushMessengerResult};
+use crate::notification::utils::web_push_messenger::{
+    Message, WebPushMessenger, WebPushMessengerResult,
+};
 
 mod web_push_messenger;
 
 #[derive(Debug)]
-pub struct Message {
-    pub text: String,
+pub struct MessageWithUserId {
+    pub content: Message,
     pub user_id: Uuid,
+}
+
+impl MessageWithUserId {
+    pub fn new(title: Option<String>, body: String, path: Option<String>, user_id: Uuid) -> Self {
+        Self {
+            content: Message { title, body, path },
+            user_id,
+        }
+    }
 }
 
 // MYMEMO: This should have a wrapper error type for all the errors in this file.
 // MYMEMO: nice to have a test, but to do that, need to create a messenger_builder to DI.
 #[instrument(skip_all)]
-pub async fn send_messages(messages: Vec<Message>, settings: &Settings, db: &DbConn) -> () {
+pub async fn send_messages(
+    messages: Vec<MessageWithUserId>,
+    settings: &Settings,
+    db: &DbConn,
+) -> () {
     let mut user_ids = messages
         .iter()
         .map(|message| message.user_id)
@@ -61,7 +76,7 @@ pub async fn send_messages(messages: Vec<Message>, settings: &Settings, db: &DbC
 
 #[instrument(skip_all)]
 async fn send_web_push(
-    message: Message,
+    message: MessageWithUserId,
     web_push_subscriptions_by_user_id: &mut HashMap<Uuid, web_push_subscription::Model>,
     settings: &Settings,
     db: &DbConn,
@@ -81,13 +96,16 @@ async fn send_web_push(
             return ();
         }
     };
-    match messenger.send_message(&message.text).await {
+    match messenger.send_message(message.content).await {
         Ok(result) => match result {
             WebPushMessengerResult::OK => {
                 web_push_subscriptions_by_user_id.insert(subscription.user_id, subscription);
             }
             WebPushMessengerResult::InvalidSubscription => {
-                event!(Level::WARN, "WebPushMessengerResult::InvalidSubscription for this message. Deleting the web_push_subscription.");
+                event!(
+                    Level::WARN,
+                    "WebPushMessengerResult::InvalidSubscription for this message. Deleting the web_push_subscription."
+                );
 
                 // NOTE: iOS returns 201 even when it's unsubscribed.
                 if let Err(e) = WebPushSubscriptionAdapter::init(db)

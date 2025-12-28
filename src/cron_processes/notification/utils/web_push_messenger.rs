@@ -1,14 +1,14 @@
 use aes_gcm::{
-    aead::{
-        consts as aes_gcm_consts, generic_array, rand_core::RngCore, AeadMutInPlace, Buffer, OsRng,
-    },
     Aes128Gcm, Key, KeyInit, Nonce,
+    aead::{
+        AeadMutInPlace, Buffer, OsRng, consts as aes_gcm_consts, generic_array, rand_core::RngCore,
+    },
 };
-use base64::{prelude::BASE64_URL_SAFE_NO_PAD, Engine};
+use base64::{Engine, prelude::BASE64_URL_SAFE_NO_PAD};
 use hkdf::Hkdf;
 use http::{
-    header::{AUTHORIZATION, CONTENT_ENCODING, CONTENT_TYPE},
     HeaderMap, HeaderValue, StatusCode, Uri,
+    header::{AUTHORIZATION, CONTENT_ENCODING, CONTENT_TYPE},
 };
 use jwt_simple::prelude::{
     Claims, Duration, ECDSAP256KeyPairLike, ECDSAP256PublicKeyLike, ES256KeyPair,
@@ -24,9 +24,11 @@ use entities::web_push_subscription;
 
 const TTL_SECONDS: u64 = 60 * 60 * 23;
 
-#[derive(Serialize)]
-struct Message {
-    body: String,
+#[derive(Serialize, Debug)]
+pub struct Message {
+    pub title: Option<String>,
+    pub body: String,
+    pub path: Option<String>,
 }
 
 pub struct WebPushMessenger {
@@ -80,7 +82,7 @@ impl WebPushMessenger {
 
     pub async fn send_message(
         &self,
-        message: impl ToString,
+        message: Message,
     ) -> Result<WebPushMessengerResult, WebPushMessengerError> {
         let encrypted_message = self.encrypt_message(message)?;
 
@@ -124,15 +126,8 @@ impl WebPushMessenger {
             .map_err(|e| WebPushMessengerError::new("WebPushMessenger::send_message", e))
     }
 
-    pub fn encrypt_message(
-        &self,
-        message: impl ToString,
-    ) -> Result<Vec<u8>, WebPushMessengerError> {
-        // MYMEMO: Take this out so that it can more easily be changed. (Like adding title or path.) Or add all those now?
-        let message = json!(Message {
-            body: message.to_string()
-        })
-        .to_string();
+    pub fn encrypt_message(&self, message: Message) -> Result<Vec<u8>, WebPushMessengerError> {
+        let message = json!(message).to_string();
         self.message_encryptor.encrypt(message)
     }
 }

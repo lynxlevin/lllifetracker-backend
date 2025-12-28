@@ -1,10 +1,10 @@
 use chrono::{NaiveTime, Weekday};
 use jwt_simple::reexports::rand::{seq::IteratorRandom, thread_rng};
 use sea_orm::DbConn;
-use tracing::{event, instrument, Level};
+use tracing::{Level, event, instrument};
 use uuid::Uuid;
 
-use crate::notification::utils::{send_messages, Message};
+use crate::notification::utils::{MessageWithUserId, send_messages};
 use common::settings::types::Settings;
 use db_adapters::{
     ambition_adapter::{AmbitionAdapter, AmbitionFilter, AmbitionQuery},
@@ -74,9 +74,9 @@ async fn get_notification_rules(
 async fn get_messages(
     db: &DbConn,
     notification_rules: Vec<notification_rule::Model>,
-) -> Vec<Message> {
+) -> Vec<MessageWithUserId> {
     // MYMEMO: Is there a way to reduce DB query? If not, use stream. https://users.rust-lang.org/t/how-to-use-await-inside-vec-iter-map-in-an-async-fn/65416/3
-    let mut messages: Vec<Message> = vec![];
+    let mut messages: Vec<MessageWithUserId> = vec![];
     for rule in notification_rules.iter() {
         let choice = match rule.r#type {
             NotificationType::AmbitionOrDesiredState => [
@@ -125,8 +125,8 @@ async fn get_random_message(
     notification_choice: &NotificationChoice,
     user_id: Uuid,
     db: &DbConn,
-) -> Option<Message> {
-    let text = match notification_choice {
+) -> Option<MessageWithUserId> {
+    let (title, body) = match notification_choice {
         NotificationChoice::Ambition => {
             let ambition = match AmbitionAdapter::init(db)
                 .filter_eq_user_id(user_id)
@@ -144,8 +144,11 @@ async fn get_random_message(
                 }
             };
             match ambition.description {
-                Some(description) => format!("{}:\n{}", ambition.name, description),
-                None => ambition.name,
+                Some(description) => (
+                    Some(format!("大志: {}", ambition.name)),
+                    description.replace('\n', "").replace('\r', ""),
+                ),
+                None => (Some("大志".to_string()), ambition.name),
             }
         }
         NotificationChoice::DesiredState => {
@@ -158,19 +161,22 @@ async fn get_random_message(
                     event!(Level::ERROR, %e);
                     return None;
                 }) {
-                Some(ambition) => ambition,
+                Some(desired_state) => desired_state,
                 None => {
                     event!(Level::WARN, "DesiredState not found.");
                     return None;
                 }
             };
             match desired_state.description {
-                Some(description) => format!("{}:\n{}", desired_state.name, description),
-                None => desired_state.name,
+                Some(description) => (
+                    Some(format!("大事にすること: {}", desired_state.name)),
+                    description.replace('\n', "").replace('\r', ""),
+                ),
+                None => (Some("大事にすること".to_string()), desired_state.name),
             }
         }
     };
-    Some(Message { text, user_id })
+    Some(MessageWithUserId::new(title, body, None, user_id))
 }
 
 #[cfg(test)]
@@ -264,7 +270,9 @@ mod tests {
         assert!(res.is_some());
         let res = res.unwrap();
 
-        assert_eq!(res.text, ambition.name);
+        assert_eq!(res.content.title, Some("大志".to_string()));
+        assert_eq!(res.content.body, ambition.name);
+        assert_eq!(res.content.path, None);
         assert_eq!(res.user_id, user.id);
 
         Ok(())
@@ -285,10 +293,16 @@ mod tests {
         assert!(res.is_some());
         let res = res.unwrap();
 
+        assert_eq!(res.content.title, Some(format!("大志: {}", ambition.name)));
         assert_eq!(
-            res.text,
-            format!("{}:\n{}", ambition.name, ambition.description.unwrap())
+            res.content.body,
+            ambition
+                .description
+                .unwrap()
+                .replace('\n', "")
+                .replace('\r', "")
         );
+        assert_eq!(res.content.path, None);
         assert_eq!(res.user_id, user.id);
 
         Ok(())
@@ -306,7 +320,9 @@ mod tests {
         assert!(res.is_some());
         let res = res.unwrap();
 
-        assert_eq!(res.text, desired_state.name);
+        assert_eq!(res.content.title, Some("大事にすること".to_string()));
+        assert_eq!(res.content.body, desired_state.name);
+        assert_eq!(res.content.path, None);
         assert_eq!(res.user_id, user.id);
 
         Ok(())
@@ -328,13 +344,18 @@ mod tests {
         let res = res.unwrap();
 
         assert_eq!(
-            res.text,
-            format!(
-                "{}:\n{}",
-                desired_state.name,
-                desired_state.description.unwrap()
-            )
+            res.content.title,
+            Some(format!("大事にすること: {}", desired_state.name))
         );
+        assert_eq!(
+            res.content.body,
+            desired_state
+                .description
+                .unwrap()
+                .replace('\n', "")
+                .replace('\r', "")
+        );
+        assert_eq!(res.content.path, None);
         assert_eq!(res.user_id, user.id);
 
         Ok(())
