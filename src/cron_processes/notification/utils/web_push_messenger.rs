@@ -41,6 +41,7 @@ pub enum WebPushMessengerResult {
 }
 
 #[derive(Debug)]
+// MYMEMO: This should be changed to enum error
 pub struct WebPushMessengerError {
     method_detail: String,
     error: String,
@@ -127,6 +128,7 @@ impl WebPushMessenger {
         &self,
         message: impl ToString,
     ) -> Result<Vec<u8>, WebPushMessengerError> {
+        // MYMEMO: Take this out so that it can more easily be changed. (Like adding title or path.) Or add all those now?
         let message = json!(Message {
             body: message.to_string()
         })
@@ -280,6 +282,7 @@ struct VapidSignatureBuilder {
     app_owner_email: String,
 }
 
+// MYMEMO: It's nice to test Vapid Signature
 impl VapidSignatureBuilder {
     fn new(settings: &Settings) -> Result<Self, WebPushMessengerError> {
         Ok(Self {

@@ -7,53 +7,53 @@ mod my_way_reminder;
 mod utils;
 
 #[instrument(skip_all)]
-// MYMEMO: This should panic or return Error and stop server from starting.
-pub async fn run_cron_processes(settings: Settings) -> () {
+pub async fn run_cron_processes(settings: Settings) -> Result<(), ()> {
     let db = init_db(&settings).await;
 
     let scheduler = match JobScheduler::new().await {
         Ok(scheduler) => scheduler,
         Err(e) => {
             event!(Level::ERROR, "{:?}", e);
-            return ();
+            return Err(());
         }
     };
 
-    if let Err(e) =
-        scheduler
-            .add(
-                Job::new_async("0 0,10,20,30,40,50, * * * *", move |_, _| {
-                    let params = (settings.clone(), db.clone());
-                    Box::pin(async move {
-                        let (weekday, utc_time_rounded_by_10_minutes) =
-                            match get_parsed_time(Utc::now()) {
-                                Some(parsed_now) => parsed_now,
-                                None => {
-                                    event!(Level::ERROR, "Error on parsing utc_time.");
-                                    return ();
-                                }
-                            };
-                        my_way_reminder::my_way_reminder(
-                            &params.0,
-                            &params.1,
-                            weekday,
-                            utc_time_rounded_by_10_minutes,
-                        )
-                        .await
-                    })
-                })
-                .unwrap(),
+    let my_way_reminder_job = match Job::new_async("0 0,10,20,30,40,50, * * * *", move |_, _| {
+        let params = (settings.clone(), db.clone());
+        Box::pin(async move {
+            let (weekday, utc_time_rounded_by_10_minutes) = match get_parsed_time(Utc::now()) {
+                Some(parsed_now) => parsed_now,
+                None => {
+                    event!(Level::ERROR, "Error on parsing utc_time.");
+                    return ();
+                }
+            };
+            my_way_reminder::my_way_reminder(
+                &params.0,
+                &params.1,
+                weekday,
+                utc_time_rounded_by_10_minutes,
             )
             .await
-    {
+        })
+    }) {
+        Ok(job) => job,
+        Err(e) => {
+            event!(Level::ERROR, "{:?}", e);
+            return Err(());
+        }
+    };
+    if let Err(e) = scheduler.add(my_way_reminder_job).await {
         event!(Level::ERROR, "{:?}", e);
+        return Err(());
     };
 
     if let Err(e) = scheduler.start().await {
         event!(Level::ERROR, "{:?}", e);
+        return Err(());
     }
 
-    ()
+    Ok(())
 }
 
 fn get_parsed_time(time: DateTime<Utc>) -> Option<(Weekday, NaiveTime)> {

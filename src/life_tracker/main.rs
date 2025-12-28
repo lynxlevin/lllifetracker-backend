@@ -1,5 +1,6 @@
 use common::settings::get_settings;
 use cron_processes::notification::run_cron_processes;
+use tracing::{event, Level};
 
 mod startup;
 mod telemetry;
@@ -14,7 +15,14 @@ async fn main() -> std::io::Result<()> {
     // - More system info should be collected automatically.
     let _guard = telemetry::init_subscriber(settings.debug, settings.application.max_log_files);
 
-    run_cron_processes(settings.clone()).await;
+    if let Err(e) = run_cron_processes(settings.clone()).await {
+        event!(
+            Level::ERROR,
+            "Some error in run_cron_processes, stopping server. {:?}",
+            e
+        );
+        return Ok(());
+    };
 
     let application = startup::Application::build(settings).await?;
 

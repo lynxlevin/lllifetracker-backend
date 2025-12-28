@@ -20,6 +20,7 @@ pub struct Message {
     pub user_id: Uuid,
 }
 
+// MYMEMO: This should have a wrapper error type for all the errors in this file.
 // MYMEMO: nice to have a test, but to do that, need to create a messenger_builder to DI.
 #[instrument(skip_all)]
 pub async fn send_messages(messages: Vec<Message>, settings: &Settings, db: &DbConn) -> () {
