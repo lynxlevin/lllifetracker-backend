@@ -17,6 +17,7 @@
     "minijinja",
     "pasetor",
     "pasetors",
+    "reqwest",
     "rustls",
     "serde",
     "sqlx",

@@ -9,6 +9,7 @@ path = "main.rs"
 
 [dependencies]
 common = { path = "../common", features = ["db", "redis", "settings"] }
+cron_processes = { path = "../cron_processes" }
 server = { path = "../server" }
 
 actix-session.workspace = true

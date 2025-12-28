@@ -1,16 +1,15 @@
-use actix_tls::connect::rustls_0_23;
 use aes_gcm::{
     aead::{
         consts as aes_gcm_consts, generic_array, rand_core::RngCore, AeadMutInPlace, Buffer, OsRng,
     },
     Aes128Gcm, Key, KeyInit, Nonce,
 };
-use awc::ClientRequest;
 use base64::{prelude::BASE64_URL_SAFE_NO_PAD, Engine};
-use common::{db::decode_and_decrypt, settings::types::Settings};
-use entities::web_push_subscription;
 use hkdf::Hkdf;
-use http::Uri;
+use http::{
+    header::{AUTHORIZATION, CONTENT_ENCODING, CONTENT_TYPE},
+    HeaderMap, HeaderValue, StatusCode, Uri,
+};
 use jwt_simple::prelude::{
     Claims, Duration, ECDSAP256KeyPairLike, ECDSAP256PublicKeyLike, ES256KeyPair,
 };
@@ -18,9 +17,10 @@ use p256::elliptic_curve::sec1::ToEncodedPoint;
 use serde::Serialize;
 use serde_json::json;
 use sha2::Sha256;
-use std::{collections::BTreeMap, sync::Arc};
+use std::{collections::BTreeMap, error::Error, fmt::Display};
 
-use crate::{error_500, UseCaseError};
+use common::{db::decode_and_decrypt, settings::types::Settings};
+use entities::web_push_subscription;
 
 const TTL_SECONDS: u64 = 60 * 60 * 23;
 
@@ -29,47 +29,111 @@ struct Message {
     body: String,
 }
 
-pub struct WebPushRequestBuilder {
+pub struct WebPushMessenger {
     endpoint: String,
     message_encryptor: MessageEncryptor,
     vapid_signature_builder: VapidSignatureBuilder,
 }
 
-impl WebPushRequestBuilder {
+pub enum WebPushMessengerResult {
+    OK,
+    InvalidSubscription,
+}
+
+#[derive(Debug)]
+// MYMEMO: This should be changed to enum error
+pub struct WebPushMessengerError {
+    method_detail: String,
+    error: String,
+}
+impl WebPushMessengerError {
+    fn new(method_detail: impl ToString, error: impl ToString) -> Self {
+        Self {
+            method_detail: method_detail.to_string(),
+            error: error.to_string(),
+        }
+    }
+}
+impl Display for WebPushMessengerError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} {}", &self.method_detail, &self.error)
+    }
+}
+impl Error for WebPushMessengerError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        None
+    }
+}
+
+impl WebPushMessenger {
     pub fn new(
         subscription: &web_push_subscription::Model,
         settings: &Settings,
-    ) -> Result<Self, UseCaseError> {
+    ) -> Result<Self, WebPushMessengerError> {
         Ok(Self {
             endpoint: decode_and_decrypt(subscription.endpoint.clone(), &settings)
-                .map_err(error_500)?,
+                .map_err(|e| WebPushMessengerError::new("WebPushMessenger::new", e))?,
             message_encryptor: MessageEncryptor::new(subscription, settings)?,
             vapid_signature_builder: VapidSignatureBuilder::new(settings)?,
         })
     }
 
-    pub fn encrypt_message(&self, message: String) -> Result<Vec<u8>, UseCaseError> {
-        let message = json!(Message { body: message }).to_string();
-        self.message_encryptor.encrypt(message)
+    pub async fn send_message(
+        &self,
+        message: impl ToString,
+    ) -> Result<WebPushMessengerResult, WebPushMessengerError> {
+        let encrypted_message = self.encrypt_message(message)?;
+
+        // NOTE: Http client cannot be awc because it causes "future is not Send" error in run_cron_processes.
+        // This is inevitable though not ideal because reqwest is hyper-based whereas actix-web is tokio-based.
+        let client = reqwest::Client::new();
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            CONTENT_TYPE,
+            HeaderValue::from_str("application/octet-stream")
+                .map_err(|e| WebPushMessengerError::new("WebPushMessenger::send_message", e))?,
+        );
+        headers.insert(
+            AUTHORIZATION,
+            HeaderValue::from_str(&self.vapid_signature_builder.build(&self.endpoint)?)
+                .map_err(|e| WebPushMessengerError::new("WebPushMessenger::send_message", e))?,
+        );
+        headers.insert(
+            CONTENT_ENCODING,
+            HeaderValue::from_str("aes128gcm")
+                .map_err(|e| WebPushMessengerError::new("WebPushMessenger::send_message", e))?,
+        );
+        headers.insert("TTL", HeaderValue::from(TTL_SECONDS));
+        headers.insert(
+            "Urgency",
+            HeaderValue::from_str("normal")
+                .map_err(|e| WebPushMessengerError::new("WebPushMessenger::send_message", e))?,
+        );
+        client
+            .post(&self.endpoint)
+            .headers(headers)
+            .body(encrypted_message)
+            .send()
+            .await
+            .map(|res| match res.status() {
+                StatusCode::NOT_FOUND | StatusCode::GONE => {
+                    WebPushMessengerResult::InvalidSubscription
+                }
+                _ => WebPushMessengerResult::OK,
+            })
+            .map_err(|e| WebPushMessengerError::new("WebPushMessenger::send_message", e))
     }
 
-    pub fn get_awc_client(&self, ttl_seconds: Option<u64>) -> Result<ClientRequest, UseCaseError> {
-        let config = rustls_0_23::reexports::ClientConfig::builder()
-            .with_root_certificates(rustls_0_23::webpki_roots_cert_store())
-            .with_no_client_auth();
-        let client = awc::Client::builder()
-            .connector(awc::Connector::new().rustls_0_23(Arc::new(config)))
-            .finish();
-        Ok(client
-            .post(&self.endpoint)
-            .content_type("application/octet-stream")
-            .insert_header((
-                "Authorization",
-                self.vapid_signature_builder.build(&self.endpoint)?,
-            ))
-            .insert_header(("Content-Encoding", "aes128gcm"))
-            .insert_header(("TTL", ttl_seconds.unwrap_or(TTL_SECONDS)))
-            .insert_header(("Urgency", "normal")))
+    pub fn encrypt_message(
+        &self,
+        message: impl ToString,
+    ) -> Result<Vec<u8>, WebPushMessengerError> {
+        // MYMEMO: Take this out so that it can more easily be changed. (Like adding title or path.) Or add all those now?
+        let message = json!(Message {
+            body: message.to_string()
+        })
+        .to_string();
+        self.message_encryptor.encrypt(message)
     }
 }
 
@@ -82,20 +146,20 @@ impl MessageEncryptor {
     fn new(
         subscription: &web_push_subscription::Model,
         settings: &Settings,
-    ) -> Result<Self, UseCaseError> {
+    ) -> Result<Self, WebPushMessengerError> {
         Ok(Self {
             p256dh_key: BASE64_URL_SAFE_NO_PAD
                 .decode(
                     decode_and_decrypt(subscription.p256dh_key.clone(), &settings)
-                        .map_err(error_500)?,
+                        .map_err(|e| WebPushMessengerError::new("MessageEncryptor::new", e))?,
                 )
-                .map_err(error_500)?,
+                .map_err(|e| WebPushMessengerError::new("MessageEncryptor::new", e))?,
             auth_key: BASE64_URL_SAFE_NO_PAD
                 .decode(
                     decode_and_decrypt(subscription.auth_key.clone(), &settings)
-                        .map_err(error_500)?,
+                        .map_err(|e| WebPushMessengerError::new("MessageEncryptor::new", e))?,
                 )
-                .map_err(error_500)?,
+                .map_err(|e| WebPushMessengerError::new("MessageEncryptor::new", e))?,
         })
     }
 
@@ -129,24 +193,32 @@ impl MessageEncryptor {
         nonce: &Nonce<aes_gcm_consts::U12>,
         mut record: B,
         encrypted_record_size: u32,
-    ) -> Result<B, UseCaseError> {
-        let plain_record_size: u32 = record.len().try_into().map_err(error_500)?;
+    ) -> Result<B, WebPushMessengerError> {
+        let plain_record_size: u32 = record
+            .len()
+            .try_into()
+            .map_err(|e| WebPushMessengerError::new("MessageEncryptor::encrypt_record", e))?;
         if plain_record_size >= encrypted_record_size - 16 {
-            return Err(error_500("RecordLengthInvalid".to_string()));
+            return Err(WebPushMessengerError::new(
+                "MessageEncryptor::encrypt_record",
+                "RecordLengthInvalid",
+            ));
         }
 
-        record.extend_from_slice(b"\x02").map_err(error_500)?;
+        record
+            .extend_from_slice(b"\x02")
+            .map_err(|e| WebPushMessengerError::new("MessageEncryptor::encrypt_record", e))?;
 
         Aes128Gcm::new(key)
             .encrypt_in_place(nonce, b"", &mut record)
-            .map_err(error_500)?;
+            .map_err(|e| WebPushMessengerError::new("MessageEncryptor::encrypt_record", e))?;
         Ok(record)
     }
 
-    fn encrypt(&self, message: String) -> Result<Vec<u8>, UseCaseError> {
+    fn encrypt(&self, message: String) -> Result<Vec<u8>, WebPushMessengerError> {
         let message: Vec<u8> = message.as_bytes().into();
-        let p256_public_key =
-            p256::PublicKey::from_sec1_bytes(&self.p256dh_key).map_err(error_500)?;
+        let p256_public_key = p256::PublicKey::from_sec1_bytes(&self.p256dh_key)
+            .map_err(|e| WebPushMessengerError::new("MessageEncryptor::encrypt", e))?;
         let auth = generic_array::GenericArray::<u8, generic_array::typenum::U16>::clone_from_slice(
             &self.auth_key,
         );
@@ -172,10 +244,13 @@ impl MessageEncryptor {
         let shared =
             p256::ecdh::diffie_hellman(as_secret.to_nonzero_scalar(), p256_public_key.as_affine());
         let hk = Hkdf::<Sha256>::new(Some(&auth), &shared.raw_secret_bytes().as_ref());
-        hk.expand(&info, &mut ikm).map_err(error_500)?;
+        hk.expand(&info, &mut ikm)
+            .map_err(|e| WebPushMessengerError::new("MessageEncryptor::encrypt", e))?;
 
         let key_id = as_public.as_affine().to_encoded_point(false);
-        let encrypted_record_length: u32 = (message.len() + 17).try_into().map_err(error_500)?;
+        let encrypted_record_length: u32 = (message.len() + 17)
+            .try_into()
+            .map_err(|e| WebPushMessengerError::new("MessageEncryptor::encrypt", e))?;
 
         let mut seq = [0u8; 12];
         seq[4..].copy_from_slice(&0_usize.to_be_bytes());
@@ -185,12 +260,17 @@ impl MessageEncryptor {
         let mut output = vec![];
         output.extend_from_slice(&salt);
         output.extend_from_slice(&encrypted_record_length.to_be_bytes());
-        output.push(key_id.len().try_into().map_err(error_500)?);
+        output.push(
+            key_id
+                .len()
+                .try_into()
+                .map_err(|e| WebPushMessengerError::new("MessageEncryptor::encrypt", e))?,
+        );
         output.extend_from_slice(key_id.as_ref());
 
         let record = self
             .encrypt_record(&key, &nonce, message, encrypted_record_length)
-            .map_err(error_500)?;
+            .map_err(|e| WebPushMessengerError::new("MessageEncryptor::encrypt", e))?;
         output.extend_from_slice(&record);
 
         Ok(output)
@@ -202,18 +282,20 @@ struct VapidSignatureBuilder {
     app_owner_email: String,
 }
 
+// MYMEMO: It's nice to test Vapid Signature
 impl VapidSignatureBuilder {
-    fn new(settings: &Settings) -> Result<Self, UseCaseError> {
+    fn new(settings: &Settings) -> Result<Self, WebPushMessengerError> {
         Ok(Self {
             vapid_private_key: BASE64_URL_SAFE_NO_PAD
                 .decode(settings.application.vapid_private_key.clone())
-                .map_err(error_500)?,
+                .map_err(|e| WebPushMessengerError::new("VapidSignatureBuilder::new", e))?,
             app_owner_email: settings.application.app_owner_email.clone(),
         })
     }
 
-    fn build_jwt(&self, endpoint: Uri) -> Result<String, UseCaseError> {
-        let vapid_key = ES256KeyPair::from_bytes(&self.vapid_private_key).map_err(error_500)?;
+    fn build_jwt(&self, endpoint: Uri) -> Result<String, WebPushMessengerError> {
+        let vapid_key = ES256KeyPair::from_bytes(&self.vapid_private_key)
+            .map_err(|e| WebPushMessengerError::new("VapidSignatureBuilder::build_jwt", e))?;
 
         let mut jwt_claims = Claims::with_custom_claims(
             BTreeMap::<String, String>::new(),
@@ -232,12 +314,19 @@ impl VapidSignatureBuilder {
             "sub".to_string(),
             format!("mailto:{}", &self.app_owner_email),
         );
-        vapid_key.sign(jwt_claims).map_err(error_500)
+        vapid_key
+            .sign(jwt_claims)
+            .map_err(|e| WebPushMessengerError::new("VapidSignatureBuilder::build_jwt", e))
     }
 
-    fn build(&self, endpoint: &str) -> Result<String, UseCaseError> {
-        let vapid_key = ES256KeyPair::from_bytes(&self.vapid_private_key).map_err(error_500)?;
-        let jwt = self.build_jwt(endpoint.try_into().map_err(error_500)?)?;
+    fn build(&self, endpoint: &str) -> Result<String, WebPushMessengerError> {
+        let vapid_key = ES256KeyPair::from_bytes(&self.vapid_private_key)
+            .map_err(|e| WebPushMessengerError::new("VapidSignatureBuilder::build", e))?;
+        let jwt = self.build_jwt(
+            endpoint
+                .try_into()
+                .map_err(|e| WebPushMessengerError::new("VapidSignatureBuilder::build", e))?,
+        )?;
 
         Ok(format!(
             "vapid t={}, k={}",
