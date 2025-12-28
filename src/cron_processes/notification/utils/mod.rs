@@ -45,6 +45,7 @@ pub async fn send_messages(messages: Vec<Message>, settings: &Settings, db: &DbC
         }
     };
 
+    let message_len = messages.len();
     for message in messages {
         send_web_push(
             message,
@@ -54,6 +55,7 @@ pub async fn send_messages(messages: Vec<Message>, settings: &Settings, db: &DbC
         )
         .await;
     }
+    event!(Level::INFO, "Successfully sent {} messages", message_len);
     ()
 }
 
@@ -82,11 +84,6 @@ async fn send_web_push(
     match messenger.send_message(&message.text).await {
         Ok(result) => match result {
             WebPushMessengerResult::OK => {
-                event!(
-                    Level::INFO,
-                    "Successfully sent message: {}",
-                    message.user_id
-                );
                 web_push_subscriptions_by_user_id.insert(subscription.user_id, subscription);
             }
             WebPushMessengerResult::InvalidSubscription => {

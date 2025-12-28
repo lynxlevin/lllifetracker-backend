@@ -29,12 +29,6 @@ pub async fn my_way_reminder(
     weekday: Weekday,
     utc_time: NaiveTime,
 ) -> () {
-    event!(
-        Level::INFO,
-        "Starting my_way_reminder. weekday: {}, utc_time: {}",
-        weekday,
-        utc_time
-    );
     let notification_rules = match get_notification_rules(db, weekday, utc_time).await {
         Ok(notification_rules) => notification_rules,
         Err(_) => {
