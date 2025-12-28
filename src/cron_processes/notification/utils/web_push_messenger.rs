@@ -7,7 +7,7 @@ use aes_gcm::{
 use base64::{prelude::BASE64_URL_SAFE_NO_PAD, Engine};
 use hkdf::Hkdf;
 use http::{
-    header::{InvalidHeaderValue, AUTHORIZATION, CONTENT_ENCODING, CONTENT_TYPE},
+    header::{AUTHORIZATION, CONTENT_ENCODING, CONTENT_TYPE},
     HeaderMap, HeaderValue, StatusCode, Uri,
 };
 use jwt_simple::prelude::{
