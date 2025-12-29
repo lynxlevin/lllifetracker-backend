@@ -277,7 +277,6 @@ struct VapidSignatureBuilder {
     app_owner_email: String,
 }
 
-// MYMEMO: It's nice to test Vapid Signature
 impl VapidSignatureBuilder {
     fn new(settings: &Settings) -> Result<Self, WebPushMessengerError> {
         Ok(Self {
@@ -340,10 +339,11 @@ mod tests {
         factory::{self, *},
         settings::get_test_settings,
     };
+    use jwt_simple::claims::{Audiences, NoCustomClaims};
     use uuid::Uuid;
 
     #[test]
-    fn test_encrypt_message() {
+    fn test_message_encryptor() {
         let (key_pair, auth) = ece::generate_keypair_and_auth_secret().unwrap();
         let p256dh_key = key_pair.pub_as_raw().unwrap();
 
@@ -360,6 +360,47 @@ mod tests {
         assert_eq!(
             message.as_bytes(),
             ece::decrypt(&key_pair.raw_components().unwrap(), &auth, &encrypted).unwrap()
+        );
+    }
+
+    #[test]
+    fn test_vapid_signature_builder() {
+        let settings = get_test_settings();
+        let builder = VapidSignatureBuilder::new(&settings).unwrap();
+        let endpoint = "https://dummy-endpoint.com";
+
+        let signature = builder.build(endpoint).unwrap();
+        let mut signature_parts = signature.split(' ');
+
+        let signature_start = signature_parts.next().unwrap();
+        let signature_t = signature_parts.next().unwrap();
+        let signature_k = signature_parts.next().unwrap();
+        assert_eq!(signature_parts.next(), None);
+
+        assert_eq!(signature_start, "vapid");
+        assert_eq!(
+            signature_k,
+            "k=BFOdTFXaneR5amG3nD6S5lqvZUK0melyCApPy7vGGpbsagm65TfZHWHUtHIHYvP5pa_PDaKn0_364U0gTVecPQw"
+        );
+
+        // signature_t assertion
+        let vapid_private_key = BASE64_URL_SAFE_NO_PAD
+            .decode(settings.application.vapid_private_key.clone())
+            .unwrap();
+        let vapid_key = ES256KeyPair::from_bytes(&vapid_private_key)
+            .unwrap()
+            .public_key();
+        let token = &signature_t[2..284];
+        let claims = vapid_key
+            .verify_token::<NoCustomClaims>(token, None)
+            .unwrap();
+        assert_eq!(
+            claims.subject,
+            Some(format!("mailto:{}", settings.application.app_owner_email))
+        );
+        assert_eq!(
+            claims.audiences,
+            Some(Audiences::AsString(endpoint.to_string()))
         );
     }
 }
