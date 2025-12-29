@@ -23,11 +23,20 @@ pub struct MessageWithUserId {
 }
 
 impl MessageWithUserId {
-    pub fn new(title: Option<String>, body: String, path: Option<String>, user_id: Uuid) -> Self {
+    pub fn new(body: String, user_id: Uuid) -> Self {
         Self {
-            content: Message { title, body, path },
+            content: Message {
+                title: None,
+                body,
+                path: None,
+            },
             user_id,
         }
+    }
+
+    pub fn title(mut self, title: Option<String>) -> Self {
+        self.content.title = title;
+        self
     }
 }
 

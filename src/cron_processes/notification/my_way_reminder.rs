@@ -176,7 +176,7 @@ async fn get_random_message(
             }
         }
     };
-    Some(MessageWithUserId::new(title, body, None, user_id))
+    Some(MessageWithUserId::new(body, user_id).title(title))
 }
 
 #[cfg(test)]
