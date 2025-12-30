@@ -1,10 +1,10 @@
 use chrono::{NaiveTime, Weekday};
 use jwt_simple::reexports::rand::{seq::IteratorRandom, thread_rng};
 use sea_orm::DbConn;
-use tracing::{Level, event, instrument};
+use tracing::{event, instrument, Level};
 use uuid::Uuid;
 
-use crate::notification::utils::{MessageWithUserId, send_messages};
+use crate::notification::utils::{send_messages, MessageWithUserId};
 use common::settings::types::Settings;
 use db_adapters::{
     ambition_adapter::{AmbitionAdapter, AmbitionFilter, AmbitionQuery},
@@ -143,13 +143,16 @@ async fn get_random_message(
                     return None;
                 }
             };
-            match ambition.description {
-                Some(description) => (
-                    Some(format!("大志: {}", ambition.name)),
-                    description.replace('\n', "").replace('\r', ""),
+            let title = Some("大志".to_string());
+            let body = match ambition.description {
+                Some(description) => format!(
+                    "{}\n{}",
+                    ambition.name,
+                    description.replace('\n', "").replace('\r', "")
                 ),
-                None => (Some("大志".to_string()), ambition.name),
-            }
+                None => ambition.name,
+            };
+            (title, body)
         }
         NotificationChoice::DesiredState => {
             let desired_state = match DesiredStateAdapter::init(db)
@@ -167,13 +170,16 @@ async fn get_random_message(
                     return None;
                 }
             };
-            match desired_state.description {
-                Some(description) => (
-                    Some(format!("大事にすること: {}", desired_state.name)),
-                    description.replace('\n', "").replace('\r', ""),
+            let title = Some("大事にすること".to_string());
+            let body = match desired_state.description {
+                Some(description) => format!(
+                    "{}\n{}",
+                    desired_state.name,
+                    description.replace('\n', "").replace('\r', "")
                 ),
-                None => (Some("大事にすること".to_string()), desired_state.name),
-            }
+                None => desired_state.name,
+            };
+            (title, body)
         }
     };
     Some(MessageWithUserId::new(body, user_id).title(title))
@@ -293,14 +299,18 @@ mod tests {
         assert!(res.is_some());
         let res = res.unwrap();
 
-        assert_eq!(res.content.title, Some(format!("大志: {}", ambition.name)));
+        assert_eq!(res.content.title, Some("大志".to_string()));
         assert_eq!(
             res.content.body,
-            ambition
-                .description
-                .unwrap()
-                .replace('\n', "")
-                .replace('\r', "")
+            format!(
+                "{}\n{}",
+                ambition.name,
+                ambition
+                    .description
+                    .unwrap()
+                    .replace('\n', "")
+                    .replace('\r', "")
+            )
         );
         assert_eq!(res.content.path, None);
         assert_eq!(res.user_id, user.id);
@@ -343,17 +353,18 @@ mod tests {
         assert!(res.is_some());
         let res = res.unwrap();
 
-        assert_eq!(
-            res.content.title,
-            Some(format!("大事にすること: {}", desired_state.name))
-        );
+        assert_eq!(res.content.title, Some("大事にすること".to_string()));
         assert_eq!(
             res.content.body,
-            desired_state
-                .description
-                .unwrap()
-                .replace('\n', "")
-                .replace('\r', "")
+            format!(
+                "{}\n{}",
+                desired_state.name,
+                desired_state
+                    .description
+                    .unwrap()
+                    .replace('\n', "")
+                    .replace('\r', "")
+            )
         );
         assert_eq!(res.content.path, None);
         assert_eq!(res.user_id, user.id);
