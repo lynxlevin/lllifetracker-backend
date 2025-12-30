@@ -10,10 +10,6 @@ Content-Type: application/json
   "password": "password"
 }
 
-###
-# @name list
-GET {{endpoint}}/api/diaries
-
 @diary_id=c76d8f03-7660-4da8-97ee-3e575eb1c408
 @tag_0_id="9c9a0c62-14ac-4635-8696-d6b6230b658e"
 @tag_1_id="1b8e6f8e-a72b-4c97-af76-43ab3f452faa"

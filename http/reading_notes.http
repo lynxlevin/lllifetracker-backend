@@ -11,8 +11,8 @@ Content-Type: application/json
 }
 
 ###
-# @name list
-GET {{endpoint}}/api/reading_notes
+# @name list_titles
+GET {{endpoint}}/api/reading_notes/titles
 
 @reading_note_id=46b64201-f5fe-4dd2-8d09-e3f8c2071c6f
 @tag_0_id="8ae47c10-d248-46e2-9986-b17b1944ec70"
