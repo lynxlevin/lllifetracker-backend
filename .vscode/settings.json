@@ -23,6 +23,7 @@
     "sqlx",
     "Subsec",
     "subsecs",
+    "thiserror",
     "trunc"
   ],
   "rest-client.followredirect": false,
