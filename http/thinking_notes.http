@@ -9,10 +9,6 @@ Content-Type: application/json
   "password": "password"
 }
 
-###
-# @name list
-GET {{endpoint}}/api/thinking_notes
-
 @thinking_note_id=0198ab0d-7bce-7001-9e21-98cbe3c309ae
 @tag_0_id=1b8e6f8e-a72b-4c97-af76-43ab3f452faa
 @tag_1_id=73d61c99-3ab9-44b7-a732-f773c845b27d
