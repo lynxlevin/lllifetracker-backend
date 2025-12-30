@@ -98,7 +98,7 @@ async fn send_web_push(
     let messenger = match WebPushMessenger::new(&subscription, settings) {
         Ok(messenger) => messenger,
         Err(e) => {
-            event!(Level::ERROR, "Error on initializing WebPushMessenger: {e}");
+            event!(Level::ERROR, %e);
             return ();
         }
     };
@@ -123,7 +123,7 @@ async fn send_web_push(
             }
         },
         Err(e) => {
-            event!(Level::ERROR, "Error on send_message: {e}");
+            event!(Level::ERROR, %e);
             return ();
         }
     };

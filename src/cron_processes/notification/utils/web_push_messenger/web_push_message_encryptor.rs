@@ -1,18 +1,32 @@
 use aes_gcm::{
     aead::{
-        consts as aes_gcm_consts, generic_array, rand_core::RngCore, AeadMutInPlace, Buffer, OsRng,
+        consts as aes_gcm_consts, generic_array, rand_core::RngCore, AeadMutInPlace, Buffer,
+        Error as AEADError, OsRng,
     },
     Aes128Gcm, Key, KeyInit, Nonce,
 };
-use base64::{prelude::BASE64_URL_SAFE_NO_PAD, Engine};
+use base64::{prelude::BASE64_URL_SAFE_NO_PAD, DecodeError, Engine};
 use hkdf::Hkdf;
-use p256::elliptic_curve::sec1::ToEncodedPoint;
+use p256::elliptic_curve::{sec1::ToEncodedPoint, Error as P256Error};
 use sha2::Sha256;
+use thiserror::Error;
 
 use common::{db::decode_and_decrypt, settings::types::Settings};
 use entities::web_push_subscription;
 
-use crate::notification::utils::web_push_messenger::web_push_messenger::WebPushMessengerError;
+#[derive(Debug, Error)]
+pub enum MessageEncryptorError {
+    #[error("Base64DecodeError: {0}")]
+    Base64DecodeError(DecodeError),
+    #[error("Aes128GcmEncryptError: {0}")]
+    Aes128GcmEncryptError(AEADError),
+    #[error("InternalError: {0}")]
+    InternalError(String),
+    #[error("InvalidP256DHKey: {0}")]
+    InvalidP256DHKey(P256Error),
+    #[error("Generic error message: {0}")]
+    Error(String),
+}
 
 pub struct MessageEncryptor {
     p256dh_key: Vec<u8>,
@@ -23,20 +37,20 @@ impl MessageEncryptor {
     pub fn new(
         subscription: &web_push_subscription::Model,
         settings: &Settings,
-    ) -> Result<Self, WebPushMessengerError> {
+    ) -> Result<Self, MessageEncryptorError> {
         Ok(Self {
             p256dh_key: BASE64_URL_SAFE_NO_PAD
                 .decode(
                     decode_and_decrypt(subscription.p256dh_key.clone(), &settings)
-                        .map_err(|e| WebPushMessengerError::new("MessageEncryptor::new", e))?,
+                        .map_err(|e| MessageEncryptorError::Error(e))?,
                 )
-                .map_err(|e| WebPushMessengerError::new("MessageEncryptor::new", e))?,
+                .map_err(|e| MessageEncryptorError::Base64DecodeError(e))?,
             auth_key: BASE64_URL_SAFE_NO_PAD
                 .decode(
                     decode_and_decrypt(subscription.auth_key.clone(), &settings)
-                        .map_err(|e| WebPushMessengerError::new("MessageEncryptor::new", e))?,
+                        .map_err(|e| MessageEncryptorError::Error(e))?,
                 )
-                .map_err(|e| WebPushMessengerError::new("MessageEncryptor::new", e))?,
+                .map_err(|e| MessageEncryptorError::Base64DecodeError(e))?,
         })
     }
 
@@ -70,32 +84,30 @@ impl MessageEncryptor {
         nonce: &Nonce<aes_gcm_consts::U12>,
         mut record: B,
         encrypted_record_size: u32,
-    ) -> Result<B, WebPushMessengerError> {
-        let plain_record_size: u32 = record
-            .len()
-            .try_into()
-            .map_err(|e| WebPushMessengerError::new("MessageEncryptor::encrypt_record", e))?;
+    ) -> Result<B, MessageEncryptorError> {
+        let plain_record_size: u32 = record.len().try_into().map_err(|e| {
+            MessageEncryptorError::InternalError(format!("Invalid record length: {:?}", e))
+        })?;
         if plain_record_size >= encrypted_record_size - 16 {
-            return Err(WebPushMessengerError::new(
-                "MessageEncryptor::encrypt_record",
-                "RecordLengthInvalid",
+            return Err(MessageEncryptorError::InternalError(
+                "Invalid record length, plain_record longer than encrypted_record".to_string(),
             ));
         }
 
-        record
-            .extend_from_slice(b"\x02")
-            .map_err(|e| WebPushMessengerError::new("MessageEncryptor::encrypt_record", e))?;
+        record.extend_from_slice(b"\x02").map_err(|e| {
+            MessageEncryptorError::InternalError(format!("Record extend error: {:?}", e))
+        })?;
 
         Aes128Gcm::new(key)
             .encrypt_in_place(nonce, b"", &mut record)
-            .map_err(|e| WebPushMessengerError::new("MessageEncryptor::encrypt_record", e))?;
+            .map_err(|e| MessageEncryptorError::Aes128GcmEncryptError(e))?;
         Ok(record)
     }
 
-    pub fn encrypt(&self, message: String) -> Result<Vec<u8>, WebPushMessengerError> {
+    pub fn encrypt(&self, message: String) -> Result<Vec<u8>, MessageEncryptorError> {
         let message: Vec<u8> = message.as_bytes().into();
         let p256_public_key = p256::PublicKey::from_sec1_bytes(&self.p256dh_key)
-            .map_err(|e| WebPushMessengerError::new("MessageEncryptor::encrypt", e))?;
+            .map_err(|e| MessageEncryptorError::InvalidP256DHKey(e))?;
         let auth = generic_array::GenericArray::<u8, generic_array::typenum::U16>::clone_from_slice(
             &self.auth_key,
         );
@@ -122,12 +134,12 @@ impl MessageEncryptor {
             p256::ecdh::diffie_hellman(as_secret.to_nonzero_scalar(), p256_public_key.as_affine());
         let hk = Hkdf::<Sha256>::new(Some(&auth), &shared.raw_secret_bytes().as_ref());
         hk.expand(&info, &mut ikm)
-            .map_err(|e| WebPushMessengerError::new("MessageEncryptor::encrypt", e))?;
+            .map_err(|e| MessageEncryptorError::InternalError(e.to_string()))?;
 
         let key_id = as_public.as_affine().to_encoded_point(false);
-        let encrypted_record_length: u32 = (message.len() + 17)
-            .try_into()
-            .map_err(|e| WebPushMessengerError::new("MessageEncryptor::encrypt", e))?;
+        let encrypted_record_length: u32 = (message.len() + 17).try_into().map_err(|e| {
+            MessageEncryptorError::InternalError(format!("Invalid message length: {:?}", e))
+        })?;
 
         let mut seq = [0u8; 12];
         seq[4..].copy_from_slice(&0_usize.to_be_bytes());
@@ -137,17 +149,12 @@ impl MessageEncryptor {
         let mut output = vec![];
         output.extend_from_slice(&salt);
         output.extend_from_slice(&encrypted_record_length.to_be_bytes());
-        output.push(
-            key_id
-                .len()
-                .try_into()
-                .map_err(|e| WebPushMessengerError::new("MessageEncryptor::encrypt", e))?,
-        );
+        output.push(key_id.len().try_into().map_err(|e| {
+            MessageEncryptorError::InternalError(format!("Invalid key_id length: {:?}", e))
+        })?);
         output.extend_from_slice(key_id.as_ref());
 
-        let record = self
-            .encrypt_record(&key, &nonce, message, encrypted_record_length)
-            .map_err(|e| WebPushMessengerError::new("MessageEncryptor::encrypt", e))?;
+        let record = self.encrypt_record(&key, &nonce, message, encrypted_record_length)?;
         output.extend_from_slice(&record);
 
         Ok(output)

@@ -1,17 +1,18 @@
 use http::{
-    header::{AUTHORIZATION, CONTENT_ENCODING, CONTENT_TYPE},
+    header::{InvalidHeaderValue, AUTHORIZATION, CONTENT_ENCODING, CONTENT_TYPE},
     HeaderMap, HeaderValue, StatusCode,
 };
+use reqwest::Error as ReqwestError;
 use serde::Serialize;
 use serde_json::json;
-use std::{error::Error, fmt::Display};
+use thiserror::Error;
 
 use common::{db::decode_and_decrypt, settings::types::Settings};
 use entities::web_push_subscription;
 
 use crate::notification::utils::web_push_messenger::{
-    web_push_message_encryptor::MessageEncryptor,
-    web_push_vapid_signature_builder::VapidSignatureBuilder,
+    web_push_message_encryptor::{MessageEncryptor, MessageEncryptorError},
+    web_push_vapid_signature_builder::{VapidSignatureBuilder, VapidSignatureBuilderError},
 };
 
 const TTL_SECONDS: u64 = 60 * 60 * 23;
@@ -34,29 +35,18 @@ pub enum WebPushMessengerResult {
     InvalidSubscription,
 }
 
-#[derive(Debug)]
-// MYMEMO: This should be changed to enum error
-pub struct WebPushMessengerError {
-    method_detail: String,
-    error: String,
-}
-impl WebPushMessengerError {
-    pub fn new(method_detail: impl ToString, error: impl ToString) -> Self {
-        Self {
-            method_detail: method_detail.to_string(),
-            error: error.to_string(),
-        }
-    }
-}
-impl Display for WebPushMessengerError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {}", &self.method_detail, &self.error)
-    }
-}
-impl Error for WebPushMessengerError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        None
-    }
+#[derive(Debug, Error)]
+pub enum WebPushMessengerError {
+    #[error("WebPushMessengerError:InitializationError:{0}")]
+    InitializationError(String),
+    #[error("WebPushMessengerError:MessageEncryptorError:{0}")]
+    MessageEncryptorError(MessageEncryptorError),
+    #[error("WebPushMessengerError:VapidSignatureBuilderError:{0}")]
+    VapidSignatureBuilderError(VapidSignatureBuilderError),
+    #[error("WebPushMessengerError:InvalidHeaderValue:{0}")]
+    InvalidHeaderValue(InvalidHeaderValue),
+    #[error("WebPushMessengerError:RequestError:{0}")]
+    RequestError(ReqwestError),
 }
 
 impl WebPushMessenger {
@@ -66,9 +56,11 @@ impl WebPushMessenger {
     ) -> Result<Self, WebPushMessengerError> {
         Ok(Self {
             endpoint: decode_and_decrypt(subscription.endpoint.clone(), &settings)
-                .map_err(|e| WebPushMessengerError::new("WebPushMessenger::new", e))?,
-            message_encryptor: MessageEncryptor::new(subscription, settings)?,
-            vapid_signature_builder: VapidSignatureBuilder::new(settings)?,
+                .map_err(|e| WebPushMessengerError::InitializationError(e.to_string()))?,
+            message_encryptor: MessageEncryptor::new(subscription, settings)
+                .map_err(|e| WebPushMessengerError::MessageEncryptorError(e))?,
+            vapid_signature_builder: VapidSignatureBuilder::new(settings)
+                .map_err(|e| WebPushMessengerError::VapidSignatureBuilderError(e))?,
         })
     }
 
@@ -85,27 +77,28 @@ impl WebPushMessenger {
         headers.insert(
             CONTENT_TYPE,
             HeaderValue::from_str("application/octet-stream")
-                .map_err(|e| WebPushMessengerError::new("WebPushMessenger::send_message", e))?,
+                .map_err(|e| WebPushMessengerError::InvalidHeaderValue(e))?,
         );
         headers.insert(
             AUTHORIZATION,
             HeaderValue::from_str(
                 &self
                     .vapid_signature_builder
-                    .build(&self.endpoint, TTL_SECONDS)?,
+                    .build(&self.endpoint, TTL_SECONDS)
+                    .map_err(|e| WebPushMessengerError::VapidSignatureBuilderError(e))?,
             )
-            .map_err(|e| WebPushMessengerError::new("WebPushMessenger::send_message", e))?,
+            .map_err(|e| WebPushMessengerError::InvalidHeaderValue(e))?,
         );
         headers.insert(
             CONTENT_ENCODING,
             HeaderValue::from_str("aes128gcm")
-                .map_err(|e| WebPushMessengerError::new("WebPushMessenger::send_message", e))?,
+                .map_err(|e| WebPushMessengerError::InvalidHeaderValue(e))?,
         );
         headers.insert("TTL", HeaderValue::from(TTL_SECONDS));
         headers.insert(
             "Urgency",
             HeaderValue::from_str("normal")
-                .map_err(|e| WebPushMessengerError::new("WebPushMessenger::send_message", e))?,
+                .map_err(|e| WebPushMessengerError::InvalidHeaderValue(e))?,
         );
         client
             .post(&self.endpoint)
@@ -119,11 +112,13 @@ impl WebPushMessenger {
                 }
                 _ => WebPushMessengerResult::OK,
             })
-            .map_err(|e| WebPushMessengerError::new("WebPushMessenger::send_message", e))
+            .map_err(|e| WebPushMessengerError::RequestError(e))
     }
 
     pub fn encrypt_message(&self, message: Message) -> Result<Vec<u8>, WebPushMessengerError> {
         let message = json!(message).to_string();
-        self.message_encryptor.encrypt(message)
+        self.message_encryptor
+            .encrypt(message)
+            .map_err(|e| WebPushMessengerError::MessageEncryptorError(e))
     }
 }

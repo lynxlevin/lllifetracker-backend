@@ -1,13 +1,25 @@
-use base64::{prelude::BASE64_URL_SAFE_NO_PAD, Engine};
-use http::Uri;
-use jwt_simple::prelude::{
-    Claims, Duration, ECDSAP256KeyPairLike, ECDSAP256PublicKeyLike, ES256KeyPair,
+use base64::{prelude::BASE64_URL_SAFE_NO_PAD, DecodeError, Engine};
+use http::{uri::InvalidUri, Uri};
+use jwt_simple::{
+    prelude::{Claims, Duration, ECDSAP256KeyPairLike, ECDSAP256PublicKeyLike, ES256KeyPair},
+    Error as JWTGenericError,
 };
 use std::collections::BTreeMap;
+use thiserror::Error;
 
 use common::settings::types::Settings;
 
-use crate::notification::utils::web_push_messenger::web_push_messenger::WebPushMessengerError;
+#[derive(Debug, Error)]
+pub enum VapidSignatureBuilderError {
+    #[error("Base64DecodeError: {0}")]
+    Base64DecodeError(DecodeError),
+    #[error("EndpointParseError: {0}")]
+    EndpointParseError(InvalidUri),
+    #[error("Error parsing vapid_private_key: {0}")]
+    VapidKeyParseError(JWTGenericError),
+    #[error("Error generating vapid signature: {0}")]
+    SigningError(JWTGenericError),
+}
 
 pub struct VapidSignatureBuilder {
     vapid_private_key: Vec<u8>,
@@ -15,18 +27,22 @@ pub struct VapidSignatureBuilder {
 }
 
 impl VapidSignatureBuilder {
-    pub fn new(settings: &Settings) -> Result<Self, WebPushMessengerError> {
+    pub fn new(settings: &Settings) -> Result<Self, VapidSignatureBuilderError> {
         Ok(Self {
             vapid_private_key: BASE64_URL_SAFE_NO_PAD
                 .decode(settings.application.vapid_private_key.clone())
-                .map_err(|e| WebPushMessengerError::new("VapidSignatureBuilder::new", e))?,
+                .map_err(|e| VapidSignatureBuilderError::Base64DecodeError(e))?,
             app_owner_email: settings.application.app_owner_email.clone(),
         })
     }
 
-    fn build_jwt(&self, endpoint: Uri, ttl_seconds: u64) -> Result<String, WebPushMessengerError> {
+    fn build_jwt(
+        &self,
+        endpoint: Uri,
+        ttl_seconds: u64,
+    ) -> Result<String, VapidSignatureBuilderError> {
         let vapid_key = ES256KeyPair::from_bytes(&self.vapid_private_key)
-            .map_err(|e| WebPushMessengerError::new("VapidSignatureBuilder::build_jwt", e))?;
+            .map_err(|e| VapidSignatureBuilderError::VapidKeyParseError(e))?;
 
         let mut jwt_claims = Claims::with_custom_claims(
             BTreeMap::<String, String>::new(),
@@ -47,16 +63,20 @@ impl VapidSignatureBuilder {
         );
         vapid_key
             .sign(jwt_claims)
-            .map_err(|e| WebPushMessengerError::new("VapidSignatureBuilder::build_jwt", e))
+            .map_err(|e| VapidSignatureBuilderError::SigningError(e))
     }
 
-    pub fn build(&self, endpoint: &str, ttl_seconds: u64) -> Result<String, WebPushMessengerError> {
+    pub fn build(
+        &self,
+        endpoint: &str,
+        ttl_seconds: u64,
+    ) -> Result<String, VapidSignatureBuilderError> {
         let vapid_key = ES256KeyPair::from_bytes(&self.vapid_private_key)
-            .map_err(|e| WebPushMessengerError::new("VapidSignatureBuilder::build", e))?;
+            .map_err(|e| VapidSignatureBuilderError::VapidKeyParseError(e))?;
         let jwt = self.build_jwt(
             endpoint
                 .try_into()
-                .map_err(|e| WebPushMessengerError::new("VapidSignatureBuilder::build", e))?,
+                .map_err(|e| VapidSignatureBuilderError::EndpointParseError(e))?,
             ttl_seconds,
         )?;
 
