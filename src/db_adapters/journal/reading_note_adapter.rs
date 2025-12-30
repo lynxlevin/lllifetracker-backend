@@ -3,9 +3,9 @@ use std::future::Future;
 use chrono::{DateTime, FixedOffset, NaiveDate, Utc};
 use sea_orm::{
     prelude::Expr, sea_query::NullOrdering::Last, sqlx::error::Error::Database, ActiveModelTrait,
-    ColumnAsExpr, ColumnTrait, DbConn, DbErr, EntityTrait, FromQueryResult, IntoActiveModel,
-    JoinType::LeftJoin, ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
-    RuntimeErr::SqlxError, Select, Set,
+    ColumnAsExpr, ColumnTrait, DbConn, DbErr, DeriveColumn, EntityTrait, EnumIter, FromQueryResult,
+    IntoActiveModel, JoinType::LeftJoin, ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect,
+    RelationTrait, RuntimeErr::SqlxError, Select, Set,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -77,6 +77,7 @@ impl ReadingNoteFilter for ReadingNoteAdapter<'_> {
 }
 
 pub trait ReadingNoteOrder {
+    fn order_by_title(self, order: Order) -> Self;
     fn order_by_date(self, order: Order) -> Self;
     fn order_by_created_at(self, order: Order) -> Self;
     fn order_by_ambition_created_at_nulls_last(self, order: Order) -> Self;
@@ -86,6 +87,11 @@ pub trait ReadingNoteOrder {
 }
 
 impl ReadingNoteOrder for ReadingNoteAdapter<'_> {
+    fn order_by_title(mut self, order: Order) -> Self {
+        self.query = self.query.order_by(Column::Title, order);
+        self
+    }
+
     fn order_by_date(mut self, order: Order) -> Self {
         self.query = self.query.order_by(Column::Date, order);
         self
@@ -152,11 +158,17 @@ impl Into<TagWithName> for &ReadingNoteWithTag {
     }
 }
 
+#[derive(EnumIter, DeriveColumn, Clone, Copy, Debug)]
+enum TitleQuery {
+    Title,
+}
+
 pub trait ReadingNoteQuery {
     fn get_all_with_tags(self) -> impl Future<Output = Result<Vec<ReadingNoteWithTag>, DbErr>>;
     fn get_by_id(self, id: Uuid) -> impl Future<Output = Result<Option<Model>, DbErr>>;
     fn get_with_tags(self)
         -> impl Future<Output = Result<Option<(Model, Vec<tag::Model>)>, DbErr>>;
+    fn get_all_only_titles(self) -> impl Future<Output = Result<Vec<String>, DbErr>>;
 }
 
 impl ReadingNoteQuery for ReadingNoteAdapter<'_> {
@@ -210,6 +222,16 @@ impl ReadingNoteQuery for ReadingNoteAdapter<'_> {
             },
             Err(e) => Err(e),
         }
+    }
+
+    async fn get_all_only_titles(self) -> Result<Vec<String>, DbErr> {
+        self.query
+            .select_only()
+            .column(Column::Title)
+            .distinct()
+            .into_values::<String, TitleQuery>()
+            .all(self.db)
+            .await
     }
 }
 
