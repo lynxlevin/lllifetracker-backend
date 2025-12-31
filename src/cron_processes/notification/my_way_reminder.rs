@@ -270,7 +270,6 @@ mod tests {
         let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let ambition = factory::ambition(user.id).insert(&db).await?;
-        let _desired_state = factory::desired_state(user.id).insert(&db).await?;
 
         let res = get_random_message(&NotificationChoice::Ambition, user.id, &db).await;
         assert!(res.is_some());
@@ -293,7 +292,6 @@ mod tests {
             .description(Some("Description".to_string()))
             .insert(&db)
             .await?;
-        let _desired_state = factory::desired_state(user.id).insert(&db).await?;
 
         let res = get_random_message(&NotificationChoice::Ambition, user.id, &db).await;
         assert!(res.is_some());
@@ -323,7 +321,6 @@ mod tests {
         let settings = get_test_settings();
         let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
-        let _ambition = factory::ambition(user.id).insert(&db).await?;
         let desired_state = factory::desired_state(user.id).insert(&db).await?;
 
         let res = get_random_message(&NotificationChoice::DesiredState, user.id, &db).await;
@@ -343,7 +340,6 @@ mod tests {
         let settings = get_test_settings();
         let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
-        let _ambition = factory::ambition(user.id).insert(&db).await?;
         let desired_state = factory::desired_state(user.id)
             .description(Some("Description".to_string()))
             .insert(&db)
@@ -366,6 +362,32 @@ mod tests {
                     .replace('\r', "")
             )
         );
+        assert_eq!(res.content.path, None);
+        assert_eq!(res.user_id, user.id);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn test_get_random_message_case_desired_state_with_category() -> Result<(), DbErr> {
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
+        let user = factory::user().insert(&db).await?;
+        let category = factory::desired_state_category(user.id).insert(&db).await?;
+        let desired_state = factory::desired_state(user.id)
+            .category_id(Some(category.id))
+            .insert(&db)
+            .await?;
+
+        let res = get_random_message(&NotificationChoice::DesiredState, user.id, &db).await;
+        assert!(res.is_some());
+        let res = res.unwrap();
+
+        assert_eq!(
+            res.content.title,
+            Some(format!("大事にすること: {}", category.name))
+        );
+        assert_eq!(res.content.body, desired_state.name);
         assert_eq!(res.content.path, None);
         assert_eq!(res.user_id, user.id);
 
