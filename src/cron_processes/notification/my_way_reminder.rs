@@ -8,7 +8,9 @@ use crate::notification::utils::{send_messages, MessageWithUserId};
 use common::settings::types::Settings;
 use db_adapters::{
     ambition_adapter::{AmbitionAdapter, AmbitionFilter, AmbitionQuery},
-    desired_state_adapter::{DesiredStateAdapter, DesiredStateFilter, DesiredStateQuery},
+    desired_state_adapter::{
+        DesiredStateAdapter, DesiredStateFilter, DesiredStateJoin, DesiredStateQuery,
+    },
     notification_rule_adapter::{
         NotificationRuleAdapter, NotificationRuleFilter, NotificationRuleOrder,
         NotificationRuleQuery,
@@ -155,10 +157,11 @@ async fn get_random_message(
             (title, body)
         }
         NotificationChoice::DesiredState => {
-            let desired_state = match DesiredStateAdapter::init(db)
+            let (desired_state, category) = match DesiredStateAdapter::init(db)
+                .join_category()
                 .filter_eq_user_id(user_id)
                 .filter_eq_archived(false)
-                .get_random()
+                .get_random_with_category()
                 .await
                 .unwrap_or_else(|e| {
                     event!(Level::ERROR, %e);
@@ -170,7 +173,10 @@ async fn get_random_message(
                     return None;
                 }
             };
-            let title = Some("大事にすること".to_string());
+            let title = match category {
+                Some(category) => Some(format!("大事にすること: {}", category.name)),
+                None => Some("大事にすること".to_string()),
+            };
             let body = match desired_state.description {
                 Some(description) => format!(
                     "{}\n{}",
@@ -270,7 +276,6 @@ mod tests {
         let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
         let ambition = factory::ambition(user.id).insert(&db).await?;
-        let _desired_state = factory::desired_state(user.id).insert(&db).await?;
 
         let res = get_random_message(&NotificationChoice::Ambition, user.id, &db).await;
         assert!(res.is_some());
@@ -293,7 +298,6 @@ mod tests {
             .description(Some("Description".to_string()))
             .insert(&db)
             .await?;
-        let _desired_state = factory::desired_state(user.id).insert(&db).await?;
 
         let res = get_random_message(&NotificationChoice::Ambition, user.id, &db).await;
         assert!(res.is_some());
@@ -323,7 +327,6 @@ mod tests {
         let settings = get_test_settings();
         let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
-        let _ambition = factory::ambition(user.id).insert(&db).await?;
         let desired_state = factory::desired_state(user.id).insert(&db).await?;
 
         let res = get_random_message(&NotificationChoice::DesiredState, user.id, &db).await;
@@ -343,7 +346,6 @@ mod tests {
         let settings = get_test_settings();
         let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
-        let _ambition = factory::ambition(user.id).insert(&db).await?;
         let desired_state = factory::desired_state(user.id)
             .description(Some("Description".to_string()))
             .insert(&db)
@@ -366,6 +368,32 @@ mod tests {
                     .replace('\r', "")
             )
         );
+        assert_eq!(res.content.path, None);
+        assert_eq!(res.user_id, user.id);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn test_get_random_message_case_desired_state_with_category() -> Result<(), DbErr> {
+        let settings = get_test_settings();
+        let db = init_db(&settings).await;
+        let user = factory::user().insert(&db).await?;
+        let category = factory::desired_state_category(user.id).insert(&db).await?;
+        let desired_state = factory::desired_state(user.id)
+            .category_id(Some(category.id))
+            .insert(&db)
+            .await?;
+
+        let res = get_random_message(&NotificationChoice::DesiredState, user.id, &db).await;
+        assert!(res.is_some());
+        let res = res.unwrap();
+
+        assert_eq!(
+            res.content.title,
+            Some(format!("大事にすること: {}", category.name))
+        );
+        assert_eq!(res.content.body, desired_state.name);
         assert_eq!(res.content.path, None);
         assert_eq!(res.user_id, user.id);
 
