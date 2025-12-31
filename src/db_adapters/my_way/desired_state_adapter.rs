@@ -105,6 +105,9 @@ pub trait DesiredStateQuery {
     fn get_all(self) -> impl Future<Output = Result<Vec<Model>, DbErr>>;
     fn get_by_id(self, id: Uuid) -> impl Future<Output = Result<Option<Model>, DbErr>>;
     fn get_random(self) -> impl Future<Output = Result<Option<Model>, DbErr>>;
+    fn get_random_with_category(
+        self,
+    ) -> impl Future<Output = Result<Option<(Model, Option<desired_state_category::Model>)>, DbErr>>;
 }
 
 impl DesiredStateQuery for DesiredStateAdapter<'_> {
@@ -118,6 +121,17 @@ impl DesiredStateQuery for DesiredStateAdapter<'_> {
 
     async fn get_random(self) -> Result<Option<Model>, DbErr> {
         self.query
+            .order_by(SimpleExpr::FunctionCall(Func::random()), Order::Asc)
+            .limit(1)
+            .one(self.db)
+            .await
+    }
+
+    async fn get_random_with_category(
+        self,
+    ) -> Result<Option<(Model, Option<desired_state_category::Model>)>, DbErr> {
+        self.query
+            .select_also(desired_state_category::Entity)
             .order_by(SimpleExpr::FunctionCall(Func::random()), Order::Asc)
             .limit(1)
             .one(self.db)

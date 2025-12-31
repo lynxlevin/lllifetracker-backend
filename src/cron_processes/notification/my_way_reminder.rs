@@ -8,7 +8,9 @@ use crate::notification::utils::{send_messages, MessageWithUserId};
 use common::settings::types::Settings;
 use db_adapters::{
     ambition_adapter::{AmbitionAdapter, AmbitionFilter, AmbitionQuery},
-    desired_state_adapter::{DesiredStateAdapter, DesiredStateFilter, DesiredStateQuery},
+    desired_state_adapter::{
+        DesiredStateAdapter, DesiredStateFilter, DesiredStateJoin, DesiredStateQuery,
+    },
     notification_rule_adapter::{
         NotificationRuleAdapter, NotificationRuleFilter, NotificationRuleOrder,
         NotificationRuleQuery,
@@ -155,10 +157,11 @@ async fn get_random_message(
             (title, body)
         }
         NotificationChoice::DesiredState => {
-            let desired_state = match DesiredStateAdapter::init(db)
+            let (desired_state, category) = match DesiredStateAdapter::init(db)
+                .join_category()
                 .filter_eq_user_id(user_id)
                 .filter_eq_archived(false)
-                .get_random()
+                .get_random_with_category()
                 .await
                 .unwrap_or_else(|e| {
                     event!(Level::ERROR, %e);
@@ -170,7 +173,10 @@ async fn get_random_message(
                     return None;
                 }
             };
-            let title = Some("大事にすること".to_string());
+            let title = match category {
+                Some(category) => Some(format!("大事にすること: {}", category.name)),
+                None => Some("大事にすること".to_string()),
+            };
             let body = match desired_state.description {
                 Some(description) => format!(
                     "{}\n{}",
