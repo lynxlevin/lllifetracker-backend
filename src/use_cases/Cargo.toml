@@ -13,6 +13,7 @@ db_adapters = { path = "../db_adapters" }
 entities = { path = "../entities" }
 
 chrono.workspace = true
+futures.workspace = true
 sea-orm.workspace = true
 serde.workspace = true
 uuid.workspace = true

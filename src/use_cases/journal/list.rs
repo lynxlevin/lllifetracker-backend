@@ -1,5 +1,7 @@
 use std::collections::VecDeque;
 
+use futures::join;
+
 use db_adapters::{
     diary_adapter::DiaryAdapter, reading_note_adapter::ReadingNoteAdapter,
     thinking_note_adapter::ThinkingNoteAdapter,
@@ -23,37 +25,33 @@ pub async fn list_journals<'a>(
     reading_note_adapter: ReadingNoteAdapter<'a>,
     thinking_note_adapter: ThinkingNoteAdapter<'a>,
 ) -> Result<Vec<JournalVisibleWithTags>, UseCaseError> {
-    let mut diaries = list_diaries(
+    let diaries_future = list_diaries(
         user.clone(),
         diary_adapter,
         DiaryListQuery {
             tag_id_or: query.tag_id_or.clone(),
         },
-    )
-    .await?
-    .into_iter()
-    .collect::<VecDeque<_>>();
-    let mut reading_notes = list_reading_notes(
+    );
+    let reading_notes_future = list_reading_notes(
         user.clone(),
         reading_note_adapter,
         ReadingNoteListQuery {
             tag_id_or: query.tag_id_or.clone(),
         },
-    )
-    .await?
-    .into_iter()
-    .collect::<VecDeque<_>>();
-    let mut thinking_notes = list_thinking_notes(
+    );
+    let thinking_notes_future = list_thinking_notes(
         user.clone(),
         ThinkingNoteListQuery {
             resolved: None,
             tag_id_or: query.tag_id_or,
         },
         thinking_note_adapter,
-    )
-    .await?
-    .into_iter()
-    .collect::<VecDeque<_>>();
+    );
+    let (diaries, reading_notes, thinking_notes) =
+        join!(diaries_future, reading_notes_future, thinking_notes_future);
+    let mut diaries = diaries?.into_iter().collect::<VecDeque<_>>();
+    let mut reading_notes = reading_notes?.into_iter().collect::<VecDeque<_>>();
+    let mut thinking_notes = thinking_notes?.into_iter().collect::<VecDeque<_>>();
 
     let mut res = vec![];
     let count = diaries.len() + reading_notes.len() + thinking_notes.len();
