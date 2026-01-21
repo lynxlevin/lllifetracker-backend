@@ -2,7 +2,11 @@ use std::future::Future;
 
 use chrono::Utc;
 use sea_orm::{
-    sea_query::{Func, NullOrdering::Last, SimpleExpr},
+    sea_query::{
+        Func,
+        NullOrdering::{First, Last},
+        SimpleExpr,
+    },
     ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel,
     JoinType::LeftJoin,
     ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait, Select, Set,
@@ -76,6 +80,7 @@ impl DesiredStateFilter for DesiredStateAdapter<'_> {
 
 pub trait DesiredStateOrder {
     fn order_by_category_ordering_nulls_last(self, order: Order) -> Self;
+    fn order_by_ordering_nulls_first(self, order: Order) -> Self;
     fn order_by_ordering_nulls_last(self, order: Order) -> Self;
     fn order_by_created_at(self, order: Order) -> Self;
 }
@@ -85,6 +90,13 @@ impl DesiredStateOrder for DesiredStateAdapter<'_> {
         self.query =
             self.query
                 .order_by_with_nulls(desired_state_category::Column::Ordering, order, Last);
+        self
+    }
+
+    fn order_by_ordering_nulls_first(mut self, order: Order) -> Self {
+        self.query = self
+            .query
+            .order_by_with_nulls(Column::Ordering, order, First);
         self
     }
 

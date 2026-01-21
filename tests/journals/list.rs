@@ -1,20 +1,16 @@
 use actix_web::{http, test, HttpMessage};
 use chrono::{Duration, Utc};
 use sea_orm::{ActiveModelTrait, DbErr};
+
+use crate::utils::{init_app, Connections};
+use common::factory::{self, *};
 use use_cases::{
     journal::{
-        diaries::types::DiaryVisibleWithTags,
-        reading_notes::types::ReadingNoteVisibleWithTags,
-        thinking_notes::types::ThinkingNoteVisibleWithTags,
-        types::{JournalKind, JournalVisibleWithTags},
+        diaries::types::DiaryVisibleWithTags, reading_notes::types::ReadingNoteVisibleWithTags,
+        thinking_notes::types::ThinkingNoteVisibleWithTags, types::JournalVisibleWithTags,
     },
     tags::types::TagVisible,
 };
-
-use crate::utils::Connections;
-
-use super::super::utils::init_app;
-use common::factory::{self, *};
 
 #[actix_web::test]
 async fn test_order() -> Result<(), DbErr> {
@@ -52,77 +48,17 @@ async fn test_order() -> Result<(), DbErr> {
 
     let body: Vec<JournalVisibleWithTags> = test::read_body_json(resp).await;
     let expected = vec![
-        JournalVisibleWithTags {
-            diary: None,
-            reading_note: None,
-            thinking_note: Some(ThinkingNoteVisibleWithTags {
-                id: thinking_note.id,
-                question: thinking_note.question,
-                thought: thinking_note.thought,
-                answer: thinking_note.answer,
-                resolved_at: thinking_note.resolved_at,
-                created_at: thinking_note.created_at,
-                updated_at: thinking_note.updated_at,
-                tags: vec![],
-            }),
-            kind: JournalKind::ThinkingNote,
-        },
-        JournalVisibleWithTags {
-            diary: Some(DiaryVisibleWithTags {
-                id: diary.id,
-                text: diary.text.clone(),
-                date: diary.date,
-                tags: vec![],
-            }),
-            reading_note: None,
-            thinking_note: None,
-            kind: JournalKind::Diary,
-        },
-        JournalVisibleWithTags {
-            diary: None,
-            reading_note: None,
-            thinking_note: Some(ThinkingNoteVisibleWithTags {
-                id: resolved_thinking_note_0.id,
-                question: resolved_thinking_note_0.question,
-                thought: resolved_thinking_note_0.thought,
-                answer: resolved_thinking_note_0.answer,
-                resolved_at: resolved_thinking_note_0.resolved_at,
-                created_at: resolved_thinking_note_0.created_at,
-                updated_at: resolved_thinking_note_0.updated_at,
-                tags: vec![],
-            }),
-            kind: JournalKind::ThinkingNote,
-        },
-        JournalVisibleWithTags {
-            diary: None,
-            reading_note: Some(ReadingNoteVisibleWithTags {
-                id: reading_note.id,
-                title: reading_note.title.clone(),
-                page_number: reading_note.page_number,
-                text: reading_note.text.clone(),
-                date: reading_note.date,
-                created_at: reading_note.created_at,
-                updated_at: reading_note.updated_at,
-                tags: vec![],
-            }),
-            thinking_note: None,
-            kind: JournalKind::ReadingNote,
-        },
-        JournalVisibleWithTags {
-            diary: None,
-            reading_note: None,
-            thinking_note: Some(ThinkingNoteVisibleWithTags {
-                id: resolved_thinking_note_1.id,
-                question: resolved_thinking_note_1.question,
-                thought: resolved_thinking_note_1.thought,
-                answer: resolved_thinking_note_1.answer,
-                resolved_at: resolved_thinking_note_1.resolved_at,
-                created_at: resolved_thinking_note_1.created_at,
-                updated_at: resolved_thinking_note_1.updated_at,
-                tags: vec![],
-            }),
-            kind: JournalKind::ThinkingNote,
-        },
+        JournalVisibleWithTags::from(ThinkingNoteVisibleWithTags::from((thinking_note, vec![]))),
+        JournalVisibleWithTags::from(DiaryVisibleWithTags::from((diary, vec![]))),
+        JournalVisibleWithTags::from(ThinkingNoteVisibleWithTags::from((
+            resolved_thinking_note_0,
+            vec![],
+        ))),
+        JournalVisibleWithTags::from(ReadingNoteVisibleWithTags::from((reading_note, vec![]))),
+        JournalVisibleWithTags::from(ThinkingNoteVisibleWithTags::from((
+            resolved_thinking_note_1,
+            vec![],
+        ))),
     ];
 
     assert_eq!(body.len(), expected.len());
@@ -138,20 +74,22 @@ async fn test_order() -> Result<(), DbErr> {
 async fn test_tag_query() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
-    let tagged_thinking_note = factory::thinking_note(user.id).insert(&db).await?;
-    let _thinking_note = factory::thinking_note(user.id).insert(&db).await?;
-    let different_tagged_thinking_note = factory::thinking_note(user.id).insert(&db).await?;
-    let tagged_diary = factory::diary(user.id).insert(&db).await?;
-    let _diary = factory::diary(user.id).insert(&db).await?;
-    let tagged_reading_note = factory::reading_note(user.id).insert(&db).await?;
-    let _reading_note = factory::reading_note(user.id).insert(&db).await?;
     let plain_tag_0 = factory::tag(user.id).insert(&db).await?;
     let plain_tag_1 = factory::tag(user.id).insert(&db).await?;
     let plain_tag_2 = factory::tag(user.id).insert(&db).await?;
+
+    let tagged_thinking_note = factory::thinking_note(user.id).insert(&db).await?;
+    let tagged_diary = factory::diary(user.id).insert(&db).await?;
+    let tagged_reading_note = factory::reading_note(user.id).insert(&db).await?;
     factory::link_thinking_note_tag(&db, tagged_thinking_note.id, plain_tag_0.id).await?;
     factory::link_thinking_note_tag(&db, tagged_thinking_note.id, plain_tag_2.id).await?;
     factory::link_diary_tag(&db, tagged_diary.id, plain_tag_0.id).await?;
     factory::link_reading_note_tag(&db, tagged_reading_note.id, plain_tag_1.id).await?;
+
+    let _thinking_note = factory::thinking_note(user.id).insert(&db).await?;
+    let _diary = factory::diary(user.id).insert(&db).await?;
+    let _reading_note = factory::reading_note(user.id).insert(&db).await?;
+    let different_tagged_thinking_note = factory::thinking_note(user.id).insert(&db).await?;
     factory::link_thinking_note_tag(&db, different_tagged_thinking_note.id, plain_tag_2.id).await?;
 
     let req = test::TestRequest::get()
@@ -167,70 +105,41 @@ async fn test_tag_query() -> Result<(), DbErr> {
 
     let body: Vec<JournalVisibleWithTags> = test::read_body_json(resp).await;
     let expected = vec![
-        JournalVisibleWithTags {
-            diary: None,
-            reading_note: None,
-            thinking_note: Some(ThinkingNoteVisibleWithTags {
-                id: tagged_thinking_note.id,
-                question: tagged_thinking_note.question,
-                thought: tagged_thinking_note.thought,
-                answer: tagged_thinking_note.answer,
-                resolved_at: tagged_thinking_note.resolved_at,
-                created_at: tagged_thinking_note.created_at,
-                updated_at: tagged_thinking_note.updated_at,
-                tags: vec![
-                    TagVisible {
-                        id: plain_tag_0.id,
-                        name: plain_tag_0.name.clone().unwrap(),
-                        r#type: plain_tag_0.r#type.clone(),
-                        created_at: plain_tag_0.created_at,
-                    },
-                    TagVisible {
-                        id: plain_tag_2.id,
-                        name: plain_tag_2.name.unwrap(),
-                        r#type: plain_tag_2.r#type,
-                        created_at: plain_tag_2.created_at,
-                    },
-                ],
-            }),
-            kind: JournalKind::ThinkingNote,
-        },
-        JournalVisibleWithTags {
-            diary: Some(DiaryVisibleWithTags {
-                id: tagged_diary.id,
-                text: tagged_diary.text.clone(),
-                date: tagged_diary.date,
-                tags: vec![TagVisible {
+        JournalVisibleWithTags::from(ThinkingNoteVisibleWithTags::from((
+            tagged_thinking_note,
+            vec![
+                TagVisible {
                     id: plain_tag_0.id,
-                    name: plain_tag_0.name.unwrap(),
-                    r#type: plain_tag_0.r#type,
+                    name: plain_tag_0.name.clone().unwrap(),
+                    r#type: plain_tag_0.r#type.clone(),
                     created_at: plain_tag_0.created_at,
-                }],
-            }),
-            reading_note: None,
-            thinking_note: None,
-            kind: JournalKind::Diary,
-        },
-        JournalVisibleWithTags {
-            diary: None,
-            reading_note: Some(ReadingNoteVisibleWithTags {
-                id: tagged_reading_note.id,
-                title: tagged_reading_note.title.clone(),
-                page_number: tagged_reading_note.page_number,
-                text: tagged_reading_note.text.clone(),
-                date: tagged_reading_note.date,
-                created_at: tagged_reading_note.created_at,
-                updated_at: tagged_reading_note.updated_at,
-                tags: vec![TagVisible {
-                    id: plain_tag_1.id,
-                    name: plain_tag_1.name.unwrap(),
-                    r#type: plain_tag_1.r#type,
-                    created_at: plain_tag_1.created_at,
-                }],
-            }),
-            thinking_note: None,
-            kind: JournalKind::ReadingNote,
-        },
+                },
+                TagVisible {
+                    id: plain_tag_2.id,
+                    name: plain_tag_2.name.unwrap(),
+                    r#type: plain_tag_2.r#type,
+                    created_at: plain_tag_2.created_at,
+                },
+            ],
+        ))),
+        JournalVisibleWithTags::from(DiaryVisibleWithTags::from((
+            tagged_diary,
+            vec![TagVisible {
+                id: plain_tag_0.id,
+                name: plain_tag_0.name.unwrap(),
+                r#type: plain_tag_0.r#type,
+                created_at: plain_tag_0.created_at,
+            }],
+        ))),
+        JournalVisibleWithTags::from(ReadingNoteVisibleWithTags::from((
+            tagged_reading_note,
+            vec![TagVisible::from(TagVisible {
+                id: plain_tag_1.id,
+                name: plain_tag_1.name.unwrap(),
+                r#type: plain_tag_1.r#type,
+                created_at: plain_tag_1.created_at,
+            })],
+        ))),
     ];
 
     assert_eq!(body.len(), expected.len());

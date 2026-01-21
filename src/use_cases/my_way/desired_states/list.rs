@@ -22,7 +22,7 @@ pub async fn list_desired_states<'a>(
         .filter_eq_user(&user)
         .filter_eq_archived(params.show_archived_only.unwrap_or(false))
         .order_by_category_ordering_nulls_last(Asc)
-        .order_by_ordering_nulls_last(Asc)
+        .order_by_ordering_nulls_first(Asc)
         .order_by_created_at(Asc)
         .get_all()
         .await

@@ -5,8 +5,8 @@ POST {{endpoint}}/api/users/login
 Content-Type: application/json
 
 {
-  "email": "test@test.com",
-  "password": "password"
+  "email": "{{email}}",
+  "password": "{{password}}"
 }
 
 @thinking_note_id=0198ab0d-7bce-7001-9e21-98cbe3c309ae
