@@ -118,6 +118,10 @@ async fn ordering_with_category() -> Result<(), DbErr> {
         .category_id(Some(category_0.id))
         .insert(&db)
         .await?;
+    let new_desired_state = factory::desired_state(user.id)
+        .category_id(Some(category_0.id))
+        .insert(&db)
+        .await?;
 
     let req = test::TestRequest::get()
         .uri("/api/desired_states")
@@ -129,6 +133,7 @@ async fn ordering_with_category() -> Result<(), DbErr> {
 
     let body: Vec<DesiredStateVisible> = test::read_body_json(resp).await;
     let expected = vec![
+        DesiredStateVisible::from(new_desired_state),
         DesiredStateVisible::from(desired_state_0),
         DesiredStateVisible::from(desired_state_2),
         DesiredStateVisible::from(desired_state_1),
