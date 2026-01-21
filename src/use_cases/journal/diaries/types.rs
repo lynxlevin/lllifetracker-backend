@@ -3,10 +3,7 @@ use entities::{diary, prelude::Diary};
 use sea_orm::{DerivePartialModel, FromQueryResult};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    journal::types::{IntoJournalVisibleWithTags, JournalKind, JournalVisibleWithTags},
-    tags::types::TagVisible,
-};
+use crate::{journal::types::IntoJournalVisibleWithTags, tags::types::TagVisible};
 
 #[derive(Serialize, Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug)]
 #[sea_orm(entity = "Diary")]
@@ -33,7 +30,17 @@ pub struct DiaryVisibleWithTags {
     pub date: chrono::NaiveDate,
     pub tags: Vec<TagVisible>,
 }
-
+impl From<(diary::Model, Vec<TagVisible>)> for DiaryVisibleWithTags {
+    fn from(value: (diary::Model, Vec<TagVisible>)) -> Self {
+        let (diary, tags) = value;
+        Self {
+            id: diary.id,
+            text: diary.text,
+            date: diary.date,
+            tags,
+        }
+    }
+}
 impl IntoJournalVisibleWithTags for DiaryVisibleWithTags {
     fn push_tag(&mut self, tag: TagVisible) {
         self.tags.push(tag);
@@ -45,17 +52,6 @@ impl IntoJournalVisibleWithTags for DiaryVisibleWithTags {
 
     fn is_newer_or_eq<T: IntoJournalVisibleWithTags>(&self, other: &T) -> bool {
         self.sort_key() >= other.sort_key()
-    }
-}
-
-impl Into<JournalVisibleWithTags> for DiaryVisibleWithTags {
-    fn into(self) -> JournalVisibleWithTags {
-        JournalVisibleWithTags {
-            diary: Some(self),
-            reading_note: None,
-            thinking_note: None,
-            kind: JournalKind::Diary,
-        }
     }
 }
 
