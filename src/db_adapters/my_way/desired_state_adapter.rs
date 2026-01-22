@@ -53,6 +53,7 @@ pub trait DesiredStateFilter {
     fn filter_eq_user_id(self, user_id: Uuid) -> Self;
     fn filter_eq_user(self, user: &user::Model) -> Self;
     fn filter_eq_archived(self, archived: bool) -> Self;
+    fn filter_eq_is_focused(self, focused: bool) -> Self;
     fn filter_in_ids(self, ids: Vec<Uuid>) -> Self;
 }
 
@@ -69,6 +70,11 @@ impl DesiredStateFilter for DesiredStateAdapter<'_> {
 
     fn filter_eq_archived(mut self, archived: bool) -> Self {
         self.query = self.query.filter(Column::Archived.eq(archived));
+        self
+    }
+
+    fn filter_eq_is_focused(mut self, is_focused: bool) -> Self {
+        self.query = self.query.filter(Column::IsFocused.eq(is_focused));
         self
     }
 
