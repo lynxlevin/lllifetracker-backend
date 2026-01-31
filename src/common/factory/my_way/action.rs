@@ -14,7 +14,8 @@ pub fn action(user_id: Uuid) -> action::ActiveModel {
         id: Set(Uuid::now_v7()),
         user_id: Set(user_id),
         name: Set("action".to_string()),
-        description: Set(None),
+        discipline: Set(None),
+        memo: Set(None),
         archived: Set(false),
         ordering: NotSet,
         color: Set("#212121".to_string()),
@@ -26,7 +27,7 @@ pub fn action(user_id: Uuid) -> action::ActiveModel {
 
 pub trait ActionFactory {
     fn name(self, name: String) -> action::ActiveModel;
-    fn description(self, description: Option<String>) -> action::ActiveModel;
+    fn discipline(self, discipline: Option<String>) -> action::ActiveModel;
     fn archived(self, archived: bool) -> action::ActiveModel;
     fn ordering(self, ordering: Option<i32>) -> action::ActiveModel;
     fn track_type(self, track_type: ActionTrackType) -> action::ActiveModel;
@@ -42,8 +43,8 @@ impl ActionFactory for action::ActiveModel {
         self
     }
 
-    fn description(mut self, description: Option<String>) -> action::ActiveModel {
-        self.description = Set(description);
+    fn discipline(mut self, discipline: Option<String>) -> action::ActiveModel {
+        self.discipline = Set(discipline);
         self
     }
 

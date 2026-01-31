@@ -13,7 +13,7 @@ pub async fn create_action<'a>(
     action_adapter
         .create_with_tag(CreateActionParams {
             name: params.name.clone(),
-            description: params.description.clone(),
+            discipline: params.discipline.clone(),
             track_type: params.track_type.clone(),
             user_id: user.id,
         })

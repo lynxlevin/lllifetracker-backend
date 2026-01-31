@@ -12,7 +12,7 @@ use crate::my_way::action_goals::types::ActionGoalVisible;
 pub struct ActionVisible {
     pub id: Uuid,
     pub name: String,
-    pub description: Option<String>,
+    pub discipline: Option<String>,
     pub color: String,
     pub track_type: ActionTrackType,
     pub created_at: DateTime<FixedOffset>,
@@ -24,7 +24,7 @@ impl From<&action::Model> for ActionVisible {
         ActionVisible {
             id: item.id,
             name: item.name.clone(),
-            description: item.description.clone(),
+            discipline: item.discipline.clone(),
             color: item.color.clone(),
             track_type: item.track_type.clone(),
             created_at: item.created_at,
@@ -43,7 +43,7 @@ impl From<action::Model> for ActionVisible {
 pub struct ActionVisibleWithGoal {
     pub id: Uuid,
     pub name: String,
-    pub description: Option<String>,
+    pub discipline: Option<String>,
     pub color: String,
     pub track_type: ActionTrackType,
     pub goal: Option<ActionGoalVisible>,
@@ -56,7 +56,7 @@ impl From<&(action::Model, Option<action_goal::Model>)> for ActionVisibleWithGoa
         ActionVisibleWithGoal {
             id: value.0.id,
             name: value.0.name.clone(),
-            description: value.0.description.clone(),
+            discipline: value.0.discipline.clone(),
             color: value.0.color.clone(),
             track_type: value.0.track_type.clone(),
             goal: value
@@ -83,14 +83,14 @@ pub struct ActionListQuery {
 #[derive(Deserialize, Debug, Serialize)]
 pub struct ActionCreateRequest {
     pub name: String,
-    pub description: Option<String>,
+    pub discipline: Option<String>,
     pub track_type: ActionTrackType,
 }
 
 #[derive(Deserialize, Debug, Serialize)]
 pub struct ActionUpdateRequest {
     pub name: String,
-    pub description: Option<String>,
+    pub discipline: Option<String>,
     pub color: Option<String>,
 }
 
