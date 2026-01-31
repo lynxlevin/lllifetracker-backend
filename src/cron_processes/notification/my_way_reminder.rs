@@ -22,7 +22,6 @@ use entities::{notification_rule, sea_orm_active_enums::NotificationType};
 enum NotificationChoice {
     Ambition,
     DesiredState,
-    FocusedDesiredState,
 }
 
 #[instrument(skip_all)]
@@ -61,7 +60,6 @@ async fn get_notification_rules(
             NotificationType::AmbitionOrDesiredState,
             NotificationType::Ambition,
             NotificationType::DesiredState,
-            NotificationType::FocusedDesiredState,
         ])
         .filter_eq_weekday(weekday)
         .filter_eq_utc_time(utc_time)
@@ -92,7 +90,6 @@ async fn get_messages(
             .unwrap(),
             NotificationType::Ambition => NotificationChoice::Ambition,
             NotificationType::DesiredState => NotificationChoice::DesiredState,
-            NotificationType::FocusedDesiredState => NotificationChoice::FocusedDesiredState,
             _ => {
                 event!(
                     Level::ERROR,
@@ -174,38 +171,6 @@ async fn get_random_message(
                 Some(desired_state) => desired_state,
                 None => {
                     event!(Level::WARN, "DesiredState not found.");
-                    return None;
-                }
-            };
-            let title = match category {
-                Some(category) => Some(format!("大事にすること: {}", category.name)),
-                None => Some("大事にすること".to_string()),
-            };
-            let body = match desired_state.description {
-                Some(description) => format!(
-                    "{}\n{}",
-                    desired_state.name,
-                    description.replace('\n', "").replace('\r', "")
-                ),
-                None => desired_state.name,
-            };
-            (title, body)
-        }
-        NotificationChoice::FocusedDesiredState => {
-            let (desired_state, category) = match DesiredStateAdapter::init(db)
-                .join_category()
-                .filter_eq_user_id(user_id)
-                .filter_eq_archived(false)
-                .filter_eq_is_focused(true)
-                .get_random_with_category()
-                .await
-                .unwrap_or_else(|e| {
-                    event!(Level::ERROR, %e);
-                    return None;
-                }) {
-                Some(desired_state) => desired_state,
-                None => {
-                    event!(Level::WARN, "Focused DesiredState not found.");
                     return None;
                 }
             };
