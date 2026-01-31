@@ -19,11 +19,13 @@ async fn happy_path() -> Result<(), DbErr> {
 
     let name = "create_action".to_string();
     let discipline = "Create action.".to_string();
+    let memo = "Something important.".to_string();
     let req = test::TestRequest::post()
         .uri("/api/actions")
         .set_json(ActionCreateRequest {
             name: name.clone(),
             discipline: Some(discipline.clone()),
+            memo: Some(memo.clone()),
             track_type: ActionTrackType::Count,
         })
         .to_request();
@@ -35,6 +37,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let res: ActionVisible = test::read_body_json(res).await;
     assert_eq!(res.name, name.clone());
     assert_eq!(res.discipline, Some(discipline.clone()));
+    assert_eq!(res.memo, Some(memo.clone()));
     assert_eq!(res.track_type, ActionTrackType::Count);
 
     let action_in_db = action::Entity::find_by_id(res.id).one(&db).await?.unwrap();
@@ -63,6 +66,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
         .set_json(ActionCreateRequest {
             name: "Test create_action not logged in".to_string(),
             discipline: None,
+            memo: None,
             track_type: ActionTrackType::TimeSpan,
         })
         .to_request();

@@ -16,6 +16,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
     let new_name = "action_after_update".to_string();
     let new_discipline = "Action after update.".to_string();
+    let new_memo = "Some new insights.".to_string();
     let new_color = "#ffffff".to_string();
 
     let req = test::TestRequest::put()
@@ -23,6 +24,7 @@ async fn happy_path() -> Result<(), DbErr> {
         .set_json(ActionUpdateRequest {
             name: new_name.clone(),
             discipline: Some(new_discipline.clone()),
+            memo: Some(new_memo.clone()),
             color: Some(new_color.clone()),
         })
         .to_request();
@@ -35,6 +37,7 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(res.id, action.id);
     assert_eq!(res.name, new_name.clone());
     assert_eq!(res.discipline, Some(new_discipline.clone()));
+    assert_eq!(res.memo, Some(new_memo.clone()));
     assert_eq!(res.color, new_color.clone());
     assert_eq!(res.created_at, action.created_at);
     assert!(res.updated_at > action.updated_at);
@@ -61,6 +64,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
         .set_json(ActionUpdateRequest {
             name: "action_after_update_route".to_string(),
             discipline: None,
+            memo: None,
             color: None,
         })
         .to_request();
@@ -86,6 +90,7 @@ mod validation_errors {
             .set_json(ActionUpdateRequest {
                 name: "action_after_update_route".to_string(),
                 discipline: None,
+                memo: None,
                 color: Some(long_name),
             })
             .to_request();
@@ -109,6 +114,7 @@ mod validation_errors {
             .set_json(ActionUpdateRequest {
                 name: "action_after_update_route".to_string(),
                 discipline: None,
+                memo: None,
                 color: Some(short_name),
             })
             .to_request();
@@ -132,6 +138,7 @@ mod validation_errors {
             .set_json(ActionUpdateRequest {
                 name: "action_after_update_route".to_string(),
                 discipline: None,
+                memo: None,
                 color: Some(bad_format),
             })
             .to_request();
@@ -155,6 +162,7 @@ mod validation_errors {
             .set_json(ActionUpdateRequest {
                 name: "action_after_update_route".to_string(),
                 discipline: None,
+                memo: None,
                 color: Some(bad_character),
             })
             .to_request();
