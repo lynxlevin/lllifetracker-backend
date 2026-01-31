@@ -16,7 +16,6 @@ pub struct Model {
     pub archived: bool,
     pub ordering: Option<i32>,
     pub category_id: Option<Uuid>,
-    pub is_focused: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
