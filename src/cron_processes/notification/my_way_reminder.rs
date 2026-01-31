@@ -110,7 +110,6 @@ async fn get_messages(
                     let choice = match choice {
                         NotificationChoice::Ambition => NotificationChoice::DesiredState,
                         NotificationChoice::DesiredState => NotificationChoice::Ambition,
-                        _ => continue,
                     };
                     match get_random_message(&choice, rule.user_id, db).await {
                         Some(message) => messages.push(message),
