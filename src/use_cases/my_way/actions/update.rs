@@ -33,6 +33,7 @@ pub async fn update_action<'a>(
             UpdateActionParams {
                 name: params.name.clone(),
                 discipline: params.discipline.clone(),
+                memo: params.memo.clone(),
                 color: params.color.clone(),
             },
         )

@@ -14,6 +14,7 @@ pub async fn create_action<'a>(
         .create_with_tag(CreateActionParams {
             name: params.name.clone(),
             discipline: params.discipline.clone(),
+            memo: params.memo.clone(),
             track_type: params.track_type.clone(),
             user_id: user.id,
         })
