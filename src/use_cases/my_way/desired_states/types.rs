@@ -12,7 +12,6 @@ pub struct DesiredStateVisible {
     pub name: String,
     pub description: Option<String>,
     pub category_id: Option<Uuid>,
-    pub is_focused: bool,
     pub created_at: DateTime<FixedOffset>,
     pub updated_at: DateTime<FixedOffset>,
 }
@@ -24,7 +23,6 @@ impl From<&desired_state::Model> for DesiredStateVisible {
             name: item.name.clone(),
             description: item.description.clone(),
             category_id: item.category_id,
-            is_focused: item.is_focused,
             created_at: item.created_at,
             updated_at: item.updated_at,
         }
@@ -47,7 +45,6 @@ pub struct DesiredStateCreateRequest {
     pub name: String,
     pub description: Option<String>,
     pub category_id: Option<Uuid>,
-    pub is_focused: bool,
 }
 
 #[derive(Deserialize, Debug, Serialize)]
@@ -55,7 +52,6 @@ pub struct DesiredStateUpdateRequest {
     pub name: String,
     pub description: Option<String>,
     pub category_id: Option<Uuid>,
-    pub is_focused: bool,
 }
 
 #[derive(Deserialize, Debug, Serialize)]
