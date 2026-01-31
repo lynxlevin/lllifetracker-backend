@@ -26,7 +26,8 @@ Content-Type: application/json
 
 {
   "name": "Second action",
-  "description": "Second action description",
+  "discipline": "Second action discipline",
+  "memo": "Second action memo",
   "track_type": "Count"
 }
 
@@ -37,7 +38,8 @@ Content-Type: application/json
 
 {
   "name": "My action edited",
-  "description": "Description added",
+  "discipline": "Discipline added",
+  "memo": "memo added",
   "color": "#adfadf"
 }
 

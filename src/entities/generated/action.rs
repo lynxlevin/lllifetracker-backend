@@ -13,11 +13,12 @@ pub struct Model {
     pub name: String,
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    pub description: Option<String>,
+    pub discipline: Option<String>,
     pub archived: bool,
     pub ordering: Option<i32>,
     pub color: String,
     pub track_type: ActionTrackType,
+    pub memo: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

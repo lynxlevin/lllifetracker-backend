@@ -26,7 +26,8 @@ async fn happy_path() -> Result<(), DbErr> {
     let res: ActionVisible = test::read_body_json(res).await;
     assert_eq!(res.id, action.id);
     assert_eq!(res.name, action.name.clone());
-    assert_eq!(res.description, action.description.clone());
+    assert_eq!(res.discipline, action.discipline.clone());
+    assert_eq!(res.memo, action.memo.clone());
     assert_eq!(res.created_at, action.created_at);
     assert!(res.updated_at > action.updated_at);
 

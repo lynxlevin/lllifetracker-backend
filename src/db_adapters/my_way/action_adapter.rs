@@ -118,7 +118,8 @@ impl ActionQuery for ActionAdapter<'_> {
 #[derive(Debug, Clone)]
 pub struct CreateActionParams {
     pub name: String,
-    pub description: Option<String>,
+    pub discipline: Option<String>,
+    pub memo: Option<String>,
     pub track_type: ActionTrackType,
     pub user_id: Uuid,
 }
@@ -126,7 +127,8 @@ pub struct CreateActionParams {
 #[derive(Debug, Clone)]
 pub struct UpdateActionParams {
     pub name: String,
-    pub description: Option<String>,
+    pub discipline: Option<String>,
+    pub memo: Option<String>,
     pub color: Option<String>,
 }
 
@@ -168,7 +170,8 @@ impl ActionMutation for ActionAdapter<'_> {
                         id: Set(action_id),
                         user_id: Set(params.user_id),
                         name: Set(params.name.to_owned()),
-                        description: Set(params.description.to_owned()),
+                        discipline: Set(params.discipline.to_owned()),
+                        memo: Set(params.memo.to_owned()),
                         track_type: Set(params.track_type),
                         ..Default::default()
                     }
@@ -193,7 +196,8 @@ impl ActionMutation for ActionAdapter<'_> {
     async fn update(self, action: Model, params: UpdateActionParams) -> Result<Model, DbErr> {
         let mut action = action.into_active_model();
         action.name = Set(params.name);
-        action.description = Set(params.description);
+        action.discipline = Set(params.discipline);
+        action.memo = Set(params.memo);
         if let Some(color) = params.color {
             action.color = Set(color);
         }

@@ -15,14 +15,16 @@ async fn happy_path() -> Result<(), DbErr> {
     let action = factory::action(user.id).insert(&db).await?;
 
     let new_name = "action_after_update".to_string();
-    let new_description = "Action after update.".to_string();
+    let new_discipline = "Action after update.".to_string();
+    let new_memo = "Some new insights.".to_string();
     let new_color = "#ffffff".to_string();
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/actions/{}", action.id))
         .set_json(ActionUpdateRequest {
             name: new_name.clone(),
-            description: Some(new_description.clone()),
+            discipline: Some(new_discipline.clone()),
+            memo: Some(new_memo.clone()),
             color: Some(new_color.clone()),
         })
         .to_request();
@@ -34,7 +36,8 @@ async fn happy_path() -> Result<(), DbErr> {
     let res: ActionVisible = test::read_body_json(res).await;
     assert_eq!(res.id, action.id);
     assert_eq!(res.name, new_name.clone());
-    assert_eq!(res.description, Some(new_description.clone()));
+    assert_eq!(res.discipline, Some(new_discipline.clone()));
+    assert_eq!(res.memo, Some(new_memo.clone()));
     assert_eq!(res.color, new_color.clone());
     assert_eq!(res.created_at, action.created_at);
     assert!(res.updated_at > action.updated_at);
@@ -60,7 +63,8 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
         .uri(&format!("/api/actions/{}", action.id))
         .set_json(ActionUpdateRequest {
             name: "action_after_update_route".to_string(),
-            description: None,
+            discipline: None,
+            memo: None,
             color: None,
         })
         .to_request();
@@ -85,7 +89,8 @@ mod validation_errors {
             .uri(&format!("/api/actions/{}", action.id))
             .set_json(ActionUpdateRequest {
                 name: "action_after_update_route".to_string(),
-                description: None,
+                discipline: None,
+                memo: None,
                 color: Some(long_name),
             })
             .to_request();
@@ -108,7 +113,8 @@ mod validation_errors {
             .uri(&format!("/api/actions/{}", action.id))
             .set_json(ActionUpdateRequest {
                 name: "action_after_update_route".to_string(),
-                description: None,
+                discipline: None,
+                memo: None,
                 color: Some(short_name),
             })
             .to_request();
@@ -131,7 +137,8 @@ mod validation_errors {
             .uri(&format!("/api/actions/{}", action.id))
             .set_json(ActionUpdateRequest {
                 name: "action_after_update_route".to_string(),
-                description: None,
+                discipline: None,
+                memo: None,
                 color: Some(bad_format),
             })
             .to_request();
@@ -154,7 +161,8 @@ mod validation_errors {
             .uri(&format!("/api/actions/{}", action.id))
             .set_json(ActionUpdateRequest {
                 name: "action_after_update_route".to_string(),
-                description: None,
+                discipline: None,
+                memo: None,
                 color: Some(bad_character),
             })
             .to_request();
