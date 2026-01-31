@@ -14,7 +14,6 @@ pub fn desired_state(user_id: Uuid) -> desired_state::ActiveModel {
         archived: Set(false),
         ordering: NotSet,
         category_id: NotSet,
-        is_focused: Set(false),
         created_at: Set(now.into()),
         updated_at: Set(now.into()),
     }
