@@ -49,6 +49,7 @@ mod m20251113_000001_remove_trackable_from_actions_table;
 mod m20260122_000001_add_focused_desired_state_to_notification_type;
 mod m20260131_000001_modify_actions_table_discipline_and_memo;
 mod m20260131_000002_remove_focus_from_desired_state_table;
+mod m20260131_000003_rename_desired_states_to_directions_table;
 mod m_seed_data;
 
 pub struct Migrator;
@@ -111,6 +112,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20260122_000001_add_focused_desired_state_to_notification_type::Migration),
             Box::new(m20260131_000001_modify_actions_table_discipline_and_memo::Migration),
             Box::new(m20260131_000002_remove_focus_from_desired_state_table::Migration),
+            Box::new(m20260131_000003_rename_desired_states_to_directions_table::Migration),
         ]
     }
 }

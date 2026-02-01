@@ -173,7 +173,7 @@ pub enum Action {
 
 #[derive(DeriveActiveEnum, EnumIter)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "notification_type")]
-enum NotificationType {
+pub enum NotificationType {
     #[sea_orm(string_value = "Ambition")]
     Ambition,
     #[sea_orm(string_value = "DesiredState")]
