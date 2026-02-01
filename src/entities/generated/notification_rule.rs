@@ -10,10 +10,10 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
     pub user_id: Uuid,
-    pub r#type: NotificationType,
     pub weekday: i16,
     pub utc_time: Time,
     pub action_id: Option<Uuid>,
+    pub r#type: NotificationType,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
