@@ -159,7 +159,12 @@ async fn tag_type<'a>(manager: &SchemaManager<'_>, up: bool) -> Result<(), DbErr
             .alter_table(
                 Table::alter()
                     .table(Tag::Table)
-                    .add_column_if_not_exists(ColumnDef::new(Tag::Type).custom(TagType::name()))
+                    .add_column_if_not_exists(
+                        ColumnDef::new(Tag::Type)
+                            .custom(TagType::name())
+                            .not_null()
+                            .default(TagType::Plain),
+                    )
                     .to_owned(),
             )
             .await?;
@@ -183,14 +188,6 @@ async fn tag_type<'a>(manager: &SchemaManager<'_>, up: bool) -> Result<(), DbErr
                 Table::alter()
                     .table(Tag::Table)
                     .drop_column(Tag::TypeOld)
-                    .to_owned(),
-            )
-            .await?;
-        manager
-            .alter_table(
-                Table::alter()
-                    .table(Tag::Table)
-                    .modify_column(ColumnDef::new(Tag::Type).custom(TagType::name()).not_null())
                     .to_owned(),
             )
             .await?;
