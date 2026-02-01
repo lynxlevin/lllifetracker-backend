@@ -12,12 +12,12 @@ pub fn direction_category(user_id: Uuid) -> direction_category::ActiveModel {
     }
 }
 
-pub trait DesiredStateCategoryFactory {
+pub trait DirectionCategoryFactory {
     fn name(self, name: String) -> direction_category::ActiveModel;
     fn ordering(self, ordering: Option<i32>) -> direction_category::ActiveModel;
 }
 
-impl DesiredStateCategoryFactory for direction_category::ActiveModel {
+impl DirectionCategoryFactory for direction_category::ActiveModel {
     fn name(mut self, name: String) -> direction_category::ActiveModel {
         self.name = Set(name);
         self

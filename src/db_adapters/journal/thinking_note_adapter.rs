@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use entities::{
-    action, ambition, desired_state,
+    action, ambition, direction,
     sea_orm_active_enums::TagType,
     tag,
     thinking_note::{ActiveModel, Column, Entity, Model},
@@ -57,7 +57,7 @@ impl ThinkingNoteJoin for ThinkingNoteAdapter<'_> {
         self.query = self
             .query
             .join(LeftJoin, tag::Relation::Ambition.def())
-            .join(LeftJoin, tag::Relation::DesiredState.def())
+            .join(LeftJoin, tag::Relation::Direction.def())
             .join(LeftJoin, tag::Relation::Action.def());
         self
     }
@@ -93,7 +93,7 @@ pub trait ThinkingNoteOrder {
     fn order_by_resolved_at_nulls_first(self, order: Order) -> Self;
     fn order_by_updated_at(self, order: Order) -> Self;
     fn order_by_ambition_created_at_nulls_last(self, order: Order) -> Self;
-    fn order_by_desired_state_created_at_nulls_last(self, order: Order) -> Self;
+    fn order_by_direction_created_at_nulls_last(self, order: Order) -> Self;
     fn order_by_action_created_at_nulls_last(self, order: Order) -> Self;
     fn order_by_tag_created_at_nulls_last(self, order: Order) -> Self;
 }
@@ -118,10 +118,10 @@ impl ThinkingNoteOrder for ThinkingNoteAdapter<'_> {
         self
     }
 
-    fn order_by_desired_state_created_at_nulls_last(mut self, order: Order) -> Self {
+    fn order_by_direction_created_at_nulls_last(mut self, order: Order) -> Self {
         self.query = self
             .query
-            .order_by_with_nulls(desired_state::Column::CreatedAt, order, Last);
+            .order_by_with_nulls(direction::Column::CreatedAt, order, Last);
         self
     }
 
@@ -188,8 +188,8 @@ impl ThinkingNoteQuery for ThinkingNoteAdapter<'_> {
                 .case(
                     Expr::col(tag::Column::Type)
                         .cast_as("text")
-                        .eq(TagType::DesiredState),
-                    desired_state::Column::Name.into_column_as_expr(),
+                        .eq(TagType::Direction),
+                    direction::Column::Name.into_column_as_expr(),
                 )
                 .case(
                     Expr::col(tag::Column::Type)

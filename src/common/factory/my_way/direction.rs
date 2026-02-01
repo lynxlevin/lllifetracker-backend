@@ -19,7 +19,7 @@ pub fn direction(user_id: Uuid) -> direction::ActiveModel {
     }
 }
 
-pub trait DesiredStateFactory {
+pub trait DirectionFactory {
     fn name(self, name: String) -> direction::ActiveModel;
     fn description(self, description: Option<String>) -> direction::ActiveModel;
     fn archived(self, archived: bool) -> direction::ActiveModel;
@@ -31,7 +31,7 @@ pub trait DesiredStateFactory {
     ) -> impl Future<Output = Result<(direction::Model, tag::Model), DbErr>> + Send;
 }
 
-impl DesiredStateFactory for direction::ActiveModel {
+impl DirectionFactory for direction::ActiveModel {
     fn name(mut self, name: String) -> direction::ActiveModel {
         self.name = Set(name);
         self

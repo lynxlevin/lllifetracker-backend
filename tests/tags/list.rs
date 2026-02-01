@@ -15,8 +15,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let plain_tag = factory::tag(user.id).insert(&db).await?;
     let (action, action_tag) = factory::action(user.id).insert_with_tag(&db).await?;
     let (ambition, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
-    let (desired_state, desired_state_tag) =
-        factory::desired_state(user.id).insert_with_tag(&db).await?;
+    let (direction, direction_tag) = factory::direction(user.id).insert_with_tag(&db).await?;
     let _archived_action = factory::action(user.id)
         .archived(true)
         .insert_with_tag(&db)
@@ -25,7 +24,7 @@ async fn happy_path() -> Result<(), DbErr> {
         .archived(true)
         .insert_with_tag(&db)
         .await?;
-    let _archived_desired_state = factory::desired_state(user.id)
+    let _archived_direction = factory::direction(user.id)
         .archived(true)
         .insert(&db)
         .await?;
@@ -45,10 +44,10 @@ async fn happy_path() -> Result<(), DbErr> {
             created_at: ambition_tag.created_at,
         },
         TagVisible {
-            id: desired_state_tag.id,
-            name: desired_state.name.clone(),
-            r#type: TagType::DesiredState,
-            created_at: desired_state_tag.created_at,
+            id: direction_tag.id,
+            name: direction.name.clone(),
+            r#type: TagType::Direction,
+            created_at: direction_tag.created_at,
         },
         TagVisible {
             id: action_tag.id,

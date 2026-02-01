@@ -8,9 +8,7 @@ use crate::notification::utils::{send_messages, MessageWithUserId};
 use common::settings::types::Settings;
 use db_adapters::{
     ambition_adapter::{AmbitionAdapter, AmbitionFilter, AmbitionQuery},
-    desired_state_adapter::{
-        DesiredStateAdapter, DesiredStateFilter, DesiredStateJoin, DesiredStateQuery,
-    },
+    direction_adapter::{DirectionAdapter, DirectionFilter, DirectionJoin, DirectionQuery},
     notification_rule_adapter::{
         NotificationRuleAdapter, NotificationRuleFilter, NotificationRuleOrder,
         NotificationRuleQuery,
@@ -21,7 +19,7 @@ use entities::{notification_rule, sea_orm_active_enums::NotificationType};
 #[derive(Debug)]
 enum NotificationChoice {
     Ambition,
-    DesiredState,
+    Direction,
 }
 
 #[instrument(skip_all)]
@@ -57,9 +55,9 @@ async fn get_notification_rules(
 ) -> Result<Vec<notification_rule::Model>, ()> {
     NotificationRuleAdapter::init(db)
         .filter_in_types(vec![
-            NotificationType::AmbitionOrDesiredState,
+            NotificationType::AmbitionOrDirection,
             NotificationType::Ambition,
-            NotificationType::DesiredState,
+            NotificationType::Direction,
         ])
         .filter_eq_weekday(weekday)
         .filter_eq_utc_time(utc_time)
@@ -81,15 +79,14 @@ async fn get_messages(
     let mut messages: Vec<MessageWithUserId> = vec![];
     for rule in notification_rules.iter() {
         let choice = match rule.r#type {
-            NotificationType::AmbitionOrDesiredState => [
-                NotificationChoice::Ambition,
-                NotificationChoice::DesiredState,
-            ]
-            .into_iter()
-            .choose(&mut thread_rng())
-            .unwrap(),
+            NotificationType::AmbitionOrDirection => {
+                [NotificationChoice::Ambition, NotificationChoice::Direction]
+                    .into_iter()
+                    .choose(&mut thread_rng())
+                    .unwrap()
+            }
             NotificationType::Ambition => NotificationChoice::Ambition,
-            NotificationType::DesiredState => NotificationChoice::DesiredState,
+            NotificationType::Direction => NotificationChoice::Direction,
             _ => {
                 event!(
                     Level::ERROR,
@@ -102,14 +99,14 @@ async fn get_messages(
         match get_random_message(&choice, rule.user_id, db).await {
             Some(message) => messages.push(message),
             None => {
-                if rule.r#type == NotificationType::AmbitionOrDesiredState {
+                if rule.r#type == NotificationType::AmbitionOrDirection {
                     event!(
                         Level::INFO,
-                        "type is AmbitionOrDesiredState, falling back to another choice."
+                        "type is AmbitionOrDirection, falling back to another choice."
                     );
                     let choice = match choice {
-                        NotificationChoice::Ambition => NotificationChoice::DesiredState,
-                        NotificationChoice::DesiredState => NotificationChoice::Ambition,
+                        NotificationChoice::Ambition => NotificationChoice::Direction,
+                        NotificationChoice::Direction => NotificationChoice::Ambition,
                     };
                     match get_random_message(&choice, rule.user_id, db).await {
                         Some(message) => messages.push(message),
@@ -156,8 +153,8 @@ async fn get_random_message(
             };
             (title, body)
         }
-        NotificationChoice::DesiredState => {
-            let (desired_state, category) = match DesiredStateAdapter::init(db)
+        NotificationChoice::Direction => {
+            let (direction, category) = match DirectionAdapter::init(db)
                 .join_category()
                 .filter_eq_user_id(user_id)
                 .filter_eq_archived(false)
@@ -167,9 +164,9 @@ async fn get_random_message(
                     event!(Level::ERROR, %e);
                     return None;
                 }) {
-                Some(desired_state) => desired_state,
+                Some(direction) => direction,
                 None => {
-                    event!(Level::WARN, "DesiredState not found.");
+                    event!(Level::WARN, "Direction not found.");
                     return None;
                 }
             };
@@ -177,13 +174,13 @@ async fn get_random_message(
                 Some(category) => Some(format!("大事にすること: {}", category.name)),
                 None => Some("大事にすること".to_string()),
             };
-            let body = match desired_state.description {
+            let body = match direction.description {
                 Some(description) => format!(
                     "{}\n{}",
-                    desired_state.name,
+                    direction.name,
                     description.replace('\n', "").replace('\r', "")
                 ),
-                None => desired_state.name,
+                None => direction.name,
             };
             (title, body)
         }
@@ -227,16 +224,16 @@ mod tests {
             .insert(&db)
             .await?;
         let notification_rule_1 = default_notification_rule(user.id, weekday.clone(), time.clone())
-            .r#type(NotificationType::DesiredState)
+            .r#type(NotificationType::Direction)
             .insert(&db)
             .await?;
         let notification_rule_2 = default_notification_rule(user.id, weekday.clone(), time.clone())
-            .r#type(NotificationType::AmbitionOrDesiredState)
+            .r#type(NotificationType::AmbitionOrDirection)
             .insert(&db)
             .await?;
         let no_use_notification_rule_0 =
             default_notification_rule(user.id, weekday.clone(), time.clone())
-                .r#type(NotificationType::Action);
+                .r#type(NotificationType::UnaccomplishedAction);
         let no_use_notification_rule_1 =
             default_notification_rule(user.id, weekday.clone(), time.clone())
                 .weekday(weekday.succ());
@@ -324,18 +321,18 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn test_get_random_message_case_desired_state_no_description() -> Result<(), DbErr> {
+    async fn test_get_random_message_case_direction_no_description() -> Result<(), DbErr> {
         let settings = get_test_settings();
         let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
-        let desired_state = factory::desired_state(user.id).insert(&db).await?;
+        let direction = factory::direction(user.id).insert(&db).await?;
 
-        let res = get_random_message(&NotificationChoice::DesiredState, user.id, &db).await;
+        let res = get_random_message(&NotificationChoice::Direction, user.id, &db).await;
         assert!(res.is_some());
         let res = res.unwrap();
 
         assert_eq!(res.content.title, Some("大事にすること".to_string()));
-        assert_eq!(res.content.body, desired_state.name);
+        assert_eq!(res.content.body, direction.name);
         assert_eq!(res.content.path, None);
         assert_eq!(res.user_id, user.id);
 
@@ -343,16 +340,16 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn test_get_random_message_case_desired_state_with_description() -> Result<(), DbErr> {
+    async fn test_get_random_message_case_direction_with_description() -> Result<(), DbErr> {
         let settings = get_test_settings();
         let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
-        let desired_state = factory::desired_state(user.id)
+        let direction = factory::direction(user.id)
             .description(Some("Description".to_string()))
             .insert(&db)
             .await?;
 
-        let res = get_random_message(&NotificationChoice::DesiredState, user.id, &db).await;
+        let res = get_random_message(&NotificationChoice::Direction, user.id, &db).await;
         assert!(res.is_some());
         let res = res.unwrap();
 
@@ -361,8 +358,8 @@ mod tests {
             res.content.body,
             format!(
                 "{}\n{}",
-                desired_state.name,
-                desired_state
+                direction.name,
+                direction
                     .description
                     .unwrap()
                     .replace('\n', "")
@@ -376,17 +373,17 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn test_get_random_message_case_desired_state_with_category() -> Result<(), DbErr> {
+    async fn test_get_random_message_case_direction_with_category() -> Result<(), DbErr> {
         let settings = get_test_settings();
         let db = init_db(&settings).await;
         let user = factory::user().insert(&db).await?;
-        let category = factory::desired_state_category(user.id).insert(&db).await?;
-        let desired_state = factory::desired_state(user.id)
+        let category = factory::direction_category(user.id).insert(&db).await?;
+        let direction = factory::direction(user.id)
             .category_id(Some(category.id))
             .insert(&db)
             .await?;
 
-        let res = get_random_message(&NotificationChoice::DesiredState, user.id, &db).await;
+        let res = get_random_message(&NotificationChoice::Direction, user.id, &db).await;
         assert!(res.is_some());
         let res = res.unwrap();
 
@@ -394,7 +391,7 @@ mod tests {
             res.content.title,
             Some(format!("大事にすること: {}", category.name))
         );
-        assert_eq!(res.content.body, desired_state.name);
+        assert_eq!(res.content.body, direction.name);
         assert_eq!(res.content.path, None);
         assert_eq!(res.user_id, user.id);
 

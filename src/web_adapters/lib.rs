@@ -12,8 +12,8 @@ pub use journal::{
 };
 pub use my_way::{
     action_goals::action_goal_routes, action_tracks::action_track_routes, actions::action_routes,
-    ambitions::ambition_routes, desired_state_categories::desired_state_category_routes,
-    desired_states::desired_state_routes,
+    ambitions::ambition_routes, direction_categories::direction_category_routes,
+    directions::direction_routes,
 };
 pub use notification::{
     notification_rule::notification_rule_routes,
