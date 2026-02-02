@@ -6,7 +6,7 @@ use actix_web::{cookie, web::scope, Scope};
 use common::settings::types::Settings;
 use web_adapters::{
     action_goal_routes, action_routes, action_track_routes, ambition_routes, auth_routes,
-    desired_state_category_routes, desired_state_routes, diary_routes, journal_routes,
+    direction_category_routes, direction_routes, diary_routes, journal_routes,
     notification_rule_routes, reading_note_routes, tag_routes, thinking_note_routes,
     web_push_subscription_routes,
 };
@@ -50,14 +50,14 @@ pub fn get_routes() -> Scope {
         .service(health_check)
         .configure(auth_routes)
         .configure(ambition_routes)
-        .configure(desired_state_routes)
+        .configure(direction_routes)
         .configure(action_routes)
         .configure(reading_note_routes)
         .configure(tag_routes)
         .configure(action_track_routes)
         .configure(journal_routes)
         .configure(diary_routes)
-        .configure(desired_state_category_routes)
+        .configure(direction_category_routes)
         .configure(action_goal_routes)
         .configure(thinking_note_routes)
         .configure(web_push_subscription_routes)

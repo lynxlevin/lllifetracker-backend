@@ -12,8 +12,7 @@ pub struct Model {
     pub user_id: Uuid,
     #[sea_orm(unique)]
     pub ambition_id: Option<Uuid>,
-    #[sea_orm(unique)]
-    pub desired_state_id: Option<Uuid>,
+    pub direction_id: Option<Uuid>,
     #[sea_orm(unique)]
     pub action_id: Option<Uuid>,
     pub created_at: DateTimeWithTimeZone,
@@ -39,16 +38,16 @@ pub enum Relation {
         on_delete = "Cascade"
     )]
     Ambition,
+    #[sea_orm(has_many = "super::diaries_tags::Entity")]
+    DiariesTags,
     #[sea_orm(
-        belongs_to = "super::desired_state::Entity",
-        from = "Column::DesiredStateId",
-        to = "super::desired_state::Column::Id",
+        belongs_to = "super::direction::Entity",
+        from = "Column::DirectionId",
+        to = "super::direction::Column::Id",
         on_update = "NoAction",
         on_delete = "Cascade"
     )]
-    DesiredState,
-    #[sea_orm(has_many = "super::diaries_tags::Entity")]
-    DiariesTags,
+    Direction,
     #[sea_orm(has_many = "super::reading_notes_tags::Entity")]
     ReadingNotesTags,
     #[sea_orm(has_many = "super::thinking_note_tags::Entity")]
@@ -75,15 +74,15 @@ impl Related<super::ambition::Entity> for Entity {
     }
 }
 
-impl Related<super::desired_state::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::DesiredState.def()
-    }
-}
-
 impl Related<super::diaries_tags::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::DiariesTags.def()
+    }
+}
+
+impl Related<super::direction::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Direction.def()
     }
 }
 

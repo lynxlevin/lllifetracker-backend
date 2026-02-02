@@ -14,16 +14,14 @@ pub enum ActionTrackType {
 #[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum, Serialize, Deserialize)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "notification_type")]
 pub enum NotificationType {
-    #[sea_orm(string_value = "Action")]
-    Action,
     #[sea_orm(string_value = "Ambition")]
     Ambition,
-    #[sea_orm(string_value = "AmbitionOrDesiredState")]
-    AmbitionOrDesiredState,
-    #[sea_orm(string_value = "DesiredState")]
-    DesiredState,
-    #[sea_orm(string_value = "FocusedDesiredState")]
-    FocusedDesiredState,
+    #[sea_orm(string_value = "AmbitionOrDirection")]
+    AmbitionOrDirection,
+    #[sea_orm(string_value = "Direction")]
+    Direction,
+    #[sea_orm(string_value = "UnaccomplishedAction")]
+    UnaccomplishedAction,
 }
 #[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum, Serialize, Deserialize)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "tag_type")]
@@ -32,8 +30,8 @@ pub enum TagType {
     Action,
     #[sea_orm(string_value = "Ambition")]
     Ambition,
-    #[sea_orm(string_value = "DesiredState")]
-    DesiredState,
+    #[sea_orm(string_value = "Direction")]
+    Direction,
     #[sea_orm(string_value = "Plain")]
     Plain,
 }

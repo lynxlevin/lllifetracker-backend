@@ -31,12 +31,12 @@ pub enum Relation {
     ActionTrack,
     #[sea_orm(has_many = "super::ambition::Entity")]
     Ambition,
-    #[sea_orm(has_many = "super::desired_state::Entity")]
-    DesiredState,
-    #[sea_orm(has_many = "super::desired_state_category::Entity")]
-    DesiredStateCategory,
     #[sea_orm(has_many = "super::diary::Entity")]
     Diary,
+    #[sea_orm(has_many = "super::direction::Entity")]
+    Direction,
+    #[sea_orm(has_many = "super::direction_category::Entity")]
+    DirectionCategory,
     #[sea_orm(has_many = "super::notification_rule::Entity")]
     NotificationRule,
     #[sea_orm(has_many = "super::reading_note::Entity")]
@@ -73,21 +73,21 @@ impl Related<super::ambition::Entity> for Entity {
     }
 }
 
-impl Related<super::desired_state::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::DesiredState.def()
-    }
-}
-
-impl Related<super::desired_state_category::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::DesiredStateCategory.def()
-    }
-}
-
 impl Related<super::diary::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Diary.def()
+    }
+}
+
+impl Related<super::direction::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Direction.def()
+    }
+}
+
+impl Related<super::direction_category::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::DirectionCategory.def()
     }
 }
 

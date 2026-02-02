@@ -35,6 +35,6 @@ pub async fn delete_plain_tag<'a>(
 fn _is_plain_tag(tag: &tag::Model) -> bool {
     return tag.name.is_some()
         && tag.ambition_id.is_none()
-        && tag.desired_state_id.is_none()
+        && tag.direction_id.is_none()
         && tag.action_id.is_none();
 }

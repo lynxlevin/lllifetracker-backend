@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use entities::{
-    action, ambition, desired_state,
+    action, ambition, direction,
     sea_orm_active_enums::TagType,
     tag::{ActiveModel, Column, Entity, Model, Relation},
     user,
@@ -32,7 +32,7 @@ impl<'a> TagAdapter<'a> {
 
 pub trait TagJoin {
     fn join_ambition(self) -> Self;
-    fn join_desired_state(self) -> Self;
+    fn join_direction(self) -> Self;
     fn join_action(self) -> Self;
 }
 
@@ -42,8 +42,8 @@ impl TagJoin for TagAdapter<'_> {
         self
     }
 
-    fn join_desired_state(mut self) -> Self {
-        self.query = self.query.join(LeftJoin, Relation::DesiredState.def());
+    fn join_direction(mut self) -> Self {
+        self.query = self.query.join(LeftJoin, Relation::Direction.def());
         self
     }
 
@@ -74,8 +74,8 @@ impl TagFilter for TagAdapter<'_> {
             )
             .filter(
                 Condition::any()
-                    .add(desired_state::Column::Archived.eq(false))
-                    .add(desired_state::Column::Archived.is_null()),
+                    .add(direction::Column::Archived.eq(false))
+                    .add(direction::Column::Archived.is_null()),
             )
             .filter(
                 Condition::any()
@@ -88,7 +88,7 @@ impl TagFilter for TagAdapter<'_> {
 
 pub trait TagOrder {
     fn order_by_ambition_created_at_nulls_last(self, order: Order) -> Self;
-    fn order_by_desired_state_created_at_nulls_last(self, order: Order) -> Self;
+    fn order_by_direction_created_at_nulls_last(self, order: Order) -> Self;
     fn order_by_action_created_at_nulls_last(self, order: Order) -> Self;
     fn order_by_created_at(self, order: Order) -> Self;
 }
@@ -101,10 +101,10 @@ impl TagOrder for TagAdapter<'_> {
         self
     }
 
-    fn order_by_desired_state_created_at_nulls_last(mut self, order: Order) -> Self {
+    fn order_by_direction_created_at_nulls_last(mut self, order: Order) -> Self {
         self.query = self
             .query
-            .order_by_with_nulls(desired_state::Column::CreatedAt, order, Last);
+            .order_by_with_nulls(direction::Column::CreatedAt, order, Last);
         self
     }
 
@@ -147,8 +147,8 @@ impl TagQuery for TagAdapter<'_> {
                 .case(
                     Expr::col(Column::Type)
                         .cast_as("text")
-                        .eq(TagType::DesiredState),
-                    desired_state::Column::Name.into_column_as_expr(),
+                        .eq(TagType::Direction),
+                    direction::Column::Name.into_column_as_expr(),
                 )
                 .case(
                     Expr::col(Column::Type).cast_as("text").eq(TagType::Action),

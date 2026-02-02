@@ -12,12 +12,12 @@ pub async fn list_tags<'a>(
 ) -> Result<Vec<TagVisible>, UseCaseError> {
     tag_adapter
         .join_ambition()
-        .join_desired_state()
+        .join_direction()
         .join_action()
         .filter_eq_user(&user)
         .filter_out_archived()
         .order_by_ambition_created_at_nulls_last(Asc)
-        .order_by_desired_state_created_at_nulls_last(Asc)
+        .order_by_direction_created_at_nulls_last(Asc)
         .order_by_action_created_at_nulls_last(Asc)
         .order_by_created_at(Asc)
         .get_all_tags()

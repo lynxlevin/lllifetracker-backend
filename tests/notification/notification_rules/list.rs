@@ -21,7 +21,7 @@ async fn happy_path_utc_plus_9() -> Result<(), DbErr> {
     factory::create_weekday_rules(
         user.id,
         &db,
-        NotificationType::AmbitionOrDesiredState,
+        NotificationType::AmbitionOrDirection,
         NaiveTime::from_hms_opt(23, 10, 0).unwrap(),
         true,
     )
@@ -29,7 +29,7 @@ async fn happy_path_utc_plus_9() -> Result<(), DbErr> {
     factory::create_weekend_rules(
         user.id,
         &db,
-        NotificationType::DesiredState,
+        NotificationType::Direction,
         NaiveTime::from_hms_opt(16, 30, 0).unwrap(),
         true,
     )
@@ -51,12 +51,12 @@ async fn happy_path_utc_plus_9() -> Result<(), DbErr> {
             time: NaiveTime::from_hms_opt(9, 0, 0).unwrap(),
         },
         NotificationRuleVisible {
-            r#type: NotificationType::AmbitionOrDesiredState,
+            r#type: NotificationType::AmbitionOrDirection,
             recurrence_type: RecurrenceType::Weekday,
             time: NaiveTime::from_hms_opt(8, 10, 0).unwrap(),
         },
         NotificationRuleVisible {
-            r#type: NotificationType::DesiredState,
+            r#type: NotificationType::Direction,
             recurrence_type: RecurrenceType::Weekend,
             time: NaiveTime::from_hms_opt(1, 30, 0).unwrap(),
         },

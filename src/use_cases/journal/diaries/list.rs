@@ -27,7 +27,7 @@ pub async fn list_diaries<'a>(
         .order_by_date(Desc)
         .order_by_id(Desc)
         .order_by_ambition_created_at_nulls_last(Asc)
-        .order_by_desired_state_created_at_nulls_last(Asc)
+        .order_by_direction_created_at_nulls_last(Asc)
         .order_by_action_created_at_nulls_last(Asc)
         .order_by_tag_created_at_nulls_last(Asc)
         .get_all_with_tags()

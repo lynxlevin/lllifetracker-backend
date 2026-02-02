@@ -48,7 +48,7 @@ async fn happy_path() -> Result<(), DbErr> {
         .filter(tag::Column::UserId.eq(user.id))
         .filter(tag::Column::ActionId.eq(res.id))
         .filter(tag::Column::AmbitionId.is_null())
-        .filter(tag::Column::DesiredStateId.is_null())
+        .filter(tag::Column::DirectionId.is_null())
         .filter(tag::Column::Type.eq(TagType::Action))
         .one(&db)
         .await?;

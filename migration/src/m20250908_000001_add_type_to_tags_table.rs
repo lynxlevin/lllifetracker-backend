@@ -88,7 +88,7 @@ pub enum Tag {
 
 #[derive(DeriveActiveEnum, EnumIter)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "tag_type")]
-enum TagType {
+pub enum TagType {
     #[sea_orm(string_value = "Ambition")]
     Ambition,
     #[sea_orm(string_value = "DesiredState")]
