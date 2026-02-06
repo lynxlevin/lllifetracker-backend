@@ -1,8 +1,11 @@
 use std::future::Future;
 
 use sea_orm::{
-    prelude::Expr, sea_query::NullOrdering::Last, ActiveModelTrait, ColumnAsExpr, ColumnTrait,
-    Condition, DbConn, DbErr, EntityTrait, FromQueryResult, IntoActiveModel, JoinType::LeftJoin,
+    prelude::Expr,
+    sea_query::NullOrdering::{First, Last},
+    ActiveModelTrait, ColumnAsExpr, ColumnTrait, DbConn, DbErr, EntityTrait, FromQueryResult,
+    IntoActiveModel,
+    JoinType::LeftJoin,
     ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait, Select, Set,
 };
 use serde::{Deserialize, Serialize};
@@ -55,7 +58,6 @@ impl TagJoin for TagAdapter<'_> {
 
 pub trait TagFilter {
     fn filter_eq_user(self, user: &user::Model) -> Self;
-    fn filter_out_archived(self) -> Self;
 }
 
 impl TagFilter for TagAdapter<'_> {
@@ -63,60 +65,45 @@ impl TagFilter for TagAdapter<'_> {
         self.query = self.query.filter(Column::UserId.eq(user.id));
         self
     }
-
-    fn filter_out_archived(mut self) -> Self {
-        self.query = self
-            .query
-            .filter(
-                Condition::any()
-                    .add(ambition::Column::Archived.eq(false))
-                    .add(ambition::Column::Archived.is_null()),
-            )
-            .filter(
-                Condition::any()
-                    .add(direction::Column::Archived.eq(false))
-                    .add(direction::Column::Archived.is_null()),
-            )
-            .filter(
-                Condition::any()
-                    .add(action::Column::Archived.eq(false))
-                    .add(action::Column::Archived.is_null()),
-            );
-        self
-    }
 }
 
 pub trait TagOrder {
-    fn order_by_ambition_created_at_nulls_last(self, order: Order) -> Self;
-    fn order_by_direction_created_at_nulls_last(self, order: Order) -> Self;
-    fn order_by_action_created_at_nulls_last(self, order: Order) -> Self;
+    fn order_by_ambition_ordering_nulls_last(self, order: Order) -> Self;
+    fn order_by_direction_ordering_nulls_first(self, order: Order) -> Self;
+    fn order_by_action_ordering_nulls_last(self, order: Order) -> Self;
     fn order_by_created_at(self, order: Order) -> Self;
+    fn order_by_type(self, order: Order) -> Self;
 }
 
 impl TagOrder for TagAdapter<'_> {
-    fn order_by_ambition_created_at_nulls_last(mut self, order: Order) -> Self {
+    fn order_by_ambition_ordering_nulls_last(mut self, order: Order) -> Self {
         self.query = self
             .query
-            .order_by_with_nulls(ambition::Column::CreatedAt, order, Last);
+            .order_by_with_nulls(ambition::Column::Ordering, order, Last);
         self
     }
 
-    fn order_by_direction_created_at_nulls_last(mut self, order: Order) -> Self {
+    fn order_by_direction_ordering_nulls_first(mut self, order: Order) -> Self {
         self.query = self
             .query
-            .order_by_with_nulls(direction::Column::CreatedAt, order, Last);
+            .order_by_with_nulls(direction::Column::Ordering, order, First);
         self
     }
 
-    fn order_by_action_created_at_nulls_last(mut self, order: Order) -> Self {
+    fn order_by_action_ordering_nulls_last(mut self, order: Order) -> Self {
         self.query = self
             .query
-            .order_by_with_nulls(action::Column::CreatedAt, order, Last);
+            .order_by_with_nulls(action::Column::Ordering, order, Last);
         self
     }
 
     fn order_by_created_at(mut self, order: Order) -> Self {
         self.query = self.query.order_by(Column::CreatedAt, order);
+        self
+    }
+
+    fn order_by_type(mut self, order: Order) -> Self {
+        self.query = self.query.order_by(Column::Type, order);
         self
     }
 }
