@@ -28,14 +28,16 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(res.status(), http::StatusCode::CREATED);
 
     let res: AmbitionVisible = test::read_body_json(res).await;
-    assert_eq!(res.name, name.clone());
-    assert_eq!(res.description, description.clone());
-
     let ambition_in_db = ambition::Entity::find_by_id(res.id)
         .one(&db)
         .await?
         .unwrap();
     assert_eq!(ambition_in_db.user_id, user.id);
+    assert_eq!(ambition_in_db.name, name);
+    assert_eq!(ambition_in_db.description, description);
+    assert_eq!(ambition_in_db.archived, false);
+    assert_eq!(ambition_in_db.ordering, None);
+
     assert_eq!(AmbitionVisible::from(ambition_in_db), res);
 
     let tag_in_db = tag::Entity::find()
@@ -70,14 +72,17 @@ async fn happy_path_no_description() -> Result<(), DbErr> {
     assert_eq!(res.status(), http::StatusCode::CREATED);
 
     let res: AmbitionVisible = test::read_body_json(res).await;
-    assert_eq!(res.name, name.clone());
-    assert!(res.description.is_none());
 
     let ambition_in_db = ambition::Entity::find_by_id(res.id)
         .one(&db)
         .await?
         .unwrap();
     assert_eq!(ambition_in_db.user_id, user.id);
+    assert_eq!(ambition_in_db.name, name);
+    assert_eq!(ambition_in_db.description, None);
+    assert_eq!(ambition_in_db.archived, false);
+    assert_eq!(ambition_in_db.ordering, None);
+
     assert_eq!(AmbitionVisible::from(ambition_in_db), res);
 
     let tag_in_db = tag::Entity::find()

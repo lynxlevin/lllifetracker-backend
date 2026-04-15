@@ -32,20 +32,21 @@ async fn happy_path() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::OK);
 
-    let res: DirectionVisible = test::read_body_json(res).await;
-    assert_eq!(res.id, direction.id);
-    assert_eq!(res.name, new_name.clone());
-    assert_eq!(res.description, Some(new_description.clone()));
-    assert_eq!(res.category_id, Some(category.id));
-    assert_eq!(res.created_at, direction.created_at);
-    assert!(res.updated_at > direction.updated_at);
-
     let direction_in_db = direction::Entity::find_by_id(direction.id)
         .one(&db)
         .await?
         .unwrap();
+    assert_eq!(direction_in_db.id, direction.id);
     assert_eq!(direction_in_db.user_id, user.id);
+    assert_eq!(direction_in_db.name, new_name);
+    assert_eq!(direction_in_db.created_at, direction.created_at);
+    assert!(direction_in_db.updated_at > direction.updated_at);
+    assert_eq!(direction_in_db.description, Some(new_description));
     assert_eq!(direction_in_db.archived, direction.archived);
+    assert_eq!(direction_in_db.ordering, direction.ordering);
+    assert_eq!(direction_in_db.category_id, Some(category.id));
+
+    let res: DirectionVisible = test::read_body_json(res).await;
     assert_eq!(DirectionVisible::from(direction_in_db), res);
 
     Ok(())
@@ -87,7 +88,16 @@ async fn no_category_cases() -> Result<(), DbErr> {
             .one(&db)
             .await?
             .unwrap();
+        assert_eq!(direction_in_db.id, direction.id);
         assert_eq!(direction_in_db.user_id, user.id);
+        assert_eq!(direction_in_db.name, String::default());
+        assert_eq!(direction_in_db.created_at, direction.created_at);
+        assert!(direction_in_db.updated_at > direction.updated_at);
+        assert_eq!(direction_in_db.description, None);
+        assert_eq!(direction_in_db.archived, direction.archived);
+        assert_eq!(direction_in_db.ordering, direction.ordering);
+        assert_eq!(direction_in_db.category_id, None);
+
         assert_eq!(DirectionVisible::from(direction_in_db), res);
     }
 

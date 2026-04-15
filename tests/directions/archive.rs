@@ -10,7 +10,7 @@ use entities::direction;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let direction = factory::direction(user.id).insert(&db).await?;
 
@@ -22,19 +22,21 @@ async fn happy_path() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::OK);
 
-    let res: DirectionVisible = test::read_body_json(res).await;
-    assert_eq!(res.id, direction.id);
-    assert_eq!(res.name, direction.name.clone());
-    assert_eq!(res.description, direction.description.clone());
-    assert_eq!(res.created_at, direction.created_at);
-    assert!(res.updated_at > direction.updated_at);
-
     let direction_in_db = direction::Entity::find_by_id(direction.id)
         .one(&db)
         .await?
         .unwrap();
+    assert_eq!(direction_in_db.id, direction.id);
     assert_eq!(direction_in_db.user_id, user.id);
+    assert_eq!(direction_in_db.name, direction.name);
+    assert_eq!(direction_in_db.created_at, direction.created_at);
+    assert!(direction_in_db.updated_at > direction.updated_at);
+    assert_eq!(direction_in_db.description, direction.description);
     assert_eq!(direction_in_db.archived, true);
+    assert_eq!(direction_in_db.ordering, direction.ordering);
+    assert_eq!(direction_in_db.category_id, direction.category_id);
+
+    let res: DirectionVisible = test::read_body_json(res).await;
     assert_eq!(DirectionVisible::from(direction_in_db), res);
 
     Ok(())
@@ -42,7 +44,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let direction = factory::direction(user.id).insert(&db).await?;
 

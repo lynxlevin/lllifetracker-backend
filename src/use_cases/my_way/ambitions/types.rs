@@ -10,6 +10,7 @@ pub struct AmbitionVisible {
     pub id: uuid::Uuid,
     pub name: String,
     pub description: Option<String>,
+    pub archived: bool,
     pub created_at: DateTime<FixedOffset>,
     pub updated_at: DateTime<FixedOffset>,
 }
@@ -20,6 +21,7 @@ impl From<&ambition::Model> for AmbitionVisible {
             id: item.id,
             name: item.name.clone(),
             description: item.description.clone(),
+            archived: item.archived,
             created_at: item.created_at,
             updated_at: item.updated_at,
         }

@@ -35,13 +35,17 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(res.status(), http::StatusCode::CREATED);
 
     let res: ActionVisible = test::read_body_json(res).await;
-    assert_eq!(res.name, name.clone());
-    assert_eq!(res.discipline, Some(discipline.clone()));
-    assert_eq!(res.memo, Some(memo.clone()));
-    assert_eq!(res.track_type, ActionTrackType::Count);
 
     let action_in_db = action::Entity::find_by_id(res.id).one(&db).await?.unwrap();
     assert_eq!(action_in_db.user_id, user.id);
+    assert_eq!(action_in_db.name, name);
+    assert_eq!(action_in_db.discipline, Some(discipline));
+    assert_eq!(action_in_db.archived, false);
+    assert_eq!(action_in_db.ordering, None);
+    assert_eq!(action_in_db.color, "#212121".to_string());
+    assert_eq!(action_in_db.track_type, ActionTrackType::Count);
+    assert_eq!(action_in_db.memo, Some(memo));
+
     assert_eq!(ActionVisible::from(action_in_db), res);
 
     let tag_in_db = tag::Entity::find()
