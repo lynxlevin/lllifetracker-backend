@@ -83,11 +83,6 @@ impl From<(action::Model, Option<action_goal::Model>)> for ActionVisibleWithGoal
     }
 }
 
-#[derive(Deserialize, Debug)]
-pub struct ActionListQuery {
-    pub show_archived_only: Option<bool>,
-}
-
 #[derive(Deserialize, Debug, Serialize)]
 pub struct ActionCreateRequest {
     pub name: String,

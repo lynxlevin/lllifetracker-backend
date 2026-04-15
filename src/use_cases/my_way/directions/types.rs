@@ -37,11 +37,6 @@ impl From<direction::Model> for DirectionVisible {
     }
 }
 
-#[derive(Deserialize, Debug)]
-pub struct DirectionListQuery {
-    pub show_archived_only: Option<bool>,
-}
-
 #[derive(Deserialize, Debug, Serialize)]
 pub struct DirectionCreateRequest {
     pub name: String,

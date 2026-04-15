@@ -50,18 +50,12 @@ impl ActionJoin for ActionAdapter<'_> {
 
 pub trait ActionFilter {
     fn filter_eq_user(self, user: &user::Model) -> Self;
-    fn filter_eq_archived(self, archived: bool) -> Self;
     fn filter_in_ids(self, ids: Vec<Uuid>) -> Self;
 }
 
 impl ActionFilter for ActionAdapter<'_> {
     fn filter_eq_user(mut self, user: &user::Model) -> Self {
         self.query = self.query.filter(Column::UserId.eq(user.id));
-        self
-    }
-
-    fn filter_eq_archived(mut self, archived: bool) -> Self {
-        self.query = self.query.filter(Column::Archived.eq(archived));
         self
     }
 

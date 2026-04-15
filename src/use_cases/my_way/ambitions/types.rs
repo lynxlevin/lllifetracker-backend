@@ -34,11 +34,6 @@ impl From<ambition::Model> for AmbitionVisible {
     }
 }
 
-#[derive(Deserialize, Debug)]
-pub struct AmbitionListQuery {
-    pub show_archived_only: Option<bool>,
-}
-
 #[derive(Deserialize, Debug, Serialize)]
 pub struct AmbitionCreateRequest {
     pub name: String,
