@@ -7,14 +7,11 @@ use common::settings::types::Settings;
 use db_adapters::web_push_subscription_adapter::WebPushSubscriptionAdapter;
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use use_cases::{
-    notification::web_push_subscription::{
-        create::create_web_push_subscription, types::WebPushSubscriptionCreateRequest,
-    },
-    UseCaseError,
+use use_cases::notification::web_push_subscription::{
+    create::create_web_push_subscription, types::WebPushSubscriptionCreateRequest,
 };
 
-use crate::utils::{response_401, response_404, response_500};
+use crate::utils::{response_401, response_500};
 
 #[tracing::instrument(
     name = "Registering a web push subscription",
@@ -38,10 +35,7 @@ pub async fn create_web_push_subscription_endpoint(
             .await
             {
                 Ok(res) => HttpResponse::Created().json(res),
-                Err(e) => match &e {
-                    UseCaseError::NotFound(message) => response_404(message),
-                    _ => response_500(e),
-                },
+                Err(e) => response_500(e),
             }
         }
         None => response_401(),
