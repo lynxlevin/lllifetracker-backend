@@ -10,7 +10,7 @@ use entities::ambition;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let ambition = factory::ambition(user.id).insert(&db).await?;
 
@@ -22,19 +22,20 @@ async fn happy_path() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::OK);
 
-    let res: AmbitionVisible = test::read_body_json(res).await;
-    assert_eq!(res.id, ambition.id);
-    assert_eq!(res.name, ambition.name.clone());
-    assert_eq!(res.description, ambition.description.clone());
-    assert_eq!(res.created_at, ambition.created_at);
-    assert!(res.updated_at > ambition.updated_at);
-
     let ambition_in_db = ambition::Entity::find_by_id(ambition.id)
         .one(&db)
         .await?
         .unwrap();
+    assert_eq!(ambition_in_db.id, ambition.id);
     assert_eq!(ambition_in_db.user_id, user.id);
+    assert_eq!(ambition_in_db.name, ambition.name);
+    assert_eq!(ambition_in_db.description, ambition.description);
+    assert_eq!(ambition_in_db.created_at, ambition.created_at);
+    assert!(ambition_in_db.updated_at > ambition.updated_at);
     assert_eq!(ambition_in_db.archived, true);
+    assert_eq!(ambition_in_db.ordering, ambition.ordering);
+
+    let res: AmbitionVisible = test::read_body_json(res).await;
     assert_eq!(AmbitionVisible::from(ambition_in_db), res);
 
     Ok(())
@@ -42,7 +43,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let ambition = factory::ambition(user.id).insert(&db).await?;
 

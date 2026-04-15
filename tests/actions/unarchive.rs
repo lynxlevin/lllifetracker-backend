@@ -23,21 +23,23 @@ async fn happy_path() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::OK);
 
-    let res: ActionVisible = test::read_body_json(res).await;
-    assert_eq!(res.id, action.id);
-    assert_eq!(res.name, action.name.clone());
-    assert_eq!(res.discipline, action.discipline.clone());
-    assert_eq!(res.memo, action.memo.clone());
-    assert_eq!(res.created_at, action.created_at);
-    assert!(res.updated_at > action.updated_at);
-
-    let restored_action = action::Entity::find_by_id(action.id)
+    let action_in_db = action::Entity::find_by_id(action.id)
         .one(&db)
         .await?
         .unwrap();
-    assert_eq!(restored_action.user_id, user.id);
-    assert_eq!(restored_action.archived, false);
-    assert_eq!(ActionVisible::from(restored_action), res);
+    assert_eq!(action_in_db.user_id, user.id);
+    assert_eq!(action_in_db.name, action.name);
+    assert_eq!(action_in_db.created_at, action.created_at);
+    assert!(action_in_db.updated_at > action.updated_at);
+    assert_eq!(action_in_db.discipline, action.discipline);
+    assert_eq!(action_in_db.archived, false);
+    assert_eq!(action_in_db.ordering, action.ordering);
+    assert_eq!(action_in_db.color, action.color);
+    assert_eq!(action_in_db.track_type, action.track_type);
+    assert_eq!(action_in_db.memo, action.memo);
+
+    let res: ActionVisible = test::read_body_json(res).await;
+    assert_eq!(ActionVisible::from(action_in_db), res);
 
     Ok(())
 }
