@@ -12,6 +12,7 @@ pub struct DirectionVisible {
     pub name: String,
     pub description: Option<String>,
     pub category_id: Option<Uuid>,
+    pub archived: bool,
     pub created_at: DateTime<FixedOffset>,
     pub updated_at: DateTime<FixedOffset>,
 }
@@ -23,6 +24,7 @@ impl From<&direction::Model> for DirectionVisible {
             name: item.name.clone(),
             description: item.description.clone(),
             category_id: item.category_id,
+            archived: item.archived,
             created_at: item.created_at,
             updated_at: item.updated_at,
         }

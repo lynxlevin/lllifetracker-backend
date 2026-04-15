@@ -16,6 +16,7 @@ pub struct ActionVisible {
     pub memo: Option<String>,
     pub color: String,
     pub track_type: ActionTrackType,
+    pub archived: bool,
     pub created_at: DateTime<FixedOffset>,
     pub updated_at: DateTime<FixedOffset>,
 }
@@ -29,6 +30,7 @@ impl From<&action::Model> for ActionVisible {
             memo: item.memo.clone(),
             color: item.color.clone(),
             track_type: item.track_type.clone(),
+            archived: item.archived,
             created_at: item.created_at,
             updated_at: item.updated_at,
         }
