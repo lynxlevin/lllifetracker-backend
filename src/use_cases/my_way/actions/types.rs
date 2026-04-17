@@ -51,6 +51,7 @@ pub struct ActionVisibleWithGoal {
     pub memo: Option<String>,
     pub color: String,
     pub track_type: ActionTrackType,
+    pub archived: bool,
     pub goal: Option<ActionGoalVisible>,
     pub created_at: DateTime<FixedOffset>,
     pub updated_at: DateTime<FixedOffset>,
@@ -65,6 +66,7 @@ impl From<&(action::Model, Option<action_goal::Model>)> for ActionVisibleWithGoa
             memo: value.0.memo.clone(),
             color: value.0.color.clone(),
             track_type: value.0.track_type.clone(),
+            archived: value.0.archived,
             goal: value
                 .1
                 .as_ref()
@@ -79,11 +81,6 @@ impl From<(action::Model, Option<action_goal::Model>)> for ActionVisibleWithGoal
     fn from(value: (action::Model, Option<action_goal::Model>)) -> Self {
         ActionVisibleWithGoal::from(&(value.0, value.1))
     }
-}
-
-#[derive(Deserialize, Debug)]
-pub struct ActionListQuery {
-    pub show_archived_only: Option<bool>,
 }
 
 #[derive(Deserialize, Debug, Serialize)]

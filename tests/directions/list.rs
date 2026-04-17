@@ -19,14 +19,12 @@ async fn happy_path() -> Result<(), DbErr> {
         .name("direction_1".to_string())
         .insert(&db)
         .await?;
-    let _archived_direction = factory::direction(user.id)
+    let archived_direction = factory::direction(user.id)
         .archived(true)
         .insert(&db)
         .await?;
 
-    let req = test::TestRequest::get()
-        .uri("/api/directions")
-        .to_request();
+    let req = test::TestRequest::get().uri("/api/directions").to_request();
     req.extensions_mut().insert(user.clone());
 
     let resp = test::call_service(&app, req).await;
@@ -36,37 +34,8 @@ async fn happy_path() -> Result<(), DbErr> {
     let expected = vec![
         DirectionVisible::from(direction_0),
         DirectionVisible::from(direction_1),
+        DirectionVisible::from(archived_direction),
     ];
-
-    assert_eq!(body.len(), expected.len());
-    for i in 0..body.len() {
-        dbg!(i);
-        assert_eq!(body[i], expected[i]);
-    }
-
-    Ok(())
-}
-
-#[actix_web::test]
-async fn happy_path_show_archived_only() -> Result<(), DbErr> {
-    let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let _direction = factory::direction(user.id).insert(&db).await?;
-    let archived_direction = factory::direction(user.id)
-        .archived(true)
-        .insert(&db)
-        .await?;
-
-    let req = test::TestRequest::get()
-        .uri("/api/directions?show_archived_only=true")
-        .to_request();
-    req.extensions_mut().insert(user.clone());
-
-    let resp = test::call_service(&app, req).await;
-    assert_eq!(resp.status(), http::StatusCode::OK);
-
-    let body: Vec<DirectionVisible> = test::read_body_json(resp).await;
-    let expected = vec![DirectionVisible::from(archived_direction)];
 
     assert_eq!(body.len(), expected.len());
     for i in 0..body.len() {
@@ -81,9 +50,7 @@ async fn happy_path_show_archived_only() -> Result<(), DbErr> {
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let Connections { app, .. } = init_app().await?;
 
-    let req = test::TestRequest::get()
-        .uri("/api/directions")
-        .to_request();
+    let req = test::TestRequest::get().uri("/api/directions").to_request();
 
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), http::StatusCode::UNAUTHORIZED);
@@ -123,9 +90,7 @@ async fn ordering_with_category() -> Result<(), DbErr> {
         .insert(&db)
         .await?;
 
-    let req = test::TestRequest::get()
-        .uri("/api/directions")
-        .to_request();
+    let req = test::TestRequest::get().uri("/api/directions").to_request();
     req.extensions_mut().insert(user.clone());
 
     let resp = test::call_service(&app, req).await;
