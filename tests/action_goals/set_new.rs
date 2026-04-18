@@ -8,7 +8,9 @@ use crate::utils::Connections;
 
 use super::super::utils::init_app;
 use common::factory::{self, ActionFactory, ActionGoalFactory};
-use entities::{action_goal, sea_orm_active_enums::ActionTrackType};
+use entities::{
+    action_goal, custom_methods::user::UserTimezoneTrait, sea_orm_active_enums::ActionTrackType,
+};
 
 #[actix_web::test]
 async fn happy_path_time_span() -> Result<(), DbErr> {
@@ -147,8 +149,10 @@ async fn duplicate_from_date() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let action = factory::action(user.id).insert(&db).await?;
-    // MEMO: This test is flakey just around midnight, but the probability is so low I don't freeze now function.
-    let existing_goal = factory::action_goal(user.id, action.id).insert(&db).await?;
+    let existing_goal = factory::action_goal(user.id, action.id)
+        .from_date(user.to_user_timezone(Utc::now()).date_naive())
+        .insert(&db)
+        .await?;
 
     let req = test::TestRequest::post()
         .uri("/api/action_goals")
