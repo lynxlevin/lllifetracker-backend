@@ -35,6 +35,7 @@ pub struct ApplicationSettings {
     pub login_attempts_cool_time_seconds: u64,
     pub vapid_private_key: String,
     pub app_owner_email: String,
+    pub session_lifetime_days: i64,
 }
 
 #[derive(Deserialize, Clone, Default, Debug)]
