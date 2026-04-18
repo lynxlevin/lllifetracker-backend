@@ -34,6 +34,7 @@ fn get_development_settings() -> Result<Settings, String> {
             host: "127.0.0.1".to_string(),
             base_url: "http://127.0.0.1".to_string(),
             frontend_url: "https://localhost:3000".to_string(),
+            session_lifetime_days: 365,
             ..b.application
         },
         debug: true,
@@ -53,6 +54,7 @@ fn get_production_settings() -> Result<Settings, String> {
             host: "0.0.0.0".to_string(),
             base_url: "".to_string(),
             frontend_url: "https://localhost:3000".to_string(),
+            session_lifetime_days: 30,
             ..b.application
         },
         debug: false,
