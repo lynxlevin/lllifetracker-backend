@@ -8,7 +8,7 @@ use crate::utils::Connections;
 
 use super::super::utils::init_app;
 use common::factory::{self, ActionGoalFactory};
-use entities::action_goal;
+use entities::{action_goal, custom_methods::user::UserTimezoneTrait};
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
@@ -50,7 +50,10 @@ async fn from_date_is_today() -> Result<(), DbErr> {
     let user = factory::user().insert(&db).await?;
     let action = factory::action(user.id).insert(&db).await?;
     // MEMO: This test is flakey just around midnight, but the probability is so low I don't freeze now function.
-    let action_goal = factory::action_goal(user.id, action.id).insert(&db).await?;
+    let action_goal = factory::action_goal(user.id, action.id)
+        .from_date(user.to_user_timezone(Utc::now()).date_naive())
+        .insert(&db)
+        .await?;
 
     let req = test::TestRequest::delete()
         .uri(&format!("/api/action_goals?action_id={}", action.id))
