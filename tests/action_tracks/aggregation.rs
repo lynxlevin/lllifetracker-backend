@@ -12,40 +12,56 @@ use common::factory::{self, *};
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
-    let action_0 = factory::action(user.id).insert(&db).await?;
-    let action_1 = factory::action(user.id).insert(&db).await?;
-    let _action_2 = factory::action(user.id).insert(&db).await?;
+    let actions = create_actions(
+        vec![
+            ActionParam { name: "action_0".to_string(), ..Default::default() },
+            ActionParam { name: "action_1".to_string(), ..Default::default() },
+            ActionParam { name: "_action_2".to_string(), ..Default::default() },
+        ],
+        &user,
+        &db,
+    )
+    .await?;
+    let action_0 = actions.get("action_0").unwrap();
+    let action_1 = actions.get("action_1").unwrap();
     let jst_now = Utc::now().with_timezone(&FixedOffset::east_opt(9 * 3600).unwrap());
-    let action_0_track_0 = factory::action_track(user.id)
-        .started_at(jst_now - Duration::days(1))
-        .duration(Some(120))
-        .action_id(action_0.id)
-        .insert(&db)
-        .await?;
-    let _action_0_track_1 = factory::action_track(user.id)
-        .started_at(jst_now)
-        .duration(Some(180))
-        .action_id(action_0.id)
-        .insert(&db)
-        .await?;
-    let action_0_track_2 = factory::action_track(user.id)
-        .started_at(jst_now + Duration::days(1))
-        .duration(Some(300))
-        .action_id(action_0.id)
-        .insert(&db)
-        .await?;
-    let _action_0_track_3 = factory::action_track(user.id)
-        .started_at(jst_now + Duration::days(2))
-        .duration(Some(550))
-        .action_id(action_0.id)
-        .insert(&db)
-        .await?;
-    let action_1_track_0 = factory::action_track(user.id)
-        .started_at(jst_now + Duration::days(1))
-        .duration(Some(350))
-        .action_id(action_1.id)
-        .insert(&db)
-        .await?;
+    let action_tracks = create_action_tracks(
+        vec![
+            ActionTrackParam {
+                name: "action_0_track_0".to_string(),
+                action_id: action_0.id,
+                started_at: jst_now - Duration::days(1),
+                duration: Some(120),
+            },
+            ActionTrackParam {
+                name: "_action_0_track_1".to_string(),
+                action_id: action_0.id,
+                started_at: jst_now,
+                duration: Some(180),
+            },
+            ActionTrackParam {
+                name: "action_0_track_2".to_string(),
+                action_id: action_0.id,
+                started_at: jst_now + Duration::days(1),
+                duration: Some(300),
+            },
+            ActionTrackParam {
+                name: "_action_0_track_3".to_string(),
+                action_id: action_0.id,
+                started_at: jst_now + Duration::days(2),
+                duration: Some(550),
+            },
+            ActionTrackParam {
+                name: "action_1_track_0".to_string(),
+                action_id: action_1.id,
+                started_at: jst_now + Duration::days(1),
+                duration: Some(350),
+            },
+        ],
+        &user,
+        &db,
+    )
+    .await?;
 
     let req = test::TestRequest::get()
         .uri(&format!(
@@ -65,12 +81,13 @@ async fn happy_path() -> Result<(), DbErr> {
         durations_by_action: vec![
             ActionTrackAggregationDuration {
                 action_id: action_0.id,
-                duration: action_0_track_0.duration.unwrap() + action_0_track_2.duration.unwrap(),
+                duration: action_tracks.get("action_0_track_0").unwrap().duration.unwrap()
+                    + action_tracks.get("action_0_track_2").unwrap().duration.unwrap(),
                 count: 2,
             },
             ActionTrackAggregationDuration {
                 action_id: action_1.id,
-                duration: action_1_track_0.duration.unwrap(),
+                duration: action_tracks.get("action_1_track_0").unwrap().duration.unwrap(),
                 count: 1,
             },
         ],
@@ -89,39 +106,55 @@ async fn started_at_gte_lte() -> Result<(), DbErr> {
         DateTime::parse_from_rfc3339("2025-01-27T00:00:00Z").unwrap();
     let query_started_at_lte: DateTime<FixedOffset> =
         DateTime::parse_from_rfc3339("2025-01-27T23:59:59Z").unwrap();
-    let action_0 = factory::action(user.id).insert(&db).await?;
-    let action_1 = factory::action(user.id).insert(&db).await?;
-    let _action_2 = factory::action(user.id).insert(&db).await?;
-    let _action_0_track_0 = factory::action_track(user.id)
-        .started_at(query_started_at_gte - Duration::seconds(1))
-        .duration(Some(120))
-        .action_id(action_0.id)
-        .insert(&db)
-        .await?;
-    let action_0_track_1 = factory::action_track(user.id)
-        .started_at(query_started_at_gte)
-        .duration(Some(180))
-        .action_id(action_0.id)
-        .insert(&db)
-        .await?;
-    let action_0_track_2 = factory::action_track(user.id)
-        .started_at(query_started_at_lte)
-        .duration(Some(300))
-        .action_id(action_0.id)
-        .insert(&db)
-        .await?;
-    let _action_0_track_3 = factory::action_track(user.id)
-        .started_at(query_started_at_lte + Duration::seconds(1))
-        .duration(Some(550))
-        .action_id(action_0.id)
-        .insert(&db)
-        .await?;
-    let action_1_track_0 = factory::action_track(user.id)
-        .started_at(query_started_at_lte)
-        .duration(Some(350))
-        .action_id(action_1.id)
-        .insert(&db)
-        .await?;
+    let actions = create_actions(
+        vec![
+            ActionParam { name: "action_0".to_string(), ..Default::default() },
+            ActionParam { name: "action_1".to_string(), ..Default::default() },
+            ActionParam { name: "_action_2".to_string(), ..Default::default() },
+        ],
+        &user,
+        &db,
+    )
+    .await?;
+    let action_0 = actions.get("action_0").unwrap();
+    let action_1 = actions.get("action_1").unwrap();
+    let action_tracks = create_action_tracks(
+        vec![
+            ActionTrackParam {
+                name: "_action_0_track_0".to_string(),
+                action_id: action_0.id,
+                started_at: query_started_at_gte - Duration::seconds(1),
+                duration: Some(120),
+            },
+            ActionTrackParam {
+                name: "action_0_track_1".to_string(),
+                action_id: action_0.id,
+                started_at: query_started_at_gte,
+                duration: Some(180),
+            },
+            ActionTrackParam {
+                name: "action_0_track_2".to_string(),
+                action_id: action_0.id,
+                started_at: query_started_at_lte,
+                duration: Some(300),
+            },
+            ActionTrackParam {
+                name: "_action_0_track_3".to_string(),
+                action_id: action_0.id,
+                started_at: query_started_at_lte + Duration::seconds(1),
+                duration: Some(550),
+            },
+            ActionTrackParam {
+                name: "action_1_track_0".to_string(),
+                action_id: action_1.id,
+                started_at: query_started_at_lte,
+                duration: Some(350),
+            },
+        ],
+        &user,
+        &db,
+    )
+    .await?;
 
     let req = test::TestRequest::get()
         .uri(&format!(
@@ -141,12 +174,13 @@ async fn started_at_gte_lte() -> Result<(), DbErr> {
         durations_by_action: vec![
             ActionTrackAggregationDuration {
                 action_id: action_0.id,
-                duration: action_0_track_1.duration.unwrap() + action_0_track_2.duration.unwrap(),
+                duration: action_tracks.get("action_0_track_1").unwrap().duration.unwrap()
+                    + action_tracks.get("action_0_track_2").unwrap().duration.unwrap(),
                 count: 2,
             },
             ActionTrackAggregationDuration {
                 action_id: action_1.id,
-                duration: action_1_track_0.duration.unwrap(),
+                duration: action_tracks.get("action_1_track_0").unwrap().duration.unwrap(),
                 count: 1,
             },
         ],

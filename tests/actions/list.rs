@@ -13,15 +13,29 @@ use common::factory::{self, *};
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
-    let action_0 = factory::action(user.id)
-        .name("action_0".to_string())
-        .insert(&db)
-        .await?;
-    let action_1 = factory::action(user.id)
-        .name("action_1".to_string())
-        .track_type(ActionTrackType::Count)
-        .insert(&db)
-        .await?;
+    let mut actions = create_actions(
+        vec![
+            ActionParam { name: "action_0".to_string(), track_type: None, archived: false, ..Default::default() },
+            ActionParam {
+                name: "action_1".to_string(),
+                track_type: Some(ActionTrackType::Count),
+                archived: false,
+                ..Default::default()
+            },
+            ActionParam {
+                name: "archived_action".to_string(),
+                track_type: None,
+                archived: true,
+                ..Default::default()
+            },
+        ],
+        &user,
+        &db,
+    )
+    .await?;
+    let action_0 = actions.remove("action_0").unwrap();
+    let action_1 = actions.remove("action_1").unwrap();
+    let archived_action = actions.remove("archived_action").unwrap();
     let action_goal_0 = factory::action_goal(user.id, action_0.id)
         .duration_seconds(Some(3600))
         .insert(&db)
@@ -30,7 +44,6 @@ async fn happy_path() -> Result<(), DbErr> {
         .count(Some(5))
         .insert(&db)
         .await?;
-    let archived_action = factory::action(user.id).archived(true).insert(&db).await?;
 
     let req = test::TestRequest::get().uri("/api/actions").to_request();
     req.extensions_mut().insert(user.clone());

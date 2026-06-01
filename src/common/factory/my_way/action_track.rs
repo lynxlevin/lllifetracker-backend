@@ -1,10 +1,15 @@
-use entities::action_track;
-use chrono::{Duration, SubsecRound, Utc};
-use sea_orm::{ActiveValue::NotSet, Set};
+use std::collections::HashMap;
+
+use chrono::{DateTime, Duration, FixedOffset, SubsecRound, Utc};
+use entities::{
+    action_track::{ActiveModel, Entity, Model},
+    user,
+};
+use sea_orm::{ActiveValue::NotSet, DbConn, DbErr, EntityTrait, Set};
 use uuid::Uuid;
 
-pub fn action_track(user_id: Uuid) -> action_track::ActiveModel {
-    action_track::ActiveModel {
+pub fn action_track(user_id: Uuid) -> ActiveModel {
+    ActiveModel {
         id: Set(Uuid::now_v7()),
         user_id: Set(user_id),
         action_id: NotSet,
@@ -15,21 +20,18 @@ pub fn action_track(user_id: Uuid) -> action_track::ActiveModel {
 }
 
 pub trait ActionTrackFactory {
-    fn action_id(self, action_id: Uuid) -> action_track::ActiveModel;
-    fn duration(self, duration: Option<i64>) -> action_track::ActiveModel;
-    fn started_at(
-        self,
-        started_at: chrono::DateTime<chrono::FixedOffset>,
-    ) -> action_track::ActiveModel;
+    fn action_id(self, action_id: Uuid) -> ActiveModel;
+    fn duration(self, duration: Option<i64>) -> ActiveModel;
+    fn started_at(self, started_at: chrono::DateTime<chrono::FixedOffset>) -> ActiveModel;
 }
 
-impl ActionTrackFactory for action_track::ActiveModel {
-    fn action_id(mut self, action_id: Uuid) -> action_track::ActiveModel {
+impl ActionTrackFactory for ActiveModel {
+    fn action_id(mut self, action_id: Uuid) -> ActiveModel {
         self.action_id = Set(action_id);
         self
     }
 
-    fn duration(mut self, duration: Option<i64>) -> action_track::ActiveModel {
+    fn duration(mut self, duration: Option<i64>) -> ActiveModel {
         self.duration = Set(duration);
         match duration {
             Some(duration) => {
@@ -42,10 +44,7 @@ impl ActionTrackFactory for action_track::ActiveModel {
         self
     }
 
-    fn started_at(
-        mut self,
-        started_at: chrono::DateTime<chrono::FixedOffset>,
-    ) -> action_track::ActiveModel {
+    fn started_at(mut self, started_at: chrono::DateTime<chrono::FixedOffset>) -> ActiveModel {
         self.started_at = Set(started_at);
         if self.duration == NotSet {
             return self;
@@ -55,4 +54,34 @@ impl ActionTrackFactory for action_track::ActiveModel {
         }
         self
     }
+}
+
+#[derive(Default)]
+pub struct ActionTrackParam {
+    pub name: String,
+    pub action_id: Uuid,
+    pub started_at: DateTime<FixedOffset>,
+    pub duration: Option<i64>,
+}
+
+pub async fn create_action_tracks<'a>(
+    params: Vec<ActionTrackParam>,
+    user: &'a user::Model,
+    db: &'a DbConn,
+) -> Result<HashMap<String, Model>, DbErr> {
+    let action_tracks = params.iter().map(|param| {
+        action_track(user.id)
+            .action_id(param.action_id)
+            .started_at(param.started_at)
+            .duration(param.duration)
+    });
+    let action_tracks = Entity::insert_many(action_tracks).exec_with_returning_many(db).await?;
+
+    Ok(action_tracks
+        .into_iter()
+        .zip(params)
+        .fold(HashMap::new(), |mut acc, (action_track, param)| {
+            acc.entry(param.name.to_string()).or_insert(action_track);
+            acc
+        }))
 }

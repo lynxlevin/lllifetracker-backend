@@ -5,16 +5,26 @@ use use_cases::my_way::ambitions::types::AmbitionBulkUpdateOrderingRequest;
 use crate::utils::Connections;
 
 use super::super::utils::init_app;
-use common::factory;
+use common::factory::{self, *};
 use entities::ambition;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
-    let ambition_0 = factory::ambition(user.id).insert(&db).await?;
-    let ambition_1 = factory::ambition(user.id).insert(&db).await?;
-    let ambition_2 = factory::ambition(user.id).insert(&db).await?;
+    let ambitions = create_ambitions(
+        vec![
+            AmbitionParam { name: "ambition_0".to_string(), ..Default::default() },
+            AmbitionParam { name: "ambition_1".to_string(), ..Default::default() },
+            AmbitionParam { name: "ambition_2".to_string(), ..Default::default() },
+        ],
+        &user,
+        &db,
+    )
+    .await?;
+    let ambition_0 = ambitions.get("ambition_0").unwrap();
+    let ambition_1 = ambitions.get("ambition_1").unwrap();
+    let ambition_2 = ambitions.get("ambition_2").unwrap();
 
     let req = test::TestRequest::put()
         .uri("/api/ambitions/bulk_update_ordering")

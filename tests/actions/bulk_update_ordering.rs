@@ -5,16 +5,26 @@ use use_cases::my_way::actions::types::ActionBulkUpdateOrderRequest;
 use crate::utils::Connections;
 
 use super::super::utils::init_app;
-use common::factory;
+use common::factory::{self, *};
 use entities::action;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
-    let action_0 = factory::action(user.id).insert(&db).await?;
-    let action_1 = factory::action(user.id).insert(&db).await?;
-    let action_2 = factory::action(user.id).insert(&db).await?;
+    let actions = create_actions(
+        vec![
+            ActionParam { name: "action_0".to_string(), ..Default::default() },
+            ActionParam { name: "action_1".to_string(), ..Default::default() },
+            ActionParam { name: "action_2".to_string(), ..Default::default() },
+        ],
+        &user,
+        &db,
+    )
+    .await?;
+    let action_0 = actions.get("action_0").unwrap();
+    let action_1 = actions.get("action_1").unwrap();
+    let action_2 = actions.get("action_2").unwrap();
 
     let req = test::TestRequest::put()
         .uri("/api/actions/bulk_update_ordering")

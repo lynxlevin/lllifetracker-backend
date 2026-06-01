@@ -5,16 +5,26 @@ use use_cases::my_way::directions::types::DirectionBulkUpdateOrderingRequest;
 use crate::utils::Connections;
 
 use super::super::utils::init_app;
-use common::factory;
+use common::factory::{self, *};
 use entities::direction;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
-    let direction_0 = factory::direction(user.id).insert(&db).await?;
-    let direction_1 = factory::direction(user.id).insert(&db).await?;
-    let direction_2 = factory::direction(user.id).insert(&db).await?;
+    let directions = create_directions(
+        vec![
+            DirectionParam { name: "direction_0".to_string(), ..Default::default() },
+            DirectionParam { name: "direction_1".to_string(), ..Default::default() },
+            DirectionParam { name: "direction_2".to_string(), ..Default::default() },
+        ],
+        &user,
+        &db,
+    )
+    .await?;
+    let direction_0 = directions.get("direction_0").unwrap();
+    let direction_1 = directions.get("direction_1").unwrap();
+    let direction_2 = directions.get("direction_2").unwrap();
 
     let req = test::TestRequest::put()
         .uri("/api/directions/bulk_update_ordering")

@@ -13,6 +13,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let plain_tag = factory::tag(user.id).insert(&db).await?;
+    // MYMEMO: tagのfactory整備から必要
     let (ambition_null_ordering, ambition_null_ordering_tag) = factory::ambition(user.id)
         .name("ambition_null_ordering".to_string())
         .insert_with_tag(&db)

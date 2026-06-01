@@ -11,16 +11,19 @@ use common::factory::{self, *};
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
-    let ambition_0 = factory::ambition(user.id)
-        .name("ambition_0".to_string())
-        .insert(&db)
-        .await?;
-    let ambition_1 = factory::ambition(user.id)
-        .name("ambition1".to_string())
-        .description(Some("ambition1".to_string()))
-        .insert(&db)
-        .await?;
-    let archived_ambition = factory::ambition(user.id).archived(true).insert(&db).await?;
+    let ambitions = create_ambitions(
+        vec![
+            AmbitionParam { name: "ambition_0".to_string(), archived: false, ..Default::default() },
+            AmbitionParam { name: "ambition_1".to_string(), archived: false, ..Default::default() },
+            AmbitionParam { name: "archived_ambition".to_string(), archived: true, ..Default::default() },
+        ],
+        &user,
+        &db,
+    )
+    .await?;
+    let ambition_0 = ambitions.get("ambition_0").unwrap();
+    let ambition_1 = ambitions.get("ambition_1").unwrap();
+    let archived_ambition = ambitions.get("archived_ambition").unwrap();
 
     let req = test::TestRequest::get().uri("/api/ambitions").to_request();
     req.extensions_mut().insert(user.clone());
