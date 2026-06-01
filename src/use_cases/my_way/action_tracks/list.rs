@@ -3,9 +3,7 @@ use crate::{
     UseCaseError,
 };
 use db_adapters::{
-    action_track_adapter::{
-        ActionTrackAdapter, ActionTrackFilter, ActionTrackOrder, ActionTrackQuery,
-    },
+    action_track_adapter::{ActionTrackAdapter, ActionTrackFilter, ActionTrackOrder, ActionTrackQuery},
     Order,
 };
 use entities::user as user_entity;

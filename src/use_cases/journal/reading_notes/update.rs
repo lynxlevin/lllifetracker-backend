@@ -1,7 +1,7 @@
 use db_adapters::{
     reading_note_adapter::{
-        ReadingNoteAdapter, ReadingNoteFilter, ReadingNoteJoin, ReadingNoteMutation,
-        ReadingNoteQuery, UpdateReadingNoteParams,
+        ReadingNoteAdapter, ReadingNoteFilter, ReadingNoteJoin, ReadingNoteMutation, ReadingNoteQuery,
+        UpdateReadingNoteParams,
     },
     CustomDbErr,
 };
@@ -47,9 +47,7 @@ pub async fn update_reading_note<'a>(
         .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
 
     if let Some(tag_ids) = params.tag_ids.clone() {
-        if let Err(e) =
-            _update_tag_links(&reading_note, linked_tags, tag_ids, reading_note_adapter).await
-        {
+        if let Err(e) = _update_tag_links(&reading_note, linked_tags, tag_ids, reading_note_adapter).await {
             match &e {
                 DbErr::Custom(ce) => match CustomDbErr::from(ce) {
                     CustomDbErr::NotFound => {
@@ -76,17 +74,10 @@ async fn _update_tag_links(
 ) -> Result<(), DbErr> {
     let linked_tag_ids = linked_tags.iter().map(|tag| tag.id).collect::<Vec<_>>();
 
-    let tag_ids_to_link = tag_ids
-        .clone()
-        .into_iter()
-        .filter(|id| !linked_tag_ids.contains(id));
-    reading_note_adapter
-        .link_tags(&reading_note, tag_ids_to_link)
-        .await?;
+    let tag_ids_to_link = tag_ids.clone().into_iter().filter(|id| !linked_tag_ids.contains(id));
+    reading_note_adapter.link_tags(&reading_note, tag_ids_to_link).await?;
 
-    let tag_ids_to_unlink = linked_tag_ids
-        .into_iter()
-        .filter(|id| !tag_ids.contains(id));
+    let tag_ids_to_unlink = linked_tag_ids.into_iter().filter(|id| !tag_ids.contains(id));
     reading_note_adapter
         .unlink_tags(&reading_note, tag_ids_to_unlink)
         .await?;

@@ -8,8 +8,7 @@ use crate::{
 use db_adapters::{
     action_adapter::{ActionAdapter, ActionFilter, ActionMutation, ActionQuery},
     action_goal_adapter::{
-        ActionGoalAdapter, ActionGoalFilter, ActionGoalMutation, ActionGoalQuery,
-        UpdateActionGoalParams,
+        ActionGoalAdapter, ActionGoalFilter, ActionGoalMutation, ActionGoalQuery, UpdateActionGoalParams,
     },
 };
 use entities::{custom_methods::user::UserTimezoneTrait, user as user_entity};
@@ -27,9 +26,7 @@ pub async fn convert_action_track_type<'a>(
         .get_by_id(action_id)
         .await
         .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?
-        .ok_or(UseCaseError::NotFound(
-            "Action with this id was not found".to_string(),
-        ))?;
+        .ok_or(UseCaseError::NotFound("Action with this id was not found".to_string()))?;
 
     if action.track_type == params.track_type {
         return Ok(ActionVisible::from(action));

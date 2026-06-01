@@ -1,7 +1,5 @@
 use actix_web::web::{scope, ServiceConfig};
-use password_change::{
-    request_password_change, submit_password_change, verify_password_change_token,
-};
+use password_change::{request_password_change, submit_password_change, verify_password_change_token};
 use registration::{confirm_factory, register_factory, resend_email_factory};
 
 mod get_user;

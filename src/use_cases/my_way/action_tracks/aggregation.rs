@@ -6,9 +6,7 @@ use crate::{
 };
 use chrono::{DateTime, Datelike, FixedOffset, NaiveDate};
 use db_adapters::{
-    action_track_adapter::{
-        ActionTrackAdapter, ActionTrackFilter, ActionTrackOrder, ActionTrackQuery,
-    },
+    action_track_adapter::{ActionTrackAdapter, ActionTrackFilter, ActionTrackOrder, ActionTrackQuery},
     Order,
 };
 use entities::user as user_entity;
@@ -51,9 +49,7 @@ pub async fn aggregate_action_tracks<'a>(
             res.last_mut().unwrap().count += 1;
         }
     }
-    Ok(ActionTrackAggregation {
-        durations_by_action: res,
-    })
+    Ok(ActionTrackAggregation { durations_by_action: res })
 }
 
 #[derive(Default)]
@@ -85,10 +81,7 @@ fn parse_params(params: ActionTrackAggregationQuery) -> Result<ParsedParams, Use
                     .filter(|date| date.is_some())
                     .map(|date| date.unwrap())
                     .collect();
-                Ok(ParsedParams {
-                    dates: Some(parsed_dates),
-                    ..Default::default()
-                })
+                Ok(ParsedParams { dates: Some(parsed_dates), ..Default::default() })
             }
         },
         None => Ok(ParsedParams {

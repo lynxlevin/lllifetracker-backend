@@ -2,8 +2,8 @@ use sea_orm_migration::{
     prelude::{
         async_trait,
         sea_orm::{self, DeriveIden},
-        DbErr, DeriveMigrationName, Expr, ForeignKey, ForeignKeyAction, Index, MigrationTrait,
-        SchemaManager, Table,
+        DbErr, DeriveMigrationName, Expr, ForeignKey, ForeignKeyAction, Index, MigrationTrait, SchemaManager,
+        Table,
     },
     schema::{boolean, date, string_len, text, timestamp_with_time_zone, uuid},
 };
@@ -29,14 +29,8 @@ impl MigrationTrait for Migration {
                     .col(text(Memo::Text))
                     .col(date(Memo::Date))
                     .col(boolean(Memo::Archived).default(false))
-                    .col(
-                        timestamp_with_time_zone(Memo::CreatedAt)
-                            .default(Expr::current_timestamp()),
-                    )
-                    .col(
-                        timestamp_with_time_zone(Memo::UpdatedAt)
-                            .default(Expr::current_timestamp()),
-                    )
+                    .col(timestamp_with_time_zone(Memo::CreatedAt).default(Expr::current_timestamp()))
+                    .col(timestamp_with_time_zone(Memo::UpdatedAt).default(Expr::current_timestamp()))
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk-memos-user_id")
@@ -60,12 +54,8 @@ impl MigrationTrait for Migration {
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        manager
-            .drop_index(Index::drop().name(INDEX_NAME).to_owned())
-            .await?;
-        manager
-            .drop_table(Table::drop().table(Memo::Table).to_owned())
-            .await?;
+        manager.drop_index(Index::drop().name(INDEX_NAME).to_owned()).await?;
+        manager.drop_table(Table::drop().table(Memo::Table).to_owned()).await?;
         Ok(())
     }
 }

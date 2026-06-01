@@ -24,12 +24,7 @@ pub async fn archive_direction_endpoint(
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            match archive_direction(
-                user.into_inner(),
-                path_param.direction_id,
-                DirectionAdapter::init(&db),
-            )
-            .await
+            match archive_direction(user.into_inner(), path_param.direction_id, DirectionAdapter::init(&db)).await
             {
                 Ok(res) => HttpResponse::Ok().json(res),
                 Err(e) => match &e {

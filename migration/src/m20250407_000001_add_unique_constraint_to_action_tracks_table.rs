@@ -4,8 +4,7 @@ use sea_orm_migration::prelude::{
     DbErr, DeriveMigrationName, Index, MigrationTrait, SchemaManager,
 };
 
-const UNIQUE_STARTED_AT_INDEX_NAME: &str =
-    "action_tracks_user_id_action_id_started_at_unique_index";
+const UNIQUE_STARTED_AT_INDEX_NAME: &str = "action_tracks_user_id_action_id_started_at_unique_index";
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;

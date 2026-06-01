@@ -1,9 +1,7 @@
 use uuid::Uuid;
 
 use crate::UseCaseError;
-use db_adapters::ambition_adapter::{
-    AmbitionAdapter, AmbitionFilter, AmbitionMutation, AmbitionQuery,
-};
+use db_adapters::ambition_adapter::{AmbitionAdapter, AmbitionFilter, AmbitionMutation, AmbitionQuery};
 use entities::user as user_entity;
 
 pub async fn delete_ambition<'a>(

@@ -34,12 +34,8 @@ pub async fn bulk_update_ambition_ordering_endpoint(
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            match bulk_update_ambition_ordering(
-                user.into_inner(),
-                req.into_inner(),
-                AmbitionAdapter::init(&db),
-            )
-            .await
+            match bulk_update_ambition_ordering(user.into_inner(), req.into_inner(), AmbitionAdapter::init(&db))
+                .await
             {
                 Ok(_) => HttpResponse::Ok().finish(),
                 Err(e) => response_500(e),

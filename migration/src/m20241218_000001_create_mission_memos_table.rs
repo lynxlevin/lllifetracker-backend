@@ -2,8 +2,8 @@ use sea_orm_migration::{
     prelude::{
         async_trait,
         sea_orm::{self, DeriveIden},
-        DbErr, DeriveMigrationName, Expr, ForeignKey, ForeignKeyAction, Index, MigrationTrait,
-        SchemaManager, Table,
+        DbErr, DeriveMigrationName, Expr, ForeignKey, ForeignKeyAction, Index, MigrationTrait, SchemaManager,
+        Table,
     },
     schema::{boolean, date, string_len, text, timestamp_with_time_zone, timestamp_with_time_zone_null, uuid},
 };
@@ -29,17 +29,9 @@ impl MigrationTrait for Migration {
                     .col(text(MissionMemo::Text))
                     .col(date(MissionMemo::Date))
                     .col(boolean(MissionMemo::Archived).default(false))
-                    .col(
-                        timestamp_with_time_zone_null(MissionMemo::AccomplishedAt),
-                    )
-                    .col(
-                        timestamp_with_time_zone(MissionMemo::CreatedAt)
-                            .default(Expr::current_timestamp()),
-                    )
-                    .col(
-                        timestamp_with_time_zone(MissionMemo::UpdatedAt)
-                            .default(Expr::current_timestamp()),
-                    )
+                    .col(timestamp_with_time_zone_null(MissionMemo::AccomplishedAt))
+                    .col(timestamp_with_time_zone(MissionMemo::CreatedAt).default(Expr::current_timestamp()))
+                    .col(timestamp_with_time_zone(MissionMemo::UpdatedAt).default(Expr::current_timestamp()))
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk-mission-memos-user_id")
@@ -63,9 +55,7 @@ impl MigrationTrait for Migration {
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        manager
-            .drop_index(Index::drop().name(INDEX_NAME).to_owned())
-            .await?;
+        manager.drop_index(Index::drop().name(INDEX_NAME).to_owned()).await?;
         manager
             .drop_table(Table::drop().table(MissionMemo::Table).to_owned())
             .await?;

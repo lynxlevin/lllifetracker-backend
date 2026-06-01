@@ -12,10 +12,7 @@ pub struct DirectionCategoryVisible {
 
 impl From<&direction_category::Model> for DirectionCategoryVisible {
     fn from(item: &direction_category::Model) -> Self {
-        DirectionCategoryVisible {
-            id: item.id,
-            name: item.name.clone(),
-        }
+        DirectionCategoryVisible { id: item.id, name: item.name.clone() }
     }
 }
 

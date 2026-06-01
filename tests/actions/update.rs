@@ -33,10 +33,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::OK);
 
-    let action_in_db = action::Entity::find_by_id(action.id)
-        .one(&db)
-        .await?
-        .unwrap();
+    let action_in_db = action::Entity::find_by_id(action.id).one(&db).await?.unwrap();
     assert_eq!(action_in_db.user_id, user.id);
     assert_eq!(action_in_db.name, new_name);
     assert_eq!(action_in_db.created_at, action.created_at);

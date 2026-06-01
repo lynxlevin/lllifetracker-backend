@@ -7,19 +7,14 @@ use actix_web::{
 use common::settings::types::Settings;
 use deadpool_redis::Pool;
 
-use crate::utils::auth::tokens::{
-    issue_confirmation_token_pasetors, verify_confirmation_token_pasetor,
-};
+use crate::utils::auth::tokens::{issue_confirmation_token_pasetors, verify_confirmation_token_pasetor};
 
 #[derive(serde::Deserialize)]
 struct Parameters {
     token: String,
 }
 
-#[tracing::instrument(
-    name = "Confirming change password token",
-    skip(query, redis_pool, settings)
-)]
+#[tracing::instrument(name = "Confirming change password token", skip(query, redis_pool, settings))]
 #[get("/email-verification")]
 pub async fn verify_password_change_token(
     query: Query<Parameters>,
@@ -29,9 +24,7 @@ pub async fn verify_password_change_token(
     let frontend_url = &settings.application.frontend_url;
     match redis_pool.get().await {
         Ok(ref mut redis_con) => {
-            match verify_confirmation_token_pasetor(query.token.clone(), redis_con, None, &settings)
-                .await
-            {
+            match verify_confirmation_token_pasetor(query.token.clone(), redis_con, None, &settings).await {
                 Ok(confirmation_token) => {
                     match issue_confirmation_token_pasetors(
                         confirmation_token.user_id,
@@ -43,23 +36,20 @@ pub async fn verify_password_change_token(
                     {
                         Ok(issued_token) => {
                             HttpResponse::SeeOther()
-                            .insert_header((
-                                header::LOCATION,
-                                format!(
-                                    // MYMEMO: Change url later.
-                                    "{frontend_url}/auth/password/change-password?token={issued_token}"
-                                ),
-                            ))
-                            .finish()
+                                .insert_header((
+                                    header::LOCATION,
+                                    format!(
+                                        // MYMEMO: Change url later.
+                                        "{frontend_url}/auth/password/change-password?token={issued_token}"
+                                    ),
+                                ))
+                                .finish()
                         }
                         Err(e) => {
                             tracing::event!(target: "backend", tracing::Level::ERROR, "{e}");
                             // MYMEMO: Change url later.
                             HttpResponse::SeeOther()
-                                .insert_header((
-                                    header::LOCATION,
-                                    format!("{frontend_url}/auth/error?reason={e}"),
-                                ))
+                                .insert_header((header::LOCATION, format!("{frontend_url}/auth/error?reason={e}")))
                                 .finish()
                         }
                     }
@@ -77,7 +67,9 @@ pub async fn verify_password_change_token(
             HttpResponse::SeeOther()
                 .insert_header((
                     header::LOCATION,
-                    format!("{frontend_url}/auth/error?reason=Some unexpected error happened. Please try again later."),
+                    format!(
+                        "{frontend_url}/auth/error?reason=Some unexpected error happened. Please try again later."
+                    ),
                 ))
                 .finish()
         }

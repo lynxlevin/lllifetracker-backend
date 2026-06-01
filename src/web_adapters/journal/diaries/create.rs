@@ -21,15 +21,13 @@ pub async fn create_diary_endpoint(
     req: Json<DiaryCreateRequest>,
 ) -> HttpResponse {
     match user {
-        Some(user) => {
-            match create_diary(user.into_inner(), req.into_inner(), DiaryAdapter::init(&db)).await {
-                Ok(res) => HttpResponse::Created().json(res),
-                Err(e) => match &e {
-                    UseCaseError::NotFound(message) => response_404(message),
-                    _ => response_500(e),
-                },
-            }
-        }
+        Some(user) => match create_diary(user.into_inner(), req.into_inner(), DiaryAdapter::init(&db)).await {
+            Ok(res) => HttpResponse::Created().json(res),
+            Err(e) => match &e {
+                UseCaseError::NotFound(message) => response_404(message),
+                _ => response_500(e),
+            },
+        },
         None => response_401(),
     }
 }

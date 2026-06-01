@@ -7,9 +7,7 @@ use db_adapters::direction_category_adapter::DirectionCategoryAdapter;
 use entities::user as user_entity;
 use sea_orm::DbConn;
 use use_cases::{
-    my_way::direction_categories::{
-        types::DirectionCategoryUpdateRequest, update::update_direction_category,
-    },
+    my_way::direction_categories::{types::DirectionCategoryUpdateRequest, update::update_direction_category},
     UseCaseError,
 };
 use uuid::Uuid;

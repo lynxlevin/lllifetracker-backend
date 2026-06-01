@@ -15,10 +15,7 @@ struct PathParam {
     direction_id: uuid::Uuid,
 }
 
-#[tracing::instrument(
-    name = "Restoring an direction from unarchive",
-    skip(db, user, path_param)
-)]
+#[tracing::instrument(name = "Restoring an direction from unarchive", skip(db, user, path_param))]
 #[put("/{direction_id}/unarchive")]
 pub async fn unarchive_direction_endpoint(
     db: Data<DbConn>,
@@ -27,12 +24,8 @@ pub async fn unarchive_direction_endpoint(
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            match unarchive_direction(
-                user.into_inner(),
-                path_param.direction_id,
-                DirectionAdapter::init(&db),
-            )
-            .await
+            match unarchive_direction(user.into_inner(), path_param.direction_id, DirectionAdapter::init(&db))
+                .await
             {
                 Ok(res) => HttpResponse::Ok().json(res),
                 Err(e) => match &e {

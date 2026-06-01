@@ -1,8 +1,7 @@
 use actix_web::{http, test, HttpMessage};
 use entities::{thinking_note, thinking_note_tags};
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter, QueryFilter,
-    QuerySelect,
+    ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter, QueryFilter, QuerySelect,
 };
 use use_cases::journal::thinking_notes::types::{ThinkingNoteUpdateRequest, ThinkingNoteVisible};
 use uuid::Uuid;
@@ -49,10 +48,7 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(res.created_at, thinking_note.created_at);
     assert!(res.updated_at > thinking_note.updated_at);
 
-    let thinking_note_in_db = thinking_note::Entity::find_by_id(res.id)
-        .one(&db)
-        .await?
-        .unwrap();
+    let thinking_note_in_db = thinking_note::Entity::find_by_id(res.id).one(&db).await?.unwrap();
     assert_eq!(thinking_note_in_db.user_id, user.id);
     assert_eq!(ThinkingNoteVisible::from(thinking_note_in_db), res);
 
@@ -110,10 +106,7 @@ async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
 
     let non_existent_tag_req = test::TestRequest::put()
         .uri(&format!("/api/thinking_notes/{}", thinking_note.id))
-        .set_json(ThinkingNoteUpdateRequest {
-            tag_ids: vec![Uuid::now_v7()],
-            ..Default::default()
-        })
+        .set_json(ThinkingNoteUpdateRequest { tag_ids: vec![Uuid::now_v7()], ..Default::default() })
         .to_request();
     non_existent_tag_req.extensions_mut().insert(user.clone());
 

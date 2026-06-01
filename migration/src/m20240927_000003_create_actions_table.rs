@@ -2,8 +2,7 @@ use sea_orm_migration::{
     prelude::{
         async_trait,
         sea_orm::{self, DeriveIden},
-        DbErr, DeriveMigrationName, Expr, ForeignKey, ForeignKeyAction, MigrationTrait,
-        SchemaManager, Table,
+        DbErr, DeriveMigrationName, Expr, ForeignKey, ForeignKeyAction, MigrationTrait, SchemaManager, Table,
     },
     schema::{string, timestamp_with_time_zone, uuid},
 };
@@ -24,14 +23,8 @@ impl MigrationTrait for Migration {
                     .col(uuid(Action::Id).primary_key())
                     .col(uuid(Action::UserId))
                     .col(string(Action::Name))
-                    .col(
-                        timestamp_with_time_zone(Action::CreatedAt)
-                            .default(Expr::current_timestamp()),
-                    )
-                    .col(
-                        timestamp_with_time_zone(Action::UpdatedAt)
-                            .default(Expr::current_timestamp()),
-                    )
+                    .col(timestamp_with_time_zone(Action::CreatedAt).default(Expr::current_timestamp()))
+                    .col(timestamp_with_time_zone(Action::UpdatedAt).default(Expr::current_timestamp()))
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk-actions-user_id")

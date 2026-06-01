@@ -9,8 +9,8 @@ use sea_orm::{
     },
     ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel,
     JoinType::LeftJoin,
-    ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait, Select, Set,
-    TransactionError, TransactionTrait,
+    ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait, Select, Set, TransactionError,
+    TransactionTrait,
 };
 use uuid::Uuid;
 
@@ -29,10 +29,7 @@ pub struct DirectionAdapter<'a> {
 
 impl<'a> DirectionAdapter<'a> {
     pub fn init(db: &'a DbConn) -> Self {
-        Self {
-            db,
-            query: Entity::find(),
-        }
+        Self { db, query: Entity::find() }
     }
 }
 
@@ -42,9 +39,7 @@ pub trait DirectionJoin {
 
 impl DirectionJoin for DirectionAdapter<'_> {
     fn join_category(mut self) -> Self {
-        self.query = self
-            .query
-            .join(LeftJoin, Relation::DirectionCategory.def());
+        self.query = self.query.join(LeftJoin, Relation::DirectionCategory.def());
         self
     }
 }
@@ -87,23 +82,19 @@ pub trait DirectionOrder {
 
 impl DirectionOrder for DirectionAdapter<'_> {
     fn order_by_category_ordering_nulls_last(mut self, order: Order) -> Self {
-        self.query =
-            self.query
-                .order_by_with_nulls(direction_category::Column::Ordering, order, Last);
+        self.query = self
+            .query
+            .order_by_with_nulls(direction_category::Column::Ordering, order, Last);
         self
     }
 
     fn order_by_ordering_nulls_first(mut self, order: Order) -> Self {
-        self.query = self
-            .query
-            .order_by_with_nulls(Column::Ordering, order, First);
+        self.query = self.query.order_by_with_nulls(Column::Ordering, order, First);
         self
     }
 
     fn order_by_ordering_nulls_last(mut self, order: Order) -> Self {
-        self.query = self
-            .query
-            .order_by_with_nulls(Column::Ordering, order, Last);
+        self.query = self.query.order_by_with_nulls(Column::Ordering, order, Last);
         self
     }
 
@@ -139,9 +130,7 @@ impl DirectionQuery for DirectionAdapter<'_> {
             .await
     }
 
-    async fn get_random_with_category(
-        self,
-    ) -> Result<Option<(Model, Option<direction_category::Model>)>, DbErr> {
+    async fn get_random_with_category(self) -> Result<Option<(Model, Option<direction_category::Model>)>, DbErr> {
         self.query
             .select_also(direction_category::Entity)
             .order_by(SimpleExpr::FunctionCall(Func::random()), Order::Asc)
@@ -171,11 +160,8 @@ pub trait DirectionMutation {
         self,
         params: CreateDirectionParams,
     ) -> impl Future<Output = Result<Model, TransactionError<DbErr>>>;
-    fn update(
-        self,
-        direction: Model,
-        params: UpdateDirectionParams,
-    ) -> impl Future<Output = Result<Model, DbErr>>;
+    fn update(self, direction: Model, params: UpdateDirectionParams)
+        -> impl Future<Output = Result<Model, DbErr>>;
     fn archive(self, direction: Model) -> impl Future<Output = Result<Model, DbErr>>;
     fn unarchive(self, direction: Model) -> impl Future<Output = Result<Model, DbErr>>;
     fn bulk_update_ordering(
@@ -187,10 +173,7 @@ pub trait DirectionMutation {
 }
 
 impl DirectionMutation for DirectionAdapter<'_> {
-    async fn create_with_tag(
-        self,
-        params: CreateDirectionParams,
-    ) -> Result<Model, TransactionError<DbErr>> {
+    async fn create_with_tag(self, params: CreateDirectionParams) -> Result<Model, TransactionError<DbErr>> {
         self.db
             .transaction::<_, Model, DbErr>(|txn| {
                 Box::pin(async move {
@@ -221,11 +204,7 @@ impl DirectionMutation for DirectionAdapter<'_> {
             .await
     }
 
-    async fn update(
-        self,
-        direction: Model,
-        params: UpdateDirectionParams,
-    ) -> Result<Model, DbErr> {
+    async fn update(self, direction: Model, params: UpdateDirectionParams) -> Result<Model, DbErr> {
         let mut direction = direction.into_active_model();
         direction.name = Set(params.name);
         direction.description = Set(params.description);
@@ -248,11 +227,7 @@ impl DirectionMutation for DirectionAdapter<'_> {
         direction.update(self.db).await
     }
 
-    async fn bulk_update_ordering(
-        self,
-        directions: Vec<Model>,
-        ordering: Vec<Uuid>,
-    ) -> Result<(), DbErr> {
+    async fn bulk_update_ordering(self, directions: Vec<Model>, ordering: Vec<Uuid>) -> Result<(), DbErr> {
         for direction in directions {
             let order = &ordering.iter().position(|id| id == &direction.id);
             if let Some(order) = order {

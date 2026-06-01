@@ -19,10 +19,7 @@ async fn happy_path() -> Result<(), DbErr> {
         .name("direction_1".to_string())
         .insert(&db)
         .await?;
-    let archived_direction = factory::direction(user.id)
-        .archived(true)
-        .insert(&db)
-        .await?;
+    let archived_direction = factory::direction(user.id).archived(true).insert(&db).await?;
 
     let req = test::TestRequest::get().uri("/api/directions").to_request();
     req.extensions_mut().insert(user.clone());

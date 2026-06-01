@@ -9,8 +9,7 @@ use crate::{
 };
 use db_adapters::{
     action_track_adapter::{
-        ActionTrackAdapter, ActionTrackFilter, ActionTrackMutation, ActionTrackQuery,
-        UpdateActionTrackParams,
+        ActionTrackAdapter, ActionTrackFilter, ActionTrackMutation, ActionTrackQuery, UpdateActionTrackParams,
     },
     user_adapter::UserAdapter,
     CustomDbErr,
@@ -43,14 +42,9 @@ pub async fn update_action_track<'a>(
             action_track,
             UpdateActionTrackParams {
                 started_at: params.started_at.trunc_subsecs(0),
-                ended_at: params
-                    .ended_at
-                    .and_then(|ended_at| Some(ended_at.trunc_subsecs(0))),
+                ended_at: params.ended_at.and_then(|ended_at| Some(ended_at.trunc_subsecs(0))),
                 duration: params.ended_at.and_then(|ended_at| {
-                    Some(
-                        (ended_at.trunc_subsecs(0) - params.started_at.trunc_subsecs(0))
-                            .num_seconds(),
-                    )
+                    Some((ended_at.trunc_subsecs(0) - params.started_at.trunc_subsecs(0)).num_seconds())
                 }),
                 action_id: params.action_id,
             },
@@ -73,13 +67,8 @@ pub async fn update_action_track<'a>(
     Ok(ActionTrackVisible::from(new_action_track))
 }
 
-fn _parse_params(
-    params: ActionTrackUpdateRequest,
-) -> Result<ActionTrackUpdateRequest, UseCaseError> {
-    if params
-        .ended_at
-        .is_some_and(|ended_at| ended_at < params.started_at)
-    {
+fn _parse_params(params: ActionTrackUpdateRequest) -> Result<ActionTrackUpdateRequest, UseCaseError> {
+    if params.ended_at.is_some_and(|ended_at| ended_at < params.started_at) {
         return Err(UseCaseError::BadRequest(
             "Ended_at must be later than started_at.".to_string(),
         ));

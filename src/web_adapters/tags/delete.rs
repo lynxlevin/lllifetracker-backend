@@ -23,17 +23,13 @@ pub async fn delete_plain_tag_endpoint(
     path_param: Path<PathParam>,
 ) -> HttpResponse {
     match user {
-        Some(user) => {
-            match delete_plain_tag(user.into_inner(), path_param.tag_id, TagAdapter::init(&db))
-                .await
-            {
-                Ok(_) => HttpResponse::NoContent().finish(),
-                Err(e) => match &e {
-                    UseCaseError::BadRequest(message) => response_400(message),
-                    _ => response_500(e),
-                },
-            }
-        }
+        Some(user) => match delete_plain_tag(user.into_inner(), path_param.tag_id, TagAdapter::init(&db)).await {
+            Ok(_) => HttpResponse::NoContent().finish(),
+            Err(e) => match &e {
+                UseCaseError::BadRequest(message) => response_400(message),
+                _ => response_500(e),
+            },
+        },
         None => response_401(),
     }
 }

@@ -41,18 +41,11 @@ pub async fn list_diaries<'a>(
                 Some(_) => vec![Into::<TagVisible>::into(&diary)],
                 None => vec![],
             };
-            let res_diary = DiaryVisibleWithTags {
-                id: diary.id,
-                text: diary.text,
-                date: diary.date,
-                tags,
-            };
+            let res_diary = DiaryVisibleWithTags { id: diary.id, text: diary.text, date: diary.date, tags };
             res.push(res_diary);
         } else {
             if let Some(_) = diary.tag_id {
-                res.last_mut()
-                    .unwrap()
-                    .push_tag(Into::<TagVisible>::into(&diary));
+                res.last_mut().unwrap().push_tag(Into::<TagVisible>::into(&diary));
             }
         }
     }
@@ -62,13 +55,7 @@ pub async fn list_diaries<'a>(
     if let Some(tag_id_or) = params.tag_id_or {
         res = res
             .into_iter()
-            .filter(|diary| {
-                diary
-                    .tags
-                    .iter()
-                    .find(|tag| tag_id_or.contains(&tag.id))
-                    .is_some()
-            })
+            .filter(|diary| diary.tags.iter().find(|tag| tag_id_or.contains(&tag.id)).is_some())
             .collect();
     }
 
@@ -85,8 +72,7 @@ fn validate_params(params: DiaryListQuery) -> Result<QueryParam, UseCaseError> {
             tag_id_or
                 .split(',')
                 .map(|tag_id| {
-                    Uuid::parse_str(tag_id)
-                        .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
+                    Uuid::parse_str(tag_id).map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
                 })
                 .filter(|tag_id| tag_id.is_ok())
                 .map(|tag_id| tag_id.unwrap())

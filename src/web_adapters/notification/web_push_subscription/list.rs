@@ -18,12 +18,7 @@ pub async fn list_web_push_subscription_endpoint(
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            match list_web_push_subscription(
-                user.into_inner(),
-                WebPushSubscriptionAdapter::init(&db),
-            )
-            .await
-            {
+            match list_web_push_subscription(user.into_inner(), WebPushSubscriptionAdapter::init(&db)).await {
                 Ok(res) => HttpResponse::Ok().json(res),
                 Err(e) => response_500(e),
             }

@@ -2,8 +2,8 @@ use std::future::Future;
 
 use chrono::{NaiveTime, Weekday};
 use sea_orm::{
-    ActiveValue::Set, ColumnTrait, DbConn, DbErr, EntityTrait, ModelTrait, PaginatorTrait,
-    QueryFilter, QueryOrder, Select,
+    ActiveValue::Set, ColumnTrait, DbConn, DbErr, EntityTrait, ModelTrait, PaginatorTrait, QueryFilter,
+    QueryOrder, Select,
 };
 
 use entities::{
@@ -21,10 +21,7 @@ pub struct NotificationRuleAdapter<'a> {
 
 impl<'a> NotificationRuleAdapter<'a> {
     pub fn init(db: &'a DbConn) -> Self {
-        Self {
-            db,
-            query: Entity::find(),
-        }
+        Self { db, query: Entity::find() }
     }
 }
 
@@ -53,9 +50,7 @@ impl NotificationRuleFilter for NotificationRuleAdapter<'_> {
     }
 
     fn filter_eq_weekday(mut self, weekday: Weekday) -> Self {
-        self.query = self
-            .query
-            .filter(Column::Weekday.eq(weekday.num_days_from_monday()));
+        self.query = self.query.filter(Column::Weekday.eq(weekday.num_days_from_monday()));
         self
     }
 
@@ -101,12 +96,8 @@ pub struct CreateNotificationRuleParams {
 }
 
 pub trait NotificationRuleMutation {
-    fn create_many(
-        self,
-        params: Vec<CreateNotificationRuleParams>,
-    ) -> impl Future<Output = Result<(), DbErr>>;
-    fn delete_many(self, notification_rules: Vec<Model>)
-        -> impl Future<Output = Result<(), DbErr>>;
+    fn create_many(self, params: Vec<CreateNotificationRuleParams>) -> impl Future<Output = Result<(), DbErr>>;
+    fn delete_many(self, notification_rules: Vec<Model>) -> impl Future<Output = Result<(), DbErr>>;
 }
 
 impl NotificationRuleMutation for NotificationRuleAdapter<'_> {

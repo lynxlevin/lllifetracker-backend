@@ -1,7 +1,5 @@
 use db_adapters::{
-    reading_note_adapter::{
-        ReadingNoteAdapter, ReadingNoteFilter, ReadingNoteOrder, ReadingNoteQuery,
-    },
+    reading_note_adapter::{ReadingNoteAdapter, ReadingNoteFilter, ReadingNoteOrder, ReadingNoteQuery},
     Order::Asc,
 };
 use entities::user as user_entity;

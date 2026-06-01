@@ -23,21 +23,13 @@ pub async fn get_action_endpoint(
     path_param: Path<PathParam>,
 ) -> HttpResponse {
     match user {
-        Some(user) => {
-            match get_action(
-                user.into_inner(),
-                path_param.action_id,
-                ActionAdapter::init(&db),
-            )
-            .await
-            {
-                Ok(res) => HttpResponse::Ok().json(res),
-                Err(e) => match &e {
-                    UseCaseError::NotFound(message) => response_404(message),
-                    _ => response_500(e),
-                },
-            }
-        }
+        Some(user) => match get_action(user.into_inner(), path_param.action_id, ActionAdapter::init(&db)).await {
+            Ok(res) => HttpResponse::Ok().json(res),
+            Err(e) => match &e {
+                UseCaseError::NotFound(message) => response_404(message),
+                _ => response_500(e),
+            },
+        },
         None => response_401(),
     }
 }

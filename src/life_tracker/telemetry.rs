@@ -4,15 +4,8 @@ use tracing_appender::{
 };
 use tracing_subscriber::layer::SubscriberExt;
 
-pub fn get_subscriber(
-    debug: bool,
-    max_log_files: usize,
-) -> (impl tracing::Subscriber + Send + Sync, WorkerGuard) {
-    let env_filter = if debug {
-        "debug".to_string()
-    } else {
-        "info".to_string()
-    };
+pub fn get_subscriber(debug: bool, max_log_files: usize) -> (impl tracing::Subscriber + Send + Sync, WorkerGuard) {
+    let env_filter = if debug { "debug".to_string() } else { "info".to_string() };
     let env_filter = tracing_subscriber::EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new(env_filter));
 

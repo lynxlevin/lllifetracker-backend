@@ -26,9 +26,7 @@ async fn happy_path() -> Result<(), DbErr> {
         .insert(&db)
         .await?;
 
-    let req = test::TestRequest::get()
-        .uri("/api/action_tracks")
-        .to_request();
+    let req = test::TestRequest::get().uri("/api/action_tracks").to_request();
     req.extensions_mut().insert(user.clone());
 
     let resp = test::call_service(&app, req).await;
@@ -96,9 +94,7 @@ async fn happy_path_started_at_lgte() -> Result<(), DbErr> {
                 .action_id(action.id)
         })
         .collect::<Vec<action_track::ActiveModel>>();
-    action_track::Entity::insert_many(action_tracks)
-        .exec(&db)
-        .await?;
+    action_track::Entity::insert_many(action_tracks).exec(&db).await?;
     let action_tracks = action_track::Entity::find()
         .filter(action_track::Column::ActionId.eq(action.id))
         .all(&db)
@@ -108,16 +104,8 @@ async fn happy_path_started_at_lgte() -> Result<(), DbErr> {
     let req = test::TestRequest::get()
         .uri(&format!(
             "/api/action_tracks?started_at_gte={}&started_at_lte={}",
-            expected
-                .last()
-                .unwrap()
-                .started_at
-                .format("%Y-%m-%dT%H:%M:%SZ"),
-            expected
-                .first()
-                .unwrap()
-                .started_at
-                .format("%Y-%m-%dT%H:%M:%SZ"),
+            expected.last().unwrap().started_at.format("%Y-%m-%dT%H:%M:%SZ"),
+            expected.first().unwrap().started_at.format("%Y-%m-%dT%H:%M:%SZ"),
         ))
         .to_request();
     req.extensions_mut().insert(user.clone());
@@ -143,9 +131,7 @@ async fn happy_path_started_at_lgte() -> Result<(), DbErr> {
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let Connections { app, .. } = init_app().await?;
 
-    let req = test::TestRequest::get()
-        .uri("/api/action_tracks")
-        .to_request();
+    let req = test::TestRequest::get().uri("/api/action_tracks").to_request();
 
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), http::StatusCode::UNAUTHORIZED);

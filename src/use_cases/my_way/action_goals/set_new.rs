@@ -6,13 +6,12 @@ use chrono::{Duration, Utc};
 use db_adapters::{
     action_adapter::{ActionAdapter, ActionFilter, ActionQuery},
     action_goal_adapter::{
-        ActionGoalAdapter, ActionGoalFilter, ActionGoalMutation, ActionGoalQuery,
-        CreateActionGoalParams, UpdateActionGoalParams,
+        ActionGoalAdapter, ActionGoalFilter, ActionGoalMutation, ActionGoalQuery, CreateActionGoalParams,
+        UpdateActionGoalParams,
     },
 };
 use entities::{
-    action, custom_methods::user::UserTimezoneTrait, sea_orm_active_enums::ActionTrackType,
-    user as user_entity,
+    action, custom_methods::user::UserTimezoneTrait, sea_orm_active_enums::ActionTrackType, user as user_entity,
 };
 
 pub async fn set_new_action_goal<'a>(

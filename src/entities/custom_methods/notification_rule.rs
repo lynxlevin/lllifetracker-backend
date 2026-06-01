@@ -13,9 +13,7 @@ impl NotificationRuleTrait for notification_rule::Model {
                 let weekday: u8 = self.weekday.try_into().unwrap();
                 Weekday::try_from(weekday).unwrap()
             }
-            _ => unreachable!(
-                "This should not happen, weekday has DB check to make sure it's between 0 to 6."
-            ),
+            _ => unreachable!("This should not happen, weekday has DB check to make sure it's between 0 to 6."),
         }
     }
 }

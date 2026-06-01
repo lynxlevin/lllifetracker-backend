@@ -1,8 +1,7 @@
 use actix_web::{http, test, HttpMessage};
 use db_adapters::diary_adapter::DiaryUpdateKey;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter, QueryFilter,
-    QuerySelect,
+    ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter, QueryFilter, QuerySelect,
 };
 use use_cases::journal::diaries::types::{DiaryUpdateRequest, DiaryVisible};
 
@@ -27,11 +26,7 @@ async fn happy_path() -> Result<(), DbErr> {
         text: None,
         date: chrono::NaiveDate::from_ymd_opt(2024, 11, 3).unwrap(),
         tag_ids: vec![tag.id],
-        update_keys: vec![
-            DiaryUpdateKey::Text,
-            DiaryUpdateKey::Date,
-            DiaryUpdateKey::TagIds,
-        ],
+        update_keys: vec![DiaryUpdateKey::Text, DiaryUpdateKey::Date, DiaryUpdateKey::TagIds],
     };
 
     let req = test::TestRequest::put()

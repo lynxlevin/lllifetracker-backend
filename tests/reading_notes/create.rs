@@ -1,7 +1,6 @@
 use actix_web::{http, test, HttpMessage};
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter, QueryFilter,
-    QuerySelect,
+    ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter, QueryFilter, QuerySelect,
 };
 use use_cases::journal::reading_notes::types::{ReadingNoteCreateRequest, ReadingNoteVisible};
 use uuid::Uuid;
@@ -19,7 +18,7 @@ enum QueryAs {
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let (_, tag_0) = factory::action(user.id)
         .name("action_0".to_string())
@@ -55,10 +54,7 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(res.text, reading_note_text.clone());
     assert_eq!(res.date, today);
 
-    let reading_note_in_db = reading_note::Entity::find_by_id(res.id)
-        .one(&db)
-        .await?
-        .unwrap();
+    let reading_note_in_db = reading_note::Entity::find_by_id(res.id).one(&db).await?.unwrap();
     assert_eq!(reading_note_in_db.user_id, user.id);
     assert_eq!(ReadingNoteVisible::from(reading_note_in_db), res);
 
@@ -77,7 +73,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let Connections { app, ..} = init_app().await?;
+    let Connections { app, .. } = init_app().await?;
 
     let req = test::TestRequest::post()
         .uri("/api/reading_notes")
@@ -98,7 +94,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
 
     let non_existent_tag_req = test::TestRequest::post()

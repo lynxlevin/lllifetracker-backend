@@ -10,8 +10,7 @@ use db_adapters::{
     ambition_adapter::{AmbitionAdapter, AmbitionFilter, AmbitionQuery},
     direction_adapter::{DirectionAdapter, DirectionFilter, DirectionJoin, DirectionQuery},
     notification_rule_adapter::{
-        NotificationRuleAdapter, NotificationRuleFilter, NotificationRuleOrder,
-        NotificationRuleQuery,
+        NotificationRuleAdapter, NotificationRuleFilter, NotificationRuleOrder, NotificationRuleQuery,
     },
 };
 use entities::{notification_rule, sea_orm_active_enums::NotificationType};
@@ -23,12 +22,7 @@ enum NotificationChoice {
 }
 
 #[instrument(skip_all)]
-pub async fn my_way_reminder(
-    settings: &Settings,
-    db: &DbConn,
-    weekday: Weekday,
-    utc_time: NaiveTime,
-) -> () {
+pub async fn my_way_reminder(settings: &Settings, db: &DbConn, weekday: Weekday, utc_time: NaiveTime) -> () {
     let notification_rules = match get_notification_rules(db, weekday, utc_time).await {
         Ok(notification_rules) => notification_rules,
         Err(_) => {
@@ -71,20 +65,15 @@ async fn get_notification_rules(
 }
 
 #[instrument(skip_all)]
-async fn get_messages(
-    db: &DbConn,
-    notification_rules: Vec<notification_rule::Model>,
-) -> Vec<MessageWithUserId> {
+async fn get_messages(db: &DbConn, notification_rules: Vec<notification_rule::Model>) -> Vec<MessageWithUserId> {
     // MYMEMO: Is there a way to reduce DB query? If not, use stream. https://users.rust-lang.org/t/how-to-use-await-inside-vec-iter-map-in-an-async-fn/65416/3
     let mut messages: Vec<MessageWithUserId> = vec![];
     for rule in notification_rules.iter() {
         let choice = match rule.r#type {
-            NotificationType::AmbitionOrDirection => {
-                [NotificationChoice::Ambition, NotificationChoice::Direction]
-                    .into_iter()
-                    .choose(&mut thread_rng())
-                    .unwrap()
-            }
+            NotificationType::AmbitionOrDirection => [NotificationChoice::Ambition, NotificationChoice::Direction]
+                .into_iter()
+                .choose(&mut thread_rng())
+                .unwrap(),
             NotificationType::Ambition => NotificationChoice::Ambition,
             NotificationType::Direction => NotificationChoice::Direction,
             _ => {
@@ -144,11 +133,9 @@ async fn get_random_message(
             };
             let title = Some("大志".to_string());
             let body = match ambition.description {
-                Some(description) => format!(
-                    "{}\n{}",
-                    ambition.name,
-                    description.replace('\n', "").replace('\r', "")
-                ),
+                Some(description) => {
+                    format!("{}\n{}", ambition.name, description.replace('\n', "").replace('\r', ""))
+                }
                 None => ambition.name,
             };
             (title, body)
@@ -231,21 +218,16 @@ mod tests {
             .r#type(NotificationType::AmbitionOrDirection)
             .insert(&db)
             .await?;
-        let no_use_notification_rule_0 =
-            default_notification_rule(user.id, weekday.clone(), time.clone())
-                .r#type(NotificationType::UnaccomplishedAction);
+        let no_use_notification_rule_0 = default_notification_rule(user.id, weekday.clone(), time.clone())
+            .r#type(NotificationType::UnaccomplishedAction);
         let no_use_notification_rule_1 =
-            default_notification_rule(user.id, weekday.clone(), time.clone())
-                .weekday(weekday.succ());
+            default_notification_rule(user.id, weekday.clone(), time.clone()).weekday(weekday.succ());
         let no_use_notification_rule_2 =
-            default_notification_rule(user.id, weekday.clone(), time.clone())
-                .weekday(weekday.pred());
-        let no_use_notification_rule_3 =
-            default_notification_rule(user.id, weekday.clone(), time.clone())
-                .utc_time(NaiveTime::from_hms_opt(0, 10, 0).unwrap());
-        let no_use_notification_rule_4 =
-            default_notification_rule(user.id, weekday.clone(), time.clone())
-                .utc_time(NaiveTime::from_hms_opt(1, 0, 0).unwrap());
+            default_notification_rule(user.id, weekday.clone(), time.clone()).weekday(weekday.pred());
+        let no_use_notification_rule_3 = default_notification_rule(user.id, weekday.clone(), time.clone())
+            .utc_time(NaiveTime::from_hms_opt(0, 10, 0).unwrap());
+        let no_use_notification_rule_4 = default_notification_rule(user.id, weekday.clone(), time.clone())
+            .utc_time(NaiveTime::from_hms_opt(1, 0, 0).unwrap());
         notification_rule::Entity::insert_many([
             no_use_notification_rule_0,
             no_use_notification_rule_1,
@@ -307,11 +289,7 @@ mod tests {
             format!(
                 "{}\n{}",
                 ambition.name,
-                ambition
-                    .description
-                    .unwrap()
-                    .replace('\n', "")
-                    .replace('\r', "")
+                ambition.description.unwrap().replace('\n', "").replace('\r', "")
             )
         );
         assert_eq!(res.content.path, None);
@@ -359,11 +337,7 @@ mod tests {
             format!(
                 "{}\n{}",
                 direction.name,
-                direction
-                    .description
-                    .unwrap()
-                    .replace('\n', "")
-                    .replace('\r', "")
+                direction.description.unwrap().replace('\n', "").replace('\r', "")
             )
         );
         assert_eq!(res.content.path, None);
@@ -387,10 +361,7 @@ mod tests {
         assert!(res.is_some());
         let res = res.unwrap();
 
-        assert_eq!(
-            res.content.title,
-            Some(format!("大事にすること: {}", category.name))
-        );
+        assert_eq!(res.content.title, Some(format!("大事にすること: {}", category.name)));
         assert_eq!(res.content.body, direction.name);
         assert_eq!(res.content.path, None);
         assert_eq!(res.user_id, user.id);

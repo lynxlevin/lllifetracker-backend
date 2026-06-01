@@ -29,20 +29,10 @@ pub async fn submit_password_change(
 ) -> HttpResponse {
     match redis_pool.get().await {
         Ok(ref mut redis_con) => {
-            match verify_confirmation_token_pasetor(
-                req.token.clone(),
-                redis_con,
-                Some(true),
-                &settings,
-            )
-            .await
-            {
+            match verify_confirmation_token_pasetor(req.token.clone(), redis_con, Some(true), &settings).await {
                 Ok(confirmation_token) => {
                     let hashed_password = password::hash(req.password.as_bytes()).await;
-                    let user = match UserAdapter::init(&db)
-                        .get_by_id(confirmation_token.user_id)
-                        .await
-                    {
+                    let user = match UserAdapter::init(&db).get_by_id(confirmation_token.user_id).await {
                         Ok(user) => match user {
                             Some(user) => user,
                             None => return response_404("User not found"),
@@ -50,15 +40,15 @@ pub async fn submit_password_change(
                         Err(e) => return response_500(e),
                     };
                     match UserAdapter::init(&db).update_password(user, hashed_password).await {
-                        Ok(_) => {
-                            HttpResponse::Ok().json("Your password has been changed successfully. Kindly login with the new password")
-                        }
-                        Err(e) => response_500(e)
+                        Ok(_) => HttpResponse::Ok().json(
+                            "Your password has been changed successfully. Kindly login with the new password",
+                        ),
+                        Err(e) => response_500(e),
                     }
                 }
-                Err(_) => response_400(
-                    "It appears that your password request token has expired or previously used",
-                ),
+                Err(_) => {
+                    response_400("It appears that your password request token has expired or previously used")
+                }
             }
         }
         Err(e) => response_500(e),

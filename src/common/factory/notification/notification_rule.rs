@@ -65,9 +65,7 @@ pub async fn create_everyday_rules(
                 .weekday(weekday),
         );
     }
-    notification_rule::Entity::insert_many(rules)
-        .exec(db)
-        .await?;
+    notification_rule::Entity::insert_many(rules).exec(db).await?;
     Ok(())
 }
 
@@ -92,9 +90,7 @@ pub async fn create_weekday_rules(
                 .weekday(weekday),
         );
     }
-    notification_rule::Entity::insert_many(rules)
-        .exec(db)
-        .await?;
+    notification_rule::Entity::insert_many(rules).exec(db).await?;
     Ok(())
 }
 
@@ -106,11 +102,7 @@ pub async fn create_weekend_rules(
     is_prev_day_in_utc: bool,
 ) -> Result<(), DbErr> {
     let mut rules = vec![];
-    let weekdays = if is_prev_day_in_utc {
-        [Fri, Sat]
-    } else {
-        [Sat, Sun]
-    };
+    let weekdays = if is_prev_day_in_utc { [Fri, Sat] } else { [Sat, Sun] };
     for weekday in weekdays {
         rules.push(
             notification_rule(user_id)
@@ -119,8 +111,6 @@ pub async fn create_weekend_rules(
                 .weekday(weekday),
         );
     }
-    notification_rule::Entity::insert_many(rules)
-        .exec(db)
-        .await?;
+    notification_rule::Entity::insert_many(rules).exec(db).await?;
     Ok(())
 }

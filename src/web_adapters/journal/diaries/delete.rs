@@ -23,18 +23,10 @@ pub async fn delete_diary_endpoint(
     path_param: Path<PathParam>,
 ) -> HttpResponse {
     match user {
-        Some(user) => {
-            match delete_diary(
-                user.into_inner(),
-                path_param.diary_id,
-                DiaryAdapter::init(&db),
-            )
-            .await
-            {
-                Ok(_) => HttpResponse::NoContent().finish(),
-                Err(e) => response_500(e),
-            }
-        }
+        Some(user) => match delete_diary(user.into_inner(), path_param.diary_id, DiaryAdapter::init(&db)).await {
+            Ok(_) => HttpResponse::NoContent().finish(),
+            Err(e) => response_500(e),
+        },
         None => response_401(),
     }
 }

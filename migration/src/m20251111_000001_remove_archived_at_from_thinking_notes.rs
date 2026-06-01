@@ -30,8 +30,7 @@ impl MigrationTrait for Migration {
                 Table::alter()
                     .table(ThinkingNote::Table)
                     .add_column(
-                        timestamp_with_time_zone_null(ThinkingNote::ArchivedAt)
-                            .default(Expr::current_timestamp()),
+                        timestamp_with_time_zone_null(ThinkingNote::ArchivedAt).default(Expr::current_timestamp()),
                     )
                     .to_owned(),
             )

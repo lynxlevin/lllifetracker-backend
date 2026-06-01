@@ -32,13 +32,9 @@ async fn happy_path() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::NO_CONTENT);
 
-    let action_goal_in_db = action_goal::Entity::find_by_id(action_goal.id)
-        .one(&db)
-        .await?
-        .unwrap();
-    let user_yesterday = (Utc::now().with_timezone(&FixedOffset::east_opt(9 * 3600).unwrap())
-        - Duration::days(1))
-    .date_naive();
+    let action_goal_in_db = action_goal::Entity::find_by_id(action_goal.id).one(&db).await?.unwrap();
+    let user_yesterday =
+        (Utc::now().with_timezone(&FixedOffset::east_opt(9 * 3600).unwrap()) - Duration::days(1)).date_naive();
     assert_eq!(Some(user_yesterday), action_goal_in_db.to_date);
 
     Ok(())
@@ -63,9 +59,7 @@ async fn from_date_is_today() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::NO_CONTENT);
 
-    let action_goal_in_db = action_goal::Entity::find_by_id(action_goal.id)
-        .one(&db)
-        .await?;
+    let action_goal_in_db = action_goal::Entity::find_by_id(action_goal.id).one(&db).await?;
     assert!(action_goal_in_db.is_none());
 
     Ok(())
@@ -94,11 +88,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 
     let req = test::TestRequest::post()
         .uri("/api/action_goals")
-        .set_json(ActionGoalSetNewRequest {
-            action_id: Uuid::now_v7(),
-            duration_seconds: None,
-            count: None,
-        })
+        .set_json(ActionGoalSetNewRequest { action_id: Uuid::now_v7(), duration_seconds: None, count: None })
         .to_request();
 
     let res = test::call_service(&app, req).await;

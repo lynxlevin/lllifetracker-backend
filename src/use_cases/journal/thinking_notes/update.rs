@@ -1,7 +1,7 @@
 use db_adapters::{
     thinking_note_adapter::{
-        ThinkingNoteAdapter, ThinkingNoteFilter, ThinkingNoteJoin, ThinkingNoteMutation,
-        ThinkingNoteQuery, UpdateThinkingNoteParams,
+        ThinkingNoteAdapter, ThinkingNoteFilter, ThinkingNoteJoin, ThinkingNoteMutation, ThinkingNoteQuery,
+        UpdateThinkingNoteParams,
     },
     CustomDbErr,
 };
@@ -46,14 +46,7 @@ pub async fn update_thinking_note<'a>(
         .await
         .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
 
-    if let Err(e) = _update_tag_links(
-        &thinking_note,
-        linked_tags,
-        params.tag_ids,
-        thinking_note_adapter,
-    )
-    .await
-    {
+    if let Err(e) = _update_tag_links(&thinking_note, linked_tags, params.tag_ids, thinking_note_adapter).await {
         match &e {
             DbErr::Custom(ce) => match CustomDbErr::from(ce) {
                 CustomDbErr::NotFound => {
@@ -79,17 +72,10 @@ async fn _update_tag_links(
 ) -> Result<(), DbErr> {
     let linked_tag_ids = linked_tags.iter().map(|tag| tag.id).collect::<Vec<_>>();
 
-    let tag_ids_to_link = tag_ids
-        .clone()
-        .into_iter()
-        .filter(|id| !linked_tag_ids.contains(id));
-    thinking_note_adapter
-        .link_tags(&thinking_note, tag_ids_to_link)
-        .await?;
+    let tag_ids_to_link = tag_ids.clone().into_iter().filter(|id| !linked_tag_ids.contains(id));
+    thinking_note_adapter.link_tags(&thinking_note, tag_ids_to_link).await?;
 
-    let tag_ids_to_unlink = linked_tag_ids
-        .into_iter()
-        .filter(|id| !tag_ids.contains(id));
+    let tag_ids_to_unlink = linked_tag_ids.into_iter().filter(|id| !tag_ids.contains(id));
     thinking_note_adapter
         .unlink_tags(&thinking_note, tag_ids_to_unlink)
         .await?;

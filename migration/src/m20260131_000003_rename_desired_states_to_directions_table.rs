@@ -5,10 +5,7 @@ use crate::{
 use sea_orm_migration::prelude::{
     async_trait,
     extension::postgres::Type,
-    sea_orm::{
-        self, ActiveEnum, ConnectionTrait, DbBackend, DeriveActiveEnum, DeriveIden, EnumIter,
-        Schema,
-    },
+    sea_orm::{self, ActiveEnum, ConnectionTrait, DbBackend, DeriveActiveEnum, DeriveIden, EnumIter, Schema},
     ColumnDef, DbErr, DeriveMigrationName, MigrationTrait, SchemaManager, Table,
 };
 
@@ -32,11 +29,7 @@ impl MigrationTrait for Migration {
             )
             .await?;
         manager
-            .rename_table(
-                Table::rename()
-                    .table(DesiredState::Table, Direction::Table)
-                    .to_owned(),
-            )
+            .rename_table(Table::rename().table(DesiredState::Table, Direction::Table).to_owned())
             .await?;
 
         manager
@@ -79,11 +72,7 @@ impl MigrationTrait for Migration {
             .await?;
 
         manager
-            .rename_table(
-                Table::rename()
-                    .table(Direction::Table, DesiredState::Table)
-                    .to_owned(),
-            )
+            .rename_table(Table::rename().table(Direction::Table, DesiredState::Table).to_owned())
             .await?;
         manager
             .alter_table(
@@ -184,25 +173,14 @@ async fn tag_type<'a>(manager: &SchemaManager<'_>, up: bool) -> Result<(), DbErr
         .await?;
 
         manager
-            .alter_table(
-                Table::alter()
-                    .table(Tag::Table)
-                    .drop_column(Tag::TypeOld)
-                    .to_owned(),
-            )
+            .alter_table(Table::alter().table(Tag::Table).drop_column(Tag::TypeOld).to_owned())
             .await?;
-        manager
-            .drop_type(Type::drop().name("tag_type_old").to_owned())
-            .await?;
+        manager.drop_type(Type::drop().name("tag_type_old").to_owned()).await?;
 
         Ok(())
     } else {
         manager
-            .alter_type(
-                Type::alter()
-                    .name(TagType::name())
-                    .rename_to("tag_type_new"),
-            )
+            .alter_type(Type::alter().name(TagType::name()).rename_to("tag_type_new"))
             .await?;
         manager
             .create_type(schema.create_enum_from_active_enum::<OldTagType>())
@@ -239,25 +217,14 @@ async fn tag_type<'a>(manager: &SchemaManager<'_>, up: bool) -> Result<(), DbErr
         .await?;
 
         manager
-            .alter_table(
-                Table::alter()
-                    .table(Tag::Table)
-                    .drop_column("type_new")
-                    .to_owned(),
-            )
+            .alter_table(Table::alter().table(Tag::Table).drop_column("type_new").to_owned())
             .await?;
-        manager
-            .drop_type(Type::drop().name("tag_type_new").to_owned())
-            .await?;
+        manager.drop_type(Type::drop().name("tag_type_new").to_owned()).await?;
         manager
             .alter_table(
                 Table::alter()
                     .table(Tag::Table)
-                    .modify_column(
-                        ColumnDef::new(Tag::Type)
-                            .custom(OldTagType::name())
-                            .not_null(),
-                    )
+                    .modify_column(ColumnDef::new(Tag::Type).custom(OldTagType::name()).not_null())
                     .to_owned(),
             )
             .await?;

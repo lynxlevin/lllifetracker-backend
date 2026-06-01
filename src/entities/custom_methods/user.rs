@@ -10,9 +10,7 @@ pub trait UserTimezoneTrait {
 impl UserTimezoneTrait for user::Model {
     fn to_user_timezone(&self, datetime: DateTime<Utc>) -> DateTime<FixedOffset> {
         match self.timezone {
-            TimezoneEnum::AsiaTokyo => {
-                datetime.with_timezone(&FixedOffset::east_opt(9 * 3600).unwrap())
-            }
+            TimezoneEnum::AsiaTokyo => datetime.with_timezone(&FixedOffset::east_opt(9 * 3600).unwrap()),
             TimezoneEnum::Utc => datetime.fixed_offset(),
         }
     }

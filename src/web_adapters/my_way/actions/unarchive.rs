@@ -4,8 +4,7 @@ use actix_web::{
     HttpResponse,
 };
 use db_adapters::{
-    action_adapter::ActionAdapter, action_track_adapter::ActionTrackAdapter,
-    user_adapter::UserAdapter,
+    action_adapter::ActionAdapter, action_track_adapter::ActionTrackAdapter, user_adapter::UserAdapter,
 };
 use entities::user as user_entity;
 use sea_orm::DbConn;

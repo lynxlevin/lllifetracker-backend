@@ -1,9 +1,7 @@
 use actix_web::{http, test, HttpMessage};
 use chrono::{DateTime, Duration, FixedOffset, Utc};
 use sea_orm::{ActiveModelTrait, DbErr};
-use use_cases::my_way::action_tracks::types::{
-    ActionTrackAggregation, ActionTrackAggregationDuration,
-};
+use use_cases::my_way::action_tracks::types::{ActionTrackAggregation, ActionTrackAggregationDuration};
 
 use crate::utils::Connections;
 

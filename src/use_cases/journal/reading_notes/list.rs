@@ -92,8 +92,7 @@ fn validate_params(params: ReadingNoteListQuery) -> Result<QueryParam, UseCaseEr
             tag_id_or
                 .split(',')
                 .map(|tag_id| {
-                    Uuid::parse_str(tag_id)
-                        .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
+                    Uuid::parse_str(tag_id).map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
                 })
                 .filter(|tag_id| tag_id.is_ok())
                 .map(|tag_id| tag_id.unwrap())
@@ -104,9 +103,6 @@ fn validate_params(params: ReadingNoteListQuery) -> Result<QueryParam, UseCaseEr
     Ok(QueryParam { tag_id_or })
 }
 
-fn first_to_process(
-    res: &Vec<ReadingNoteVisibleWithTags>,
-    reading_note: &ReadingNoteWithTag,
-) -> bool {
+fn first_to_process(res: &Vec<ReadingNoteVisibleWithTags>, reading_note: &ReadingNoteWithTag) -> bool {
     res.is_empty() || res.last().unwrap().id != reading_note.id
 }

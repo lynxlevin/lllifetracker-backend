@@ -42,12 +42,7 @@ impl MigrationTrait for Migration {
             )
             .await?;
         manager
-            .alter_table(
-                Table::alter()
-                    .table(Action::Table)
-                    .drop_column(Action::Memo)
-                    .to_owned(),
-            )
+            .alter_table(Table::alter().table(Action::Table).drop_column(Action::Memo).to_owned())
             .await?;
         Ok(())
     }

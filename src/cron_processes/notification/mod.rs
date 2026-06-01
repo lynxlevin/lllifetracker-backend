@@ -28,13 +28,7 @@ pub async fn run_cron_processes(settings: Settings) -> Result<(), ()> {
                     return ();
                 }
             };
-            my_way_reminder::my_way_reminder(
-                &params.0,
-                &params.1,
-                weekday,
-                utc_time_rounded_by_10_minutes,
-            )
-            .await
+            my_way_reminder::my_way_reminder(&params.0, &params.1, weekday, utc_time_rounded_by_10_minutes).await
         })
     }) {
         Ok(job) => job,
@@ -59,16 +53,13 @@ pub async fn run_cron_processes(settings: Settings) -> Result<(), ()> {
 fn get_parsed_time(time: DateTime<Utc>) -> Option<(Weekday, NaiveTime)> {
     let five_minutes_ahead = time + Duration::minutes(5);
     let weekday = five_minutes_ahead.weekday();
-    let utc_time_rounded_by_10_minutes = match NaiveTime::from_hms_opt(
-        five_minutes_ahead.hour(),
-        five_minutes_ahead.minute() / 10 * 10,
-        0,
-    ) {
-        Some(time) => time,
-        None => {
-            return None;
-        }
-    };
+    let utc_time_rounded_by_10_minutes =
+        match NaiveTime::from_hms_opt(five_minutes_ahead.hour(), five_minutes_ahead.minute() / 10 * 10, 0) {
+            Some(time) => time,
+            None => {
+                return None;
+            }
+        };
     Some((weekday, utc_time_rounded_by_10_minutes))
 }
 
@@ -78,37 +69,22 @@ mod tests {
 
     #[test]
     fn test_get_parsed_time() {
-        let time = DateTime::parse_from_rfc3339("2025-12-28T00:00:00Z")
-            .unwrap()
-            .to_utc();
+        let time = DateTime::parse_from_rfc3339("2025-12-28T00:00:00Z").unwrap().to_utc();
         let res = get_parsed_time(time);
-        assert_eq!(
-            res,
-            Some((Weekday::Sun, NaiveTime::from_hms_opt(0, 0, 0).unwrap()))
-        );
+        assert_eq!(res, Some((Weekday::Sun, NaiveTime::from_hms_opt(0, 0, 0).unwrap())));
     }
 
     #[test]
     fn test_get_parsed_time_55_minutes_to_0() {
-        let time = DateTime::parse_from_rfc3339("2025-12-28T23:55:00Z")
-            .unwrap()
-            .to_utc();
+        let time = DateTime::parse_from_rfc3339("2025-12-28T23:55:00Z").unwrap().to_utc();
         let res = get_parsed_time(time);
-        assert_eq!(
-            res,
-            Some((Weekday::Mon, NaiveTime::from_hms_opt(0, 0, 0).unwrap()))
-        );
+        assert_eq!(res, Some((Weekday::Mon, NaiveTime::from_hms_opt(0, 0, 0).unwrap())));
     }
 
     #[test]
     fn test_get_parsed_time_4_minutes_to_0() {
-        let time = DateTime::parse_from_rfc3339("2025-12-28T00:04:00Z")
-            .unwrap()
-            .to_utc();
+        let time = DateTime::parse_from_rfc3339("2025-12-28T00:04:00Z").unwrap().to_utc();
         let res = get_parsed_time(time);
-        assert_eq!(
-            res,
-            Some((Weekday::Sun, NaiveTime::from_hms_opt(0, 0, 0).unwrap()))
-        );
+        assert_eq!(res, Some((Weekday::Sun, NaiveTime::from_hms_opt(0, 0, 0).unwrap())));
     }
 }

@@ -50,15 +50,9 @@ async fn test_order() -> Result<(), DbErr> {
     let expected = vec![
         JournalVisibleWithTags::from(ThinkingNoteVisibleWithTags::from((thinking_note, vec![]))),
         JournalVisibleWithTags::from(DiaryVisibleWithTags::from((diary, vec![]))),
-        JournalVisibleWithTags::from(ThinkingNoteVisibleWithTags::from((
-            resolved_thinking_note_0,
-            vec![],
-        ))),
+        JournalVisibleWithTags::from(ThinkingNoteVisibleWithTags::from((resolved_thinking_note_0, vec![]))),
         JournalVisibleWithTags::from(ReadingNoteVisibleWithTags::from((reading_note, vec![]))),
-        JournalVisibleWithTags::from(ThinkingNoteVisibleWithTags::from((
-            resolved_thinking_note_1,
-            vec![],
-        ))),
+        JournalVisibleWithTags::from(ThinkingNoteVisibleWithTags::from((resolved_thinking_note_1, vec![]))),
     ];
 
     assert_eq!(body.len(), expected.len());

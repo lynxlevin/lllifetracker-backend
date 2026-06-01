@@ -3,8 +3,7 @@ use sea_orm_migration::{
         async_trait,
         extension::postgres::Type,
         sea_orm::{self, DeriveIden},
-        ColumnDef, ConnectionTrait, DbErr, DeriveMigrationName, MigrationTrait, SchemaManager,
-        Table,
+        ColumnDef, ConnectionTrait, DbErr, DeriveMigrationName, MigrationTrait, SchemaManager, Table,
     },
     sea_orm::{ActiveEnum, DbBackend, DeriveActiveEnum, EnumIter, Schema},
 };
@@ -66,12 +65,7 @@ impl MigrationTrait for Migration {
         db.execute_unprepared("ALTER TABLE tag DROP CONSTRAINT type_foreign_keys_compatibility;")
             .await?;
         manager
-            .alter_table(
-                Table::alter()
-                    .table(Tag::Table)
-                    .drop_column(Tag::Type)
-                    .to_owned(),
-            )
+            .alter_table(Table::alter().table(Tag::Table).drop_column(Tag::Type).to_owned())
             .await?;
         manager
             .drop_type(Type::drop().if_exists().name(TagType::name()).to_owned())

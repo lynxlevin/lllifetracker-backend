@@ -28,20 +28,15 @@ pub struct Connections<
 }
 
 pub async fn init_app() -> Result<
-    Connections<
-        impl Service<Request, Response = ServiceResponse<EitherBody<Encoder<BoxBody>>>, Error = Error>,
-    >,
+    Connections<impl Service<Request, Response = ServiceResponse<EitherBody<Encoder<BoxBody>>>, Error = Error>>,
     DbErr,
 > {
     let settings = get_test_settings();
     // let _ = env_logger::try_init();
     let db = init_db(&settings).await;
-    let redis_pool = init_redis_pool(&settings)
-        .await
-        .expect("Error on getting Redis pool.");
+    let redis_pool = init_redis_pool(&settings).await.expect("Error on getting Redis pool.");
 
-    let (redis_store, secret_key) =
-        get_preps_for_redis_session_store(&settings, &settings.redis.url).await;
+    let (redis_store, secret_key) = get_preps_for_redis_session_store(&settings, &settings.redis.url).await;
 
     let app = test::init_service(
         App::new()

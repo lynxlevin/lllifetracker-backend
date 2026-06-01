@@ -26,12 +26,7 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .alter_table(
-                Table::alter()
-                    .table(Memo::Table)
-                    .drop_column(Memo::Favorite)
-                    .to_owned(),
-            )
+            .alter_table(Table::alter().table(Memo::Table).drop_column(Memo::Favorite).to_owned())
             .await?;
         Ok(())
     }

@@ -1,7 +1,6 @@
 use db_adapters::{
     direction_category_adapter::{
-        DirectionCategoryAdapter, DirectionCategoryFilter, DirectionCategoryOrder,
-        DirectionCategoryQuery,
+        DirectionCategoryAdapter, DirectionCategoryFilter, DirectionCategoryOrder, DirectionCategoryQuery,
     },
     Order::Asc,
 };

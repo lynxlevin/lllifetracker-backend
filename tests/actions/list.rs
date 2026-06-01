@@ -91,10 +91,7 @@ mod list_with_goal {
 
         let res: Vec<ActionVisibleWithGoal> = test::read_body_json(resp).await;
 
-        let expected = vec![ActionVisibleWithGoal::from((
-            action,
-            Some(active_action_goal),
-        ))];
+        let expected = vec![ActionVisibleWithGoal::from((action, Some(active_action_goal)))];
 
         assert_eq!(res.len(), expected.len());
         assert_eq!(res[0], expected[0]);
@@ -106,17 +103,13 @@ mod list_with_goal {
     async fn return_action_with_no_active_goal() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
         let user = factory::user().insert(&db).await?;
-        let action_with_no_goal = factory::action(user.id)
-            .name("no_goal".to_string())
+        let action_with_no_goal = factory::action(user.id).name("no_goal".to_string()).insert(&db).await?;
+        let action_with_only_inactive_goal = factory::action(user.id).insert(&db).await?;
+        let _inactive_action_goal = factory::action_goal(user.id, action_with_only_inactive_goal.id)
+            .from_date(NaiveDate::from_ymd_opt(2025, 8, 12).unwrap())
+            .to_date(Some(NaiveDate::from_ymd_opt(2025, 8, 12).unwrap()))
             .insert(&db)
             .await?;
-        let action_with_only_inactive_goal = factory::action(user.id).insert(&db).await?;
-        let _inactive_action_goal =
-            factory::action_goal(user.id, action_with_only_inactive_goal.id)
-                .from_date(NaiveDate::from_ymd_opt(2025, 8, 12).unwrap())
-                .to_date(Some(NaiveDate::from_ymd_opt(2025, 8, 12).unwrap()))
-                .insert(&db)
-                .await?;
 
         let req = test::TestRequest::get().uri("/api/actions").to_request();
         req.extensions_mut().insert(user.clone());

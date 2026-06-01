@@ -2,12 +2,10 @@ use sea_orm_migration::{
     prelude::{
         async_trait,
         sea_orm::{self, DeriveIden},
-        DbErr, DeriveMigrationName, Expr, ForeignKey, ForeignKeyAction, Index, MigrationTrait,
-        SchemaManager, Table,
+        DbErr, DeriveMigrationName, Expr, ForeignKey, ForeignKeyAction, Index, MigrationTrait, SchemaManager,
+        Table,
     },
-    schema::{
-        string_null, timestamp_with_time_zone, timestamp_with_time_zone_null, uuid, uuid_null,
-    },
+    schema::{string_null, timestamp_with_time_zone, timestamp_with_time_zone_null, uuid, uuid_null},
 };
 
 use crate::m20240722_000001_create_users_table::User;
@@ -44,19 +42,10 @@ impl MigrationTrait for Migration {
                     .col(uuid(Record::UserId))
                     .col(uuid_null(Record::TagId))
                     .col(string_null(Record::ActionName))
-                    .col(
-                        timestamp_with_time_zone(Record::StartedAt)
-                            .default(Expr::current_timestamp()),
-                    )
+                    .col(timestamp_with_time_zone(Record::StartedAt).default(Expr::current_timestamp()))
                     .col(timestamp_with_time_zone_null(Record::EndedAt))
-                    .col(
-                        timestamp_with_time_zone(Record::CreatedAt)
-                            .default(Expr::current_timestamp()),
-                    )
-                    .col(
-                        timestamp_with_time_zone(Record::UpdatedAt)
-                            .default(Expr::current_timestamp()),
-                    )
+                    .col(timestamp_with_time_zone(Record::CreatedAt).default(Expr::current_timestamp()))
+                    .col(timestamp_with_time_zone(Record::UpdatedAt).default(Expr::current_timestamp()))
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk-records-user_id")

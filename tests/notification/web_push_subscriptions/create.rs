@@ -43,10 +43,7 @@ async fn happy_path() -> Result<(), DbErr> {
         .await?
         .unwrap();
     assert_eq!(sub_in_db.device_name, req_body.device_name);
-    assert_eq!(
-        sub_in_db.expiration_epoch_time,
-        req_body.expiration_epoch_time
-    );
+    assert_eq!(sub_in_db.expiration_epoch_time, req_body.expiration_epoch_time);
     assert_eq!(
         sub_in_db.endpoint,
         encrypt_and_encode(req_body.endpoint.clone(), &settings).unwrap()
@@ -79,9 +76,7 @@ async fn happy_path() -> Result<(), DbErr> {
 async fn happy_path_conflict_handling() -> Result<(), DbErr> {
     let Connections { app, db, settings } = init_app().await?;
     let user = factory::user().insert(&db).await?;
-    let _subscription = factory::web_push_subscription(user.id, &settings)
-        .insert(&db)
-        .await?;
+    let _subscription = factory::web_push_subscription(user.id, &settings).insert(&db).await?;
 
     let req_body = WebPushSubscriptionCreateRequest {
         device_name: "My iPhone".to_string(),
@@ -110,10 +105,7 @@ async fn happy_path_conflict_handling() -> Result<(), DbErr> {
         .await?
         .unwrap();
     assert_eq!(sub_in_db.device_name, req_body.device_name);
-    assert_eq!(
-        sub_in_db.expiration_epoch_time,
-        req_body.expiration_epoch_time
-    );
+    assert_eq!(sub_in_db.expiration_epoch_time, req_body.expiration_epoch_time);
     assert_eq!(
         sub_in_db.endpoint,
         encrypt_and_encode(req_body.endpoint.clone(), &settings).unwrap()
@@ -148,9 +140,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 
     let req = test::TestRequest::post()
         .uri("/api/web_push_subscription")
-        .set_json(WebPushSubscriptionCreateRequest {
-            ..Default::default()
-        })
+        .set_json(WebPushSubscriptionCreateRequest { ..Default::default() })
         .to_request();
 
     let resp = test::call_service(&app, req).await;

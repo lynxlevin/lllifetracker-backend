@@ -1,9 +1,7 @@
 use uuid::Uuid;
 
 use crate::{my_way::ambitions::types::AmbitionVisible, UseCaseError};
-use db_adapters::ambition_adapter::{
-    AmbitionAdapter, AmbitionFilter, AmbitionMutation, AmbitionQuery,
-};
+use db_adapters::ambition_adapter::{AmbitionAdapter, AmbitionFilter, AmbitionMutation, AmbitionQuery};
 use entities::user as user_entity;
 
 pub async fn unarchive_ambition<'a>(

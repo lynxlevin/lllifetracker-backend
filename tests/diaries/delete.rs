@@ -4,12 +4,12 @@ use sea_orm::{ActiveModelTrait, ColumnTrait, DbErr, EntityTrait, QueryFilter};
 use crate::utils::Connections;
 
 use super::super::utils::init_app;
-use entities::{diaries_tags, diary};
 use common::factory::{self, *};
+use entities::{diaries_tags, diary};
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let diary = factory::diary(user.id).insert(&db).await?;
     let (_, tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
@@ -38,7 +38,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let diary = factory::diary(user.id).insert(&db).await?;
 

@@ -2,22 +2,16 @@ use std::collections::HashMap;
 
 use crate::{
     my_way::action_tracks::types::{
-        ActionTrackAggregationDailyQuery, ActionTrackAggregationDuration,
-        ActionTrackDailyAggregationItem,
+        ActionTrackAggregationDailyQuery, ActionTrackAggregationDuration, ActionTrackDailyAggregationItem,
     },
     UseCaseError,
 };
 use chrono::{DateTime, Datelike, Duration, FixedOffset};
 use db_adapters::{
-    action_track_adapter::{
-        ActionTrackAdapter, ActionTrackFilter, ActionTrackOrder, ActionTrackQuery,
-    },
+    action_track_adapter::{ActionTrackAdapter, ActionTrackFilter, ActionTrackOrder, ActionTrackQuery},
     Order,
 };
-use entities::{
-    custom_methods::user::UserTimezoneTrait, sea_orm_active_enums::TimezoneEnum,
-    user as user_entity,
-};
+use entities::{custom_methods::user::UserTimezoneTrait, sea_orm_active_enums::TimezoneEnum, user as user_entity};
 
 pub async fn aggregate_daily_action_tracks<'a>(
     user: user_entity::Model,
@@ -51,11 +45,7 @@ pub async fn aggregate_daily_action_tracks<'a>(
             })
         } else {
             let item = aggregation_items.last_mut().unwrap();
-            match item
-                .aggregation
-                .iter_mut()
-                .find(|agg| agg.action_id == track.action_id)
-            {
+            match item.aggregation.iter_mut().find(|agg| agg.action_id == track.action_id) {
                 Some(agg_item) => {
                     agg_item.duration += track.duration.unwrap();
                     agg_item.count += 1;
@@ -110,10 +100,6 @@ fn parse_params(
             end: utc_end - Duration::hours(9),
             year_month: params.year_month,
         }),
-        TimezoneEnum::Utc => Ok(ParsedParams {
-            start: utc_start,
-            end: utc_end,
-            year_month: params.year_month,
-        }),
+        TimezoneEnum::Utc => Ok(ParsedParams { start: utc_start, end: utc_end, year_month: params.year_month }),
     }
 }

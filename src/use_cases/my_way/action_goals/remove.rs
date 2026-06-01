@@ -3,8 +3,7 @@ use chrono::{Duration, Utc};
 use db_adapters::{
     action_adapter::{ActionAdapter, ActionFilter, ActionQuery},
     action_goal_adapter::{
-        ActionGoalAdapter, ActionGoalFilter, ActionGoalMutation, ActionGoalQuery,
-        UpdateActionGoalParams,
+        ActionGoalAdapter, ActionGoalFilter, ActionGoalMutation, ActionGoalQuery, UpdateActionGoalParams,
     },
 };
 use entities::{custom_methods::user::UserTimezoneTrait, user as user_entity};

@@ -22,10 +22,6 @@ pub async fn list_tags<'a>(
         .order_by_created_at(Asc)
         .get_all_tags()
         .await
-        .map(|tags| {
-            tags.into_iter()
-                .map(|tag| TagVisible::from(tag))
-                .collect::<Vec<_>>()
-        })
+        .map(|tags| tags.into_iter().map(|tag| TagVisible::from(tag)).collect::<Vec<_>>())
         .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
 }

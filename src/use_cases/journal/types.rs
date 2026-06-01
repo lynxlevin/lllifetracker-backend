@@ -30,32 +30,17 @@ pub trait IntoJournalVisibleWithTags {
 }
 impl From<DiaryVisibleWithTags> for JournalVisibleWithTags {
     fn from(value: DiaryVisibleWithTags) -> Self {
-        Self {
-            diary: Some(value),
-            reading_note: None,
-            thinking_note: None,
-            kind: JournalKind::Diary,
-        }
+        Self { diary: Some(value), reading_note: None, thinking_note: None, kind: JournalKind::Diary }
     }
 }
 impl From<ReadingNoteVisibleWithTags> for JournalVisibleWithTags {
     fn from(value: ReadingNoteVisibleWithTags) -> Self {
-        Self {
-            diary: None,
-            reading_note: Some(value),
-            thinking_note: None,
-            kind: JournalKind::ReadingNote,
-        }
+        Self { diary: None, reading_note: Some(value), thinking_note: None, kind: JournalKind::ReadingNote }
     }
 }
 impl From<ThinkingNoteVisibleWithTags> for JournalVisibleWithTags {
     fn from(value: ThinkingNoteVisibleWithTags) -> Self {
-        Self {
-            diary: None,
-            reading_note: None,
-            thinking_note: Some(value),
-            kind: JournalKind::ThinkingNote,
-        }
+        Self { diary: None, reading_note: None, thinking_note: Some(value), kind: JournalKind::ThinkingNote }
     }
 }
 

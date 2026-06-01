@@ -5,9 +5,7 @@ use db_adapters::web_push_subscription_adapter::{
 use entities::user as user_entity;
 
 use crate::{
-    notification::web_push_subscription::types::{
-        WebPushSubscriptionCreateRequest, WebPushSubscriptionVisible,
-    },
+    notification::web_push_subscription::types::{WebPushSubscriptionCreateRequest, WebPushSubscriptionVisible},
     UseCaseError,
 };
 

@@ -5,8 +5,8 @@ use sea_orm::{
     sea_query::{IntoCondition, NullOrdering::Last},
     ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel,
     JoinType::LeftJoin,
-    ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait, Select, Set,
-    TransactionError, TransactionTrait,
+    ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait, Select, Set, TransactionError,
+    TransactionTrait,
 };
 use uuid::Uuid;
 
@@ -25,10 +25,7 @@ pub struct ActionAdapter<'a> {
 
 impl<'a> ActionAdapter<'a> {
     pub fn init(db: &'a DbConn) -> Self {
-        Self {
-            db,
-            query: Entity::find(),
-        }
+        Self { db, query: Entity::find() }
     }
 }
 
@@ -40,9 +37,9 @@ impl ActionJoin for ActionAdapter<'_> {
     fn join_active_goal(mut self) -> Self {
         self.query = self.query.join(
             LeftJoin,
-            Relation::ActionGoal.def().on_condition(|_left, _right| {
-                action_goal::Column::ToDate.is_null().into_condition()
-            }),
+            Relation::ActionGoal
+                .def()
+                .on_condition(|_left, _right| action_goal::Column::ToDate.is_null().into_condition()),
         );
         self
     }
@@ -72,9 +69,7 @@ pub trait ActionOrder {
 
 impl ActionOrder for ActionAdapter<'_> {
     fn order_by_ordering_nulls_last(mut self, order: Order) -> Self {
-        self.query = self
-            .query
-            .order_by_with_nulls(Column::Ordering, order, Last);
+        self.query = self.query.order_by_with_nulls(Column::Ordering, order, Last);
         self
     }
 
@@ -86,9 +81,7 @@ impl ActionOrder for ActionAdapter<'_> {
 
 pub trait ActionQuery {
     fn get_all(self) -> impl Future<Output = Result<Vec<Model>, DbErr>>;
-    fn get_all_with_goal(
-        self,
-    ) -> impl Future<Output = Result<Vec<(Model, Option<action_goal::Model>)>, DbErr>>;
+    fn get_all_with_goal(self) -> impl Future<Output = Result<Vec<(Model, Option<action_goal::Model>)>, DbErr>>;
     fn get_by_id(self, id: Uuid) -> impl Future<Output = Result<Option<Model>, DbErr>>;
 }
 
@@ -98,10 +91,7 @@ impl ActionQuery for ActionAdapter<'_> {
     }
 
     async fn get_all_with_goal(self) -> Result<Vec<(Model, Option<action_goal::Model>)>, DbErr> {
-        self.query
-            .select_also(action_goal::Entity)
-            .all(self.db)
-            .await
+        self.query.select_also(action_goal::Entity).all(self.db).await
     }
 
     async fn get_by_id(self, id: Uuid) -> Result<Option<Model>, DbErr> {
@@ -131,11 +121,7 @@ pub trait ActionMutation {
         self,
         params: CreateActionParams,
     ) -> impl Future<Output = Result<Model, TransactionError<DbErr>>>;
-    fn update(
-        self,
-        action: Model,
-        params: UpdateActionParams,
-    ) -> impl Future<Output = Result<Model, DbErr>>;
+    fn update(self, action: Model, params: UpdateActionParams) -> impl Future<Output = Result<Model, DbErr>>;
     fn convert_track_type(
         self,
         action: Model,
@@ -152,10 +138,7 @@ pub trait ActionMutation {
 }
 
 impl ActionMutation for ActionAdapter<'_> {
-    async fn create_with_tag(
-        self,
-        params: CreateActionParams,
-    ) -> Result<Model, TransactionError<DbErr>> {
+    async fn create_with_tag(self, params: CreateActionParams) -> Result<Model, TransactionError<DbErr>> {
         self.db
             .transaction::<_, Model, DbErr>(|txn| {
                 Box::pin(async move {
@@ -199,11 +182,7 @@ impl ActionMutation for ActionAdapter<'_> {
         action.update(self.db).await
     }
 
-    async fn convert_track_type(
-        self,
-        action: Model,
-        track_type: ActionTrackType,
-    ) -> Result<Model, DbErr> {
+    async fn convert_track_type(self, action: Model, track_type: ActionTrackType) -> Result<Model, DbErr> {
         let mut action = action.into_active_model();
         action.track_type = Set(track_type);
         action.updated_at = Set(Utc::now().into());
@@ -224,11 +203,7 @@ impl ActionMutation for ActionAdapter<'_> {
         action.update(self.db).await
     }
 
-    async fn bulk_update_ordering(
-        self,
-        actions: Vec<Model>,
-        ordering: Vec<Uuid>,
-    ) -> Result<(), DbErr> {
+    async fn bulk_update_ordering(self, actions: Vec<Model>, ordering: Vec<Uuid>) -> Result<(), DbErr> {
         for action in actions {
             let order = &ordering.iter().position(|id| id == &action.id);
             if let Some(order) = order {

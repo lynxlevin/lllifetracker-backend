@@ -17,14 +17,10 @@ pub async fn list_notification_rules_endpoint(
     user: Option<ReqData<user_entity::Model>>,
 ) -> HttpResponse {
     match user {
-        Some(user) => {
-            match list_notification_rules(user.into_inner(), NotificationRuleAdapter::init(&db))
-                .await
-            {
-                Ok(res) => HttpResponse::Ok().json(res),
-                Err(e) => response_500(e),
-            }
-        }
+        Some(user) => match list_notification_rules(user.into_inner(), NotificationRuleAdapter::init(&db)).await {
+            Ok(res) => HttpResponse::Ok().json(res),
+            Err(e) => response_500(e),
+        },
         None => response_401(),
     }
 }

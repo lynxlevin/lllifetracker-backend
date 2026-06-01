@@ -1,7 +1,7 @@
 use db_adapters::{
     thinking_note_adapter::{
-        ThinkingNoteAdapter, ThinkingNoteFilter, ThinkingNoteJoin, ThinkingNoteOrder,
-        ThinkingNoteQuery, ThinkingNoteWithTag,
+        ThinkingNoteAdapter, ThinkingNoteFilter, ThinkingNoteJoin, ThinkingNoteOrder, ThinkingNoteQuery,
+        ThinkingNoteWithTag,
     },
     Order::{Asc, Desc},
 };
@@ -99,8 +99,7 @@ fn validate_params(params: ThinkingNoteListQuery) -> Result<QueryParam, UseCaseE
             tag_id_or
                 .split(',')
                 .map(|tag_id| {
-                    Uuid::parse_str(tag_id)
-                        .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
+                    Uuid::parse_str(tag_id).map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
                 })
                 .filter(|tag_id| tag_id.is_ok())
                 .map(|tag_id| tag_id.unwrap())
@@ -108,15 +107,9 @@ fn validate_params(params: ThinkingNoteListQuery) -> Result<QueryParam, UseCaseE
         )
     });
 
-    Ok(QueryParam {
-        tag_id_or,
-        resolved: params.resolved,
-    })
+    Ok(QueryParam { tag_id_or, resolved: params.resolved })
 }
 
-fn first_to_process(
-    res: &Vec<ThinkingNoteVisibleWithTags>,
-    thinking_note: &ThinkingNoteWithTag,
-) -> bool {
+fn first_to_process(res: &Vec<ThinkingNoteVisibleWithTags>, thinking_note: &ThinkingNoteWithTag) -> bool {
     res.is_empty() || res.last().unwrap().id != thinking_note.id
 }

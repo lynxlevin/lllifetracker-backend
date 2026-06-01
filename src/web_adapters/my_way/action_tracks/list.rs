@@ -18,16 +18,12 @@ pub async fn list_action_tracks_endpoint(
     query: Query<ActionTrackListQuery>,
 ) -> HttpResponse {
     match user {
-        Some(user) => match list_action_tracks(
-            user.into_inner(),
-            query.into_inner(),
-            ActionTrackAdapter::init(&db),
-        )
-        .await
-        {
-            Ok(res) => HttpResponse::Ok().json(res),
-            Err(e) => response_500(e),
-        },
+        Some(user) => {
+            match list_action_tracks(user.into_inner(), query.into_inner(), ActionTrackAdapter::init(&db)).await {
+                Ok(res) => HttpResponse::Ok().json(res),
+                Err(e) => response_500(e),
+            }
+        }
         None => response_401(),
     }
 }

@@ -19,13 +19,7 @@ pub async fn create_ambition_endpoint(
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            match create_ambition(
-                user.into_inner(),
-                req.into_inner(),
-                AmbitionAdapter::init(&db),
-            )
-            .await
-            {
+            match create_ambition(user.into_inner(), req.into_inner(), AmbitionAdapter::init(&db)).await {
                 Ok(res) => HttpResponse::Created().json(res),
                 Err(e) => response_500(e),
             }

@@ -1,8 +1,8 @@
 use std::future::Future;
 
 use sea_orm::{
-    sea_query::NullOrdering::Last, ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait,
-    IntoActiveModel, ModelTrait, Order, PaginatorTrait, QueryFilter, QueryOrder, Select, Set,
+    sea_query::NullOrdering::Last, ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel,
+    ModelTrait, Order, PaginatorTrait, QueryFilter, QueryOrder, Select, Set,
 };
 use uuid::Uuid;
 
@@ -19,10 +19,7 @@ pub struct DirectionCategoryAdapter<'a> {
 
 impl<'a> DirectionCategoryAdapter<'a> {
     pub fn init(db: &'a DbConn) -> Self {
-        Self {
-            db,
-            query: Entity::find(),
-        }
+        Self { db, query: Entity::find() }
     }
 }
 
@@ -50,9 +47,7 @@ pub trait DirectionCategoryOrder {
 
 impl DirectionCategoryOrder for DirectionCategoryAdapter<'_> {
     fn order_by_ordering_nulls_last(mut self, order: Order) -> Self {
-        self.query = self
-            .query
-            .order_by_with_nulls(Column::Ordering, order, Last);
+        self.query = self.query.order_by_with_nulls(Column::Ordering, order, Last);
         self
     }
 
@@ -95,19 +90,13 @@ pub struct UpdateDirectionCategoryParams {
 }
 
 pub trait DirectionCategoryMutation {
-    fn create(
-        self,
-        params: CreateDirectionCategoryParams,
-    ) -> impl Future<Output = Result<Model, DbErr>>;
+    fn create(self, params: CreateDirectionCategoryParams) -> impl Future<Output = Result<Model, DbErr>>;
     fn update(
         self,
         category: Model,
         params: UpdateDirectionCategoryParams,
     ) -> impl Future<Output = Result<Model, DbErr>>;
-    fn bulk_update_ordering(
-        self,
-        params: Vec<(Model, Option<i32>)>,
-    ) -> impl Future<Output = Result<(), DbErr>>;
+    fn bulk_update_ordering(self, params: Vec<(Model, Option<i32>)>) -> impl Future<Output = Result<(), DbErr>>;
     fn delete(self, category: Model) -> impl Future<Output = Result<(), DbErr>>;
 }
 
@@ -123,11 +112,7 @@ impl DirectionCategoryMutation for DirectionCategoryAdapter<'_> {
         .await
     }
 
-    async fn update(
-        self,
-        category: Model,
-        params: UpdateDirectionCategoryParams,
-    ) -> Result<Model, DbErr> {
+    async fn update(self, category: Model, params: UpdateDirectionCategoryParams) -> Result<Model, DbErr> {
         let mut category = category.into_active_model();
         category.name = Set(params.name);
         category.update(self.db).await

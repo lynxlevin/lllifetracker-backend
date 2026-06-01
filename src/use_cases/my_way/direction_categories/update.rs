@@ -1,14 +1,12 @@
 use uuid::Uuid;
 
 use crate::{
-    my_way::direction_categories::types::{
-        DirectionCategoryUpdateRequest, DirectionCategoryVisible,
-    },
+    my_way::direction_categories::types::{DirectionCategoryUpdateRequest, DirectionCategoryVisible},
     UseCaseError,
 };
 use db_adapters::direction_category_adapter::{
-    DirectionCategoryAdapter, DirectionCategoryFilter, DirectionCategoryMutation,
-    DirectionCategoryQuery, UpdateDirectionCategoryParams,
+    DirectionCategoryAdapter, DirectionCategoryFilter, DirectionCategoryMutation, DirectionCategoryQuery,
+    UpdateDirectionCategoryParams,
 };
 use entities::user as user_entity;
 
@@ -27,12 +25,7 @@ pub async fn update_direction_category<'a>(
         .ok_or(UseCaseError::NotFound("Category not found".to_string()))?;
 
     category_adapter
-        .update(
-            category,
-            UpdateDirectionCategoryParams {
-                name: params.name.clone(),
-            },
-        )
+        .update(category, UpdateDirectionCategoryParams { name: params.name.clone() })
         .await
         .map(|category| DirectionCategoryVisible::from(category))
         .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))

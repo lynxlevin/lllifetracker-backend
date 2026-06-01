@@ -11,11 +11,7 @@ pub struct Migration;
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .rename_table(
-                Table::rename()
-                    .table(BookExcerpt::Table, ReadingNote::Table)
-                    .to_owned(),
-            )
+            .rename_table(Table::rename().table(BookExcerpt::Table, ReadingNote::Table).to_owned())
             .await?;
 
         manager
@@ -29,10 +25,7 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(ReadingNotesTags::Table)
-                    .rename_column(
-                        BookExcerptsTags::BookExcerptId,
-                        ReadingNotesTags::ReadingNoteId,
-                    )
+                    .rename_column(BookExcerptsTags::BookExcerptId, ReadingNotesTags::ReadingNoteId)
                     .to_owned(),
             )
             .await?;
@@ -44,10 +37,7 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(ReadingNotesTags::Table)
-                    .rename_column(
-                        ReadingNotesTags::ReadingNoteId,
-                        BookExcerptsTags::BookExcerptId,
-                    )
+                    .rename_column(ReadingNotesTags::ReadingNoteId, BookExcerptsTags::BookExcerptId)
                     .to_owned(),
             )
             .await?;
@@ -60,11 +50,7 @@ impl MigrationTrait for Migration {
             .await?;
 
         manager
-            .rename_table(
-                Table::rename()
-                    .table(ReadingNote::Table, BookExcerpt::Table)
-                    .to_owned(),
-            )
+            .rename_table(Table::rename().table(ReadingNote::Table, BookExcerpt::Table).to_owned())
             .await?;
         Ok(())
     }

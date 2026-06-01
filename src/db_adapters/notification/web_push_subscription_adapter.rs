@@ -1,8 +1,7 @@
 use std::future::Future;
 
 use sea_orm::{
-    sea_query::OnConflict, ColumnTrait, DbConn, DbErr, EntityTrait, ModelTrait, QueryFilter,
-    Select, Set,
+    sea_query::OnConflict, ColumnTrait, DbConn, DbErr, EntityTrait, ModelTrait, QueryFilter, Select, Set,
 };
 use uuid::Uuid;
 
@@ -19,10 +18,7 @@ pub struct WebPushSubscriptionAdapter<'a> {
 
 impl<'a> WebPushSubscriptionAdapter<'a> {
     pub fn init(db: &'a DbConn) -> Self {
-        Self {
-            db,
-            query: Entity::find(),
-        }
+        Self { db, query: Entity::find() }
     }
 }
 
@@ -44,10 +40,7 @@ pub trait WebPushSubscriptionQuery {
 
 impl WebPushSubscriptionQuery for WebPushSubscriptionAdapter<'_> {
     async fn get_by_user(self, user: &user::Model) -> Result<Option<Model>, DbErr> {
-        self.query
-            .filter(Column::UserId.eq(user.id))
-            .one(self.db)
-            .await
+        self.query.filter(Column::UserId.eq(user.id)).one(self.db).await
     }
 
     async fn get_all(self) -> Result<Vec<Model>, DbErr> {
@@ -66,10 +59,7 @@ pub struct CreateWebPushSubscriptionParams {
 }
 
 pub trait WebPushSubscriptionMutation {
-    fn upsert(
-        self,
-        params: CreateWebPushSubscriptionParams,
-    ) -> impl Future<Output = Result<Model, DbErr>>;
+    fn upsert(self, params: CreateWebPushSubscriptionParams) -> impl Future<Output = Result<Model, DbErr>>;
     fn delete(self, web_push_subscription: Model) -> impl Future<Output = Result<(), DbErr>>;
 }
 

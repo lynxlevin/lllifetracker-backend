@@ -1,7 +1,8 @@
 use sea_orm_migration::{
     prelude::{
-        async_trait, sea_orm::{self, DeriveIden}, DbErr, DeriveMigrationName, MigrationTrait,
-        SchemaManager, Table,
+        async_trait,
+        sea_orm::{self, DeriveIden},
+        DbErr, DeriveMigrationName, MigrationTrait, SchemaManager, Table,
     },
     schema::string_null,
 };
@@ -26,12 +27,7 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .alter_table(
-                Table::alter()
-                    .table(Tag::Table)
-                    .drop_column(Tag::Name)
-                    .to_owned(),
-            )
+            .alter_table(Table::alter().table(Tag::Table).drop_column(Tag::Name).to_owned())
             .await?;
         Ok(())
     }

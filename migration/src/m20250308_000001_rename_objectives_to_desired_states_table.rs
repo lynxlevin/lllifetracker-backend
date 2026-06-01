@@ -11,11 +11,7 @@ pub struct Migration;
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .rename_table(
-                Table::rename()
-                    .table(Objective::Table, DesiredState::Table)
-                    .to_owned(),
-            )
+            .rename_table(Table::rename().table(Objective::Table, DesiredState::Table).to_owned())
             .await?;
 
         manager
@@ -29,10 +25,7 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(AmbitionsDesiredStates::Table)
-                    .rename_column(
-                        AmbitionsObjectives::ObjectiveId,
-                        AmbitionsDesiredStates::DesiredStateId,
-                    )
+                    .rename_column(AmbitionsObjectives::ObjectiveId, AmbitionsDesiredStates::DesiredStateId)
                     .to_owned(),
             )
             .await?;
@@ -48,10 +41,7 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(DesiredStatesActions::Table)
-                    .rename_column(
-                        ObjectivesActions::ObjectiveId,
-                        DesiredStatesActions::DesiredStateId,
-                    )
+                    .rename_column(ObjectivesActions::ObjectiveId, DesiredStatesActions::DesiredStateId)
                     .to_owned(),
             )
             .await?;
@@ -81,10 +71,7 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(DesiredStatesActions::Table)
-                    .rename_column(
-                        DesiredStatesActions::DesiredStateId,
-                        ObjectivesActions::ObjectiveId,
-                    )
+                    .rename_column(DesiredStatesActions::DesiredStateId, ObjectivesActions::ObjectiveId)
                     .to_owned(),
             )
             .await?;
@@ -100,10 +87,7 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(AmbitionsDesiredStates::Table)
-                    .rename_column(
-                        AmbitionsDesiredStates::DesiredStateId,
-                        AmbitionsObjectives::ObjectiveId,
-                    )
+                    .rename_column(AmbitionsDesiredStates::DesiredStateId, AmbitionsObjectives::ObjectiveId)
                     .to_owned(),
             )
             .await?;
@@ -116,11 +100,7 @@ impl MigrationTrait for Migration {
             .await?;
 
         manager
-            .rename_table(
-                Table::rename()
-                    .table(DesiredState::Table, Objective::Table)
-                    .to_owned(),
-            )
+            .rename_table(Table::rename().table(DesiredState::Table, Objective::Table).to_owned())
             .await?;
         Ok(())
     }

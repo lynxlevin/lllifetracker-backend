@@ -1,6 +1,4 @@
-use db_adapters::tag_adapter::{
-    TagAdapter, TagFilter, TagMutation, TagQuery, UpdatePlainTagParams,
-};
+use db_adapters::tag_adapter::{TagAdapter, TagFilter, TagMutation, TagQuery, UpdatePlainTagParams};
 use entities::{sea_orm_active_enums::TagType, user as user_entity};
 use uuid::Uuid;
 
@@ -21,9 +19,7 @@ pub async fn update_plain_tag<'a>(
         .get_by_id(tag_id)
         .await
         .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?
-        .ok_or(UseCaseError::NotFound(
-            "Tag with this id was not found".to_string(),
-        ))?;
+        .ok_or(UseCaseError::NotFound("Tag with this id was not found".to_string()))?;
 
     if tag.r#type != TagType::Plain {
         return Err(UseCaseError::BadRequest(
@@ -32,12 +28,7 @@ pub async fn update_plain_tag<'a>(
     };
 
     tag_adapter
-        .update_plain(
-            tag,
-            UpdatePlainTagParams {
-                name: params.name.clone(),
-            },
-        )
+        .update_plain(tag, UpdatePlainTagParams { name: params.name.clone() })
         .await
         .map(|tag| TagVisible {
             id: tag.id,

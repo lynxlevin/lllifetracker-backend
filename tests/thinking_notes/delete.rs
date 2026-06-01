@@ -23,9 +23,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), http::StatusCode::NO_CONTENT);
 
-    let thinking_note_in_db = thinking_note::Entity::find_by_id(thinking_note.id)
-        .one(&db)
-        .await?;
+    let thinking_note_in_db = thinking_note::Entity::find_by_id(thinking_note.id).one(&db).await?;
     assert!(thinking_note_in_db.is_none());
 
     let thinking_note_tags_in_db = thinking_note_tags::Entity::find()

@@ -16,10 +16,7 @@ pub struct Parameters {
     token: String,
 }
 
-#[tracing::instrument(
-    name = "Activating a new user",
-    skip(db, redis_pool, parameters, settings)
-)]
+#[tracing::instrument(name = "Activating a new user", skip(db, redis_pool, parameters, settings))]
 #[get("/confirm")]
 pub async fn confirm(
     parameters: Query<Parameters>,
@@ -29,29 +26,19 @@ pub async fn confirm(
 ) -> HttpResponse {
     match redis_pool.get().await {
         Ok(ref mut redis_con) => {
-            match verify_confirmation_token_pasetor(
-                parameters.token.clone(),
-                redis_con,
-                None,
-                &settings,
-            )
-            .await
-            {
+            match verify_confirmation_token_pasetor(parameters.token.clone(), redis_con, None, &settings).await {
                 Ok(confirmation_token) => {
-                    match UserAdapter::init(&db)
-                        .get_by_id(confirmation_token.user_id)
-                        .await
-                    {
+                    match UserAdapter::init(&db).get_by_id(confirmation_token.user_id).await {
                         Ok(user) => match user {
                             Some(user) => match UserAdapter::init(&db).activate(user).await {
                                 Ok(_) => {
                                     tracing::event!(target: "backend", tracing::Level::INFO, "New user was activated successfully.");
                                     HttpResponse::SeeOther()
-                                            .insert_header((
-                                                header::LOCATION,
-                                                format!("{}/auth/confirmed", settings.application.frontend_url),
-                                            ))
-                                            .json("Your account has been activated successfully! You can now log in.")
+                                        .insert_header((
+                                            header::LOCATION,
+                                            format!("{}/auth/confirmed", settings.application.frontend_url),
+                                        ))
+                                        .json("Your account has been activated successfully! You can now log in.")
                                 }
                                 Err(e) => {
                                     tracing::event!(target: "backend", tracing::Level::ERROR, "Cannot activate account: {}", e);
@@ -64,8 +51,7 @@ pub async fn confirm(
                                             ),
                                         ))
                                         .json(ErrorResponse {
-                                            error: "We cannot activate your account at the moment"
-                                                .to_string(),
+                                            error: "We cannot activate your account at the moment".to_string(),
                                         })
                                 }
                             },
@@ -78,8 +64,7 @@ pub async fn confirm(
                                     ),
                                 ))
                                 .json(ErrorResponse {
-                                    error: "We cannot activate your account at the moment"
-                                        .to_string(),
+                                    error: "We cannot activate your account at the moment".to_string(),
                                 }),
                         },
                         Err(e) => {
@@ -93,8 +78,7 @@ pub async fn confirm(
                                     ),
                                 ))
                                 .json(ErrorResponse {
-                                    error: "We cannot activate your account at the moment"
-                                        .to_string(),
+                                    error: "We cannot activate your account at the moment".to_string(),
                                 })
                         }
                     }
@@ -116,9 +100,7 @@ pub async fn confirm(
                     header::LOCATION,
                     format!("{}/auth/error", settings.application.frontend_url),
                 ))
-                .json(ErrorResponse {
-                    error: "We cannot activate your account at the moment".to_string(),
-                })
+                .json(ErrorResponse { error: "We cannot activate your account at the moment".to_string() })
         }
     }
 }

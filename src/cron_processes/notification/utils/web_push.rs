@@ -2,17 +2,14 @@ use std::collections::HashMap;
 
 use common::settings::types::Settings;
 use db_adapters::web_push_subscription_adapter::{
-    WebPushSubscriptionAdapter, WebPushSubscriptionFilter, WebPushSubscriptionMutation,
-    WebPushSubscriptionQuery,
+    WebPushSubscriptionAdapter, WebPushSubscriptionFilter, WebPushSubscriptionMutation, WebPushSubscriptionQuery,
 };
 use entities::web_push_subscription;
 use sea_orm::DbConn;
 use tracing::{event, instrument, Level};
 use uuid::Uuid;
 
-use crate::notification::utils::web_push_messenger::{
-    Message, WebPushMessenger, WebPushMessengerResult,
-};
+use crate::notification::utils::web_push_messenger::{Message, WebPushMessenger, WebPushMessengerResult};
 
 #[derive(Debug)]
 pub struct MessageWithUserId {
@@ -22,14 +19,7 @@ pub struct MessageWithUserId {
 
 impl MessageWithUserId {
     pub fn new(body: String, user_id: Uuid) -> Self {
-        Self {
-            content: Message {
-                title: None,
-                body,
-                path: None,
-            },
-            user_id,
-        }
+        Self { content: Message { title: None, body, path: None }, user_id }
     }
 
     pub fn title(mut self, title: Option<String>) -> Self {
@@ -40,15 +30,8 @@ impl MessageWithUserId {
 
 // MYMEMO: nice to have a test, but to do that, need to create a messenger_builder to DI.
 #[instrument(skip_all)]
-pub async fn send_messages(
-    messages: Vec<MessageWithUserId>,
-    settings: &Settings,
-    db: &DbConn,
-) -> () {
-    let mut user_ids = messages
-        .iter()
-        .map(|message| message.user_id)
-        .collect::<Vec<_>>();
+pub async fn send_messages(messages: Vec<MessageWithUserId>, settings: &Settings, db: &DbConn) -> () {
+    let mut user_ids = messages.iter().map(|message| message.user_id).collect::<Vec<_>>();
     user_ids.dedup();
 
     let mut web_push_subscriptions_by_user_id = match WebPushSubscriptionAdapter::init(db)
@@ -68,13 +51,7 @@ pub async fn send_messages(
 
     let message_len = messages.len();
     for message in messages {
-        send_web_push(
-            message,
-            &mut web_push_subscriptions_by_user_id,
-            settings,
-            db,
-        )
-        .await;
+        send_web_push(message, &mut web_push_subscriptions_by_user_id, settings, db).await;
     }
     event!(Level::INFO, "Successfully sent {} messages", message_len);
     ()
@@ -114,10 +91,7 @@ async fn send_web_push(
                 );
 
                 // NOTE: iOS returns 201 even when it's unsubscribed.
-                if let Err(e) = WebPushSubscriptionAdapter::init(db)
-                    .delete(subscription)
-                    .await
-                {
+                if let Err(e) = WebPushSubscriptionAdapter::init(db).delete(subscription).await {
                     event!(Level::ERROR, "Error on deleting web_push_subscription: {e}")
                 }
             }

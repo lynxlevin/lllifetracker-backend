@@ -1,8 +1,8 @@
 use uuid::Uuid;
 
 use crate::{
-    my_way::actions::types::ActionVisible,
-    users::first_track_at_synchronizer::FirstTrackAtSynchronizer, UseCaseError,
+    my_way::actions::types::ActionVisible, users::first_track_at_synchronizer::FirstTrackAtSynchronizer,
+    UseCaseError,
 };
 use db_adapters::{
     action_adapter::{ActionAdapter, ActionFilter, ActionMutation, ActionQuery},
@@ -24,9 +24,7 @@ pub async fn archive_action<'a>(
         .get_by_id(action_id)
         .await
         .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?
-        .ok_or(UseCaseError::NotFound(
-            "Action with this id was not found".to_string(),
-        ))?;
+        .ok_or(UseCaseError::NotFound("Action with this id was not found".to_string()))?;
 
     let action = action_adapter
         .archive(action)

@@ -14,21 +14,14 @@ async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let action = factory::action(user.id).insert(&db).await?;
-    let action_track = factory::action_track(user.id)
-        .action_id(action.id)
-        .insert(&db)
-        .await?;
+    let action_track = factory::action_track(user.id).action_id(action.id).insert(&db).await?;
     let ended_at = DateTime::parse_from_rfc3339("2025-07-08T00:00:00Z").unwrap();
     let duration = 180;
     let started_at = ended_at - chrono::TimeDelta::seconds(duration.into());
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/action_tracks/{}", action_track.id))
-        .set_json(ActionTrackUpdateRequest {
-            action_id: action.id,
-            started_at,
-            ended_at: Some(ended_at),
-        })
+        .set_json(ActionTrackUpdateRequest { action_id: action.id, started_at, ended_at: Some(ended_at) })
         .to_request();
     req.extensions_mut().insert(user.clone());
 
@@ -57,10 +50,7 @@ async fn conflict_on_duplicate_starts_at() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let action = factory::action(user.id).insert(&db).await?;
-    let action_track = factory::action_track(user.id)
-        .action_id(action.id)
-        .insert(&db)
-        .await?;
+    let action_track = factory::action_track(user.id).action_id(action.id).insert(&db).await?;
     let existing_action_track = factory::action_track(user.id)
         .started_at(action_track.started_at + TimeDelta::seconds(1))
         .action_id(action.id)
@@ -88,10 +78,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let action = factory::action(user.id).insert(&db).await?;
-    let action_track = factory::action_track(user.id)
-        .action_id(action.id)
-        .insert(&db)
-        .await?;
+    let action_track = factory::action_track(user.id).action_id(action.id).insert(&db).await?;
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/action_tracks/{}", action_track.id))
@@ -117,19 +104,12 @@ mod user_first_track_at_update {
         let Connections { app, db, .. } = init_app().await?;
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
-        let action_track = factory::action_track(user.id)
-            .action_id(action.id)
-            .insert(&db)
-            .await?;
+        let action_track = factory::action_track(user.id).action_id(action.id).insert(&db).await?;
         let started_at = Utc::now().into();
 
         let req = test::TestRequest::put()
             .uri(&format!("/api/action_tracks/{}", action_track.id))
-            .set_json(ActionTrackUpdateRequest {
-                action_id: action.id,
-                started_at,
-                ended_at: None,
-            })
+            .set_json(ActionTrackUpdateRequest { action_id: action.id, started_at, ended_at: None })
             .to_request();
         req.extensions_mut().insert(user.clone());
 
@@ -145,26 +125,18 @@ mod user_first_track_at_update {
     #[actix_web::test]
     async fn newer_started_at_than_first_track_at_makes_no_change() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
-        let original_first_track_at =
-            Some(DateTime::parse_from_rfc3339("2025-01-01T00:00:00Z").unwrap());
+        let original_first_track_at = Some(DateTime::parse_from_rfc3339("2025-01-01T00:00:00Z").unwrap());
         let user = factory::user()
             .first_track_at(original_first_track_at)
             .insert(&db)
             .await?;
         let action = factory::action(user.id).insert(&db).await?;
-        let action_track = factory::action_track(user.id)
-            .action_id(action.id)
-            .insert(&db)
-            .await?;
+        let action_track = factory::action_track(user.id).action_id(action.id).insert(&db).await?;
         let started_at = Utc::now().into();
 
         let req = test::TestRequest::put()
             .uri(&format!("/api/action_tracks/{}", action_track.id))
-            .set_json(ActionTrackUpdateRequest {
-                action_id: action.id,
-                started_at,
-                ended_at: None,
-            })
+            .set_json(ActionTrackUpdateRequest { action_id: action.id, started_at, ended_at: None })
             .to_request();
         req.extensions_mut().insert(user.clone());
 
@@ -181,26 +153,17 @@ mod user_first_track_at_update {
     async fn older_started_at_than_first_track_at_updates_user() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
         let user = factory::user()
-            .first_track_at(Some(
-                DateTime::parse_from_rfc3339("2025-07-08T00:00:00Z").unwrap(),
-            ))
+            .first_track_at(Some(DateTime::parse_from_rfc3339("2025-07-08T00:00:00Z").unwrap()))
             .insert(&db)
             .await?;
         let action = factory::action(user.id).insert(&db).await?;
-        let action_track = factory::action_track(user.id)
-            .action_id(action.id)
-            .insert(&db)
-            .await?;
+        let action_track = factory::action_track(user.id).action_id(action.id).insert(&db).await?;
 
         let started_at = DateTime::parse_from_rfc3339("2025-01-01T00:00:00Z").unwrap();
 
         let req = test::TestRequest::put()
             .uri(&format!("/api/action_tracks/{}", action_track.id))
-            .set_json(ActionTrackUpdateRequest {
-                action_id: action.id,
-                started_at,
-                ended_at: None,
-            })
+            .set_json(ActionTrackUpdateRequest { action_id: action.id, started_at, ended_at: None })
             .to_request();
         req.extensions_mut().insert(user.clone());
 
@@ -217,9 +180,7 @@ mod user_first_track_at_update {
     async fn updating_oldest_track_switches_to_next_oldest() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
         let user = factory::user()
-            .first_track_at(Some(
-                DateTime::parse_from_rfc3339("2025-07-08T00:00:00Z").unwrap(),
-            ))
+            .first_track_at(Some(DateTime::parse_from_rfc3339("2025-07-08T00:00:00Z").unwrap()))
             .insert(&db)
             .await?;
         let action = factory::action(user.id).insert(&db).await?;
@@ -238,11 +199,7 @@ mod user_first_track_at_update {
 
         let req = test::TestRequest::put()
             .uri(&format!("/api/action_tracks/{}", action_track.id))
-            .set_json(ActionTrackUpdateRequest {
-                action_id: action.id,
-                started_at,
-                ended_at: None,
-            })
+            .set_json(ActionTrackUpdateRequest { action_id: action.id, started_at, ended_at: None })
             .to_request();
         req.extensions_mut().insert(user.clone());
 
@@ -250,10 +207,7 @@ mod user_first_track_at_update {
         assert_eq!(res.status(), http::StatusCode::OK);
 
         let user_in_db = user::Entity::find_by_id(user.id).one(&db).await?.unwrap();
-        assert_eq!(
-            user_in_db.first_track_at,
-            Some(second_oldest_action_track.started_at)
-        );
+        assert_eq!(user_in_db.first_track_at, Some(second_oldest_action_track.started_at));
 
         Ok(())
     }
@@ -262,9 +216,7 @@ mod user_first_track_at_update {
     async fn updating_only_track_updates_first_track_at_to_same() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
         let user = factory::user()
-            .first_track_at(Some(
-                DateTime::parse_from_rfc3339("2025-07-08T00:00:00Z").unwrap(),
-            ))
+            .first_track_at(Some(DateTime::parse_from_rfc3339("2025-07-08T00:00:00Z").unwrap()))
             .insert(&db)
             .await?;
         let action = factory::action(user.id).insert(&db).await?;
@@ -278,11 +230,7 @@ mod user_first_track_at_update {
 
         let req = test::TestRequest::put()
             .uri(&format!("/api/action_tracks/{}", action_track.id))
-            .set_json(ActionTrackUpdateRequest {
-                action_id: action.id,
-                started_at,
-                ended_at: None,
-            })
+            .set_json(ActionTrackUpdateRequest { action_id: action.id, started_at, ended_at: None })
             .to_request();
         req.extensions_mut().insert(user.clone());
 
@@ -307,10 +255,7 @@ mod validation_errors {
         let Connections { app, db, .. } = init_app().await?;
         let user = factory::user().insert(&db).await?;
         let action = factory::action(user.id).insert(&db).await?;
-        let action_track = factory::action_track(user.id)
-            .action_id(action.id)
-            .insert(&db)
-            .await?;
+        let action_track = factory::action_track(user.id).action_id(action.id).insert(&db).await?;
         let ended_at = action_track.started_at - Duration::seconds(1);
 
         let req = test::TestRequest::put()

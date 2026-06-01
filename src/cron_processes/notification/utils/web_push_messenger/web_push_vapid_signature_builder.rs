@@ -36,41 +36,25 @@ impl VapidSignatureBuilder {
         })
     }
 
-    fn build_jwt(
-        &self,
-        endpoint: Uri,
-        ttl_seconds: u64,
-    ) -> Result<String, VapidSignatureBuilderError> {
+    fn build_jwt(&self, endpoint: Uri, ttl_seconds: u64) -> Result<String, VapidSignatureBuilderError> {
         let vapid_key = ES256KeyPair::from_bytes(&self.vapid_private_key)
             .map_err(|e| VapidSignatureBuilderError::VapidKeyParseError(e))?;
 
-        let mut jwt_claims = Claims::with_custom_claims(
-            BTreeMap::<String, String>::new(),
-            Duration::from_secs(ttl_seconds),
-        );
+        let mut jwt_claims =
+            Claims::with_custom_claims(BTreeMap::<String, String>::new(), Duration::from_secs(ttl_seconds));
         jwt_claims.custom.insert(
             "aud".to_string(),
-            format!(
-                "{}://{}",
-                endpoint.scheme_str().unwrap(),
-                endpoint.host().unwrap()
-            )
-            .into(),
+            format!("{}://{}", endpoint.scheme_str().unwrap(), endpoint.host().unwrap()).into(),
         );
-        jwt_claims.custom.insert(
-            "sub".to_string(),
-            format!("mailto:{}", &self.app_owner_email),
-        );
+        jwt_claims
+            .custom
+            .insert("sub".to_string(), format!("mailto:{}", &self.app_owner_email));
         vapid_key
             .sign(jwt_claims)
             .map_err(|e| VapidSignatureBuilderError::SigningError(e))
     }
 
-    pub fn build(
-        &self,
-        endpoint: &str,
-        ttl_seconds: u64,
-    ) -> Result<String, VapidSignatureBuilderError> {
+    pub fn build(&self, endpoint: &str, ttl_seconds: u64) -> Result<String, VapidSignatureBuilderError> {
         let vapid_key = ES256KeyPair::from_bytes(&self.vapid_private_key)
             .map_err(|e| VapidSignatureBuilderError::VapidKeyParseError(e))?;
         let jwt = self.build_jwt(
@@ -83,8 +67,7 @@ impl VapidSignatureBuilder {
         Ok(format!(
             "vapid t={}, k={}",
             jwt,
-            BASE64_URL_SAFE_NO_PAD
-                .encode(&vapid_key.public_key().public_key().to_bytes_uncompressed()),
+            BASE64_URL_SAFE_NO_PAD.encode(&vapid_key.public_key().public_key().to_bytes_uncompressed()),
         ))
     }
 }
@@ -120,20 +103,13 @@ mod tests {
         let vapid_private_key = BASE64_URL_SAFE_NO_PAD
             .decode(settings.application.vapid_private_key.clone())
             .unwrap();
-        let vapid_key = ES256KeyPair::from_bytes(&vapid_private_key)
-            .unwrap()
-            .public_key();
+        let vapid_key = ES256KeyPair::from_bytes(&vapid_private_key).unwrap().public_key();
         let token = &signature_t[2..284];
-        let claims = vapid_key
-            .verify_token::<NoCustomClaims>(token, None)
-            .unwrap();
+        let claims = vapid_key.verify_token::<NoCustomClaims>(token, None).unwrap();
         assert_eq!(
             claims.subject,
             Some(format!("mailto:{}", settings.application.app_owner_email))
         );
-        assert_eq!(
-            claims.audiences,
-            Some(Audiences::AsString(endpoint.to_string()))
-        );
+        assert_eq!(claims.audiences, Some(Audiences::AsString(endpoint.to_string())));
     }
 }

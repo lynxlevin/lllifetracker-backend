@@ -2,12 +2,10 @@ use sea_orm_migration::{
     prelude::{
         async_trait,
         sea_orm::{self, DeriveIden},
-        DbErr, DeriveMigrationName, Expr, ForeignKey, ForeignKeyAction, Index, MigrationTrait,
-        SchemaManager, Table,
+        DbErr, DeriveMigrationName, Expr, ForeignKey, ForeignKeyAction, Index, MigrationTrait, SchemaManager,
+        Table,
     },
-    schema::{
-        string_null, text_null, timestamp_with_time_zone, timestamp_with_time_zone_null, uuid,
-    },
+    schema::{string_null, text_null, timestamp_with_time_zone, timestamp_with_time_zone_null, uuid},
 };
 
 use crate::m20240722_000001_create_users_table::User;
@@ -31,21 +29,13 @@ impl MigrationTrait for Migration {
                     .col(text_null(ThinkingNote::Thought))
                     .col(string_null(ThinkingNote::Answer))
                     .col(
-                        timestamp_with_time_zone_null(ThinkingNote::ResolvedAt)
-                            .default(Expr::current_timestamp()),
+                        timestamp_with_time_zone_null(ThinkingNote::ResolvedAt).default(Expr::current_timestamp()),
                     )
                     .col(
-                        timestamp_with_time_zone_null(ThinkingNote::ArchivedAt)
-                            .default(Expr::current_timestamp()),
+                        timestamp_with_time_zone_null(ThinkingNote::ArchivedAt).default(Expr::current_timestamp()),
                     )
-                    .col(
-                        timestamp_with_time_zone(ThinkingNote::CreatedAt)
-                            .default(Expr::current_timestamp()),
-                    )
-                    .col(
-                        timestamp_with_time_zone(ThinkingNote::UpdatedAt)
-                            .default(Expr::current_timestamp()),
-                    )
+                    .col(timestamp_with_time_zone(ThinkingNote::CreatedAt).default(Expr::current_timestamp()))
+                    .col(timestamp_with_time_zone(ThinkingNote::UpdatedAt).default(Expr::current_timestamp()))
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk-thinking_notes-user_id")
@@ -102,9 +92,7 @@ impl MigrationTrait for Migration {
         manager
             .drop_table(Table::drop().table(ThinkingNoteTags::Table).to_owned())
             .await?;
-        manager
-            .drop_index(Index::drop().name(INDEX_NAME).to_owned())
-            .await?;
+        manager.drop_index(Index::drop().name(INDEX_NAME).to_owned()).await?;
         manager
             .drop_table(Table::drop().table(ThinkingNote::Table).to_owned())
             .await?;

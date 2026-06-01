@@ -12,10 +12,7 @@ use crate::utils::{response_401, response_500};
 
 #[tracing::instrument(name = "Listing a user's tags.", skip(db, user))]
 #[get("")]
-pub async fn list_tags_endpoint(
-    db: Data<DbConn>,
-    user: Option<ReqData<user_entity::Model>>,
-) -> HttpResponse {
+pub async fn list_tags_endpoint(db: Data<DbConn>, user: Option<ReqData<user_entity::Model>>) -> HttpResponse {
     match user {
         Some(user) => match list_tags(user.into_inner(), TagAdapter::init(&db)).await {
             Ok(res) => HttpResponse::Ok().json(res),

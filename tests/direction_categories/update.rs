@@ -1,8 +1,6 @@
 use actix_web::{http, test, HttpMessage};
 use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
-use use_cases::my_way::direction_categories::types::{
-    DirectionCategoryUpdateRequest, DirectionCategoryVisible,
-};
+use use_cases::my_way::direction_categories::types::{DirectionCategoryUpdateRequest, DirectionCategoryVisible};
 use uuid::Uuid;
 
 use crate::utils::Connections;
@@ -21,9 +19,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/direction_categories/{}", category.id))
-        .set_json(DirectionCategoryUpdateRequest {
-            name: new_name.clone(),
-        })
+        .set_json(DirectionCategoryUpdateRequest { name: new_name.clone() })
         .to_request();
     req.extensions_mut().insert(user.clone());
 
@@ -51,9 +47,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/direction_categories/{}", Uuid::now_v7()))
-        .set_json(DirectionCategoryUpdateRequest {
-            name: String::default(),
-        })
+        .set_json(DirectionCategoryUpdateRequest { name: String::default() })
         .to_request();
 
     let res = test::call_service(&app, req).await;
@@ -70,18 +64,11 @@ mod not_found {
         let Connections { app, db, .. } = init_app().await?;
         let user = factory::user().insert(&db).await?;
         let other_user = factory::user().insert(&db).await?;
-        let other_user_category = factory::direction_category(other_user.id)
-            .insert(&db)
-            .await?;
+        let other_user_category = factory::direction_category(other_user.id).insert(&db).await?;
 
         let req = test::TestRequest::put()
-            .uri(&format!(
-                "/api/direction_categories/{}",
-                other_user_category.id
-            ))
-            .set_json(DirectionCategoryUpdateRequest {
-                name: String::default(),
-            })
+            .uri(&format!("/api/direction_categories/{}", other_user_category.id))
+            .set_json(DirectionCategoryUpdateRequest { name: String::default() })
             .to_request();
         req.extensions_mut().insert(user.clone());
 
@@ -97,9 +84,7 @@ mod not_found {
 
         let req = test::TestRequest::put()
             .uri(&format!("/api/direction_categories/{}", Uuid::now_v7()))
-            .set_json(DirectionCategoryUpdateRequest {
-                name: String::default(),
-            })
+            .set_json(DirectionCategoryUpdateRequest { name: String::default() })
             .to_request();
         req.extensions_mut().insert(user.clone());
 

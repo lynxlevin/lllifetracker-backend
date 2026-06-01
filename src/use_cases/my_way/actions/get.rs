@@ -15,7 +15,5 @@ pub async fn get_action<'a>(
         .await
         .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?
         .map(|action| ActionVisible::from(action))
-        .ok_or(UseCaseError::NotFound(
-            "Action with this id was not found".to_string(),
-        ))
+        .ok_or(UseCaseError::NotFound("Action with this id was not found".to_string()))
 }

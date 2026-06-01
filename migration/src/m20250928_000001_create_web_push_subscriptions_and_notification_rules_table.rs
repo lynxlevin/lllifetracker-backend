@@ -3,8 +3,8 @@ use sea_orm_migration::{
         async_trait,
         extension::postgres::Type,
         sea_orm::{self, ActiveEnum, DeriveActiveEnum, DeriveIden, EnumIter},
-        ColumnDef, DbErr, DeriveMigrationName, Expr, ForeignKey, ForeignKeyAction, Index,
-        MigrationTrait, SchemaManager, Table,
+        ColumnDef, DbErr, DeriveMigrationName, Expr, ForeignKey, ForeignKeyAction, Index, MigrationTrait,
+        SchemaManager, Table,
     },
     schema::{big_integer_null, small_integer, string, string_len, time, uuid, uuid_null},
     sea_orm::{Condition, DbBackend, Schema},
@@ -115,22 +115,13 @@ impl MigrationTrait for Migration {
             .drop_table(Table::drop().table(NotificationRule::Table).to_owned())
             .await?;
         manager
-            .drop_index(
-                Index::drop()
-                    .name(WEB_PUSH_SUBSCRIPTION_INDEX_NAME)
-                    .to_owned(),
-            )
+            .drop_index(Index::drop().name(WEB_PUSH_SUBSCRIPTION_INDEX_NAME).to_owned())
             .await?;
         manager
             .drop_table(Table::drop().table(WebPushSubscription::Table).to_owned())
             .await?;
         manager
-            .drop_type(
-                Type::drop()
-                    .if_exists()
-                    .name(NotificationType::name())
-                    .to_owned(),
-            )
+            .drop_type(Type::drop().if_exists().name(NotificationType::name()).to_owned())
             .await?;
         Ok(())
     }

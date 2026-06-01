@@ -32,10 +32,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::OK);
 
-    let direction_in_db = direction::Entity::find_by_id(direction.id)
-        .one(&db)
-        .await?
-        .unwrap();
+    let direction_in_db = direction::Entity::find_by_id(direction.id).one(&db).await?.unwrap();
     assert_eq!(direction_in_db.id, direction.id);
     assert_eq!(direction_in_db.user_id, user.id);
     assert_eq!(direction_in_db.name, new_name);
@@ -58,9 +55,7 @@ async fn no_category_cases() -> Result<(), DbErr> {
     let user = factory::user().insert(&db).await?;
     let other_user = factory::user().insert(&db).await?;
     let direction = factory::direction(user.id).insert(&db).await?;
-    let other_user_category = factory::direction_category(other_user.id)
-        .insert(&db)
-        .await?;
+    let other_user_category = factory::direction_category(other_user.id).insert(&db).await?;
 
     for (category_id, case) in vec![
         (other_user_category.id, "other_user_category.id"),
@@ -84,10 +79,7 @@ async fn no_category_cases() -> Result<(), DbErr> {
         assert_eq!(res.id, direction.id);
         assert_eq!(res.category_id, None);
 
-        let direction_in_db = direction::Entity::find_by_id(direction.id)
-            .one(&db)
-            .await?
-            .unwrap();
+        let direction_in_db = direction::Entity::find_by_id(direction.id).one(&db).await?.unwrap();
         assert_eq!(direction_in_db.id, direction.id);
         assert_eq!(direction_in_db.user_id, user.id);
         assert_eq!(direction_in_db.name, String::default());
@@ -112,11 +104,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/directions/{}", direction.id))
-        .set_json(DirectionUpdateRequest {
-            name: "direction".to_string(),
-            description: None,
-            category_id: None,
-        })
+        .set_json(DirectionUpdateRequest { name: "direction".to_string(), description: None, category_id: None })
         .to_request();
 
     let res = test::call_service(&app, req).await;

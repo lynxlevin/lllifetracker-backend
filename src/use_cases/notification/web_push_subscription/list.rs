@@ -1,6 +1,4 @@
-use db_adapters::web_push_subscription_adapter::{
-    WebPushSubscriptionAdapter, WebPushSubscriptionQuery,
-};
+use db_adapters::web_push_subscription_adapter::{WebPushSubscriptionAdapter, WebPushSubscriptionQuery};
 use entities::user as user_entity;
 
 use crate::{notification::web_push_subscription::types::WebPushSubscriptionVisible, UseCaseError};

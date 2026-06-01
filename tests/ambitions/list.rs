@@ -20,10 +20,7 @@ async fn happy_path() -> Result<(), DbErr> {
         .description(Some("ambition1".to_string()))
         .insert(&db)
         .await?;
-    let archived_ambition = factory::ambition(user.id)
-        .archived(true)
-        .insert(&db)
-        .await?;
+    let archived_ambition = factory::ambition(user.id).archived(true).insert(&db).await?;
 
     let req = test::TestRequest::get().uri("/api/ambitions").to_request();
     req.extensions_mut().insert(user.clone());
