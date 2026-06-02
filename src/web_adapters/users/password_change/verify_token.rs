@@ -34,20 +34,14 @@ pub async fn verify_password_change_token(
                     )
                     .await
                     {
-                        Ok(issued_token) => {
-                            HttpResponse::SeeOther()
-                                .insert_header((
-                                    header::LOCATION,
-                                    format!(
-                                        // MYMEMO: Change url later.
-                                        "{frontend_url}/auth/password/change-password?token={issued_token}"
-                                    ),
-                                ))
-                                .finish()
-                        }
+                        Ok(issued_token) => HttpResponse::SeeOther()
+                            .insert_header((
+                                header::LOCATION,
+                                format!("{frontend_url}/auth/password/change-password?token={issued_token}"),
+                            ))
+                            .finish(),
                         Err(e) => {
                             tracing::event!(target: "backend", tracing::Level::ERROR, "{e}");
-                            // MYMEMO: Change url later.
                             HttpResponse::SeeOther()
                                 .insert_header((header::LOCATION, format!("{frontend_url}/auth/error?reason={e}")))
                                 .finish()
@@ -56,14 +50,12 @@ pub async fn verify_password_change_token(
                 }
                 Err(e) => {
                     tracing::event!(target: "backend", tracing::Level::ERROR, "{e}");
-                    // MYMEMO: Change url later.
                     HttpResponse::SeeOther().insert_header((header::LOCATION, format!("{frontend_url}/auth/error?reason=It appears that your password request token has expired or previously used"))).finish()
                 }
             }
         }
         Err(e) => {
             tracing::event!(target: "backend", tracing::Level::ERROR, "{e}");
-            // MYMEMO: Change url later.
             HttpResponse::SeeOther()
                 .insert_header((
                     header::LOCATION,

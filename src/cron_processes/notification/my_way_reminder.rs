@@ -175,7 +175,6 @@ async fn get_random_message(
     Some(MessageWithUserId::new(body, user_id).title(title))
 }
 
-// MYMEMO: add test
 #[cfg(test)]
 mod tests {
     use common::{
