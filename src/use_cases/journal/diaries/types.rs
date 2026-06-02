@@ -15,11 +15,7 @@ pub struct DiaryVisible {
 
 impl From<diary::Model> for DiaryVisible {
     fn from(item: diary::Model) -> Self {
-        DiaryVisible {
-            id: item.id,
-            text: item.text,
-            date: item.date,
-        }
+        DiaryVisible { id: item.id, text: item.text, date: item.date }
     }
 }
 
@@ -33,12 +29,7 @@ pub struct DiaryVisibleWithTags {
 impl From<(diary::Model, Vec<TagVisible>)> for DiaryVisibleWithTags {
     fn from(value: (diary::Model, Vec<TagVisible>)) -> Self {
         let (diary, tags) = value;
-        Self {
-            id: diary.id,
-            text: diary.text,
-            date: diary.date,
-            tags,
-        }
+        Self { id: diary.id, text: diary.text, date: diary.date, tags }
     }
 }
 impl IntoJournalVisibleWithTags for DiaryVisibleWithTags {

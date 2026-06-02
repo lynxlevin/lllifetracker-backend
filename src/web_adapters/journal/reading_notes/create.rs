@@ -22,13 +22,7 @@ pub async fn create_reading_note_endpoint(
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            match create_reading_note(
-                user.into_inner(),
-                req.into_inner(),
-                ReadingNoteAdapter::init(&db),
-            )
-            .await
-            {
+            match create_reading_note(user.into_inner(), req.into_inner(), ReadingNoteAdapter::init(&db)).await {
                 Ok(res) => HttpResponse::Created().json(res),
                 Err(e) => match &e {
                     UseCaseError::NotFound(message) => response_404(message),

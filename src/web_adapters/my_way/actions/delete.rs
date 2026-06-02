@@ -24,13 +24,7 @@ pub async fn delete_action_endpoint(
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            match delete_action(
-                user.into_inner(),
-                path_param.action_id,
-                ActionAdapter::init(&db),
-            )
-            .await
-            {
+            match delete_action(user.into_inner(), path_param.action_id, ActionAdapter::init(&db)).await {
                 Ok(_) => HttpResponse::NoContent().finish(),
                 Err(e) => response_500(e),
             }

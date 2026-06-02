@@ -18,12 +18,7 @@ pub async fn list_direction_categories_endpoint(
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            match list_direction_categories(
-                user.into_inner(),
-                DirectionCategoryAdapter::init(&db),
-            )
-            .await
-            {
+            match list_direction_categories(user.into_inner(), DirectionCategoryAdapter::init(&db)).await {
                 Ok(res) => HttpResponse::Ok().json(res),
                 Err(e) => response_500(e),
             }

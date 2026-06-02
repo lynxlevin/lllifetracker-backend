@@ -5,44 +5,43 @@ use use_cases::my_way::actions::types::ActionBulkUpdateOrderRequest;
 use crate::utils::Connections;
 
 use super::super::utils::init_app;
-use common::factory;
+use common::factory::{self, *};
 use entities::action;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
-    let action_0 = factory::action(user.id).insert(&db).await?;
-    let action_1 = factory::action(user.id).insert(&db).await?;
-    let action_2 = factory::action(user.id).insert(&db).await?;
+    let actions = create_actions(
+        vec![
+            ActionParam { name: "action_0", ..Default::default() },
+            ActionParam { name: "action_1", ..Default::default() },
+            ActionParam { name: "action_2", ..Default::default() },
+        ],
+        &user,
+        &db,
+    )
+    .await?;
+    let action_0 = actions.get("action_0").unwrap();
+    let action_1 = actions.get("action_1").unwrap();
+    let action_2 = actions.get("action_2").unwrap();
 
     let req = test::TestRequest::put()
         .uri("/api/actions/bulk_update_ordering")
-        .set_json(ActionBulkUpdateOrderRequest {
-            ordering: vec![action_0.id, action_1.id],
-        })
+        .set_json(ActionBulkUpdateOrderRequest { ordering: vec![action_0.id, action_1.id] })
         .to_request();
     req.extensions_mut().insert(user.clone());
 
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::OK);
 
-    let actin_in_db_0 = action::Entity::find_by_id(action_0.id)
-        .one(&db)
-        .await?
-        .unwrap();
+    let actin_in_db_0 = action::Entity::find_by_id(action_0.id).one(&db).await?.unwrap();
     assert_eq!(actin_in_db_0.ordering, Some(1));
 
-    let actin_in_db_1 = action::Entity::find_by_id(action_1.id)
-        .one(&db)
-        .await?
-        .unwrap();
+    let actin_in_db_1 = action::Entity::find_by_id(action_1.id).one(&db).await?.unwrap();
     assert_eq!(actin_in_db_1.ordering, Some(2));
 
-    let action_in_db_2 = action::Entity::find_by_id(action_2.id)
-        .one(&db)
-        .await?
-        .unwrap();
+    let action_in_db_2 = action::Entity::find_by_id(action_2.id).one(&db).await?.unwrap();
     assert_eq!(action_in_db_2.ordering, None);
 
     Ok(())

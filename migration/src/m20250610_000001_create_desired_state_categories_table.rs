@@ -2,8 +2,8 @@ use sea_orm_migration::{
     prelude::{
         async_trait,
         sea_orm::{self, DeriveIden},
-        Alias, DbErr, DeriveMigrationName, ForeignKey, ForeignKeyAction, Index, MigrationTrait,
-        SchemaManager, Table, TableForeignKey,
+        Alias, DbErr, DeriveMigrationName, ForeignKey, ForeignKeyAction, Index, MigrationTrait, SchemaManager,
+        Table, TableForeignKey,
     },
     schema::{integer_null, string, uuid, uuid_null},
 };
@@ -88,9 +88,7 @@ impl MigrationTrait for Migration {
                     .to_owned(),
             )
             .await?;
-        manager
-            .drop_index(Index::drop().name(INDEX_NAME).to_owned())
-            .await?;
+        manager.drop_index(Index::drop().name(INDEX_NAME).to_owned()).await?;
         manager
             .drop_table(Table::drop().table(DesiredStateCategory::Table).to_owned())
             .await?;

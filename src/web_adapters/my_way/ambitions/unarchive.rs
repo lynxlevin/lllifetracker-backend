@@ -15,10 +15,7 @@ struct PathParam {
     ambition_id: uuid::Uuid,
 }
 
-#[tracing::instrument(
-    name = "Restoring an ambition from archive",
-    skip(db, user, path_param)
-)]
+#[tracing::instrument(name = "Restoring an ambition from archive", skip(db, user, path_param))]
 #[put("/{ambition_id}/unarchive")]
 pub async fn unarchive_ambition_endpoint(
     db: Data<DbConn>,
@@ -27,13 +24,7 @@ pub async fn unarchive_ambition_endpoint(
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            match unarchive_ambition(
-                user.into_inner(),
-                path_param.ambition_id,
-                AmbitionAdapter::init(&db),
-            )
-            .await
-            {
+            match unarchive_ambition(user.into_inner(), path_param.ambition_id, AmbitionAdapter::init(&db)).await {
                 Ok(res) => HttpResponse::Ok().json(res),
                 Err(e) => match &e {
                     UseCaseError::NotFound(message) => response_404(message),

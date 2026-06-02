@@ -28,10 +28,7 @@ pub async fn update_ambition<'a>(
     ambition_adapter
         .update(
             ambition,
-            UpdateAmbitionParams {
-                name: params.name.clone(),
-                description: params.description.clone(),
-            },
+            UpdateAmbitionParams { name: params.name.clone(), description: params.description.clone() },
         )
         .await
         .map(|ambition| AmbitionVisible::from(ambition))

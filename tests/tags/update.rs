@@ -14,9 +14,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let user = factory::user().insert(&db).await?;
     let tag = factory::tag(user.id).insert(&db).await?;
 
-    let req_body = TagUpdateRequest {
-        name: "new_name".to_string(),
-    };
+    let req_body = TagUpdateRequest { name: "new_name".to_string() };
 
     let req = test::TestRequest::put()
         .set_json(req_body.clone())
@@ -46,9 +44,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/tags/plain/{}", tag.id))
-        .set_json(TagUpdateRequest {
-            name: "".to_string(),
-        })
+        .set_json(TagUpdateRequest { name: "".to_string() })
         .to_request();
 
     let resp = test::call_service(&app, req).await;
@@ -64,9 +60,7 @@ async fn not_found_if_non_existent_tag_id() -> Result<(), DbErr> {
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/tags/plain/{}", uuid::Uuid::now_v7()))
-        .set_json(TagUpdateRequest {
-            name: "".to_string(),
-        })
+        .set_json(TagUpdateRequest { name: "".to_string() })
         .to_request();
     req.extensions_mut().insert(user.clone());
 
@@ -84,9 +78,7 @@ async fn bad_request_if_not_plain_tag() -> Result<(), DbErr> {
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/tags/plain/{}", ambition_tag.id))
-        .set_json(TagUpdateRequest {
-            name: "".to_string(),
-        })
+        .set_json(TagUpdateRequest { name: "".to_string() })
         .to_request();
     req.extensions_mut().insert(user.clone());
 

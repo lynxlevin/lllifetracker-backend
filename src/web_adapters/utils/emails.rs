@@ -10,7 +10,6 @@ use lettre::{
 
 use crate::utils::auth::tokens::issue_confirmation_token_pasetors;
 
-// MYMEMO: refactor
 #[tracing::instrument(
     name = "Generic e-mail sending function.",
     skip(recipient_email, recipient_first_name, recipient_last_name, subject, html_content, text_content, settings),
@@ -77,7 +76,6 @@ pub async fn send_email(
     }
 }
 
-// MYMEMO: refactor
 #[tracing::instrument(
     name = "Generic multipart e-mail sending function.",
     skip(redis_connection, settings),
@@ -100,21 +98,17 @@ pub async fn send_multipart_email(
 ) -> Result<(), String> {
     let title = format!("Lynx Levin's LifeTracker - {subject}");
 
-    let issued_token =
-        match issue_confirmation_token_pasetors(user_id, redis_connection, None, settings).await {
-            Ok(t) => t,
-            Err(e) => {
-                tracing::event!(target: "backend", tracing::Level::ERROR, "{}", e);
-                return Err(format!("{}", e));
-            }
-        };
+    let issued_token = match issue_confirmation_token_pasetors(user_id, redis_connection, None, settings).await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::event!(target: "backend", tracing::Level::ERROR, "{}", e);
+            return Err(format!("{}", e));
+        }
+    };
 
     let web_address = {
         if settings.debug {
-            format!(
-                "{}:{}",
-                settings.application.base_url, settings.application.port
-            )
+            format!("{}:{}", settings.application.base_url, settings.application.port)
         } else {
             settings.application.base_url.clone()
         }
@@ -127,10 +121,7 @@ pub async fn send_multipart_email(
                 web_address, issued_token
             )
         } else {
-            format!(
-                "{}/users/register/confirm?token={}",
-                web_address, issued_token,
-            )
+            format!("{}/users/register/confirm?token={}", web_address, issued_token,)
         }
     };
 
@@ -167,12 +158,11 @@ pub async fn send_multipart_email(
     Ok(())
 }
 
-static ENV: once_cell::sync::Lazy<minijinja::Environment<'static>> =
-    once_cell::sync::Lazy::new(|| {
-        let mut env = minijinja::Environment::new();
-        env.set_loader(minijinja::path_loader("templates"));
-        env
-    });
+static ENV: once_cell::sync::Lazy<minijinja::Environment<'static>> = once_cell::sync::Lazy::new(|| {
+    let mut env = minijinja::Environment::new();
+    env.set_loader(minijinja::path_loader("templates"));
+    env
+});
 
 #[cfg(test)]
 mod tests {

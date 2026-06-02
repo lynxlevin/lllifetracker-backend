@@ -7,8 +7,7 @@ use sea_orm::DbConn;
 
 use crate::utils::{response_401, response_404, response_409, response_500};
 use db_adapters::{
-    action_adapter::ActionAdapter, action_track_adapter::ActionTrackAdapter,
-    user_adapter::UserAdapter,
+    action_adapter::ActionAdapter, action_track_adapter::ActionTrackAdapter, user_adapter::UserAdapter,
 };
 use entities::user as user_entity;
 use use_cases::{

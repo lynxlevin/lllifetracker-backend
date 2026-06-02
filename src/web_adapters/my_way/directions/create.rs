@@ -3,15 +3,10 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
-use db_adapters::{
-    direction_adapter::DirectionAdapter,
-    direction_category_adapter::DirectionCategoryAdapter,
-};
+use db_adapters::{direction_adapter::DirectionAdapter, direction_category_adapter::DirectionCategoryAdapter};
 use entities::user as user_entity;
 use sea_orm::DbConn;
-use use_cases::my_way::directions::{
-    create::create_direction, types::DirectionCreateRequest,
-};
+use use_cases::my_way::directions::{create::create_direction, types::DirectionCreateRequest};
 
 use crate::utils::{response_401, response_500};
 

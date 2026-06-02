@@ -31,10 +31,7 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(res.status(), http::StatusCode::CREATED);
 
     let res: DirectionVisible = test::read_body_json(res).await;
-    let direction_in_db = direction::Entity::find_by_id(res.id)
-        .one(&db)
-        .await?
-        .unwrap();
+    let direction_in_db = direction::Entity::find_by_id(res.id).one(&db).await?.unwrap();
     assert_eq!(direction_in_db.user_id, user.id);
     assert_eq!(direction_in_db.name, name);
     assert_eq!(direction_in_db.description, Some(description));
@@ -62,9 +59,7 @@ async fn no_category_cases() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let other_user = factory::user().insert(&db).await?;
-    let other_user_category = factory::direction_category(other_user.id)
-        .insert(&db)
-        .await?;
+    let other_user_category = factory::direction_category(other_user.id).insert(&db).await?;
 
     for (category_id, case) in vec![
         (other_user_category.id, "other_user_category.id"),
@@ -86,10 +81,7 @@ async fn no_category_cases() -> Result<(), DbErr> {
 
         let res: DirectionVisible = test::read_body_json(res).await;
 
-        let direction_in_db = direction::Entity::find_by_id(res.id)
-            .one(&db)
-            .await?
-            .unwrap();
+        let direction_in_db = direction::Entity::find_by_id(res.id).one(&db).await?.unwrap();
         assert_eq!(direction_in_db.user_id, user.id);
         assert_eq!(direction_in_db.name, String::default());
         assert_eq!(direction_in_db.description, None);

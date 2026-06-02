@@ -12,10 +12,7 @@ pub async fn create_plain_tag<'a>(
     tag_adapter: TagAdapter<'a>,
 ) -> Result<TagVisible, UseCaseError> {
     tag_adapter
-        .create_plain(CreatePlainTagParams {
-            name: params.name.clone(),
-            user_id: user.id,
-        })
+        .create_plain(CreatePlainTagParams { name: params.name.clone(), user_id: user.id })
         .await
         .map(|tag| TagVisible {
             id: tag.id,

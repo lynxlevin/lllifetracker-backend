@@ -10,7 +10,7 @@ use entities::direction_category;
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let category = factory::direction_category(user.id).insert(&db).await?;
 
@@ -22,9 +22,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::NO_CONTENT);
 
-    let category_in_db = direction_category::Entity::find_by_id(category.id)
-        .one(&db)
-        .await?;
+    let category_in_db = direction_category::Entity::find_by_id(category.id).one(&db).await?;
     assert!(category_in_db.is_none());
 
     Ok(())
@@ -32,18 +30,13 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn do_nothing_for_other_user_category() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let other_user = factory::user().insert(&db).await?;
-    let other_user_category = factory::direction_category(other_user.id)
-        .insert(&db)
-        .await?;
+    let other_user_category = factory::direction_category(other_user.id).insert(&db).await?;
 
     let req = test::TestRequest::delete()
-        .uri(&format!(
-            "/api/direction_categories/{}",
-            other_user_category.id
-        ))
+        .uri(&format!("/api/direction_categories/{}", other_user_category.id))
         .to_request();
     req.extensions_mut().insert(user.clone());
 
@@ -60,7 +53,7 @@ async fn do_nothing_for_other_user_category() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let Connections { app, ..} = init_app().await?;
+    let Connections { app, .. } = init_app().await?;
 
     let req = test::TestRequest::delete()
         .uri(&format!("/api/direction_categories/{}", Uuid::now_v7()))

@@ -2,8 +2,8 @@ use sea_orm_migration::{
     prelude::{
         async_trait,
         sea_orm::{self, DeriveIden},
-        DbErr, DeriveMigrationName, Expr, ForeignKey, ForeignKeyAction, Index, MigrationTrait,
-        SchemaManager, Table,
+        DbErr, DeriveMigrationName, Expr, ForeignKey, ForeignKeyAction, Index, MigrationTrait, SchemaManager,
+        Table,
     },
     schema::{date, small_integer, string_len, text, timestamp_with_time_zone, uuid},
 };
@@ -29,14 +29,8 @@ impl MigrationTrait for Migration {
                     .col(small_integer(BookExcerpt::PageNumber))
                     .col(text(BookExcerpt::Text))
                     .col(date(BookExcerpt::Date))
-                    .col(
-                        timestamp_with_time_zone(BookExcerpt::CreatedAt)
-                            .default(Expr::current_timestamp()),
-                    )
-                    .col(
-                        timestamp_with_time_zone(BookExcerpt::UpdatedAt)
-                            .default(Expr::current_timestamp()),
-                    )
+                    .col(timestamp_with_time_zone(BookExcerpt::CreatedAt).default(Expr::current_timestamp()))
+                    .col(timestamp_with_time_zone(BookExcerpt::UpdatedAt).default(Expr::current_timestamp()))
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk-book-excerpts-user_id")
@@ -60,9 +54,7 @@ impl MigrationTrait for Migration {
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        manager
-            .drop_index(Index::drop().name(INDEX_NAME).to_owned())
-            .await?;
+        manager.drop_index(Index::drop().name(INDEX_NAME).to_owned()).await?;
         manager
             .drop_table(Table::drop().table(BookExcerpt::Table).to_owned())
             .await?;

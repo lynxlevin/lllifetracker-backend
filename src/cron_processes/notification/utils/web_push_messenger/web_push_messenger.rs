@@ -64,10 +64,7 @@ impl WebPushMessenger {
         })
     }
 
-    pub async fn send_message(
-        &self,
-        message: Message,
-    ) -> Result<WebPushMessengerResult, WebPushMessengerError> {
+    pub async fn send_message(&self, message: Message) -> Result<WebPushMessengerResult, WebPushMessengerError> {
         let encrypted_message = self.encrypt_message(message)?;
 
         // NOTE: Http client cannot be awc because it causes "future is not Send" error in run_cron_processes.
@@ -91,14 +88,12 @@ impl WebPushMessenger {
         );
         headers.insert(
             CONTENT_ENCODING,
-            HeaderValue::from_str("aes128gcm")
-                .map_err(|e| WebPushMessengerError::InvalidHeaderValue(e))?,
+            HeaderValue::from_str("aes128gcm").map_err(|e| WebPushMessengerError::InvalidHeaderValue(e))?,
         );
         headers.insert("TTL", HeaderValue::from(TTL_SECONDS));
         headers.insert(
             "Urgency",
-            HeaderValue::from_str("normal")
-                .map_err(|e| WebPushMessengerError::InvalidHeaderValue(e))?,
+            HeaderValue::from_str("normal").map_err(|e| WebPushMessengerError::InvalidHeaderValue(e))?,
         );
         client
             .post(&self.endpoint)
@@ -107,9 +102,7 @@ impl WebPushMessenger {
             .send()
             .await
             .map(|res| match res.status() {
-                StatusCode::NOT_FOUND | StatusCode::GONE => {
-                    WebPushMessengerResult::InvalidSubscription
-                }
+                StatusCode::NOT_FOUND | StatusCode::GONE => WebPushMessengerResult::InvalidSubscription,
                 _ => WebPushMessengerResult::OK,
             })
             .map_err(|e| WebPushMessengerError::RequestError(e))

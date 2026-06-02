@@ -3,8 +3,7 @@ use std::future::Future;
 use sea_orm::{
     prelude::Expr,
     sea_query::NullOrdering::{First, Last},
-    ActiveModelTrait, ColumnAsExpr, ColumnTrait, DbConn, DbErr, EntityTrait, FromQueryResult,
-    IntoActiveModel,
+    ActiveModelTrait, ColumnAsExpr, ColumnTrait, DbConn, DbErr, EntityTrait, FromQueryResult, IntoActiveModel,
     JoinType::LeftJoin,
     ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait, Select, Set,
 };
@@ -14,7 +13,7 @@ use uuid::Uuid;
 use entities::{
     action, ambition, direction,
     sea_orm_active_enums::TagType,
-    tag::{ActiveModel, Column, Entity, Model, Relation},
+    tag::{self, ActiveModel, Column, Entity, Model, Relation},
     user,
 };
 
@@ -26,10 +25,7 @@ pub struct TagAdapter<'a> {
 
 impl<'a> TagAdapter<'a> {
     pub fn init(db: &'a DbConn) -> Self {
-        Self {
-            db,
-            query: Entity::find(),
-        }
+        Self { db, query: Entity::find() }
     }
 }
 
@@ -77,9 +73,7 @@ pub trait TagOrder {
 
 impl TagOrder for TagAdapter<'_> {
     fn order_by_ambition_ordering_nulls_last(mut self, order: Order) -> Self {
-        self.query = self
-            .query
-            .order_by_with_nulls(ambition::Column::Ordering, order, Last);
+        self.query = self.query.order_by_with_nulls(ambition::Column::Ordering, order, Last);
         self
     }
 
@@ -91,9 +85,7 @@ impl TagOrder for TagAdapter<'_> {
     }
 
     fn order_by_action_ordering_nulls_last(mut self, order: Order) -> Self {
-        self.query = self
-            .query
-            .order_by_with_nulls(action::Column::Ordering, order, Last);
+        self.query = self.query.order_by_with_nulls(action::Column::Ordering, order, Last);
         self
     }
 
@@ -115,6 +107,11 @@ pub struct TagWithName {
     pub r#type: TagType,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
 }
+impl From<(&tag::Model, String)> for TagWithName {
+    fn from(value: (&tag::Model, String)) -> Self {
+        Self { id: value.0.id, name: value.1, r#type: value.0.r#type.clone(), created_at: value.0.created_at }
+    }
+}
 
 pub trait TagQuery {
     fn get_all_tags(self) -> impl Future<Output = Result<Vec<TagWithName>, DbErr>>;
@@ -126,15 +123,11 @@ impl TagQuery for TagAdapter<'_> {
         self.query
             .expr_as(
                 Expr::case(
-                    Expr::col(Column::Type)
-                        .cast_as("text")
-                        .eq(TagType::Ambition),
+                    Expr::col(Column::Type).cast_as("text").eq(TagType::Ambition),
                     ambition::Column::Name.into_column_as_expr(),
                 )
                 .case(
-                    Expr::col(Column::Type)
-                        .cast_as("text")
-                        .eq(TagType::Direction),
+                    Expr::col(Column::Type).cast_as("text").eq(TagType::Direction),
                     direction::Column::Name.into_column_as_expr(),
                 )
                 .case(
@@ -170,15 +163,8 @@ pub struct UpdatePlainTagParams {
 }
 
 pub trait TagMutation {
-    fn create_plain(
-        self,
-        params: CreatePlainTagParams,
-    ) -> impl Future<Output = Result<Model, DbErr>>;
-    fn update_plain(
-        self,
-        tag: Model,
-        params: UpdatePlainTagParams,
-    ) -> impl Future<Output = Result<Model, DbErr>>;
+    fn create_plain(self, params: CreatePlainTagParams) -> impl Future<Output = Result<Model, DbErr>>;
+    fn update_plain(self, tag: Model, params: UpdatePlainTagParams) -> impl Future<Output = Result<Model, DbErr>>;
     fn delete(self, tag: Model) -> impl Future<Output = Result<(), DbErr>>;
 }
 

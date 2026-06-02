@@ -1,7 +1,7 @@
 use aes_gcm::{
     aead::{
-        consts as aes_gcm_consts, generic_array, rand_core::RngCore, AeadMutInPlace, Buffer,
-        Error as AEADError, OsRng,
+        consts as aes_gcm_consts, generic_array, rand_core::RngCore, AeadMutInPlace, Buffer, Error as AEADError,
+        OsRng,
     },
     Aes128Gcm, Key, KeyInit, Nonce,
 };
@@ -85,18 +85,19 @@ impl MessageEncryptor {
         mut record: B,
         encrypted_record_size: u32,
     ) -> Result<B, MessageEncryptorError> {
-        let plain_record_size: u32 = record.len().try_into().map_err(|e| {
-            MessageEncryptorError::InternalError(format!("Invalid record length: {:?}", e))
-        })?;
+        let plain_record_size: u32 = record
+            .len()
+            .try_into()
+            .map_err(|e| MessageEncryptorError::InternalError(format!("Invalid record length: {:?}", e)))?;
         if plain_record_size >= encrypted_record_size - 16 {
             return Err(MessageEncryptorError::InternalError(
                 "Invalid record length, plain_record longer than encrypted_record".to_string(),
             ));
         }
 
-        record.extend_from_slice(b"\x02").map_err(|e| {
-            MessageEncryptorError::InternalError(format!("Record extend error: {:?}", e))
-        })?;
+        record
+            .extend_from_slice(b"\x02")
+            .map_err(|e| MessageEncryptorError::InternalError(format!("Record extend error: {:?}", e)))?;
 
         Aes128Gcm::new(key)
             .encrypt_in_place(nonce, b"", &mut record)
@@ -108,9 +109,8 @@ impl MessageEncryptor {
         let message: Vec<u8> = message.as_bytes().into();
         let p256_public_key = p256::PublicKey::from_sec1_bytes(&self.p256dh_key)
             .map_err(|e| MessageEncryptorError::InvalidP256DHKey(e))?;
-        let auth = generic_array::GenericArray::<u8, generic_array::typenum::U16>::clone_from_slice(
-            &self.auth_key,
-        );
+        let auth =
+            generic_array::GenericArray::<u8, generic_array::typenum::U16>::clone_from_slice(&self.auth_key);
 
         let mut salt = [0u8; 16];
         OsRng.fill_bytes(&mut salt);
@@ -121,25 +121,19 @@ impl MessageEncryptor {
         let mut info = vec![];
         info.extend_from_slice(b"WebPush: info");
         info.push(0u8);
-        info.extend_from_slice(
-            p256_public_key
-                .as_affine()
-                .to_encoded_point(false)
-                .as_bytes(),
-        );
+        info.extend_from_slice(p256_public_key.as_affine().to_encoded_point(false).as_bytes());
         info.extend_from_slice(as_public.as_affine().to_encoded_point(false).as_bytes());
 
         let mut ikm = [0u8; 32];
-        let shared =
-            p256::ecdh::diffie_hellman(as_secret.to_nonzero_scalar(), p256_public_key.as_affine());
+        let shared = p256::ecdh::diffie_hellman(as_secret.to_nonzero_scalar(), p256_public_key.as_affine());
         let hk = Hkdf::<Sha256>::new(Some(&auth), &shared.raw_secret_bytes().as_ref());
         hk.expand(&info, &mut ikm)
             .map_err(|e| MessageEncryptorError::InternalError(e.to_string()))?;
 
         let key_id = as_public.as_affine().to_encoded_point(false);
-        let encrypted_record_length: u32 = (message.len() + 17).try_into().map_err(|e| {
-            MessageEncryptorError::InternalError(format!("Invalid message length: {:?}", e))
-        })?;
+        let encrypted_record_length: u32 = (message.len() + 17)
+            .try_into()
+            .map_err(|e| MessageEncryptorError::InternalError(format!("Invalid message length: {:?}", e)))?;
 
         let mut seq = [0u8; 12];
         seq[4..].copy_from_slice(&0_usize.to_be_bytes());
@@ -149,9 +143,12 @@ impl MessageEncryptor {
         let mut output = vec![];
         output.extend_from_slice(&salt);
         output.extend_from_slice(&encrypted_record_length.to_be_bytes());
-        output.push(key_id.len().try_into().map_err(|e| {
-            MessageEncryptorError::InternalError(format!("Invalid key_id length: {:?}", e))
-        })?);
+        output.push(
+            key_id
+                .len()
+                .try_into()
+                .map_err(|e| MessageEncryptorError::InternalError(format!("Invalid key_id length: {:?}", e)))?,
+        );
         output.extend_from_slice(key_id.as_ref());
 
         let record = self.encrypt_record(&key, &nonce, message, encrypted_record_length)?;

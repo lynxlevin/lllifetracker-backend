@@ -14,13 +14,7 @@ use base64::{engine::general_purpose, Engine};
 
 fn get_cipher_and_nonce(
     settings: &Settings,
-) -> Result<
-    (
-        AesGcm<Aes256, UInt<UInt<UInt<UInt<UTerm, B1>, B1>, B0>, B0>>,
-        Vec<u8>,
-    ),
-    String,
-> {
+) -> Result<(AesGcm<Aes256, UInt<UInt<UInt<UInt<UTerm, B1>, B1>, B0>, B0>>, Vec<u8>), String> {
     let key = general_purpose::STANDARD
         .decode(&settings.database.encryption_key)
         .map_err(|e| format!("Error base64-decoding encryption_key: {}", e))?;
@@ -47,6 +41,5 @@ pub fn decode_and_decrypt(cipher_text: String, settings: &Settings) -> Result<St
     let plain_text = cipher
         .decrypt(nonce.as_slice().into(), decoded_cipher_text.as_ref())
         .map_err(|e| format!("Error decrypting cipher_text: {}", e))?;
-    String::from_utf8(plain_text)
-        .map_err(|e| format!("Error utf8-encoding decrypted text: {}", e.utf8_error()))
+    String::from_utf8(plain_text).map_err(|e| format!("Error utf8-encoding decrypted text: {}", e.utf8_error()))
 }

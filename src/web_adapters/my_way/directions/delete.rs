@@ -24,13 +24,7 @@ pub async fn delete_direction_endpoint(
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            match delete_direction(
-                user.into_inner(),
-                path_param.direction_id,
-                DirectionAdapter::init(&db),
-            )
-            .await
-            {
+            match delete_direction(user.into_inner(), path_param.direction_id, DirectionAdapter::init(&db)).await {
                 Ok(_) => HttpResponse::NoContent().finish(),
                 Err(e) => response_500(e),
             }

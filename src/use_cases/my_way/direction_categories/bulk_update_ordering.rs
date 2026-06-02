@@ -1,10 +1,6 @@
-use crate::{
-    my_way::direction_categories::types::DirectionCategoryBulkUpdateOrderingRequest,
-    UseCaseError,
-};
+use crate::{my_way::direction_categories::types::DirectionCategoryBulkUpdateOrderingRequest, UseCaseError};
 use db_adapters::direction_category_adapter::{
-    DirectionCategoryAdapter, DirectionCategoryFilter, DirectionCategoryMutation,
-    DirectionCategoryQuery,
+    DirectionCategoryAdapter, DirectionCategoryFilter, DirectionCategoryMutation, DirectionCategoryQuery,
 };
 use entities::user as user_entity;
 

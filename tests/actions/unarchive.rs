@@ -23,10 +23,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::OK);
 
-    let action_in_db = action::Entity::find_by_id(action.id)
-        .one(&db)
-        .await?
-        .unwrap();
+    let action_in_db = action::Entity::find_by_id(action.id).one(&db).await?.unwrap();
     assert_eq!(action_in_db.user_id, user.id);
     assert_eq!(action_in_db.name, action.name);
     assert_eq!(action_in_db.created_at, action.created_at);
@@ -48,9 +45,7 @@ async fn happy_path() -> Result<(), DbErr> {
 async fn happy_path_update_user_first_track_at() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user()
-        .first_track_at(Some(
-            DateTime::parse_from_rfc3339("2025-07-09T00:00:00Z").unwrap(),
-        ))
+        .first_track_at(Some(DateTime::parse_from_rfc3339("2025-07-09T00:00:00Z").unwrap()))
         .insert(&db)
         .await?;
     let action_0 = factory::action(user.id).archived(true).insert(&db).await?;

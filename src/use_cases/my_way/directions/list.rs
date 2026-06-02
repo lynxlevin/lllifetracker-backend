@@ -1,7 +1,5 @@
 use db_adapters::{
-    direction_adapter::{
-        DirectionAdapter, DirectionFilter, DirectionJoin, DirectionOrder, DirectionQuery,
-    },
+    direction_adapter::{DirectionAdapter, DirectionFilter, DirectionJoin, DirectionOrder, DirectionQuery},
     Order::Asc,
 };
 use entities::user as user_entity;

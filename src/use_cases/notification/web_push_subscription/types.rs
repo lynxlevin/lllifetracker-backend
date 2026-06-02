@@ -12,10 +12,7 @@ pub struct WebPushSubscriptionVisible {
 
 impl From<&web_push_subscription::Model> for WebPushSubscriptionVisible {
     fn from(item: &web_push_subscription::Model) -> Self {
-        Self {
-            device_name: item.device_name.clone(),
-            expiration_epoch_time: item.expiration_epoch_time.clone(),
-        }
+        Self { device_name: item.device_name.clone(), expiration_epoch_time: item.expiration_epoch_time.clone() }
     }
 }
 

@@ -11,11 +11,7 @@ pub struct Migration;
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .rename_table(
-                Table::rename()
-                    .table(MissionMemo::Table, Challenge::Table)
-                    .to_owned(),
-            )
+            .rename_table(Table::rename().table(MissionMemo::Table, Challenge::Table).to_owned())
             .await?;
 
         manager
@@ -54,11 +50,7 @@ impl MigrationTrait for Migration {
             .await?;
 
         manager
-            .rename_table(
-                Table::rename()
-                    .table(Challenge::Table, MissionMemo::Table)
-                    .to_owned(),
-            )
+            .rename_table(Table::rename().table(Challenge::Table, MissionMemo::Table).to_owned())
             .await?;
         Ok(())
     }

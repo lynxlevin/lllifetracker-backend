@@ -17,11 +17,7 @@ pub async fn create_diary<'a>(
 ) -> Result<DiaryVisible, UseCaseError> {
     let diary = match diary_adapter
         .clone()
-        .create(CreateDiaryParams {
-            text: params.text.clone(),
-            date: params.date,
-            user_id: user.id,
-        })
+        .create(CreateDiaryParams { text: params.text.clone(), date: params.date, user_id: user.id })
         .await
     {
         Ok(diary) => diary,
@@ -30,10 +26,7 @@ pub async fn create_diary<'a>(
         },
     };
 
-    match diary_adapter
-        .link_tags(&diary, params.tag_ids.clone())
-        .await
-    {
+    match diary_adapter.link_tags(&diary, params.tag_ids.clone()).await {
         Ok(_) => Ok(DiaryVisible::from(diary)),
         Err(e) => match &e {
             // FIXME: diary creation should be canceled.

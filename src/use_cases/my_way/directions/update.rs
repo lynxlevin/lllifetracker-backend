@@ -1,11 +1,8 @@
 use db_adapters::{
     direction_adapter::{
-        DirectionAdapter, DirectionFilter, DirectionMutation, DirectionQuery,
-        UpdateDirectionParams,
+        DirectionAdapter, DirectionFilter, DirectionMutation, DirectionQuery, UpdateDirectionParams,
     },
-    direction_category_adapter::{
-        DirectionCategoryAdapter, DirectionCategoryFilter, DirectionCategoryQuery,
-    },
+    direction_category_adapter::{DirectionCategoryAdapter, DirectionCategoryFilter, DirectionCategoryQuery},
 };
 use entities::user as user_entity;
 use uuid::Uuid;

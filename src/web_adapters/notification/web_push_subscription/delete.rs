@@ -18,12 +18,7 @@ pub async fn delete_web_push_subscription_endpoint(
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            match delete_web_push_subscription(
-                user.into_inner(),
-                WebPushSubscriptionAdapter::init(&db),
-            )
-            .await
-            {
+            match delete_web_push_subscription(user.into_inner(), WebPushSubscriptionAdapter::init(&db)).await {
                 Ok(_) => HttpResponse::NoContent().finish(),
                 Err(e) => response_500(e),
             }

@@ -1,8 +1,6 @@
 use db_adapters::{
     direction_adapter::{CreateDirectionParams, DirectionAdapter, DirectionMutation},
-    direction_category_adapter::{
-        DirectionCategoryAdapter, DirectionCategoryFilter, DirectionCategoryQuery,
-    },
+    direction_category_adapter::{DirectionCategoryAdapter, DirectionCategoryFilter, DirectionCategoryQuery},
 };
 use entities::user as user_entity;
 

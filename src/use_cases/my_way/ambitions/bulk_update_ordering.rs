@@ -1,7 +1,5 @@
 use crate::{my_way::ambitions::types::AmbitionBulkUpdateOrderingRequest, UseCaseError};
-use db_adapters::ambition_adapter::{
-    AmbitionAdapter, AmbitionFilter, AmbitionMutation, AmbitionQuery,
-};
+use db_adapters::ambition_adapter::{AmbitionAdapter, AmbitionFilter, AmbitionMutation, AmbitionQuery};
 use entities::user as user_entity;
 
 /// Fuzzy Ordering Design Decision

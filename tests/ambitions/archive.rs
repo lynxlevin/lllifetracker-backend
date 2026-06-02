@@ -22,10 +22,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::OK);
 
-    let ambition_in_db = ambition::Entity::find_by_id(ambition.id)
-        .one(&db)
-        .await?
-        .unwrap();
+    let ambition_in_db = ambition::Entity::find_by_id(ambition.id).one(&db).await?.unwrap();
     assert_eq!(ambition_in_db.id, ambition.id);
     assert_eq!(ambition_in_db.user_id, user.id);
     assert_eq!(ambition_in_db.name, ambition.name);

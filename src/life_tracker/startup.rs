@@ -15,10 +15,7 @@ pub struct Application {
 impl Application {
     pub async fn build(settings: Settings) -> Result<Self, std::io::Error> {
         let db = init_db(&settings).await;
-        let address = format!(
-            "{}:{}",
-            settings.application.host, settings.application.port
-        );
+        let address = format!("{}:{}", settings.application.host, settings.application.port);
 
         let listener = std::net::TcpListener::bind(&address)?;
         let port = listener.local_addr().unwrap().port();
@@ -41,12 +38,9 @@ async fn run(
     db: DatabaseConnection,
     settings: Settings,
 ) -> Result<Server, std::io::Error> {
-    let redis_pool = init_redis_pool(&settings)
-        .await
-        .expect("Cannot create deadpool redis.");
+    let redis_pool = init_redis_pool(&settings).await.expect("Cannot create deadpool redis.");
 
-    let (redis_store, secret_key) =
-        get_preps_for_redis_session_store(&settings, &settings.redis.url).await;
+    let (redis_store, secret_key) = get_preps_for_redis_session_store(&settings, &settings.redis.url).await;
 
     let server = HttpServer::new(move || {
         App::new()

@@ -8,9 +8,7 @@ use entities::{
     sea_orm_active_enums::NotificationType,
 };
 use sea_orm::{ActiveModelTrait, ColumnTrait, DbErr, EntityTrait, QueryFilter, QueryOrder};
-use use_cases::notification::notification_rule::types::{
-    NotificationRuleCreateRequest, RecurrenceType,
-};
+use use_cases::notification::notification_rule::types::{NotificationRuleCreateRequest, RecurrenceType};
 
 use crate::utils::{init_app, Connections};
 use common::factory;

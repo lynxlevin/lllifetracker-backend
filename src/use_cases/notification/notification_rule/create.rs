@@ -3,12 +3,11 @@ use chrono::{
     Weekday::{self, Fri, Mon, Sat, Sun, Thu, Tue, Wed},
 };
 use db_adapters::notification_rule_adapter::{
-    CreateNotificationRuleParams, NotificationRuleAdapter, NotificationRuleFilter,
-    NotificationRuleMutation, NotificationRuleQuery,
+    CreateNotificationRuleParams, NotificationRuleAdapter, NotificationRuleFilter, NotificationRuleMutation,
+    NotificationRuleQuery,
 };
 use entities::{
-    custom_methods::user::UserTimezoneTrait, sea_orm_active_enums::NotificationType,
-    user as user_entity,
+    custom_methods::user::UserTimezoneTrait, sea_orm_active_enums::NotificationType, user as user_entity,
 };
 
 use crate::{
@@ -21,8 +20,7 @@ pub async fn create_notification_rules<'a>(
     notification_rule_adapter: NotificationRuleAdapter<'a>,
     params: NotificationRuleCreateRequest,
 ) -> Result<NotificationRuleCreateRequest, UseCaseError> {
-    let parsed_params =
-        parse_params(params.clone(), notification_rule_adapter.clone(), &user).await?;
+    let parsed_params = parse_params(params.clone(), notification_rule_adapter.clone(), &user).await?;
 
     let notification_rule_params = parsed_params
         .weekdays
@@ -103,15 +101,7 @@ async fn parse_params<'a>(
                 vec![Mon, Sun]
             }
         }
-        RecurrenceType::Unknown => {
-            return Err(UseCaseError::BadRequest(
-                "Unknown recurrence_type".to_string(),
-            ))
-        }
+        RecurrenceType::Unknown => return Err(UseCaseError::BadRequest("Unknown recurrence_type".to_string())),
     };
-    Ok(ParsedParam {
-        utc_time,
-        weekdays,
-        r#type: params.r#type,
-    })
+    Ok(ParsedParam { utc_time, weekdays, r#type: params.r#type })
 }

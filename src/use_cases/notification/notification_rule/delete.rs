@@ -1,6 +1,5 @@
 use db_adapters::notification_rule_adapter::{
-    NotificationRuleAdapter, NotificationRuleFilter, NotificationRuleMutation,
-    NotificationRuleQuery,
+    NotificationRuleAdapter, NotificationRuleFilter, NotificationRuleMutation, NotificationRuleQuery,
 };
 use entities::user as user_entity;
 

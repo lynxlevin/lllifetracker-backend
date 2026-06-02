@@ -3,10 +3,7 @@ use actix_web::{
     web::{Data, Json, Path, ReqData},
     HttpResponse,
 };
-use db_adapters::{
-    direction_adapter::DirectionAdapter,
-    direction_category_adapter::DirectionCategoryAdapter,
-};
+use db_adapters::{direction_adapter::DirectionAdapter, direction_category_adapter::DirectionCategoryAdapter};
 use entities::user as user_entity;
 use sea_orm::DbConn;
 use use_cases::{

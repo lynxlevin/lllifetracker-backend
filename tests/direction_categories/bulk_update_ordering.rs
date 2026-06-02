@@ -18,9 +18,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
     let req = test::TestRequest::put()
         .uri("/api/direction_categories/bulk_update_ordering")
-        .set_json(DirectionCategoryBulkUpdateOrderingRequest {
-            ordering: vec![category_0.id, category_1.id],
-        })
+        .set_json(DirectionCategoryBulkUpdateOrderingRequest { ordering: vec![category_0.id, category_1.id] })
         .to_request();
     req.extensions_mut().insert(user.clone());
 

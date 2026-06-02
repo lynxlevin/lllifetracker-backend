@@ -13,10 +13,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let action = factory::action(user.id).insert(&db).await?;
-    let action_track = factory::action_track(user.id)
-        .action_id(action.id)
-        .insert(&db)
-        .await?;
+    let action_track = factory::action_track(user.id).action_id(action.id).insert(&db).await?;
 
     let req = test::TestRequest::delete()
         .uri(&format!("/api/action_tracks/{}", action_track.id))
@@ -26,9 +23,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::NO_CONTENT);
 
-    let action_track_in_db = action_track::Entity::find_by_id(action_track.id)
-        .one(&db)
-        .await?;
+    let action_track_in_db = action_track::Entity::find_by_id(action_track.id).one(&db).await?;
     assert!(action_track_in_db.is_none());
 
     let action_in_db = action::Entity::find_by_id(action.id).one(&db).await?;
@@ -42,10 +37,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let action = factory::action(user.id).insert(&db).await?;
-    let action_track = factory::action_track(user.id)
-        .action_id(action.id)
-        .insert(&db)
-        .await?;
+    let action_track = factory::action_track(user.id).action_id(action.id).insert(&db).await?;
 
     let req = test::TestRequest::delete()
         .uri(&format!("/api/action_tracks/{}", action_track.id))
@@ -64,17 +56,13 @@ mod user_first_track_at_update {
     #[actix_web::test]
     async fn deleting_new_tracks_makes_no_change() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
-        let original_first_track_at =
-            Some(DateTime::parse_from_rfc3339("2025-01-01T00:00:00Z").unwrap());
+        let original_first_track_at = Some(DateTime::parse_from_rfc3339("2025-01-01T00:00:00Z").unwrap());
         let user = factory::user()
             .first_track_at(original_first_track_at)
             .insert(&db)
             .await?;
         let action = factory::action(user.id).insert(&db).await?;
-        let action_track = factory::action_track(user.id)
-            .action_id(action.id)
-            .insert(&db)
-            .await?;
+        let action_track = factory::action_track(user.id).action_id(action.id).insert(&db).await?;
 
         let req = test::TestRequest::delete()
             .uri(&format!("/api/action_tracks/{}", action_track.id))
@@ -94,9 +82,7 @@ mod user_first_track_at_update {
     async fn delete_oldest_track_switch_to_none() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
         let user = factory::user()
-            .first_track_at(Some(
-                DateTime::parse_from_rfc3339("2025-07-08T00:00:00Z").unwrap(),
-            ))
+            .first_track_at(Some(DateTime::parse_from_rfc3339("2025-07-08T00:00:00Z").unwrap()))
             .insert(&db)
             .await?;
         let action = factory::action(user.id).insert(&db).await?;
@@ -124,9 +110,7 @@ mod user_first_track_at_update {
     async fn delete_oldest_track_switch_to_next_oldest() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
         let user = factory::user()
-            .first_track_at(Some(
-                DateTime::parse_from_rfc3339("2025-07-08T00:00:00Z").unwrap(),
-            ))
+            .first_track_at(Some(DateTime::parse_from_rfc3339("2025-07-08T00:00:00Z").unwrap()))
             .insert(&db)
             .await?;
         let action = factory::action(user.id).insert(&db).await?;
@@ -150,10 +134,7 @@ mod user_first_track_at_update {
         assert_eq!(res.status(), http::StatusCode::NO_CONTENT);
 
         let user_in_db = user::Entity::find_by_id(user.id).one(&db).await?.unwrap();
-        assert_eq!(
-            user_in_db.first_track_at,
-            Some(second_oldest_action_track.started_at)
-        );
+        assert_eq!(user_in_db.first_track_at, Some(second_oldest_action_track.started_at));
 
         Ok(())
     }

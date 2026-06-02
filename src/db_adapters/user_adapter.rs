@@ -2,8 +2,7 @@ use std::future::Future;
 
 use chrono::{DateTime, FixedOffset, Utc};
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel, QueryFilter,
-    Select, Set,
+    ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel, QueryFilter, Select, Set,
 };
 use uuid::Uuid;
 
@@ -20,10 +19,7 @@ pub struct UserAdapter<'a> {
 
 impl<'a> UserAdapter<'a> {
     pub fn init(db: &'a DbConn) -> Self {
-        Self {
-            db,
-            query: Entity::find(),
-        }
+        Self { db, query: Entity::find() }
     }
 }
 
@@ -49,10 +45,7 @@ impl UserQuery for UserAdapter<'_> {
     }
 
     async fn get_by_email(self, email: String) -> Result<Option<Model>, DbErr> {
-        self.query
-            .filter(Column::Email.eq(email))
-            .one(self.db)
-            .await
+        self.query.filter(Column::Email.eq(email)).one(self.db).await
     }
 }
 
@@ -68,11 +61,7 @@ pub struct CreateUserParams {
 pub trait UserMutation {
     fn create(self, params: CreateUserParams) -> impl Future<Output = Result<Model, DbErr>>;
     fn activate(self, user: Model) -> impl Future<Output = Result<Model, DbErr>>;
-    fn update_password(
-        self,
-        user: Model,
-        password: String,
-    ) -> impl Future<Output = Result<Model, DbErr>>;
+    fn update_password(self, user: Model, password: String) -> impl Future<Output = Result<Model, DbErr>>;
     fn update_first_track_at(
         self,
         user: Model,

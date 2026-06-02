@@ -41,12 +41,7 @@ impl MigrationTrait for Migration {
             )
             .await?;
         manager
-            .drop_type(
-                Type::drop()
-                    .if_exists()
-                    .name(ActionTrackType::name())
-                    .to_owned(),
-            )
+            .drop_type(Type::drop().if_exists().name(ActionTrackType::name()).to_owned())
             .await?;
         Ok(())
     }

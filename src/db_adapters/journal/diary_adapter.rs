@@ -2,10 +2,9 @@ use std::future::Future;
 
 use chrono::{DateTime, FixedOffset, NaiveDate};
 use sea_orm::{
-    prelude::Expr, sea_query::NullOrdering::Last, sqlx::error::Error::Database, ActiveModelTrait,
-    ColumnAsExpr, ColumnTrait, DbConn, DbErr, EntityTrait, FromQueryResult, IntoActiveModel,
-    JoinType::LeftJoin, ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
-    RuntimeErr::SqlxError, Select, Set,
+    prelude::Expr, sea_query::NullOrdering::Last, sqlx::error::Error::Database, ActiveModelTrait, ColumnAsExpr,
+    ColumnTrait, DbConn, DbErr, EntityTrait, FromQueryResult, IntoActiveModel, JoinType::LeftJoin, ModelTrait,
+    Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait, RuntimeErr::SqlxError, Select, Set,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -28,10 +27,7 @@ pub struct DiaryAdapter<'a> {
 
 impl<'a> DiaryAdapter<'a> {
     pub fn init(db: &'a DbConn) -> Self {
-        Self {
-            db,
-            query: Entity::find(),
-        }
+        Self { db, query: Entity::find() }
     }
 }
 
@@ -97,9 +93,7 @@ impl DiaryOrder for DiaryAdapter<'_> {
     }
 
     fn order_by_ambition_created_at_nulls_last(mut self, order: Order) -> Self {
-        self.query = self
-            .query
-            .order_by_with_nulls(ambition::Column::CreatedAt, order, Last);
+        self.query = self.query.order_by_with_nulls(ambition::Column::CreatedAt, order, Last);
         self
     }
 
@@ -111,16 +105,12 @@ impl DiaryOrder for DiaryAdapter<'_> {
     }
 
     fn order_by_action_created_at_nulls_last(mut self, order: Order) -> Self {
-        self.query = self
-            .query
-            .order_by_with_nulls(action::Column::CreatedAt, order, Last);
+        self.query = self.query.order_by_with_nulls(action::Column::CreatedAt, order, Last);
         self
     }
 
     fn order_by_tag_created_at_nulls_last(mut self, order: Order) -> Self {
-        self.query = self
-            .query
-            .order_by_with_nulls(tag::Column::CreatedAt, order, Last);
+        self.query = self.query.order_by_with_nulls(tag::Column::CreatedAt, order, Last);
         self
     }
 }
@@ -151,8 +141,7 @@ impl Into<TagWithName> for &DiaryWithTag {
 pub trait DiaryQuery {
     fn get_all_with_tags(self) -> impl Future<Output = Result<Vec<DiaryWithTag>, DbErr>>;
     fn get_by_id(self, id: Uuid) -> impl Future<Output = Result<Option<Model>, DbErr>>;
-    fn get_with_tags(self)
-        -> impl Future<Output = Result<Option<(Model, Vec<tag::Model>)>, DbErr>>;
+    fn get_with_tags(self) -> impl Future<Output = Result<Option<(Model, Vec<tag::Model>)>, DbErr>>;
 }
 
 impl DiaryQuery for DiaryAdapter<'_> {
@@ -161,27 +150,19 @@ impl DiaryQuery for DiaryAdapter<'_> {
             .column_as(tag::Column::Id, "tag_id")
             .expr_as(
                 Expr::case(
-                    Expr::col(tag::Column::Type)
-                        .cast_as("text")
-                        .eq(TagType::Ambition),
+                    Expr::col(tag::Column::Type).cast_as("text").eq(TagType::Ambition),
                     ambition::Column::Name.into_column_as_expr(),
                 )
                 .case(
-                    Expr::col(tag::Column::Type)
-                        .cast_as("text")
-                        .eq(TagType::Direction),
+                    Expr::col(tag::Column::Type).cast_as("text").eq(TagType::Direction),
                     direction::Column::Name.into_column_as_expr(),
                 )
                 .case(
-                    Expr::col(tag::Column::Type)
-                        .cast_as("text")
-                        .eq(TagType::Action),
+                    Expr::col(tag::Column::Type).cast_as("text").eq(TagType::Action),
                     action::Column::Name.into_column_as_expr(),
                 )
                 .case(
-                    Expr::col(tag::Column::Type)
-                        .cast_as("text")
-                        .eq(TagType::Plain),
+                    Expr::col(tag::Column::Type).cast_as("text").eq(TagType::Plain),
                     tag::Column::Name.into_column_as_expr(),
                 )
                 .finally("no_name"),
@@ -232,11 +213,8 @@ pub struct UpdateDiaryParams {
 
 pub trait DiaryMutation {
     fn create(self, params: CreateDiaryParams) -> impl Future<Output = Result<Model, DbErr>>;
-    fn partial_update(
-        self,
-        diary: Model,
-        params: UpdateDiaryParams,
-    ) -> impl Future<Output = Result<Model, DbErr>>;
+    fn partial_update(self, diary: Model, params: UpdateDiaryParams)
+        -> impl Future<Output = Result<Model, DbErr>>;
     fn delete(self, diary: Model) -> impl Future<Output = Result<(), DbErr>>;
     fn link_tags(
         &self,
@@ -262,9 +240,7 @@ impl DiaryMutation for DiaryAdapter<'_> {
         .await
         .map_err(|e| match &e {
             DbErr::Query(SqlxError(Database(err))) => match err.constraint() {
-                Some("diaries_user_id_date_unique_index") => {
-                    DbErr::Custom(CustomDbErr::Duplicate.to_string())
-                }
+                Some("diaries_user_id_date_unique_index") => DbErr::Custom(CustomDbErr::Duplicate.to_string()),
                 _ => e,
             },
             _ => e,
@@ -281,9 +257,7 @@ impl DiaryMutation for DiaryAdapter<'_> {
         }
         diary.update(self.db).await.map_err(|e| match &e {
             DbErr::Query(SqlxError(Database(err))) => match err.constraint() {
-                Some("diaries_user_id_date_unique_index") => {
-                    DbErr::Custom(CustomDbErr::Duplicate.to_string())
-                }
+                Some("diaries_user_id_date_unique_index") => DbErr::Custom(CustomDbErr::Duplicate.to_string()),
                 _ => e,
             },
             _ => e,
@@ -294,15 +268,10 @@ impl DiaryMutation for DiaryAdapter<'_> {
         diary.delete(self.db).await.map(|_| ())
     }
 
-    async fn link_tags(
-        &self,
-        diary: &Model,
-        tag_ids: impl IntoIterator<Item = Uuid>,
-    ) -> Result<(), DbErr> {
-        let tag_links = tag_ids.into_iter().map(|tag_id| diaries_tags::ActiveModel {
-            diary_id: Set(diary.id),
-            tag_id: Set(tag_id),
-        });
+    async fn link_tags(&self, diary: &Model, tag_ids: impl IntoIterator<Item = Uuid>) -> Result<(), DbErr> {
+        let tag_links = tag_ids
+            .into_iter()
+            .map(|tag_id| diaries_tags::ActiveModel { diary_id: Set(diary.id), tag_id: Set(tag_id) });
         diaries_tags::Entity::insert_many(tag_links)
             .on_empty_do_nothing()
             .exec(self.db)
@@ -310,20 +279,14 @@ impl DiaryMutation for DiaryAdapter<'_> {
             .map(|_| ())
             .map_err(|e| match &e {
                 DbErr::Exec(SqlxError(Database(err))) => match err.constraint() {
-                    Some("fk-diaries_tags-tag_id") => {
-                        DbErr::Custom(CustomDbErr::NotFound.to_string())
-                    }
+                    Some("fk-diaries_tags-tag_id") => DbErr::Custom(CustomDbErr::NotFound.to_string()),
                     _ => e,
                 },
                 _ => e,
             })
     }
 
-    async fn unlink_tags(
-        &self,
-        diary: &Model,
-        tag_ids: impl IntoIterator<Item = Uuid>,
-    ) -> Result<(), DbErr> {
+    async fn unlink_tags(&self, diary: &Model, tag_ids: impl IntoIterator<Item = Uuid>) -> Result<(), DbErr> {
         diaries_tags::Entity::delete_many()
             .filter(diaries_tags::Column::DiaryId.eq(diary.id))
             .filter(diaries_tags::Column::TagId.is_in(tag_ids))

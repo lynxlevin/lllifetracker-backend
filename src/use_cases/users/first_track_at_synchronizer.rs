@@ -47,11 +47,7 @@ impl<'a> FirstTrackAtSynchronizer<'a> {
         user_adapter: UserAdapter<'a>,
         user: user::Model,
     ) -> Self {
-        Self {
-            action_track_adapter,
-            user_adapter,
-            user,
-        }
+        Self { action_track_adapter, user_adapter, user }
     }
 
     pub async fn update_user_first_track_at(
@@ -67,21 +63,19 @@ impl<'a> FirstTrackAtSynchronizer<'a> {
                 },
                 None => CreateTrack::FirstTrack,
             }),
-            (Some(old_track), Some(new_track)) => {
-                UseCase::UpdateTrack(match self.user.first_track_at {
-                    Some(first_track_at) => match old_track.started_at == first_track_at {
-                        true => match new_track.started_at < first_track_at {
-                            true => UpdateTrack::FirstTrackToOlder,
-                            false => UpdateTrack::FirstTrackToNewer,
-                        },
-                        false => match new_track.started_at < first_track_at {
-                            true => UpdateTrack::NewerTrackToOlder,
-                            false => UpdateTrack::NewerTrackToNewer,
-                        },
+            (Some(old_track), Some(new_track)) => UseCase::UpdateTrack(match self.user.first_track_at {
+                Some(first_track_at) => match old_track.started_at == first_track_at {
+                    true => match new_track.started_at < first_track_at {
+                        true => UpdateTrack::FirstTrackToOlder,
+                        false => UpdateTrack::FirstTrackToNewer,
                     },
-                    None => UpdateTrack::NewerTrackToOlder,
-                })
-            }
+                    false => match new_track.started_at < first_track_at {
+                        true => UpdateTrack::NewerTrackToOlder,
+                        false => UpdateTrack::NewerTrackToNewer,
+                    },
+                },
+                None => UpdateTrack::NewerTrackToOlder,
+            }),
             (Some(old_track), None) => UseCase::DeleteTrack(match self.user.first_track_at {
                 Some(first_track_at) => match old_track.started_at == first_track_at {
                     true => DeleteTrack::FirstTrack,
@@ -97,14 +91,11 @@ impl<'a> FirstTrackAtSynchronizer<'a> {
             | UseCase::CreateTrack(CreateTrack::OlderTrack)
             | UseCase::UpdateTrack(UpdateTrack::FirstTrackToOlder)
             | UseCase::UpdateTrack(UpdateTrack::NewerTrackToOlder) => {
-                self._update_first_track_at(Some(new_track.unwrap().started_at))
-                    .await
+                self._update_first_track_at(Some(new_track.unwrap().started_at)).await
             }
             UseCase::UpdateTrack(UpdateTrack::FirstTrackToNewer)
             | UseCase::DeleteTrack(DeleteTrack::FirstTrack)
-            | UseCase::SwitchActionArchive => {
-                self._search_for_first_action_track_and_update_user().await
-            }
+            | UseCase::SwitchActionArchive => self._search_for_first_action_track_and_update_user().await,
             UseCase::CreateTrack(CreateTrack::NewerTrack)
             | UseCase::UpdateTrack(UpdateTrack::NewerTrackToNewer)
             | UseCase::DeleteTrack(DeleteTrack::NewerTrack) => Ok(()),
@@ -123,12 +114,8 @@ impl<'a> FirstTrackAtSynchronizer<'a> {
             .await
             .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
 
-        self._update_first_track_at(
-            action_tracks
-                .first()
-                .and_then(|track| Some(track.started_at)),
-        )
-        .await
+        self._update_first_track_at(action_tracks.first().and_then(|track| Some(track.started_at)))
+            .await
     }
 
     async fn _update_first_track_at(

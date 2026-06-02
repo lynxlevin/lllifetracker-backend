@@ -2,8 +2,8 @@ use std::future::Future;
 
 use chrono::NaiveDate;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel, ModelTrait,
-    QueryFilter, Select, Set,
+    ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel, ModelTrait, QueryFilter, Select,
+    Set,
 };
 use uuid::Uuid;
 
@@ -21,10 +21,7 @@ pub struct ActionGoalAdapter<'a> {
 
 impl<'a> ActionGoalAdapter<'a> {
     pub fn init(db: &'a DbConn) -> Self {
-        Self {
-            db,
-            query: Entity::find(),
-        }
+        Self { db, query: Entity::find() }
     }
 }
 
@@ -103,11 +100,7 @@ impl ActionGoalMutation for ActionGoalAdapter<'_> {
         .await
     }
 
-    async fn update(
-        self,
-        params: UpdateActionGoalParams,
-        action_goal: Model,
-    ) -> Result<Model, DbErr> {
+    async fn update(self, params: UpdateActionGoalParams, action_goal: Model) -> Result<Model, DbErr> {
         let mut action_goal = action_goal.into_active_model();
         action_goal.to_date = Set(params.to_date);
         action_goal.duration_seconds = Set(params.duration_seconds);

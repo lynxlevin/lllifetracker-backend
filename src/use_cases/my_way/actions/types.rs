@@ -67,10 +67,7 @@ impl From<&(action::Model, Option<action_goal::Model>)> for ActionVisibleWithGoa
             color: value.0.color.clone(),
             track_type: value.0.track_type.clone(),
             archived: value.0.archived,
-            goal: value
-                .1
-                .as_ref()
-                .and_then(|goal| Some(ActionGoalVisible::from(goal))),
+            goal: value.1.as_ref().and_then(|goal| Some(ActionGoalVisible::from(goal))),
             created_at: value.0.created_at,
             updated_at: value.0.updated_at,
         }

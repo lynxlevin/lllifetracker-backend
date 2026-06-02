@@ -37,10 +37,7 @@ impl UserFactory for user::ActiveModel {
         self
     }
 
-    fn first_track_at(
-        mut self,
-        first_track_at: Option<DateTime<FixedOffset>>,
-    ) -> user::ActiveModel {
+    fn first_track_at(mut self, first_track_at: Option<DateTime<FixedOffset>>) -> user::ActiveModel {
         self.first_track_at = Set(first_track_at);
         self
     }

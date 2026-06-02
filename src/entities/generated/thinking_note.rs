@@ -49,11 +49,7 @@ impl Related<super::tag::Entity> for Entity {
         super::thinking_note_tags::Relation::Tag.def()
     }
     fn via() -> Option<RelationDef> {
-        Some(
-            super::thinking_note_tags::Relation::ThinkingNote
-                .def()
-                .rev(),
-        )
+        Some(super::thinking_note_tags::Relation::ThinkingNote.def().rev())
     }
 }
 

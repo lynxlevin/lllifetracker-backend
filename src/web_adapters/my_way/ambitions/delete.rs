@@ -24,13 +24,7 @@ pub async fn delete_ambition_endpoint(
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            match delete_ambition(
-                user.into_inner(),
-                path_param.ambition_id,
-                AmbitionAdapter::init(&db),
-            )
-            .await
-            {
+            match delete_ambition(user.into_inner(), path_param.ambition_id, AmbitionAdapter::init(&db)).await {
                 Ok(_) => HttpResponse::NoContent().finish(),
                 Err(e) => response_500(e),
             }

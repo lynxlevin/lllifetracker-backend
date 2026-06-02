@@ -13,9 +13,7 @@ async fn happy_path() -> Result<(), DbErr> {
 async fn ok_if_not_logged_in() -> Result<(), DbErr> {
     let Connections { app, .. } = init_app().await?;
 
-    let req = test::TestRequest::post()
-        .uri("/api/users/logout")
-        .to_request();
+    let req = test::TestRequest::post().uri("/api/users/logout").to_request();
     let res = test::call_service(&app, req).await;
 
     assert_eq!(res.status(), http::StatusCode::OK);

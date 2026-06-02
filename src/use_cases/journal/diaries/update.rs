@@ -1,7 +1,6 @@
 use db_adapters::{
     diary_adapter::{
-        DiaryAdapter, DiaryFilter, DiaryJoin, DiaryMutation, DiaryQuery, DiaryUpdateKey,
-        UpdateDiaryParams,
+        DiaryAdapter, DiaryFilter, DiaryJoin, DiaryMutation, DiaryQuery, DiaryUpdateKey, UpdateDiaryParams,
     },
     CustomDbErr,
 };
@@ -28,9 +27,7 @@ pub async fn update_diary<'a>(
         .get_with_tags()
         .await
         .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?
-        .ok_or(UseCaseError::NotFound(
-            "Diary with this id was not found".to_string(),
-        ))?;
+        .ok_or(UseCaseError::NotFound("Diary with this id was not found".to_string()))?;
 
     let diary = match diary_adapter
         .clone()
@@ -51,9 +48,7 @@ pub async fn update_diary<'a>(
     };
 
     if params.update_keys.contains(&DiaryUpdateKey::TagIds) {
-        if let Err(e) =
-            _update_tag_links(&diary, linked_tags, params.tag_ids.clone(), diary_adapter).await
-        {
+        if let Err(e) = _update_tag_links(&diary, linked_tags, params.tag_ids.clone(), diary_adapter).await {
             // FIXME: diary creation should be canceled.
             match &e {
                 DbErr::Custom(ce) => match CustomDbErr::from(ce) {
@@ -79,10 +74,7 @@ async fn _update_tag_links(
 ) -> Result<(), DbErr> {
     let linked_tag_ids = linked_tags.iter().map(|tag| tag.id).collect::<Vec<_>>();
 
-    let tag_ids_to_link = tag_ids
-        .clone()
-        .into_iter()
-        .filter(|id| !linked_tag_ids.contains(id));
+    let tag_ids_to_link = tag_ids.clone().into_iter().filter(|id| !linked_tag_ids.contains(id));
     diary_adapter.link_tags(diary, tag_ids_to_link).await?;
 
     let tag_ids_to_delete = linked_tag_ids

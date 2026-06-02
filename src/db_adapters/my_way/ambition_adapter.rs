@@ -3,8 +3,8 @@ use std::future::Future;
 use chrono::Utc;
 use sea_orm::{
     sea_query::{Func, NullOrdering::Last, SimpleExpr},
-    ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel, ModelTrait, Order,
-    QueryFilter, QueryOrder, QuerySelect, Select, Set, TransactionError, TransactionTrait,
+    ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel, ModelTrait, Order, QueryFilter,
+    QueryOrder, QuerySelect, Select, Set, TransactionError, TransactionTrait,
 };
 use uuid::Uuid;
 
@@ -22,10 +22,7 @@ pub struct AmbitionAdapter<'a> {
 
 impl<'a> AmbitionAdapter<'a> {
     pub fn init(db: &'a DbConn) -> Self {
-        Self {
-            db,
-            query: Entity::find(),
-        }
+        Self { db, query: Entity::find() }
     }
 }
 
@@ -65,9 +62,7 @@ pub trait AmbitionOrder {
 
 impl AmbitionOrder for AmbitionAdapter<'_> {
     fn order_by_ordering_nulls_last(mut self, order: Order) -> Self {
-        self.query = self
-            .query
-            .order_by_with_nulls(Column::Ordering, order, Last);
+        self.query = self.query.order_by_with_nulls(Column::Ordering, order, Last);
         self
     }
 
@@ -119,11 +114,7 @@ pub trait AmbitionMutation {
         self,
         params: CreateAmbitionParams,
     ) -> impl Future<Output = Result<Model, TransactionError<DbErr>>>;
-    fn update(
-        self,
-        ambition: Model,
-        params: UpdateAmbitionParams,
-    ) -> impl Future<Output = Result<Model, DbErr>>;
+    fn update(self, ambition: Model, params: UpdateAmbitionParams) -> impl Future<Output = Result<Model, DbErr>>;
     fn archive(self, ambition: Model) -> impl Future<Output = Result<Model, DbErr>>;
     fn unarchive(self, ambition: Model) -> impl Future<Output = Result<Model, DbErr>>;
     fn bulk_update_ordering(
@@ -135,10 +126,7 @@ pub trait AmbitionMutation {
 }
 
 impl AmbitionMutation for AmbitionAdapter<'_> {
-    async fn create_with_tag(
-        self,
-        params: CreateAmbitionParams,
-    ) -> Result<Model, TransactionError<DbErr>> {
+    async fn create_with_tag(self, params: CreateAmbitionParams) -> Result<Model, TransactionError<DbErr>> {
         self.db
             .transaction::<_, Model, DbErr>(|txn| {
                 Box::pin(async move {
@@ -190,11 +178,7 @@ impl AmbitionMutation for AmbitionAdapter<'_> {
         ambition.update(self.db).await
     }
 
-    async fn bulk_update_ordering(
-        self,
-        ambitions: Vec<Model>,
-        ordering: Vec<Uuid>,
-    ) -> Result<(), DbErr> {
+    async fn bulk_update_ordering(self, ambitions: Vec<Model>, ordering: Vec<Uuid>) -> Result<(), DbErr> {
         for ambition in ambitions {
             let order = &ordering.iter().position(|id| id == &ambition.id);
             if let Some(order) = order {

@@ -2,13 +2,10 @@ use sea_orm_migration::{
     prelude::{
         async_trait,
         sea_orm::{self, DeriveIden},
-        DbErr, DeriveMigrationName, Expr, ForeignKey, ForeignKeyAction, Index, MigrationTrait,
-        SchemaManager, Table,
+        DbErr, DeriveMigrationName, Expr, ForeignKey, ForeignKeyAction, Index, MigrationTrait, SchemaManager,
+        Table,
     },
-    schema::{
-        boolean, date, string_len, text, timestamp_with_time_zone, timestamp_with_time_zone_null,
-        uuid,
-    },
+    schema::{boolean, date, string_len, text, timestamp_with_time_zone, timestamp_with_time_zone_null, uuid},
 };
 
 use crate::m20240722_000001_create_users_table::User;
@@ -35,12 +32,8 @@ impl MigrationTrait for Migration {
         manager
             .drop_table(Table::drop().table(MemosTags::Table).to_owned())
             .await?;
-        manager
-            .drop_index(Index::drop().name(INDEX_NAME).to_owned())
-            .await?;
-        manager
-            .drop_table(Table::drop().table(Memo::Table).to_owned())
-            .await?;
+        manager.drop_index(Index::drop().name(INDEX_NAME).to_owned()).await?;
+        manager.drop_table(Table::drop().table(Memo::Table).to_owned()).await?;
         Ok(())
     }
 
@@ -56,14 +49,8 @@ impl MigrationTrait for Migration {
                     .col(text(Memo::Text))
                     .col(date(Memo::Date))
                     .col(boolean(Memo::Archived).default(false))
-                    .col(
-                        timestamp_with_time_zone(Memo::CreatedAt)
-                            .default(Expr::current_timestamp()),
-                    )
-                    .col(
-                        timestamp_with_time_zone(Memo::UpdatedAt)
-                            .default(Expr::current_timestamp()),
-                    )
+                    .col(timestamp_with_time_zone(Memo::CreatedAt).default(Expr::current_timestamp()))
+                    .col(timestamp_with_time_zone(Memo::UpdatedAt).default(Expr::current_timestamp()))
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk-memos-user_id")
@@ -126,14 +113,8 @@ impl MigrationTrait for Migration {
                     .col(date(Challenge::Date))
                     .col(boolean(Challenge::Archived).default(false))
                     .col(timestamp_with_time_zone_null(Challenge::AccomplishedAt))
-                    .col(
-                        timestamp_with_time_zone(Challenge::CreatedAt)
-                            .default(Expr::current_timestamp()),
-                    )
-                    .col(
-                        timestamp_with_time_zone(Challenge::UpdatedAt)
-                            .default(Expr::current_timestamp()),
-                    )
+                    .col(timestamp_with_time_zone(Challenge::CreatedAt).default(Expr::current_timestamp()))
+                    .col(timestamp_with_time_zone(Challenge::UpdatedAt).default(Expr::current_timestamp()))
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk-mission-memos-user_id")

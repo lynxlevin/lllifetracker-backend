@@ -10,7 +10,6 @@ use pasetors::{local, Local};
 
 const SESSION_KEY_PREFIX: &str = "valid_session_key_for_{}";
 
-// MYMEMO: refactor
 #[tracing::instrument(name = "Issue pasetors token", skip(redis_connection, settings))]
 pub async fn issue_confirmation_token_pasetors(
     user_id: uuid::Uuid,
@@ -26,10 +25,7 @@ pub async fn issue_confirmation_token_pasetors(
 
     let redis_key = {
         if is_for_password_change.is_some() {
-            format!(
-                "{}{}is_for_password_change",
-                SESSION_KEY_PREFIX, session_key
-            )
+            format!("{}{}is_for_password_change", SESSION_KEY_PREFIX, session_key)
         } else {
             format!("{}{}", SESSION_KEY_PREFIX, session_key)
         }
@@ -55,9 +51,7 @@ pub async fn issue_confirmation_token_pasetors(
         .set_options::<String, String, String>(
             redis_key.clone(),
             String::new(),
-            SetOptions::default().with_expiration(SetExpiry::EX(
-                time_to_live.num_seconds().try_into().unwrap(),
-            )),
+            SetOptions::default().with_expiration(SetExpiry::EX(time_to_live.num_seconds().try_into().unwrap())),
         )
         .await
         .map_err(|e| {
@@ -67,28 +61,16 @@ pub async fn issue_confirmation_token_pasetors(
 
     let mut claims = Claims::new().unwrap();
     claims.expiration(&dt.to_rfc3339()).unwrap();
-    claims
-        .add_additional("user_id", serde_json::json!(user_id))
-        .unwrap();
+    claims.add_additional("user_id", serde_json::json!(user_id)).unwrap();
     claims
         .add_additional("session_key", serde_json::json!(session_key))
         .unwrap();
 
     let sk = SymmetricKey::<V4>::from(settings.secret.secret_key.as_bytes()).unwrap();
-    Ok(local::encrypt(
-        &sk,
-        &claims,
-        None,
-        Some(settings.secret.hmac_secret.as_bytes()),
-    )
-    .unwrap())
+    Ok(local::encrypt(&sk, &claims, None, Some(settings.secret.hmac_secret.as_bytes())).unwrap())
 }
 
-// MYMEMO: refactor
-#[tracing::instrument(
-    name = "Verify pasetors token",
-    skip(token, redis_connection, settings)
-)]
+#[tracing::instrument(name = "Verify pasetors token", skip(token, redis_connection, settings))]
 pub async fn verify_confirmation_token_pasetor(
     token: String,
     redis_connection: &mut deadpool_redis::Connection,
@@ -98,8 +80,8 @@ pub async fn verify_confirmation_token_pasetor(
     let sk = SymmetricKey::<V4>::from(settings.secret.secret_key.as_bytes()).unwrap();
 
     let validation_rules = ClaimsValidationRules::new();
-    let untrusted_token = UntrustedToken::<Local, V4>::try_from(&token)
-        .map_err(|e| format!("TokenValidation: {}", e))?;
+    let untrusted_token =
+        UntrustedToken::<Local, V4>::try_from(&token).map_err(|e| format!("TokenValidation: {}", e))?;
     let trusted_token = local::decrypt(
         &sk,
         &untrusted_token,
@@ -115,8 +97,7 @@ pub async fn verify_confirmation_token_pasetor(
     match serde_json::from_value::<String>(uid) {
         Ok(uuid_string) => match uuid::Uuid::parse_str(&uuid_string) {
             Ok(user_uuid) => {
-                let sss_key =
-                    serde_json::to_value(claims.get_claim("session_key").unwrap()).unwrap();
+                let sss_key = serde_json::to_value(claims.get_claim("session_key").unwrap()).unwrap();
                 let session_key = match serde_json::from_value::<String>(sss_key) {
                     Ok(session_key) => session_key,
                     Err(e) => return Err(format!("{}", e)),
@@ -124,10 +105,7 @@ pub async fn verify_confirmation_token_pasetor(
 
                 let redis_key = {
                     if is_password.is_some() {
-                        format!(
-                            "{}{}is_for_password_change",
-                            SESSION_KEY_PREFIX, session_key
-                        )
+                        format!("{}{}is_for_password_change", SESSION_KEY_PREFIX, session_key)
                     } else {
                         format!("{}{}", SESSION_KEY_PREFIX, session_key)
                     }

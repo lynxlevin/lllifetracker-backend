@@ -34,12 +34,7 @@ pub async fn bulk_update_action_ordering_endpoint(
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            match bulk_update_action_ordering(
-                user.into_inner(),
-                req.into_inner(),
-                ActionAdapter::init(&db),
-            )
-            .await
+            match bulk_update_action_ordering(user.into_inner(), req.into_inner(), ActionAdapter::init(&db)).await
             {
                 Ok(_) => HttpResponse::Ok().finish(),
                 Err(e) => response_500(e),

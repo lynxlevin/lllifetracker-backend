@@ -1,12 +1,10 @@
 use crate::{
-    my_way::direction_categories::types::{
-        DirectionCategoryCreateRequest, DirectionCategoryVisible,
-    },
+    my_way::direction_categories::types::{DirectionCategoryCreateRequest, DirectionCategoryVisible},
     UseCaseError,
 };
 use db_adapters::direction_category_adapter::{
-    CreateDirectionCategoryParams, DirectionCategoryAdapter, DirectionCategoryFilter,
-    DirectionCategoryMutation, DirectionCategoryQuery,
+    CreateDirectionCategoryParams, DirectionCategoryAdapter, DirectionCategoryFilter, DirectionCategoryMutation,
+    DirectionCategoryQuery,
 };
 use entities::user as user_entity;
 

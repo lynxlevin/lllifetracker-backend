@@ -24,13 +24,7 @@ pub async fn get_ambition_endpoint(
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            match get_ambition(
-                user.into_inner(),
-                path_param.ambition_id,
-                AmbitionAdapter::init(&db),
-            )
-            .await
-            {
+            match get_ambition(user.into_inner(), path_param.ambition_id, AmbitionAdapter::init(&db)).await {
                 Ok(res) => HttpResponse::Ok().json(res),
                 Err(e) => match &e {
                     UseCaseError::NotFound(message) => response_404(message),

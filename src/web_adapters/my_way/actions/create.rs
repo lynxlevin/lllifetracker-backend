@@ -18,18 +18,10 @@ pub async fn create_action_endpoint(
     req: Json<ActionCreateRequest>,
 ) -> HttpResponse {
     match user {
-        Some(user) => {
-            match create_action(
-                user.into_inner(),
-                req.into_inner(),
-                ActionAdapter::init(&db),
-            )
-            .await
-            {
-                Ok(res) => HttpResponse::Created().json(res),
-                Err(e) => response_500(e),
-            }
-        }
+        Some(user) => match create_action(user.into_inner(), req.into_inner(), ActionAdapter::init(&db)).await {
+            Ok(res) => HttpResponse::Created().json(res),
+            Err(e) => response_500(e),
+        },
         None => response_401(),
     }
 }

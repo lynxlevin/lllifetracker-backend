@@ -17,12 +17,10 @@ pub async fn list_reading_note_titles_endpoint(
     user: Option<ReqData<user_entity::Model>>,
 ) -> HttpResponse {
     match user {
-        Some(user) => {
-            match list_reading_note_titles(user.into_inner(), ReadingNoteAdapter::init(&db)).await {
-                Ok(res) => HttpResponse::Ok().json(res),
-                Err(e) => response_500(e),
-            }
-        }
+        Some(user) => match list_reading_note_titles(user.into_inner(), ReadingNoteAdapter::init(&db)).await {
+            Ok(res) => HttpResponse::Ok().json(res),
+            Err(e) => response_500(e),
+        },
         None => response_401(),
     }
 }

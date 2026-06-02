@@ -24,13 +24,7 @@ pub async fn get_direction_endpoint(
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            match get_direction(
-                user.into_inner(),
-                path_param.direction_id,
-                DirectionAdapter::init(&db),
-            )
-            .await
-            {
+            match get_direction(user.into_inner(), path_param.direction_id, DirectionAdapter::init(&db)).await {
                 Ok(res) => HttpResponse::Ok().json(res),
                 Err(e) => match &e {
                     UseCaseError::NotFound(message) => response_404(message),

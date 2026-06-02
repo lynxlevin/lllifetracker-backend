@@ -2,12 +2,10 @@ use sea_orm_migration::{
     prelude::{
         async_trait,
         sea_orm::{self, DeriveIden},
-        DbErr, DeriveMigrationName, Expr, ForeignKey, ForeignKeyAction, Index, MigrationTrait,
-        SchemaManager, Table,
+        DbErr, DeriveMigrationName, Expr, ForeignKey, ForeignKeyAction, Index, MigrationTrait, SchemaManager,
+        Table,
     },
-    schema::{
-        big_integer_null, timestamp_with_time_zone, timestamp_with_time_zone_null, uuid, uuid_null,
-    },
+    schema::{big_integer_null, timestamp_with_time_zone, timestamp_with_time_zone_null, uuid, uuid_null},
 };
 
 use crate::m20240722_000001_create_users_table::User;
@@ -30,10 +28,7 @@ impl MigrationTrait for Migration {
                     .col(uuid(ActionTrack::Id).primary_key())
                     .col(uuid(ActionTrack::UserId))
                     .col(uuid_null(ActionTrack::ActionId))
-                    .col(
-                        timestamp_with_time_zone(ActionTrack::StartedAt)
-                            .default(Expr::current_timestamp()),
-                    )
+                    .col(timestamp_with_time_zone(ActionTrack::StartedAt).default(Expr::current_timestamp()))
                     .col(timestamp_with_time_zone_null(ActionTrack::EndedAt))
                     // NOTE: Using interval column results in "not implemented" error on `sea-orm-cli generate entity`.
                     .col(big_integer_null(ActionTrack::Duration))

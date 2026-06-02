@@ -1,8 +1,6 @@
 use actix_web::{http, test, HttpMessage};
 use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
-use use_cases::my_way::direction_categories::types::{
-    DirectionCategoryCreateRequest, DirectionCategoryVisible,
-};
+use use_cases::my_way::direction_categories::types::{DirectionCategoryCreateRequest, DirectionCategoryVisible};
 
 use crate::utils::Connections;
 
@@ -33,10 +31,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let res: DirectionCategoryVisible = test::read_body_json(res).await;
     assert_eq!(res.name, name);
 
-    let category_in_db = direction_category::Entity::find_by_id(res.id)
-        .one(&db)
-        .await?
-        .unwrap();
+    let category_in_db = direction_category::Entity::find_by_id(res.id).one(&db).await?.unwrap();
     assert_eq!(category_in_db.user_id, user.id);
     assert_eq!(category_in_db.ordering, Some(3));
     assert_eq!(DirectionCategoryVisible::from(category_in_db), res);

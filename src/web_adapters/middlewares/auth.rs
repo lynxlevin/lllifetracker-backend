@@ -29,9 +29,7 @@ where
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
-        ready(Ok(AuthenticateUserMiddleware {
-            service: Rc::new(service),
-        }))
+        ready(Ok(AuthenticateUserMiddleware { service: Rc::new(service) }))
     }
 }
 
@@ -119,11 +117,7 @@ mod tests {
             .unwrap();
         set_user(&srv_req).await?;
 
-        let user2 = srv_req
-            .extensions()
-            .get::<user::Model>()
-            .unwrap()
-            .to_owned();
+        let user2 = srv_req.extensions().get::<user::Model>().unwrap().to_owned();
         assert_eq!(user2, user);
 
         Ok(())

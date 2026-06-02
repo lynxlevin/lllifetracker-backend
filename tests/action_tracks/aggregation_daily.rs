@@ -1,11 +1,9 @@
 use std::collections::HashMap;
 
 use actix_web::{http, test, HttpMessage};
-use chrono::{DateTime, Duration};
+use chrono::{DateTime, Days};
 use sea_orm::{ActiveModelTrait, DbErr};
-use use_cases::my_way::action_tracks::types::{
-    ActionTrackAggregationDuration, ActionTrackDailyAggregationItem,
-};
+use use_cases::my_way::action_tracks::types::{ActionTrackAggregationDuration, ActionTrackDailyAggregationItem};
 
 use crate::utils::Connections;
 
@@ -16,40 +14,56 @@ use common::factory::{self, *};
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
-    let action_0 = factory::action(user.id).insert(&db).await?;
-    let action_1 = factory::action(user.id).insert(&db).await?;
-    let _action_2 = factory::action(user.id).insert(&db).await?;
+    let actions = create_actions(
+        vec![
+            ActionParam { name: "action_0", ..Default::default() },
+            ActionParam { name: "action_1", ..Default::default() },
+            ActionParam { name: "_action_2", ..Default::default() },
+        ],
+        &user,
+        &db,
+    )
+    .await?;
+    let action_0 = actions.get("action_0").unwrap();
+    let action_1 = actions.get("action_1").unwrap();
     let target = DateTime::parse_from_rfc3339("2025-01-31T15:00:00Z").unwrap();
-    let _action_0_track_0 = factory::action_track(user.id)
-        .started_at((target - Duration::days(1)).into())
-        .duration(Some(120))
-        .action_id(action_0.id)
-        .insert(&db)
-        .await?;
-    let action_0_track_1 = factory::action_track(user.id)
-        .started_at(target.into())
-        .duration(Some(180))
-        .action_id(action_0.id)
-        .insert(&db)
-        .await?;
-    let action_0_track_2 = factory::action_track(user.id)
-        .started_at((target + Duration::days(27)).into())
-        .duration(Some(300))
-        .action_id(action_0.id)
-        .insert(&db)
-        .await?;
-    let _action_0_track_3 = factory::action_track(user.id)
-        .started_at((target + Duration::days(28)).into())
-        .duration(Some(550))
-        .action_id(action_0.id)
-        .insert(&db)
-        .await?;
-    let action_1_track_0 = factory::action_track(user.id)
-        .started_at(target.into())
-        .duration(Some(350))
-        .action_id(action_1.id)
-        .insert(&db)
-        .await?;
+    let action_tracks = create_action_tracks(
+        vec![
+            ActionTrackParam {
+                name: "_action_0_track_0",
+                action_id: action_0.id,
+                started_at: target.checked_sub_days(Days::new(1)).unwrap(),
+                duration: Some(120),
+            },
+            ActionTrackParam {
+                name: "action_0_track_1",
+                action_id: action_0.id,
+                started_at: target,
+                duration: Some(180),
+            },
+            ActionTrackParam {
+                name: "action_0_track_2",
+                action_id: action_0.id,
+                started_at: target.checked_add_days(Days::new(27)).unwrap(),
+                duration: Some(300),
+            },
+            ActionTrackParam {
+                name: "_action_0_track_3",
+                action_id: action_0.id,
+                started_at: target.checked_add_days(Days::new(28)).unwrap(),
+                duration: Some(550),
+            },
+            ActionTrackParam {
+                name: "action_1_track_0",
+                action_id: action_1.id,
+                started_at: target,
+                duration: Some(350),
+            },
+        ],
+        &user,
+        &db,
+    )
+    .await?;
 
     let req = test::TestRequest::get()
         .uri("/api/action_tracks/aggregation/daily?year_month=202502")
@@ -59,15 +73,14 @@ async fn happy_path() -> Result<(), DbErr> {
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), http::StatusCode::OK);
 
-    let res: HashMap<String, Vec<ActionTrackDailyAggregationItem>> =
-        test::read_body_json(resp).await;
+    let res: HashMap<String, Vec<ActionTrackDailyAggregationItem>> = test::read_body_json(resp).await;
 
     let expected_items = vec![
         ActionTrackDailyAggregationItem {
             date: 28,
             aggregation: vec![ActionTrackAggregationDuration {
                 action_id: action_0.id,
-                duration: action_0_track_2.duration.unwrap(),
+                duration: action_tracks.get("action_0_track_2").unwrap().duration.unwrap(),
                 count: 1,
             }],
         },
@@ -76,12 +89,12 @@ async fn happy_path() -> Result<(), DbErr> {
             aggregation: vec![
                 ActionTrackAggregationDuration {
                     action_id: action_0.id,
-                    duration: action_0_track_1.duration.unwrap(),
+                    duration: action_tracks.get("action_0_track_1").unwrap().duration.unwrap(),
                     count: 1,
                 },
                 ActionTrackAggregationDuration {
                     action_id: action_1.id,
-                    duration: action_1_track_0.duration.unwrap(),
+                    duration: action_tracks.get("action_1_track_0").unwrap().duration.unwrap(),
                     count: 1,
                 },
             ],

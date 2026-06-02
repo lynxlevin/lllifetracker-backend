@@ -5,8 +5,7 @@ use sea_orm::{
     prelude::Expr,
     sea_query::NullOrdering::{First, Last},
     sqlx::error::Error::Database,
-    ActiveModelTrait, ColumnAsExpr, ColumnTrait, DbConn, DbErr, EntityTrait, FromQueryResult,
-    IntoActiveModel,
+    ActiveModelTrait, ColumnAsExpr, ColumnTrait, DbConn, DbErr, EntityTrait, FromQueryResult, IntoActiveModel,
     JoinType::LeftJoin,
     ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
     RuntimeErr::SqlxError,
@@ -33,10 +32,7 @@ pub struct ThinkingNoteAdapter<'a> {
 
 impl<'a> ThinkingNoteAdapter<'a> {
     pub fn init(db: &'a DbConn) -> Self {
-        Self {
-            db,
-            query: Entity::find(),
-        }
+        Self { db, query: Entity::find() }
     }
 }
 
@@ -100,9 +96,7 @@ pub trait ThinkingNoteOrder {
 
 impl ThinkingNoteOrder for ThinkingNoteAdapter<'_> {
     fn order_by_resolved_at_nulls_first(mut self, order: Order) -> Self {
-        self.query = self
-            .query
-            .order_by_with_nulls(Column::ResolvedAt, order, First);
+        self.query = self.query.order_by_with_nulls(Column::ResolvedAt, order, First);
         self
     }
 
@@ -112,9 +106,7 @@ impl ThinkingNoteOrder for ThinkingNoteAdapter<'_> {
     }
 
     fn order_by_ambition_created_at_nulls_last(mut self, order: Order) -> Self {
-        self.query = self
-            .query
-            .order_by_with_nulls(ambition::Column::CreatedAt, order, Last);
+        self.query = self.query.order_by_with_nulls(ambition::Column::CreatedAt, order, Last);
         self
     }
 
@@ -126,16 +118,12 @@ impl ThinkingNoteOrder for ThinkingNoteAdapter<'_> {
     }
 
     fn order_by_action_created_at_nulls_last(mut self, order: Order) -> Self {
-        self.query = self
-            .query
-            .order_by_with_nulls(action::Column::CreatedAt, order, Last);
+        self.query = self.query.order_by_with_nulls(action::Column::CreatedAt, order, Last);
         self
     }
 
     fn order_by_tag_created_at_nulls_last(mut self, order: Order) -> Self {
-        self.query = self
-            .query
-            .order_by_with_nulls(tag::Column::CreatedAt, order, Last);
+        self.query = self.query.order_by_with_nulls(tag::Column::CreatedAt, order, Last);
         self
     }
 }
@@ -170,8 +158,7 @@ impl Into<TagWithName> for &ThinkingNoteWithTag {
 pub trait ThinkingNoteQuery {
     fn get_all_with_tags(self) -> impl Future<Output = Result<Vec<ThinkingNoteWithTag>, DbErr>>;
     fn get_by_id(self, id: Uuid) -> impl Future<Output = Result<Option<Model>, DbErr>>;
-    fn get_with_tags(self)
-        -> impl Future<Output = Result<Option<(Model, Vec<tag::Model>)>, DbErr>>;
+    fn get_with_tags(self) -> impl Future<Output = Result<Option<(Model, Vec<tag::Model>)>, DbErr>>;
 }
 
 impl ThinkingNoteQuery for ThinkingNoteAdapter<'_> {
@@ -180,27 +167,19 @@ impl ThinkingNoteQuery for ThinkingNoteAdapter<'_> {
             .column_as(tag::Column::Id, "tag_id")
             .expr_as(
                 Expr::case(
-                    Expr::col(tag::Column::Type)
-                        .cast_as("text")
-                        .eq(TagType::Ambition),
+                    Expr::col(tag::Column::Type).cast_as("text").eq(TagType::Ambition),
                     ambition::Column::Name.into_column_as_expr(),
                 )
                 .case(
-                    Expr::col(tag::Column::Type)
-                        .cast_as("text")
-                        .eq(TagType::Direction),
+                    Expr::col(tag::Column::Type).cast_as("text").eq(TagType::Direction),
                     direction::Column::Name.into_column_as_expr(),
                 )
                 .case(
-                    Expr::col(tag::Column::Type)
-                        .cast_as("text")
-                        .eq(TagType::Action),
+                    Expr::col(tag::Column::Type).cast_as("text").eq(TagType::Action),
                     action::Column::Name.into_column_as_expr(),
                 )
                 .case(
-                    Expr::col(tag::Column::Type)
-                        .cast_as("text")
-                        .eq(TagType::Plain),
+                    Expr::col(tag::Column::Type).cast_as("text").eq(TagType::Plain),
                     tag::Column::Name.into_column_as_expr(),
                 )
                 .finally("no_name"),
@@ -245,8 +224,7 @@ pub struct UpdateThinkingNoteParams {
 }
 
 pub trait ThinkingNoteMutation {
-    fn create(self, params: CreateThinkingNoteParams)
-        -> impl Future<Output = Result<Model, DbErr>>;
+    fn create(self, params: CreateThinkingNoteParams) -> impl Future<Output = Result<Model, DbErr>>;
     fn update(
         self,
         params: UpdateThinkingNoteParams,
@@ -282,11 +260,7 @@ impl ThinkingNoteMutation for ThinkingNoteAdapter<'_> {
         .await
     }
 
-    async fn update(
-        self,
-        params: UpdateThinkingNoteParams,
-        thinking_note: Model,
-    ) -> Result<Model, DbErr> {
+    async fn update(self, params: UpdateThinkingNoteParams, thinking_note: Model) -> Result<Model, DbErr> {
         let mut thinking_note = thinking_note.into_active_model();
         thinking_note.question = Set(params.question);
         thinking_note.thought = Set(params.thought);
@@ -305,12 +279,10 @@ impl ThinkingNoteMutation for ThinkingNoteAdapter<'_> {
         thinking_note: &Model,
         tag_ids: impl IntoIterator<Item = Uuid>,
     ) -> Result<(), DbErr> {
-        let tag_links = tag_ids
-            .into_iter()
-            .map(|tag_id| thinking_note_tags::ActiveModel {
-                thinking_note_id: Set(thinking_note.id),
-                tag_id: Set(tag_id),
-            });
+        let tag_links = tag_ids.into_iter().map(|tag_id| thinking_note_tags::ActiveModel {
+            thinking_note_id: Set(thinking_note.id),
+            tag_id: Set(tag_id),
+        });
         thinking_note_tags::Entity::insert_many(tag_links)
             .on_empty_do_nothing()
             .exec(self.db)
@@ -318,9 +290,7 @@ impl ThinkingNoteMutation for ThinkingNoteAdapter<'_> {
             .map(|_| ())
             .map_err(|e| match &e {
                 DbErr::Exec(SqlxError(Database(err))) => match err.constraint() {
-                    Some("fk-thinking_note_tags-tag_id") => {
-                        DbErr::Custom(CustomDbErr::NotFound.to_string())
-                    }
+                    Some("fk-thinking_note_tags-tag_id") => DbErr::Custom(CustomDbErr::NotFound.to_string()),
                     _ => e,
                 },
                 _ => e,

@@ -7,9 +7,7 @@ use db_adapters::notification_rule_adapter::NotificationRuleAdapter;
 use entities::user as user_entity;
 use sea_orm::DbConn;
 use use_cases::{
-    notification::notification_rule::{
-        create::create_notification_rules, types::NotificationRuleCreateRequest,
-    },
+    notification::notification_rule::{create::create_notification_rules, types::NotificationRuleCreateRequest},
     UseCaseError,
 };
 

@@ -18,13 +18,10 @@ pub async fn create_plain_tag_endpoint(
     req: Json<TagCreateRequest>,
 ) -> HttpResponse {
     match user {
-        Some(user) => {
-            match create_plain_tag(user.into_inner(), req.into_inner(), TagAdapter::init(&db)).await
-            {
-                Ok(res) => HttpResponse::Created().json(res),
-                Err(e) => response_500(e),
-            }
-        }
+        Some(user) => match create_plain_tag(user.into_inner(), req.into_inner(), TagAdapter::init(&db)).await {
+            Ok(res) => HttpResponse::Created().json(res),
+            Err(e) => response_500(e),
+        },
         None => response_401(),
     }
 }

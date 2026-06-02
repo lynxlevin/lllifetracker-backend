@@ -13,9 +13,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
 
-    let req_body = TagCreateRequest {
-        name: "new_tag".to_string(),
-    };
+    let req_body = TagCreateRequest { name: "new_tag".to_string() };
 
     let req = test::TestRequest::post()
         .set_json(req_body.clone())
@@ -43,9 +41,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 
     let req = test::TestRequest::post()
         .uri("/api/tags/plain")
-        .set_json(TagCreateRequest {
-            name: "".to_string(),
-        })
+        .set_json(TagCreateRequest { name: "".to_string() })
         .to_request();
 
     let resp = test::call_service(&app, req).await;

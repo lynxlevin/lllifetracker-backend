@@ -17,10 +17,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let description = Some("Test description".to_string());
     let req = test::TestRequest::post()
         .uri("/api/ambitions")
-        .set_json(AmbitionCreateRequest {
-            name: name.clone(),
-            description: description.clone(),
-        })
+        .set_json(AmbitionCreateRequest { name: name.clone(), description: description.clone() })
         .to_request();
     req.extensions_mut().insert(user.clone());
 
@@ -28,10 +25,7 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(res.status(), http::StatusCode::CREATED);
 
     let res: AmbitionVisible = test::read_body_json(res).await;
-    let ambition_in_db = ambition::Entity::find_by_id(res.id)
-        .one(&db)
-        .await?
-        .unwrap();
+    let ambition_in_db = ambition::Entity::find_by_id(res.id).one(&db).await?.unwrap();
     assert_eq!(ambition_in_db.user_id, user.id);
     assert_eq!(ambition_in_db.name, name);
     assert_eq!(ambition_in_db.description, description);
@@ -61,10 +55,7 @@ async fn happy_path_no_description() -> Result<(), DbErr> {
     let name = "Test create_ambition route".to_string();
     let req = test::TestRequest::post()
         .uri("/api/ambitions")
-        .set_json(AmbitionCreateRequest {
-            name: name.clone(),
-            description: None,
-        })
+        .set_json(AmbitionCreateRequest { name: name.clone(), description: None })
         .to_request();
     req.extensions_mut().insert(user.clone());
 
@@ -73,10 +64,7 @@ async fn happy_path_no_description() -> Result<(), DbErr> {
 
     let res: AmbitionVisible = test::read_body_json(res).await;
 
-    let ambition_in_db = ambition::Entity::find_by_id(res.id)
-        .one(&db)
-        .await?
-        .unwrap();
+    let ambition_in_db = ambition::Entity::find_by_id(res.id).one(&db).await?.unwrap();
     assert_eq!(ambition_in_db.user_id, user.id);
     assert_eq!(ambition_in_db.name, name);
     assert_eq!(ambition_in_db.description, None);

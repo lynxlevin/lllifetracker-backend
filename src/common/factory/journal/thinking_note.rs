@@ -29,10 +29,7 @@ impl ThinkingNoteFactory for thinking_note::ActiveModel {
         self
     }
 
-    fn resolved_at(
-        mut self,
-        resolved_at: Option<DateTime<FixedOffset>>,
-    ) -> thinking_note::ActiveModel {
+    fn resolved_at(mut self, resolved_at: Option<DateTime<FixedOffset>>) -> thinking_note::ActiveModel {
         self.resolved_at = Set(resolved_at);
         self
     }

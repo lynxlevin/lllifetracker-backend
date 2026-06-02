@@ -2,9 +2,7 @@ use uuid::Uuid;
 
 use crate::{users::first_track_at_synchronizer::FirstTrackAtSynchronizer, UseCaseError};
 use db_adapters::{
-    action_track_adapter::{
-        ActionTrackAdapter, ActionTrackFilter, ActionTrackMutation, ActionTrackQuery,
-    },
+    action_track_adapter::{ActionTrackAdapter, ActionTrackFilter, ActionTrackMutation, ActionTrackQuery},
     user_adapter::UserAdapter,
 };
 use entities::user as user_entity;

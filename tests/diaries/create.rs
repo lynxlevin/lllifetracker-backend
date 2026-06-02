@@ -1,7 +1,6 @@
 use actix_web::{http, test, HttpMessage};
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter, QueryFilter,
-    QuerySelect,
+    ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter, QueryFilter, QuerySelect,
 };
 use use_cases::journal::diaries::types::{DiaryCreateRequest, DiaryVisible};
 
@@ -33,11 +32,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let today = chrono::Utc::now().date_naive();
     let req = test::TestRequest::post()
         .uri("/api/diaries")
-        .set_json(DiaryCreateRequest {
-            text: diary_text.clone(),
-            date: today,
-            tag_ids: vec![tag_0.id, tag_1.id],
-        })
+        .set_json(DiaryCreateRequest { text: diary_text.clone(), date: today, tag_ids: vec![tag_0.id, tag_1.id] })
         .to_request();
     req.extensions_mut().insert(user.clone());
 
@@ -71,11 +66,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 
     let req = test::TestRequest::post()
         .uri("/api/diaries")
-        .set_json(DiaryCreateRequest {
-            text: None,
-            date: chrono::Utc::now().date_naive(),
-            tag_ids: vec![],
-        })
+        .set_json(DiaryCreateRequest { text: None, date: chrono::Utc::now().date_naive(), tag_ids: vec![] })
         .to_request();
 
     let res = test::call_service(&app, req).await;
@@ -92,11 +83,7 @@ async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
 
     let non_existent_tag_req = test::TestRequest::post()
         .uri("/api/diaries")
-        .set_json(DiaryCreateRequest {
-            text: None,
-            date: today,
-            tag_ids: vec![uuid::Uuid::now_v7()],
-        })
+        .set_json(DiaryCreateRequest { text: None, date: today, tag_ids: vec![uuid::Uuid::now_v7()] })
         .to_request();
     non_existent_tag_req.extensions_mut().insert(user.clone());
     let res = test::call_service(&app, non_existent_tag_req).await;

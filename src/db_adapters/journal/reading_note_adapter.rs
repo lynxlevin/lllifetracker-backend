@@ -2,10 +2,10 @@ use std::future::Future;
 
 use chrono::{DateTime, FixedOffset, NaiveDate, Utc};
 use sea_orm::{
-    prelude::Expr, sea_query::NullOrdering::Last, sqlx::error::Error::Database, ActiveModelTrait,
-    ColumnAsExpr, ColumnTrait, DbConn, DbErr, DeriveColumn, EntityTrait, EnumIter, FromQueryResult,
-    IntoActiveModel, JoinType::LeftJoin, ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect,
-    RelationTrait, RuntimeErr::SqlxError, Select, Set,
+    prelude::Expr, sea_query::NullOrdering::Last, sqlx::error::Error::Database, ActiveModelTrait, ColumnAsExpr,
+    ColumnTrait, DbConn, DbErr, DeriveColumn, EntityTrait, EnumIter, FromQueryResult, IntoActiveModel,
+    JoinType::LeftJoin, ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
+    RuntimeErr::SqlxError, Select, Set,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -28,10 +28,7 @@ pub struct ReadingNoteAdapter<'a> {
 
 impl<'a> ReadingNoteAdapter<'a> {
     pub fn init(db: &'a DbConn) -> Self {
-        Self {
-            db,
-            query: Entity::find(),
-        }
+        Self { db, query: Entity::find() }
     }
 }
 
@@ -103,9 +100,7 @@ impl ReadingNoteOrder for ReadingNoteAdapter<'_> {
     }
 
     fn order_by_ambition_created_at_nulls_last(mut self, order: Order) -> Self {
-        self.query = self
-            .query
-            .order_by_with_nulls(ambition::Column::CreatedAt, order, Last);
+        self.query = self.query.order_by_with_nulls(ambition::Column::CreatedAt, order, Last);
         self
     }
 
@@ -117,16 +112,12 @@ impl ReadingNoteOrder for ReadingNoteAdapter<'_> {
     }
 
     fn order_by_action_created_at_nulls_last(mut self, order: Order) -> Self {
-        self.query = self
-            .query
-            .order_by_with_nulls(action::Column::CreatedAt, order, Last);
+        self.query = self.query.order_by_with_nulls(action::Column::CreatedAt, order, Last);
         self
     }
 
     fn order_by_tag_created_at_nulls_last(mut self, order: Order) -> Self {
-        self.query = self
-            .query
-            .order_by_with_nulls(tag::Column::CreatedAt, order, Last);
+        self.query = self.query.order_by_with_nulls(tag::Column::CreatedAt, order, Last);
         self
     }
 }
@@ -166,8 +157,7 @@ enum TitleQuery {
 pub trait ReadingNoteQuery {
     fn get_all_with_tags(self) -> impl Future<Output = Result<Vec<ReadingNoteWithTag>, DbErr>>;
     fn get_by_id(self, id: Uuid) -> impl Future<Output = Result<Option<Model>, DbErr>>;
-    fn get_with_tags(self)
-        -> impl Future<Output = Result<Option<(Model, Vec<tag::Model>)>, DbErr>>;
+    fn get_with_tags(self) -> impl Future<Output = Result<Option<(Model, Vec<tag::Model>)>, DbErr>>;
     fn get_all_only_titles(self) -> impl Future<Output = Result<Vec<String>, DbErr>>;
 }
 
@@ -177,27 +167,19 @@ impl ReadingNoteQuery for ReadingNoteAdapter<'_> {
             .column_as(tag::Column::Id, "tag_id")
             .expr_as(
                 Expr::case(
-                    Expr::col(tag::Column::Type)
-                        .cast_as("text")
-                        .eq(TagType::Ambition),
+                    Expr::col(tag::Column::Type).cast_as("text").eq(TagType::Ambition),
                     ambition::Column::Name.into_column_as_expr(),
                 )
                 .case(
-                    Expr::col(tag::Column::Type)
-                        .cast_as("text")
-                        .eq(TagType::Direction),
+                    Expr::col(tag::Column::Type).cast_as("text").eq(TagType::Direction),
                     direction::Column::Name.into_column_as_expr(),
                 )
                 .case(
-                    Expr::col(tag::Column::Type)
-                        .cast_as("text")
-                        .eq(TagType::Action),
+                    Expr::col(tag::Column::Type).cast_as("text").eq(TagType::Action),
                     action::Column::Name.into_column_as_expr(),
                 )
                 .case(
-                    Expr::col(tag::Column::Type)
-                        .cast_as("text")
-                        .eq(TagType::Plain),
+                    Expr::col(tag::Column::Type).cast_as("text").eq(TagType::Plain),
                     tag::Column::Name.into_column_as_expr(),
                 )
                 .finally("no_name"),
@@ -289,11 +271,7 @@ impl ReadingNoteMutation for ReadingNoteAdapter<'_> {
         .await
     }
 
-    async fn partial_update(
-        self,
-        reading_note: Model,
-        params: UpdateReadingNoteParams,
-    ) -> Result<Model, DbErr> {
+    async fn partial_update(self, reading_note: Model, params: UpdateReadingNoteParams) -> Result<Model, DbErr> {
         let mut reading_note = reading_note.into_active_model();
         if let Some(title) = params.title {
             reading_note.title = Set(title);
@@ -315,17 +293,11 @@ impl ReadingNoteMutation for ReadingNoteAdapter<'_> {
         reading_note.delete(self.db).await.map(|_| ())
     }
 
-    async fn link_tags(
-        &self,
-        reading_note: &Model,
-        tag_ids: impl IntoIterator<Item = Uuid>,
-    ) -> Result<(), DbErr> {
-        let tag_links = tag_ids
-            .into_iter()
-            .map(|tag_id| reading_notes_tags::ActiveModel {
-                reading_note_id: Set(reading_note.id),
-                tag_id: Set(tag_id),
-            });
+    async fn link_tags(&self, reading_note: &Model, tag_ids: impl IntoIterator<Item = Uuid>) -> Result<(), DbErr> {
+        let tag_links = tag_ids.into_iter().map(|tag_id| reading_notes_tags::ActiveModel {
+            reading_note_id: Set(reading_note.id),
+            tag_id: Set(tag_id),
+        });
         reading_notes_tags::Entity::insert_many(tag_links)
             .on_empty_do_nothing()
             .exec(self.db)
@@ -333,9 +305,7 @@ impl ReadingNoteMutation for ReadingNoteAdapter<'_> {
             .map(|_| ())
             .map_err(|e| match &e {
                 DbErr::Exec(SqlxError(Database(err))) => match err.constraint() {
-                    Some("fk-book_excerpts_tags-tag_id") => {
-                        DbErr::Custom(CustomDbErr::NotFound.to_string())
-                    }
+                    Some("fk-book_excerpts_tags-tag_id") => DbErr::Custom(CustomDbErr::NotFound.to_string()),
                     _ => e,
                 },
                 _ => e,

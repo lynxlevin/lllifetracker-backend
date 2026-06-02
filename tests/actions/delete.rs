@@ -9,7 +9,7 @@ use entities::{action, tag};
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let (action, tag) = factory::action(user.id).insert_with_tag(&db).await?;
 
@@ -32,7 +32,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let action = factory::action(user.id).insert(&db).await?;
 

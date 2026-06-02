@@ -16,12 +16,7 @@ pub struct Migration;
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .alter_table(
-                Table::alter()
-                    .table(Diary::Table)
-                    .drop_column(Diary::Score)
-                    .to_owned(),
-            )
+            .alter_table(Table::alter().table(Diary::Table).drop_column(Diary::Score).to_owned())
             .await?;
         manager
             .drop_index(Index::drop().name(UNIQUE_INDEX_NAME).to_owned())

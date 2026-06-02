@@ -8,9 +8,7 @@ use crate::utils::Connections;
 
 use super::super::utils::init_app;
 use common::factory::{self, ActionFactory, ActionGoalFactory};
-use entities::{
-    action_goal, custom_methods::user::UserTimezoneTrait, sea_orm_active_enums::ActionTrackType,
-};
+use entities::{action_goal, custom_methods::user::UserTimezoneTrait, sea_orm_active_enums::ActionTrackType};
 
 #[actix_web::test]
 async fn happy_path_time_span() -> Result<(), DbErr> {
@@ -25,11 +23,7 @@ async fn happy_path_time_span() -> Result<(), DbErr> {
 
     let req = test::TestRequest::post()
         .uri("/api/action_goals")
-        .set_json(ActionGoalSetNewRequest {
-            action_id: action.id,
-            duration_seconds,
-            count: None,
-        })
+        .set_json(ActionGoalSetNewRequest { action_id: action.id, duration_seconds, count: None })
         .to_request();
     req.extensions_mut().insert(user.clone());
 
@@ -41,10 +35,7 @@ async fn happy_path_time_span() -> Result<(), DbErr> {
     assert_eq!(res.duration_seconds, duration_seconds);
     assert_eq!(res.count, None);
 
-    let action_goal_in_db = action_goal::Entity::find_by_id(res.id)
-        .one(&db)
-        .await?
-        .unwrap();
+    let action_goal_in_db = action_goal::Entity::find_by_id(res.id).one(&db).await?.unwrap();
     assert_eq!(action_goal_in_db.user_id, user.id);
     assert_eq!(ActionGoalVisible::from(action_goal_in_db), res);
 
@@ -67,11 +58,7 @@ async fn happy_path_count() -> Result<(), DbErr> {
 
     let req = test::TestRequest::post()
         .uri("/api/action_goals")
-        .set_json(ActionGoalSetNewRequest {
-            action_id: action.id,
-            duration_seconds: None,
-            count,
-        })
+        .set_json(ActionGoalSetNewRequest { action_id: action.id, duration_seconds: None, count })
         .to_request();
     req.extensions_mut().insert(user.clone());
 
@@ -83,10 +70,7 @@ async fn happy_path_count() -> Result<(), DbErr> {
     assert_eq!(res.duration_seconds, None);
     assert_eq!(res.count, count);
 
-    let action_goal_in_db = action_goal::Entity::find_by_id(res.id)
-        .one(&db)
-        .await?
-        .unwrap();
+    let action_goal_in_db = action_goal::Entity::find_by_id(res.id).one(&db).await?.unwrap();
     assert_eq!(action_goal_in_db.user_id, user.id);
     assert_eq!(ActionGoalVisible::from(action_goal_in_db), res);
 
@@ -107,26 +91,19 @@ async fn invalidate_existing_action_goal() -> Result<(), DbErr> {
         .insert(&db)
         .await?;
     let other_action = factory::action(user.id).insert(&db).await?;
-    let existing_other_action_goal = factory::action_goal(user.id, other_action.id)
-        .insert(&db)
-        .await?;
+    let existing_other_action_goal = factory::action_goal(user.id, other_action.id).insert(&db).await?;
 
     let req = test::TestRequest::post()
         .uri("/api/action_goals")
-        .set_json(ActionGoalSetNewRequest {
-            action_id: action.id,
-            duration_seconds: Some(3600),
-            count: None,
-        })
+        .set_json(ActionGoalSetNewRequest { action_id: action.id, duration_seconds: Some(3600), count: None })
         .to_request();
     req.extensions_mut().insert(user.clone());
 
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::CREATED);
 
-    let user_yesterday = (Utc::now().with_timezone(&FixedOffset::east_opt(9 * 3600).unwrap())
-        - Duration::days(1))
-    .date_naive();
+    let user_yesterday =
+        (Utc::now().with_timezone(&FixedOffset::east_opt(9 * 3600).unwrap()) - Duration::days(1)).date_naive();
 
     let existing_goal_in_db = action_goal::Entity::find_by_id(existing_goal.id)
         .one(&db)
@@ -134,11 +111,10 @@ async fn invalidate_existing_action_goal() -> Result<(), DbErr> {
         .unwrap();
     assert_eq!(Some(user_yesterday), existing_goal_in_db.to_date);
 
-    let existing_other_action_goal_in_db =
-        action_goal::Entity::find_by_id(existing_other_action_goal.id)
-            .one(&db)
-            .await?
-            .unwrap();
+    let existing_other_action_goal_in_db = action_goal::Entity::find_by_id(existing_other_action_goal.id)
+        .one(&db)
+        .await?
+        .unwrap();
     assert_eq!(None, existing_other_action_goal_in_db.to_date);
 
     Ok(())
@@ -156,11 +132,7 @@ async fn duplicate_from_date() -> Result<(), DbErr> {
 
     let req = test::TestRequest::post()
         .uri("/api/action_goals")
-        .set_json(ActionGoalSetNewRequest {
-            action_id: action.id,
-            duration_seconds: Some(3600),
-            count: None,
-        })
+        .set_json(ActionGoalSetNewRequest { action_id: action.id, duration_seconds: Some(3600), count: None })
         .to_request();
     req.extensions_mut().insert(user.clone());
 
@@ -186,11 +158,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 
     let req = test::TestRequest::post()
         .uri("/api/action_goals")
-        .set_json(ActionGoalSetNewRequest {
-            action_id: Uuid::now_v7(),
-            duration_seconds: None,
-            count: None,
-        })
+        .set_json(ActionGoalSetNewRequest { action_id: Uuid::now_v7(), duration_seconds: None, count: None })
         .to_request();
 
     let res = test::call_service(&app, req).await;
@@ -211,11 +179,7 @@ mod not_found {
 
         let req = test::TestRequest::post()
             .uri("/api/action_goals")
-            .set_json(ActionGoalSetNewRequest {
-                action_id: other_action.id,
-                duration_seconds: None,
-                count: None,
-            })
+            .set_json(ActionGoalSetNewRequest { action_id: other_action.id, duration_seconds: None, count: None })
             .to_request();
         req.extensions_mut().insert(user.clone());
 
@@ -237,11 +201,7 @@ mod bad_request {
 
         let req = test::TestRequest::post()
             .uri("/api/action_goals")
-            .set_json(ActionGoalSetNewRequest {
-                action_id: action.id,
-                duration_seconds: None,
-                count: None,
-            })
+            .set_json(ActionGoalSetNewRequest { action_id: action.id, duration_seconds: None, count: None })
             .to_request();
         req.extensions_mut().insert(user.clone());
 
@@ -259,11 +219,7 @@ mod bad_request {
 
         let req = test::TestRequest::post()
             .uri("/api/action_goals")
-            .set_json(ActionGoalSetNewRequest {
-                action_id: action.id,
-                duration_seconds: None,
-                count: Some(5),
-            })
+            .set_json(ActionGoalSetNewRequest { action_id: action.id, duration_seconds: None, count: Some(5) })
             .to_request();
         req.extensions_mut().insert(user.clone());
 
@@ -284,11 +240,7 @@ mod bad_request {
 
         let req = test::TestRequest::post()
             .uri("/api/action_goals")
-            .set_json(ActionGoalSetNewRequest {
-                action_id: action.id,
-                duration_seconds: None,
-                count: None,
-            })
+            .set_json(ActionGoalSetNewRequest { action_id: action.id, duration_seconds: None, count: None })
             .to_request();
         req.extensions_mut().insert(user.clone());
 
@@ -309,11 +261,7 @@ mod bad_request {
 
         let req = test::TestRequest::post()
             .uri("/api/action_goals")
-            .set_json(ActionGoalSetNewRequest {
-                action_id: action.id,
-                duration_seconds: Some(3600),
-                count: None,
-            })
+            .set_json(ActionGoalSetNewRequest { action_id: action.id, duration_seconds: Some(3600), count: None })
             .to_request();
         req.extensions_mut().insert(user.clone());
 

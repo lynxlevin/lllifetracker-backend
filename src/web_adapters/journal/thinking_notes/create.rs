@@ -22,13 +22,7 @@ pub async fn create_thinking_note_endpoint(
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            match create_thinking_note(
-                user.into_inner(),
-                req.into_inner(),
-                ThinkingNoteAdapter::init(&db),
-            )
-            .await
-            {
+            match create_thinking_note(user.into_inner(), req.into_inner(), ThinkingNoteAdapter::init(&db)).await {
                 Ok(res) => HttpResponse::Created().json(res),
                 Err(e) => match &e {
                     UseCaseError::NotFound(message) => response_404(message),

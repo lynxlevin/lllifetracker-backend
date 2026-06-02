@@ -25,9 +25,7 @@ async fn test_order() -> Result<(), DbErr> {
         .insert(&db)
         .await?;
 
-    let req = test::TestRequest::get()
-        .uri("/api/reading_notes/titles")
-        .to_request();
+    let req = test::TestRequest::get().uri("/api/reading_notes/titles").to_request();
     req.extensions_mut().insert(user.clone());
 
     let resp = test::call_service(&app, req).await;
@@ -49,9 +47,7 @@ async fn test_order() -> Result<(), DbErr> {
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let Connections { app, .. } = init_app().await?;
 
-    let req = test::TestRequest::get()
-        .uri("/api/reading_notes/titles")
-        .to_request();
+    let req = test::TestRequest::get().uri("/api/reading_notes/titles").to_request();
 
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), http::StatusCode::UNAUTHORIZED);

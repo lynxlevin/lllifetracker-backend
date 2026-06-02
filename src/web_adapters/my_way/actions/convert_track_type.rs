@@ -7,9 +7,7 @@ use db_adapters::{action_adapter::ActionAdapter, action_goal_adapter::ActionGoal
 use entities::user as user_entity;
 use sea_orm::DbConn;
 use use_cases::{
-    my_way::actions::{
-        convert_track_type::convert_action_track_type, types::ActionTrackTypeConversionRequest,
-    },
+    my_way::actions::{convert_track_type::convert_action_track_type, types::ActionTrackTypeConversionRequest},
     UseCaseError,
 };
 

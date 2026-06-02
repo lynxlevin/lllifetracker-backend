@@ -5,10 +5,9 @@ use actix_session::{
 use actix_web::{cookie, web::scope, Scope};
 use common::settings::types::Settings;
 use web_adapters::{
-    action_goal_routes, action_routes, action_track_routes, ambition_routes, auth_routes,
-    diary_routes, direction_category_routes, direction_routes, journal_routes,
-    notification_rule_routes, reading_note_routes, tag_routes, thinking_note_routes,
-    web_push_subscription_routes,
+    action_goal_routes, action_routes, action_track_routes, ambition_routes, auth_routes, diary_routes,
+    direction_category_routes, direction_routes, journal_routes, notification_rule_routes, reading_note_routes,
+    tag_routes, thinking_note_routes, web_push_subscription_routes,
 };
 
 pub use web_adapters::auth_middleware;
@@ -30,17 +29,19 @@ pub fn setup_session_middleware_builder(
 ) -> SessionMiddlewareBuilder<RedisSessionStore> {
     if settings.debug {
         builder
-            .session_lifecycle(PersistentSession::default().session_ttl(
-                cookie::time::Duration::days(settings.application.session_lifetime_days),
-            ))
+            .session_lifecycle(
+                PersistentSession::default()
+                    .session_ttl(cookie::time::Duration::days(settings.application.session_lifetime_days)),
+            )
             .cookie_name("sessionId".to_string())
             .cookie_same_site(cookie::SameSite::None)
             .cookie_secure(false)
     } else {
         builder
-            .session_lifecycle(PersistentSession::default().session_ttl(
-                cookie::time::Duration::days(settings.application.session_lifetime_days),
-            ))
+            .session_lifecycle(
+                PersistentSession::default()
+                    .session_ttl(cookie::time::Duration::days(settings.application.session_lifetime_days)),
+            )
             .cookie_name("sessionId".to_string())
     }
 }

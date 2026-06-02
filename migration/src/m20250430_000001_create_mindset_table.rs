@@ -2,12 +2,10 @@ use sea_orm_migration::{
     prelude::{
         async_trait,
         sea_orm::{self, DeriveIden},
-        Alias, DbErr, DeriveMigrationName, Expr, ForeignKey, ForeignKeyAction, MigrationTrait,
-        SchemaManager, Table, TableForeignKey,
+        Alias, DbErr, DeriveMigrationName, Expr, ForeignKey, ForeignKeyAction, MigrationTrait, SchemaManager,
+        Table, TableForeignKey,
     },
-    schema::{
-        boolean, integer_null, string, string_null, timestamp_with_time_zone, uuid, uuid_null,
-    },
+    schema::{boolean, integer_null, string, string_null, timestamp_with_time_zone, uuid, uuid_null},
 };
 
 const TAGS_MINDSET_FOREIGN_KEY_NAME: &str = "fk-tags-mindset_id";
@@ -29,14 +27,8 @@ impl MigrationTrait for Migration {
                     .col(string_null(Mindset::Description))
                     .col(boolean(Mindset::Archived).default(false))
                     .col(integer_null(Mindset::Ordering))
-                    .col(
-                        timestamp_with_time_zone(Mindset::CreatedAt)
-                            .default(Expr::current_timestamp()),
-                    )
-                    .col(
-                        timestamp_with_time_zone(Mindset::UpdatedAt)
-                            .default(Expr::current_timestamp()),
-                    )
+                    .col(timestamp_with_time_zone(Mindset::CreatedAt).default(Expr::current_timestamp()))
+                    .col(timestamp_with_time_zone(Mindset::UpdatedAt).default(Expr::current_timestamp()))
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk-mindsets-user_id")

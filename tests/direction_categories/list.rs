@@ -9,7 +9,7 @@ use common::factory::{self, *};
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
-    let Connections { app, db, ..} = init_app().await?;
+    let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
     let category_0 = factory::direction_category(user.id)
         .ordering(Some(2))
@@ -19,14 +19,9 @@ async fn happy_path() -> Result<(), DbErr> {
         .ordering(Some(1))
         .insert(&db)
         .await?;
-    let category_2 = factory::direction_category(user.id)
-        .ordering(None)
-        .insert(&db)
-        .await?;
+    let category_2 = factory::direction_category(user.id).ordering(None).insert(&db).await?;
 
-    let req = test::TestRequest::get()
-        .uri("/api/direction_categories")
-        .to_request();
+    let req = test::TestRequest::get().uri("/api/direction_categories").to_request();
     req.extensions_mut().insert(user.clone());
 
     let resp = test::call_service(&app, req).await;
@@ -46,11 +41,9 @@ async fn happy_path() -> Result<(), DbErr> {
 
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
-    let Connections { app, ..} = init_app().await?;
+    let Connections { app, .. } = init_app().await?;
 
-    let req = test::TestRequest::get()
-        .uri("/api/direction_categories")
-        .to_request();
+    let req = test::TestRequest::get().uri("/api/direction_categories").to_request();
 
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), http::StatusCode::UNAUTHORIZED);
