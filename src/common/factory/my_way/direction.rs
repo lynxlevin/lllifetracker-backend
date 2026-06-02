@@ -74,21 +74,21 @@ impl DirectionFactory for ActiveModel {
 }
 
 #[derive(Default)]
-pub struct DirectionParam {
-    pub name: String,
+pub struct DirectionParam<'a> {
+    pub name: &'a str,
     pub archived: bool,
     pub ordering: Option<i32>,
     pub category_id: Option<Uuid>,
 }
 
 pub async fn create_directions<'a>(
-    params: Vec<DirectionParam>,
+    params: Vec<DirectionParam<'a>>,
     user: &'a user::Model,
     db: &'a DbConn,
 ) -> Result<HashMap<String, Model>, DbErr> {
     let directions = params.iter().map(|param| {
         direction(user.id)
-            .name(param.name.clone())
+            .name(param.name.to_string())
             .archived(param.archived)
             .ordering(param.ordering)
             .category_id(param.category_id)

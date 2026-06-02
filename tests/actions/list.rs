@@ -15,19 +15,14 @@ async fn happy_path() -> Result<(), DbErr> {
     let user = factory::user().insert(&db).await?;
     let mut actions = create_actions(
         vec![
-            ActionParam { name: "action_0".to_string(), track_type: None, archived: false, ..Default::default() },
+            ActionParam { name: "action_0", track_type: None, archived: false, ..Default::default() },
             ActionParam {
-                name: "action_1".to_string(),
+                name: "action_1",
                 track_type: Some(ActionTrackType::Count),
                 archived: false,
                 ..Default::default()
             },
-            ActionParam {
-                name: "archived_action".to_string(),
-                track_type: None,
-                archived: true,
-                ..Default::default()
-            },
+            ActionParam { name: "archived_action", track_type: None, archived: true, ..Default::default() },
         ],
         &user,
         &db,

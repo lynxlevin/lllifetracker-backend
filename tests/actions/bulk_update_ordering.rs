@@ -14,9 +14,9 @@ async fn happy_path() -> Result<(), DbErr> {
     let user = factory::user().insert(&db).await?;
     let actions = create_actions(
         vec![
-            ActionParam { name: "action_0".to_string(), ..Default::default() },
-            ActionParam { name: "action_1".to_string(), ..Default::default() },
-            ActionParam { name: "action_2".to_string(), ..Default::default() },
+            ActionParam { name: "action_0", ..Default::default() },
+            ActionParam { name: "action_1", ..Default::default() },
+            ActionParam { name: "action_2", ..Default::default() },
         ],
         &user,
         &db,

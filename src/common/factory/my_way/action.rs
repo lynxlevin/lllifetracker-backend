@@ -76,21 +76,21 @@ impl ActionFactory for ActiveModel {
 }
 
 #[derive(Default)]
-pub struct ActionParam {
-    pub name: String,
+pub struct ActionParam<'a> {
+    pub name: &'a str,
     pub archived: bool,
     pub ordering: Option<i32>,
     pub track_type: Option<ActionTrackType>,
 }
 
 pub async fn create_actions<'a>(
-    params: Vec<ActionParam>,
+    params: Vec<ActionParam<'a>>,
     user: &'a user::Model,
     db: &'a DbConn,
 ) -> Result<HashMap<String, Model>, DbErr> {
     let actions = params.iter().map(|param| {
         action(user.id)
-            .name(param.name.clone())
+            .name(param.name.to_string())
             .archived(param.archived)
             .ordering(param.ordering)
             .track_type(param.track_type.clone().or(Some(ActionTrackType::TimeSpan)).unwrap())

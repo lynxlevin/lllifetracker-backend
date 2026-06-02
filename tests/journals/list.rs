@@ -68,9 +68,19 @@ async fn test_order() -> Result<(), DbErr> {
 async fn test_tag_query() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
-    let plain_tag_0 = factory::tag(user.id).insert(&db).await?;
-    let plain_tag_1 = factory::tag(user.id).insert(&db).await?;
-    let plain_tag_2 = factory::tag(user.id).insert(&db).await?;
+    let mut tags = create_tags(
+        vec![
+            TagParam { name: "plain_tag_0", ..Default::default() },
+            TagParam { name: "plain_tag_1", ..Default::default() },
+            TagParam { name: "plain_tag_2", ..Default::default() },
+        ],
+        &user,
+        &db,
+    )
+    .await?;
+    let plain_tag_0 = tags.remove("plain_tag_0").unwrap();
+    let plain_tag_1 = tags.remove("plain_tag_1").unwrap();
+    let plain_tag_2 = tags.remove("plain_tag_2").unwrap();
 
     let tagged_thinking_note = factory::thinking_note(user.id).insert(&db).await?;
     let tagged_diary = factory::diary(user.id).insert(&db).await?;

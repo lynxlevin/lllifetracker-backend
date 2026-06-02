@@ -57,15 +57,15 @@ impl ActionTrackFactory for ActiveModel {
 }
 
 #[derive(Default)]
-pub struct ActionTrackParam {
-    pub name: String,
+pub struct ActionTrackParam<'a> {
+    pub name: &'a str,
     pub action_id: Uuid,
     pub started_at: DateTime<FixedOffset>,
     pub duration: Option<i64>,
 }
 
 pub async fn create_action_tracks<'a>(
-    params: Vec<ActionTrackParam>,
+    params: Vec<ActionTrackParam<'a>>,
     user: &'a user::Model,
     db: &'a DbConn,
 ) -> Result<HashMap<String, Model>, DbErr> {

@@ -14,9 +14,9 @@ async fn happy_path() -> Result<(), DbErr> {
     let user = factory::user().insert(&db).await?;
     let ambitions = create_ambitions(
         vec![
-            AmbitionParam { name: "ambition_0".to_string(), ..Default::default() },
-            AmbitionParam { name: "ambition_1".to_string(), ..Default::default() },
-            AmbitionParam { name: "ambition_2".to_string(), ..Default::default() },
+            AmbitionParam { name: "ambition_0", ..Default::default() },
+            AmbitionParam { name: "ambition_1", ..Default::default() },
+            AmbitionParam { name: "ambition_2", ..Default::default() },
         ],
         &user,
         &db,

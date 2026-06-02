@@ -67,20 +67,20 @@ impl AmbitionFactory for ActiveModel {
 }
 
 #[derive(Default)]
-pub struct AmbitionParam {
-    pub name: String,
+pub struct AmbitionParam<'a> {
+    pub name: &'a str,
     pub archived: bool,
     pub ordering: Option<i32>,
 }
 
 pub async fn create_ambitions<'a>(
-    params: Vec<AmbitionParam>,
+    params: Vec<AmbitionParam<'a>>,
     user: &'a user::Model,
     db: &'a DbConn,
 ) -> Result<HashMap<String, Model>, DbErr> {
     let ambitions = params.iter().map(|param| {
         ambition(user.id)
-            .name(param.name.clone())
+            .name(param.name.to_string())
             .archived(param.archived)
             .ordering(param.ordering)
     });

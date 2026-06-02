@@ -13,9 +13,9 @@ async fn happy_path() -> Result<(), DbErr> {
     let user = factory::user().insert(&db).await?;
     let directions = create_directions(
         vec![
-            DirectionParam { name: "direction_0".to_string(), archived: false, ..Default::default() },
-            DirectionParam { name: "direction_1".to_string(), archived: false, ..Default::default() },
-            DirectionParam { name: "archived_direction".to_string(), archived: true, ..Default::default() },
+            DirectionParam { name: "direction_0", archived: false, ..Default::default() },
+            DirectionParam { name: "direction_1", archived: false, ..Default::default() },
+            DirectionParam { name: "archived_direction", archived: true, ..Default::default() },
         ],
         &user,
         &db,
@@ -74,25 +74,25 @@ async fn ordering_with_category() -> Result<(), DbErr> {
     let directions = create_directions(
         vec![
             DirectionParam {
-                name: "direction_0".to_string(),
+                name: "direction_0",
                 ordering: Some(1),
                 category_id: Some(category_0.id),
                 ..Default::default()
             },
             DirectionParam {
-                name: "direction_1".to_string(),
+                name: "direction_1",
                 ordering: Some(3),
                 category_id: Some(category_1.id),
                 ..Default::default()
             },
             DirectionParam {
-                name: "direction_2".to_string(),
+                name: "direction_2",
                 ordering: Some(2),
                 category_id: Some(category_0.id),
                 ..Default::default()
             },
             DirectionParam {
-                name: "new_direction".to_string(),
+                name: "new_direction",
                 ordering: None,
                 category_id: Some(category_0.id),
                 ..Default::default()

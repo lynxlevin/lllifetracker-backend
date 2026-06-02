@@ -14,9 +14,9 @@ async fn happy_path() -> Result<(), DbErr> {
     let user = factory::user().insert(&db).await?;
     let directions = create_directions(
         vec![
-            DirectionParam { name: "direction_0".to_string(), ..Default::default() },
-            DirectionParam { name: "direction_1".to_string(), ..Default::default() },
-            DirectionParam { name: "direction_2".to_string(), ..Default::default() },
+            DirectionParam { name: "direction_0", ..Default::default() },
+            DirectionParam { name: "direction_1", ..Default::default() },
+            DirectionParam { name: "direction_2", ..Default::default() },
         ],
         &user,
         &db,

@@ -16,9 +16,9 @@ async fn happy_path() -> Result<(), DbErr> {
     let user = factory::user().insert(&db).await?;
     let actions = create_actions(
         vec![
-            ActionParam { name: "action_0".to_string(), ..Default::default() },
-            ActionParam { name: "action_1".to_string(), ..Default::default() },
-            ActionParam { name: "_action_2".to_string(), ..Default::default() },
+            ActionParam { name: "action_0", ..Default::default() },
+            ActionParam { name: "action_1", ..Default::default() },
+            ActionParam { name: "_action_2", ..Default::default() },
         ],
         &user,
         &db,
@@ -30,31 +30,31 @@ async fn happy_path() -> Result<(), DbErr> {
     let action_tracks = create_action_tracks(
         vec![
             ActionTrackParam {
-                name: "_action_0_track_0".to_string(),
+                name: "_action_0_track_0",
                 action_id: action_0.id,
                 started_at: target.checked_sub_days(Days::new(1)).unwrap(),
                 duration: Some(120),
             },
             ActionTrackParam {
-                name: "action_0_track_1".to_string(),
+                name: "action_0_track_1",
                 action_id: action_0.id,
                 started_at: target,
                 duration: Some(180),
             },
             ActionTrackParam {
-                name: "action_0_track_2".to_string(),
+                name: "action_0_track_2",
                 action_id: action_0.id,
                 started_at: target.checked_add_days(Days::new(27)).unwrap(),
                 duration: Some(300),
             },
             ActionTrackParam {
-                name: "_action_0_track_3".to_string(),
+                name: "_action_0_track_3",
                 action_id: action_0.id,
                 started_at: target.checked_add_days(Days::new(28)).unwrap(),
                 duration: Some(550),
             },
             ActionTrackParam {
-                name: "action_1_track_0".to_string(),
+                name: "action_1_track_0",
                 action_id: action_1.id,
                 started_at: target,
                 duration: Some(350),

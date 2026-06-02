@@ -6,59 +6,118 @@ use use_cases::tags::types::TagVisible;
 use crate::utils::Connections;
 
 use super::super::utils::init_app;
-use common::factory::{self, *};
+use common::factory::{
+    self, create_actions, create_ambitions, create_directions, create_tags, ActionParam, AmbitionParam,
+    DirectionParam, TagParam,
+};
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db).await?;
-    let plain_tag = factory::tag(user.id).insert(&db).await?;
-    // MYMEMO: tagのfactory整備から必要
-    let (ambition_null_ordering, ambition_null_ordering_tag) = factory::ambition(user.id)
-        .name("ambition_null_ordering".to_string())
-        .insert_with_tag(&db)
-        .await?;
-    let (direction_null_ordering, direction_null_ordering_tag) = factory::direction(user.id)
-        .name("direction_null_ordering".to_string())
-        .insert_with_tag(&db)
-        .await?;
-    let (action_null_ordering, action_null_ordering_tag) = factory::action(user.id)
-        .name("action_null_ordering".to_string())
-        .insert_with_tag(&db)
-        .await?;
-    let (ambition, ambition_tag) = factory::ambition(user.id)
-        .ordering(Some(2))
-        .name("ambition".to_string())
-        .insert_with_tag(&db)
-        .await?;
-    let (direction, direction_tag) = factory::direction(user.id)
-        .ordering(Some(2))
-        .name("direction".to_string())
-        .insert_with_tag(&db)
-        .await?;
-    let (action, action_tag) = factory::action(user.id)
-        .ordering(Some(2))
-        .name("action".to_string())
-        .insert_with_tag(&db)
-        .await?;
-    let (archived_ambition, archived_ambition_tag) = factory::ambition(user.id)
-        .archived(true)
-        .name("archived_ambition".to_string())
-        .ordering(Some(1))
-        .insert_with_tag(&db)
-        .await?;
-    let (archived_direction, archived_direction_tag) = factory::direction(user.id)
-        .archived(true)
-        .name("archived_direction".to_string())
-        .ordering(Some(1))
-        .insert_with_tag(&db)
-        .await?;
-    let (archived_action, archived_action_tag) = factory::action(user.id)
-        .archived(true)
-        .name("archived_action".to_string())
-        .ordering(Some(1))
-        .insert_with_tag(&db)
-        .await?;
+
+    let ambitions = create_ambitions(
+        vec![
+            AmbitionParam {
+                name: "ambition_null_ordering",
+                ordering: None,
+                archived: false,
+                ..Default::default()
+            },
+            AmbitionParam { name: "ambition", ordering: Some(2), archived: false, ..Default::default() },
+            AmbitionParam { name: "archived_ambition", ordering: Some(1), archived: true, ..Default::default() },
+        ],
+        &user,
+        &db,
+    )
+    .await?;
+    let directions = create_directions(
+        vec![
+            DirectionParam {
+                name: "direction_null_ordering",
+                ordering: None,
+                archived: false,
+                ..Default::default()
+            },
+            DirectionParam { name: "direction", ordering: Some(2), archived: false, ..Default::default() },
+            DirectionParam { name: "archived_direction", ordering: Some(1), archived: true, ..Default::default() },
+        ],
+        &user,
+        &db,
+    )
+    .await?;
+    let actions = create_actions(
+        vec![
+            ActionParam { name: "action_null_ordering", ordering: None, archived: false, ..Default::default() },
+            ActionParam { name: "action", ordering: Some(2), archived: false, ..Default::default() },
+            ActionParam { name: "archived_action", ordering: Some(1), archived: true, ..Default::default() },
+        ],
+        &user,
+        &db,
+    )
+    .await?;
+    let tags = create_tags(
+        vec![
+            TagParam { name: "plain_tag", r#type: TagType::Plain, ..Default::default() },
+            TagParam {
+                name: "ambition_null_ordering_tag",
+                r#type: TagType::Ambition,
+                ambition: Some(ambitions.get("ambition_null_ordering").unwrap()),
+                ..Default::default()
+            },
+            TagParam {
+                name: "ambition_tag",
+                r#type: TagType::Ambition,
+                ambition: Some(ambitions.get("ambition").unwrap()),
+                ..Default::default()
+            },
+            TagParam {
+                name: "archived_ambition_tag",
+                r#type: TagType::Ambition,
+                ambition: Some(ambitions.get("archived_ambition").unwrap()),
+                ..Default::default()
+            },
+            TagParam {
+                name: "direction_null_ordering_tag",
+                r#type: TagType::Direction,
+                direction: Some(directions.get("direction_null_ordering").unwrap()),
+                ..Default::default()
+            },
+            TagParam {
+                name: "direction_tag",
+                r#type: TagType::Direction,
+                direction: Some(directions.get("direction").unwrap()),
+                ..Default::default()
+            },
+            TagParam {
+                name: "archived_direction_tag",
+                r#type: TagType::Direction,
+                direction: Some(directions.get("archived_direction").unwrap()),
+                ..Default::default()
+            },
+            TagParam {
+                name: "action_null_ordering_tag",
+                r#type: TagType::Action,
+                action: Some(actions.get("action_null_ordering").unwrap()),
+                ..Default::default()
+            },
+            TagParam {
+                name: "action_tag",
+                r#type: TagType::Action,
+                action: Some(actions.get("action").unwrap()),
+                ..Default::default()
+            },
+            TagParam {
+                name: "archived_action_tag",
+                r#type: TagType::Action,
+                action: Some(actions.get("archived_action").unwrap()),
+                ..Default::default()
+            },
+        ],
+        &user,
+        &db,
+    )
+    .await?;
 
     let req = test::TestRequest::get().uri("/api/tags").to_request();
     req.extensions_mut().insert(user.clone());
@@ -68,66 +127,46 @@ async fn happy_path() -> Result<(), DbErr> {
 
     let body: Vec<TagVisible> = test::read_body_json(resp).await;
     let expected = vec![
-        TagVisible {
-            id: archived_ambition_tag.id,
-            name: archived_ambition.name.clone(),
-            r#type: TagType::Ambition,
-            created_at: archived_ambition_tag.created_at,
-        },
-        TagVisible {
-            id: ambition_tag.id,
-            name: ambition.name.clone(),
-            r#type: TagType::Ambition,
-            created_at: ambition_tag.created_at,
-        },
-        TagVisible {
-            id: ambition_null_ordering_tag.id,
-            name: ambition_null_ordering.name.clone(),
-            r#type: TagType::Ambition,
-            created_at: ambition_null_ordering_tag.created_at,
-        },
-        TagVisible {
-            id: direction_null_ordering_tag.id,
-            name: direction_null_ordering.name.clone(),
-            r#type: TagType::Direction,
-            created_at: direction_null_ordering_tag.created_at,
-        },
-        TagVisible {
-            id: archived_direction_tag.id,
-            name: archived_direction.name.clone(),
-            r#type: TagType::Direction,
-            created_at: archived_direction_tag.created_at,
-        },
-        TagVisible {
-            id: direction_tag.id,
-            name: direction.name.clone(),
-            r#type: TagType::Direction,
-            created_at: direction_tag.created_at,
-        },
-        TagVisible {
-            id: archived_action_tag.id,
-            name: archived_action.name.clone(),
-            r#type: TagType::Action,
-            created_at: archived_action_tag.created_at,
-        },
-        TagVisible {
-            id: action_tag.id,
-            name: action.name.clone(),
-            r#type: TagType::Action,
-            created_at: action_tag.created_at,
-        },
-        TagVisible {
-            id: action_null_ordering_tag.id,
-            name: action_null_ordering.name.clone(),
-            r#type: TagType::Action,
-            created_at: action_null_ordering_tag.created_at,
-        },
-        TagVisible {
-            id: plain_tag.id,
-            name: plain_tag.name.unwrap(),
-            r#type: TagType::Plain,
-            created_at: plain_tag.created_at,
-        },
+        TagVisible::from((
+            tags.get("archived_ambition_tag").unwrap(),
+            ambitions.get("archived_ambition").unwrap().name.clone(),
+        )),
+        TagVisible::from((
+            tags.get("ambition_tag").unwrap(),
+            ambitions.get("ambition").unwrap().name.clone(),
+        )),
+        TagVisible::from((
+            tags.get("ambition_null_ordering_tag").unwrap(),
+            ambitions.get("ambition_null_ordering").unwrap().name.clone(),
+        )),
+        TagVisible::from((
+            tags.get("direction_null_ordering_tag").unwrap(),
+            directions.get("direction_null_ordering").unwrap().name.clone(),
+        )),
+        TagVisible::from((
+            tags.get("archived_direction_tag").unwrap(),
+            directions.get("archived_direction").unwrap().name.clone(),
+        )),
+        TagVisible::from((
+            tags.get("direction_tag").unwrap(),
+            directions.get("direction").unwrap().name.clone(),
+        )),
+        TagVisible::from((
+            tags.get("archived_action_tag").unwrap(),
+            actions.get("archived_action").unwrap().name.clone(),
+        )),
+        TagVisible::from((
+            tags.get("action_tag").unwrap(),
+            actions.get("action").unwrap().name.clone(),
+        )),
+        TagVisible::from((
+            tags.get("action_null_ordering_tag").unwrap(),
+            actions.get("action_null_ordering").unwrap().name.clone(),
+        )),
+        TagVisible::from((
+            tags.get("plain_tag").unwrap(),
+            tags.get("plain_tag").unwrap().name.clone().unwrap(),
+        )),
     ];
 
     assert_eq!(body.len(), expected.len());
