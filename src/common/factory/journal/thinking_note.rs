@@ -19,6 +19,8 @@ pub fn thinking_note(user_id: Uuid) -> thinking_note::ActiveModel {
 
 pub trait ThinkingNoteFactory {
     fn question(self, question: Option<String>) -> thinking_note::ActiveModel;
+    fn thought(self, thought: Option<String>) -> thinking_note::ActiveModel;
+    fn answer(self, answer: Option<String>) -> thinking_note::ActiveModel;
     fn resolved_at(self, resolved_at: Option<DateTime<FixedOffset>>) -> thinking_note::ActiveModel;
     fn updated_at(self, updated_at: DateTime<FixedOffset>) -> thinking_note::ActiveModel;
 }
@@ -26,6 +28,16 @@ pub trait ThinkingNoteFactory {
 impl ThinkingNoteFactory for thinking_note::ActiveModel {
     fn question(mut self, question: Option<String>) -> thinking_note::ActiveModel {
         self.question = Set(question);
+        self
+    }
+
+    fn thought(mut self, thought: Option<String>) -> thinking_note::ActiveModel {
+        self.thought = Set(thought);
+        self
+    }
+
+    fn answer(mut self, answer: Option<String>) -> thinking_note::ActiveModel {
+        self.answer = Set(answer);
         self
     }
 
