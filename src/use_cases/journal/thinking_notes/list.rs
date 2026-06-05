@@ -50,16 +50,7 @@ pub async fn list_thinking_notes<'a>(
                 Some(_) => vec![Into::<TagVisible>::into(&thinking_note)],
                 None => vec![],
             };
-            let res_thinking_note = ThinkingNoteVisibleWithTags {
-                id: thinking_note.id,
-                question: thinking_note.question,
-                thought: thinking_note.thought,
-                answer: thinking_note.answer,
-                resolved_at: thinking_note.resolved_at,
-                created_at: thinking_note.created_at,
-                updated_at: thinking_note.updated_at,
-                tags,
-            };
+            let res_thinking_note = ThinkingNoteVisibleWithTags::from((thinking_note, tags));
             res.push(res_thinking_note);
         } else {
             if let Some(_) = thinking_note.tag_id {

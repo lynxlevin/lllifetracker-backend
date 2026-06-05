@@ -41,7 +41,7 @@ pub async fn list_diaries<'a>(
                 Some(_) => vec![Into::<TagVisible>::into(&diary)],
                 None => vec![],
             };
-            let res_diary = DiaryVisibleWithTags { id: diary.id, text: diary.text, date: diary.date, tags };
+            let res_diary = DiaryVisibleWithTags::from((diary, tags));
             res.push(res_diary);
         } else {
             if let Some(_) = diary.tag_id {
