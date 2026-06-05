@@ -82,11 +82,9 @@ impl ReadingNoteFilter for ReadingNoteAdapter<'_> {
                     .add(Column::Text.contains(&text)),
             );
         }
-        let mut tag_cond = Condition::any();
-        for tag_id in tag_ids {
-            tag_cond = tag_cond.add(tag::Column::Id.eq(tag_id));
-        }
-        self.query = self.query.filter(Condition::any().add(text_cond).add(tag_cond));
+        self.query = self
+            .query
+            .filter(Condition::any().add(text_cond).add(tag::Column::Id.is_in(tag_ids)));
         self
     }
 }
