@@ -108,6 +108,68 @@ async fn happy_path() -> Result<(), DbErr> {
 }
 
 #[actix_web::test]
+async fn text_hit_cases() -> Result<(), DbErr> {
+    let Connections { app, db, .. } = init_app().await?;
+    let user = factory::user().insert(&db).await?;
+    let search_text = "Find me";
+    let hit_0 = factory::diary(user.id)
+        .text(Some("Find me".to_string()))
+        .insert(&db)
+        .await?;
+    let hit_1 = factory::diary(user.id)
+        .text(Some("Findme".to_string()))
+        .insert(&db)
+        .await?;
+    let hit_2 = factory::diary(user.id)
+        .text(Some("me Find".to_string()))
+        .insert(&db)
+        .await?;
+    let hit_3 = factory::diary(user.id)
+        .text(Some("xFind mex".to_string()))
+        .insert(&db)
+        .await?;
+    let hit_4 = factory::reading_note(user.id)
+        .title("Find".to_string())
+        .text("me".to_string())
+        .insert(&db)
+        .await?;
+    let _no_hit_0 = factory::diary(user.id)
+        .text(Some("find me".to_string()))
+        .insert(&db)
+        .await?;
+    let _no_hit_1 = factory::diary(user.id)
+        .text(Some("Find".to_string()))
+        .insert(&db)
+        .await?;
+
+    let req = get_client()
+        .uri(URI)
+        .set_json(JournalSearchRequest { text: Some(search_text.to_string()), tag_ids: vec![] })
+        .to_request();
+    req.extensions_mut().insert(user.clone());
+
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), http::StatusCode::OK);
+
+    let body: Vec<JournalVisibleWithTags> = test::read_body_json(resp).await;
+    let expected = vec![
+        JournalVisibleWithTags::from(DiaryVisibleWithTags::from((hit_3, vec![]))),
+        JournalVisibleWithTags::from(DiaryVisibleWithTags::from((hit_2, vec![]))),
+        JournalVisibleWithTags::from(DiaryVisibleWithTags::from((hit_1, vec![]))),
+        JournalVisibleWithTags::from(DiaryVisibleWithTags::from((hit_0, vec![]))),
+        JournalVisibleWithTags::from(ReadingNoteVisibleWithTags::from((hit_4, vec![]))),
+    ];
+
+    assert_eq!(body.len(), expected.len());
+    for i in 0..body.len() {
+        dbg!(i);
+        assert_eq!(body[i], expected[i]);
+    }
+
+    Ok(())
+}
+
+#[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let Connections { app, .. } = init_app().await?;
 
