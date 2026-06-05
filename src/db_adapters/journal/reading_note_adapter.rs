@@ -3,7 +3,7 @@ use std::future::Future;
 use chrono::{DateTime, FixedOffset, NaiveDate, Utc};
 use sea_orm::{
     prelude::Expr, sea_query::NullOrdering::Last, sqlx::error::Error::Database, ActiveModelTrait, ColumnAsExpr,
-    ColumnTrait, DbConn, DbErr, DeriveColumn, EntityTrait, EnumIter, FromQueryResult, IntoActiveModel,
+    ColumnTrait, Condition, DbConn, DbErr, DeriveColumn, EntityTrait, EnumIter, FromQueryResult, IntoActiveModel,
     JoinType::LeftJoin, ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
     RuntimeErr::SqlxError, Select, Set,
 };
@@ -59,6 +59,7 @@ impl ReadingNoteJoin for ReadingNoteAdapter<'_> {
 pub trait ReadingNoteFilter {
     fn filter_eq_id(self, id: Uuid) -> Self;
     fn filter_eq_user(self, user: &user::Model) -> Self;
+    fn filter_contains_texts_or_tags(self, texts: Vec<String>, tag_ids: Vec<Uuid>) -> Self;
 }
 
 impl ReadingNoteFilter for ReadingNoteAdapter<'_> {
@@ -69,6 +70,23 @@ impl ReadingNoteFilter for ReadingNoteAdapter<'_> {
 
     fn filter_eq_user(mut self, user: &user::Model) -> Self {
         self.query = self.query.filter(Column::UserId.eq(user.id));
+        self
+    }
+
+    fn filter_contains_texts_or_tags(mut self, texts: Vec<String>, tag_ids: Vec<Uuid>) -> Self {
+        let mut text_cond = Condition::all();
+        for text in texts {
+            text_cond = text_cond.add(
+                Condition::any()
+                    .add(Column::Title.contains(&text))
+                    .add(Column::Text.contains(&text)),
+            );
+        }
+        let mut tag_cond = Condition::any();
+        for tag_id in tag_ids {
+            tag_cond = tag_cond.add(tag::Column::Id.eq(tag_id));
+        }
+        self.query = self.query.filter(Condition::any().add(text_cond).add(tag_cond));
         self
     }
 }

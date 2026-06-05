@@ -5,7 +5,8 @@ use sea_orm::{
     prelude::Expr,
     sea_query::NullOrdering::{First, Last},
     sqlx::error::Error::Database,
-    ActiveModelTrait, ColumnAsExpr, ColumnTrait, DbConn, DbErr, EntityTrait, FromQueryResult, IntoActiveModel,
+    ActiveModelTrait, ColumnAsExpr, ColumnTrait, Condition, DbConn, DbErr, EntityTrait, FromQueryResult,
+    IntoActiveModel,
     JoinType::LeftJoin,
     ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
     RuntimeErr::SqlxError,
@@ -63,6 +64,7 @@ pub trait ThinkingNoteFilter {
     fn filter_eq_id(self, id: Uuid) -> Self;
     fn filter_eq_user(self, user: &user::Model) -> Self;
     fn filter_null_resolved_at(self, is_null: bool) -> Self;
+    fn filter_contains_texts_or_tags(self, texts: Vec<String>, tag_ids: Vec<Uuid>) -> Self;
 }
 
 impl ThinkingNoteFilter for ThinkingNoteAdapter<'_> {
@@ -81,6 +83,24 @@ impl ThinkingNoteFilter for ThinkingNoteAdapter<'_> {
             true => self.query.filter(Column::ResolvedAt.is_null()),
             false => self.query.filter(Column::ResolvedAt.is_not_null()),
         };
+        self
+    }
+
+    fn filter_contains_texts_or_tags(mut self, texts: Vec<String>, tag_ids: Vec<Uuid>) -> Self {
+        let mut text_cond = Condition::all();
+        for text in texts {
+            text_cond = text_cond.add(
+                Condition::any()
+                    .add(Column::Question.contains(&text))
+                    .add(Column::Thought.contains(&text))
+                    .add(Column::Answer.contains(&text)),
+            );
+        }
+        let mut tag_cond = Condition::any();
+        for tag_id in tag_ids {
+            tag_cond = tag_cond.add(tag::Column::Id.eq(tag_id));
+        }
+        self.query = self.query.filter(Condition::any().add(text_cond).add(tag_cond));
         self
     }
 }

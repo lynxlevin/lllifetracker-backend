@@ -48,3 +48,9 @@ impl From<ThinkingNoteVisibleWithTags> for JournalVisibleWithTags {
 pub struct JournalListQuery {
     pub tag_id_or: Option<String>,
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct JournalSearchRequest {
+    pub text: Option<String>,
+    pub tag_ids: Vec<uuid::Uuid>,
+}
