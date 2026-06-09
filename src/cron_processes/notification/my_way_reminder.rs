@@ -29,12 +29,22 @@ pub async fn my_way_reminder(settings: &Settings, db: &DbConn, weekday: Weekday,
             return ();
         }
     };
+    if notification_rules.len() == 0 {
+        event!(Level::INFO, "No notification_rules to process. Finishing.");
+        return ();
+    }
+
     event!(
         Level::INFO,
         "Will process {} notification_rules",
         notification_rules.len()
     );
     let messages = get_messages(db, notification_rules).await;
+    if messages.len() == 0 {
+        event!(Level::INFO, "No message to send. Finishing.");
+        return ();
+    }
+
     event!(Level::INFO, "Will process {} messages", messages.len());
     send_messages(messages, settings, db).await;
     event!(Level::INFO, "Finishing my_way_reminder.");
