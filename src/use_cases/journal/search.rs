@@ -106,11 +106,14 @@ async fn get_diaries(
     text_query: Vec<String>,
     tag_ids: Vec<Uuid>,
 ) -> Result<Vec<DiaryVisibleWithTags>, UseCaseError> {
-    let diaries = diary_adapter
-        .join_tags()
-        .join_my_way_via_tags()
-        .filter_eq_user(user)
-        .filter_contains_texts_or_tags(text_query, tag_ids)
+    let mut query = diary_adapter.join_tags().join_my_way_via_tags().filter_eq_user(user);
+    if text_query.len() > 0 {
+        query = query.filter_contains_texts(text_query);
+    }
+    if tag_ids.len() > 0 {
+        query = query.filter_contains_tags(tag_ids);
+    }
+    let diaries = query
         .order_by_date(Desc)
         .order_by_id(Desc)
         .order_by_ambition_created_at_nulls_last(Asc)
@@ -145,11 +148,17 @@ async fn get_reading_notes(
     text_query: Vec<String>,
     tag_ids: Vec<Uuid>,
 ) -> Result<Vec<ReadingNoteVisibleWithTags>, UseCaseError> {
-    let reading_notes = reading_note_adapter
+    let mut query = reading_note_adapter
         .join_tags()
         .join_my_way_via_tags()
-        .filter_eq_user(user)
-        .filter_contains_texts_or_tags(text_query, tag_ids)
+        .filter_eq_user(user);
+    if text_query.len() > 0 {
+        query = query.filter_contains_texts(text_query);
+    }
+    if tag_ids.len() > 0 {
+        query = query.filter_contains_tags(tag_ids);
+    }
+    let reading_notes = query
         .order_by_date(Desc)
         .order_by_created_at(Desc)
         .order_by_ambition_created_at_nulls_last(Asc)
@@ -186,11 +195,17 @@ async fn get_thinking_notes(
     text_query: Vec<String>,
     tag_ids: Vec<Uuid>,
 ) -> Result<Vec<ThinkingNoteVisibleWithTags>, UseCaseError> {
-    let thinking_notes = thinking_note_adapter
+    let mut query = thinking_note_adapter
         .join_tags()
         .join_my_way_via_tags()
-        .filter_eq_user(user)
-        .filter_contains_texts_or_tags(text_query, tag_ids)
+        .filter_eq_user(user);
+    if text_query.len() > 0 {
+        query = query.filter_contains_texts(text_query);
+    }
+    if tag_ids.len() > 0 {
+        query = query.filter_contains_tags(tag_ids);
+    }
+    let thinking_notes = query
         .order_by_resolved_at_nulls_first(Desc)
         .order_by_updated_at(Desc)
         .order_by_ambition_created_at_nulls_last(Asc)

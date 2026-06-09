@@ -57,7 +57,8 @@ impl DiaryJoin for DiaryAdapter<'_> {
 pub trait DiaryFilter {
     fn filter_eq_id(self, id: Uuid) -> Self;
     fn filter_eq_user(self, user: &user::Model) -> Self;
-    fn filter_contains_texts_or_tags(self, texts: Vec<String>, tag_ids: Vec<Uuid>) -> Self;
+    fn filter_contains_texts(self, texts: Vec<String>) -> Self;
+    fn filter_contains_tags(self, tag_ids: Vec<Uuid>) -> Self;
 }
 
 impl DiaryFilter for DiaryAdapter<'_> {
@@ -71,14 +72,17 @@ impl DiaryFilter for DiaryAdapter<'_> {
         self
     }
 
-    fn filter_contains_texts_or_tags(mut self, texts: Vec<String>, tag_ids: Vec<Uuid>) -> Self {
+    fn filter_contains_texts(mut self, texts: Vec<String>) -> Self {
         let mut text_cond = Condition::all();
         for text in texts {
             text_cond = text_cond.add(Column::Text.contains(&text));
         }
-        self.query = self
-            .query
-            .filter(Condition::any().add(text_cond).add(tag::Column::Id.is_in(tag_ids)));
+        self.query = self.query.filter(text_cond);
+        self
+    }
+
+    fn filter_contains_tags(mut self, tag_ids: Vec<Uuid>) -> Self {
+        self.query = self.query.filter(tag::Column::Id.is_in(tag_ids));
         self
     }
 }
