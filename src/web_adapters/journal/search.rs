@@ -13,7 +13,7 @@ use use_cases::journal::{search::search_journals, types::JournalSearchRequest};
 
 use crate::utils::{response_401, response_500};
 
-#[tracing::instrument(name = "Listing user's journals.", skip(db, user))]
+#[tracing::instrument(skip(db, user))]
 #[post("search")]
 pub async fn search_journals_endpoint(
     db: Data<DbConn>,

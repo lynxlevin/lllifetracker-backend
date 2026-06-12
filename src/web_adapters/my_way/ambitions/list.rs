@@ -10,7 +10,7 @@ use use_cases::my_way::ambitions::list::list_ambitions;
 
 use crate::utils::{response_401, response_500};
 
-#[tracing::instrument(name = "Listing a user's ambitions", skip(db, user))]
+#[tracing::instrument(skip(db, user))]
 #[get("")]
 pub async fn list_ambitions_endpoint(db: Data<DbConn>, user: Option<ReqData<user_entity::Model>>) -> HttpResponse {
     match user {

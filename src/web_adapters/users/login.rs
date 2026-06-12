@@ -18,7 +18,7 @@ use crate::{
     utils::{auth::password::verify_password, response_404, response_500},
 };
 
-#[tracing::instrument(name = "Logging a user in", skip(db, redis_pool, req_user, session, settings), fields(user_email = &req_user.email))]
+#[tracing::instrument(skip_all)]
 #[post("/login")]
 async fn login_user(
     db: Data<DbConn>,

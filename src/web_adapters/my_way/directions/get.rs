@@ -15,7 +15,7 @@ struct PathParam {
     direction_id: uuid::Uuid,
 }
 
-#[tracing::instrument(name = "Getting an direction", skip(db, user))]
+#[tracing::instrument(skip(db, user))]
 #[get("/{direction_id}")]
 pub async fn get_direction_endpoint(
     db: Data<DbConn>,

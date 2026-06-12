@@ -15,7 +15,7 @@ struct PathParam {
     direction_id: uuid::Uuid,
 }
 
-#[tracing::instrument(name = "Archiving an direction", skip(db, user, path_param))]
+#[tracing::instrument(skip(db, user))]
 #[put("/{direction_id}/archive")]
 pub async fn archive_direction_endpoint(
     db: Data<DbConn>,

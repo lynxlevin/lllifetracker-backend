@@ -10,7 +10,7 @@ use db_adapters::action_track_adapter::ActionTrackAdapter;
 use entities::user as user_entity;
 use use_cases::my_way::action_tracks::{aggregation::aggregate_action_tracks, types::ActionTrackAggregationQuery};
 
-#[tracing::instrument(name = "Aggregating a user's action tracks", skip(db, user))]
+#[tracing::instrument(skip(db, user))]
 #[get("/aggregation")]
 pub async fn aggregate_action_tracks_endpoint(
     db: Data<DbConn>,

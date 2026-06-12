@@ -10,7 +10,7 @@ use use_cases::my_way::actions::{create::create_action, types::ActionCreateReque
 
 use crate::utils::{response_401, response_500};
 
-#[tracing::instrument(name = "Creating an action", skip(db, user))]
+#[tracing::instrument(skip(db, user))]
 #[post("")]
 pub async fn create_action_endpoint(
     db: Data<DbConn>,

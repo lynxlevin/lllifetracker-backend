@@ -10,7 +10,7 @@ use db_adapters::action_adapter::ActionAdapter;
 use entities::user as user_entity;
 use use_cases::my_way::actions::list::list_actions;
 
-#[tracing::instrument(name = "Listing a user's actions", skip(db, user))]
+#[tracing::instrument(skip(db, user))]
 #[get("")]
 pub async fn list_actions_endpoint(db: Data<DbConn>, user: Option<ReqData<user_entity::Model>>) -> HttpResponse {
     match user {

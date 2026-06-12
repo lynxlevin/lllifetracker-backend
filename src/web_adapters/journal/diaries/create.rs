@@ -13,7 +13,7 @@ use use_cases::{
 
 use crate::utils::{response_401, response_404, response_500};
 
-#[tracing::instrument(name = "Creating a diary", skip(db, user))]
+#[tracing::instrument(skip(db, user))]
 #[post("")]
 pub async fn create_diary_endpoint(
     db: Data<DbConn>,

@@ -13,7 +13,7 @@ use use_cases::notification::web_push_subscription::{
 
 use crate::utils::{response_401, response_500};
 
-#[tracing::instrument(name = "Registering a web push subscription", skip(db, user, settings, req))]
+#[tracing::instrument(skip_all)]
 #[post("")]
 pub async fn create_web_push_subscription_endpoint(
     db: Data<DbConn>,

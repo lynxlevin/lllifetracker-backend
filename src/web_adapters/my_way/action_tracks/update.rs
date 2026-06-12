@@ -18,7 +18,7 @@ struct PathParam {
     action_track_id: uuid::Uuid,
 }
 
-#[tracing::instrument(name = "Updating an action track", skip(db, user))]
+#[tracing::instrument(skip(db, user))]
 #[put("/{action_track_id}")]
 pub async fn update_action_track_endpoint(
     db: Data<DbConn>,

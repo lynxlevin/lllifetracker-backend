@@ -25,7 +25,7 @@ use crate::utils::{response_401, response_500};
 /// No need for handling ordering when creating, updating, archiving, un-archiving and deleting an action.
 /// Ordering numbers need only be updated on this endpoint.
 
-#[tracing::instrument(name = "Bulk updating action ordering", skip(db, user, req))]
+#[tracing::instrument(skip(db, user, req))]
 #[put("/bulk_update_ordering")]
 pub async fn bulk_update_action_ordering_endpoint(
     db: Data<DbConn>,

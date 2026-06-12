@@ -14,7 +14,7 @@ use crate::utils::{emails::send_multipart_email, response_404, response_500};
 struct RequestBody {
     email: String,
 }
-#[tracing::instrument(name = "Resending registration confirmation email", skip(db, redis_pool, req, settings))]
+#[tracing::instrument(skip(db, redis_pool, req, settings))]
 #[post("/resend-email")]
 pub async fn resend_email(
     db: Data<DbConn>,

@@ -18,7 +18,7 @@ struct PathParam {
     tag_id: uuid::Uuid,
 }
 
-#[tracing::instrument(name = "Updating a plain tag", skip(db, user))]
+#[tracing::instrument(skip(db, user))]
 #[put("/plain/{tag_id}")]
 pub async fn update_plain_tag_endpoint(
     db: Data<DbConn>,

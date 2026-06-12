@@ -18,7 +18,7 @@ struct PathParam {
     reading_note_id: uuid::Uuid,
 }
 
-#[tracing::instrument(name = "Updating a reading note", skip(db, user, req, path_param))]
+#[tracing::instrument(skip(db, user, req))]
 #[put("/{reading_note_id}")]
 pub async fn update_reading_note_endpoint(
     db: Data<DbConn>,

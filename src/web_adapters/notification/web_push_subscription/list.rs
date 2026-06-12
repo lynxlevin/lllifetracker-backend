@@ -10,7 +10,7 @@ use use_cases::notification::web_push_subscription::list::list_web_push_subscrip
 
 use crate::utils::{response_401, response_500};
 
-#[tracing::instrument(name = "Listing a user's web_push_subscription.", skip(db, user))]
+#[tracing::instrument(skip(db, user))]
 #[get("")]
 pub async fn list_web_push_subscription_endpoint(
     db: Data<DbConn>,

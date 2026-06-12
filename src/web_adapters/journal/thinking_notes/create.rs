@@ -13,7 +13,7 @@ use use_cases::{
 
 use crate::utils::{response_401, response_404, response_500};
 
-#[tracing::instrument(name = "Creating a thinking note", skip(db, user))]
+#[tracing::instrument(skip(db, user))]
 #[post("")]
 pub async fn create_thinking_note_endpoint(
     db: Data<DbConn>,

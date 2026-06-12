@@ -10,11 +10,7 @@ use lettre::{
 
 use crate::utils::auth::tokens::issue_confirmation_token_pasetors;
 
-#[tracing::instrument(
-    name = "Generic e-mail sending function.",
-    skip(recipient_email, recipient_first_name, recipient_last_name, subject, html_content, text_content, settings),
-    fields(recipient_email = %recipient_email, recipient_first_name = %recipient_first_name, recipient_last_name = %recipient_last_name)
-)]
+#[tracing::instrument(skip_all)]
 pub async fn send_email(
     recipient_email: String,
     recipient_first_name: String,
@@ -76,16 +72,7 @@ pub async fn send_email(
     }
 }
 
-#[tracing::instrument(
-    name = "Generic multipart e-mail sending function.",
-    skip(redis_connection, settings),
-    fields(
-        recipient_user_id = %user_id,
-        recipient_email = %recipient_email,
-        recipient_first_name = %recipient_first_name,
-        recipient_last_name = %recipient_last_name,
-    )
-)]
+#[tracing::instrument(skip(redis_connection, settings))]
 pub async fn send_multipart_email(
     subject: String,
     user_id: uuid::Uuid,

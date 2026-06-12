@@ -15,7 +15,7 @@ struct PathParam {
     ambition_id: uuid::Uuid,
 }
 
-#[tracing::instrument(name = "Getting an ambition", skip(db, user))]
+#[tracing::instrument(skip(db, user))]
 #[get("/{ambition_id}")]
 pub async fn get_ambition_endpoint(
     db: Data<DbConn>,

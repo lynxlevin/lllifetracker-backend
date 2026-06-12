@@ -15,7 +15,7 @@ struct PathParam {
     direction_id: uuid::Uuid,
 }
 
-#[tracing::instrument(name = "Restoring an direction from unarchive", skip(db, user, path_param))]
+#[tracing::instrument(skip(db, user))]
 #[put("/{direction_id}/unarchive")]
 pub async fn unarchive_direction_endpoint(
     db: Data<DbConn>,

@@ -12,7 +12,7 @@ use use_cases::my_way::direction_categories::{
 
 use crate::utils::{response_401, response_500};
 
-#[tracing::instrument(name = "Creating an direction_category", skip(db, user))]
+#[tracing::instrument(skip(db, user))]
 #[post("")]
 pub async fn create_direction_category_endpoint(
     db: Data<DbConn>,

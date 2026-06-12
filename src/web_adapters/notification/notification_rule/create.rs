@@ -13,7 +13,7 @@ use use_cases::{
 
 use crate::utils::{response_400, response_401, response_409, response_500};
 
-#[tracing::instrument(name = "Creating user's notification_rules.", skip(db, user))]
+#[tracing::instrument(skip(db, user))]
 #[post("")]
 pub async fn create_notification_rules_endpoint(
     db: Data<DbConn>,
