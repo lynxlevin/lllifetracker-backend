@@ -17,7 +17,7 @@ struct PathParam {
     action_id: uuid::Uuid,
 }
 
-#[tracing::instrument(name = "Restoring an action from archive", skip(db, user, path_param))]
+#[tracing::instrument(skip(db, user))]
 #[put("/{action_id}/unarchive")]
 pub async fn unarchive_action_endpoint(
     db: Data<DbConn>,

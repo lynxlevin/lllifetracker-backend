@@ -25,7 +25,7 @@ use crate::utils::{response_401, response_500};
 /// No need for handling ordering when creating, updating, archiving, un-archiving and deleting an direction.
 /// Ordering numbers need only be updated on this endpoint.
 
-#[tracing::instrument(name = "Bulk updating direction ordering", skip(db, user, req))]
+#[tracing::instrument(skip(db, user, req))]
 #[put("/bulk_update_ordering")]
 pub async fn bulk_update_direction_ordering_endpoint(
     db: Data<DbConn>,

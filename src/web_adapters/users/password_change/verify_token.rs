@@ -14,7 +14,7 @@ struct Parameters {
     token: String,
 }
 
-#[tracing::instrument(name = "Confirming change password token", skip(query, redis_pool, settings))]
+#[tracing::instrument(skip(query, redis_pool, settings))]
 #[get("/email-verification")]
 pub async fn verify_password_change_token(
     query: Query<Parameters>,

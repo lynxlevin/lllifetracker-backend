@@ -10,7 +10,7 @@ use use_cases::my_way::action_goals::{remove::remove_action_goal, types::ActionG
 
 use crate::utils::{response_401, response_500};
 
-#[tracing::instrument(name = "Removing an action goal", skip(db, user))]
+#[tracing::instrument(skip(db, user))]
 #[delete("")]
 pub async fn remove_action_goal_endpoint(
     db: Data<DbConn>,

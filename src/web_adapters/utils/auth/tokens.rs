@@ -10,7 +10,7 @@ use pasetors::{local, Local};
 
 const SESSION_KEY_PREFIX: &str = "valid_session_key_for_{}";
 
-#[tracing::instrument(name = "Issue pasetors token", skip(redis_connection, settings))]
+#[tracing::instrument(skip(redis_connection, settings))]
 pub async fn issue_confirmation_token_pasetors(
     user_id: uuid::Uuid,
     redis_connection: &mut deadpool_redis::Connection,
@@ -70,7 +70,7 @@ pub async fn issue_confirmation_token_pasetors(
     Ok(local::encrypt(&sk, &claims, None, Some(settings.secret.hmac_secret.as_bytes())).unwrap())
 }
 
-#[tracing::instrument(name = "Verify pasetors token", skip(token, redis_connection, settings))]
+#[tracing::instrument(skip(token, redis_connection, settings))]
 pub async fn verify_confirmation_token_pasetor(
     token: String,
     redis_connection: &mut deadpool_redis::Connection,

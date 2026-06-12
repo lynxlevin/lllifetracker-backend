@@ -10,7 +10,7 @@ use use_cases::notification::notification_rule::list::list_notification_rules;
 
 use crate::utils::{response_401, response_500};
 
-#[tracing::instrument(name = "Listing user's notification_rules.", skip(db, user))]
+#[tracing::instrument(skip(db, user))]
 #[get("")]
 pub async fn list_notification_rules_endpoint(
     db: Data<DbConn>,

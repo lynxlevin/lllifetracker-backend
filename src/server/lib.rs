@@ -1,3 +1,4 @@
+mod request_logger;
 use actix_session::{
     config::{PersistentSession, SessionMiddlewareBuilder},
     storage::RedisSessionStore,
@@ -10,6 +11,7 @@ use web_adapters::{
     tag_routes, thinking_note_routes, web_push_subscription_routes,
 };
 
+pub use request_logger::RequestLogger;
 pub use web_adapters::auth_middleware;
 
 pub async fn get_preps_for_redis_session_store(

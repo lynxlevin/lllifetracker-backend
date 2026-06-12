@@ -10,7 +10,7 @@ use use_cases::my_way::directions::{create::create_direction, types::DirectionCr
 
 use crate::utils::{response_401, response_500};
 
-#[tracing::instrument(name = "Creating an direction", skip(db, user))]
+#[tracing::instrument(skip(db, user))]
 #[post("")]
 pub async fn create_direction_endpoint(
     db: Data<DbConn>,

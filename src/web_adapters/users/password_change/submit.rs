@@ -19,7 +19,7 @@ struct Parameters {
     password: String,
 }
 
-#[tracing::instrument(name = "Changing user's password", skip(db, redis_pool, req, settings))]
+#[tracing::instrument(skip(db, redis_pool, req, settings))]
 #[post("")]
 pub async fn submit_password_change(
     db: Data<DbConn>,

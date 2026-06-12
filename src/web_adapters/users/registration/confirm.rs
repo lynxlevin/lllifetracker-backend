@@ -16,7 +16,7 @@ pub struct Parameters {
     token: String,
 }
 
-#[tracing::instrument(name = "Activating a new user", skip(db, redis_pool, parameters, settings))]
+#[tracing::instrument(skip(db, redis_pool, parameters, settings))]
 #[get("/confirm")]
 pub async fn confirm(
     parameters: Query<Parameters>,

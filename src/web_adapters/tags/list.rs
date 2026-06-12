@@ -10,7 +10,7 @@ use use_cases::tags::list::list_tags;
 
 use crate::utils::{response_401, response_500};
 
-#[tracing::instrument(name = "Listing a user's tags.", skip(db, user))]
+#[tracing::instrument(skip(db, user))]
 #[get("")]
 pub async fn list_tags_endpoint(db: Data<DbConn>, user: Option<ReqData<user_entity::Model>>) -> HttpResponse {
     match user {

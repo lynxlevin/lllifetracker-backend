@@ -15,7 +15,7 @@ struct PathParam {
     action_id: uuid::Uuid,
 }
 
-#[tracing::instrument(name = "Getting an action", skip(db, user))]
+#[tracing::instrument(skip(db, user))]
 #[get("/{action_id}")]
 pub async fn get_action_endpoint(
     db: Data<DbConn>,

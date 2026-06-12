@@ -13,7 +13,7 @@ use use_cases::{
 
 use crate::utils::{response_400, response_401, response_404, response_500};
 
-#[tracing::instrument(name = "Creating an action goal", skip(db, user))]
+#[tracing::instrument(skip(db, user))]
 #[post("")]
 pub async fn set_new_action_goal_endpoint(
     db: Data<DbConn>,

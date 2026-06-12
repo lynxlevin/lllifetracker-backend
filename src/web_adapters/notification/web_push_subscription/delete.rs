@@ -10,7 +10,7 @@ use use_cases::notification::web_push_subscription::delete::delete_web_push_subs
 
 use crate::utils::{response_401, response_500};
 
-#[tracing::instrument(name = "Deleting a user's web_push_subscription.", skip(db, user))]
+#[tracing::instrument(skip(db, user))]
 #[delete("")]
 pub async fn delete_web_push_subscription_endpoint(
     db: Data<DbConn>,

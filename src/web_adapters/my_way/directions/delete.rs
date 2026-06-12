@@ -15,7 +15,7 @@ struct PathParam {
     direction_id: uuid::Uuid,
 }
 
-#[tracing::instrument(name = "Deleting an direction", skip(db, user, path_param))]
+#[tracing::instrument(skip(db, user))]
 #[delete("/{direction_id}")]
 pub async fn delete_direction_endpoint(
     db: Data<DbConn>,

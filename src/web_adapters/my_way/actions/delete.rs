@@ -15,7 +15,7 @@ struct PathParam {
     action_id: uuid::Uuid,
 }
 
-#[tracing::instrument(name = "Deleting an action", skip(db, user, path_param))]
+#[tracing::instrument(skip(db, user))]
 #[delete("/{action_id}")]
 pub async fn delete_action_endpoint(
     db: Data<DbConn>,

@@ -10,7 +10,7 @@ use use_cases::my_way::directions::list::list_directions;
 
 use crate::utils::{response_401, response_500};
 
-#[tracing::instrument(name = "Listing a user's directions", skip(db, user))]
+#[tracing::instrument(skip(db, user))]
 #[get("")]
 pub async fn list_directions_endpoint(
     db: Data<DbConn>,
