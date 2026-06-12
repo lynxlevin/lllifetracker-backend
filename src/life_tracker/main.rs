@@ -9,10 +9,6 @@ mod telemetry;
 async fn main() -> std::io::Result<()> {
     let settings = get_settings(".env").expect("Error on getting settings.");
 
-    // MYMEMO: introduce tracing_actix_web
-    // - Should log some message at the beginning of all main functions.
-    // - Logs should be more readable.
-    // - More system info should be collected automatically.
     let _guard = telemetry::init_subscriber(settings.debug, settings.application.max_log_files);
 
     if let Err(e) = run_cron_processes(settings.clone()).await {

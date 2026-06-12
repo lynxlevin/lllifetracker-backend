@@ -37,7 +37,6 @@ pub async fn search_journals<'a>(
         text.split([' ', '　']).map(|t| t.to_string()).collect::<Vec<_>>()
     });
     let tag_ids = params.tag_ids;
-    // MYMEMO: add params
     let diaries_future = get_diaries(diary_adapter, &user, text_query.clone(), tag_ids.clone());
     let reading_notes_future = get_reading_notes(reading_note_adapter, &user, text_query.clone(), tag_ids.clone());
     let thinking_notes_future =
