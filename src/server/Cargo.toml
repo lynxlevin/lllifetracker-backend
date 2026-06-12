@@ -13,3 +13,6 @@ web_adapters = { path = "../web_adapters" }
 
 actix-session.workspace = true
 actix-web.workspace = true
+chrono.workspace = true
+futures.workspace = true
+tracing.workspace = true
