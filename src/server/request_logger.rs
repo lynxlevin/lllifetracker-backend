@@ -52,7 +52,7 @@ where
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let svc = self.service.clone();
         Box::pin(async move {
-            let req_start = Utc::now();
+            let req_start = Utc::now().timestamp_micros();
             let mut http = Http {
                 path: req.path().to_string(),
                 method: req.method().to_string(),
@@ -72,17 +72,14 @@ where
 
             let res = svc.call(req).await?;
 
-            let req_end = Utc::now();
-            let mut duration = (req_end - req_start)
-                .num_microseconds()
-                .unwrap_or((req_end - req_start).num_milliseconds() * 1000)
-                .to_string();
-            duration.insert(duration.len() - 3, '.');
-            duration.push_str("ms");
+            let req_end = Utc::now().timestamp_micros();
             http.status_code = res.status().to_string();
             event!(
                 Level::INFO,
-                "RequestLogger: {{ duration: {duration}, http: {http}, query: {query}  }}",
+                "RequestLogger: {{ duration_micro: {}, http: {}, query: {}  }}",
+                (req_end - req_start).to_string(),
+                http,
+                query
             );
             Ok(res)
         })
