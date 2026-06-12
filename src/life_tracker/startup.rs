@@ -4,7 +4,7 @@ use common::{db::init_db, redis::init_redis_pool, settings::types::Settings};
 use sea_orm::DatabaseConnection;
 use server::{
     auth_middleware::AuthenticateUser, get_preps_for_redis_session_store, get_routes,
-    setup_session_middleware_builder, RequestLogger, ResponseLogger,
+    setup_session_middleware_builder, RequestLogger,
 };
 
 pub struct Application {
@@ -44,7 +44,6 @@ async fn run(
 
     let server = HttpServer::new(move || {
         App::new()
-            .wrap(ResponseLogger)
             .wrap(Compress::default())
             .wrap(AuthenticateUser)
             .wrap(
