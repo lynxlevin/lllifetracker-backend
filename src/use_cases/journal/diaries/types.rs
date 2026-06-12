@@ -1,4 +1,4 @@
-use db_adapters::diary_adapter::DiaryUpdateKey;
+use db_adapters::diary_adapter::{DiaryUpdateKey, DiaryWithTag};
 use entities::{diary, prelude::Diary};
 use sea_orm::{DerivePartialModel, FromQueryResult};
 use serde::{Deserialize, Serialize};
@@ -28,6 +28,12 @@ pub struct DiaryVisibleWithTags {
 }
 impl From<(diary::Model, Vec<TagVisible>)> for DiaryVisibleWithTags {
     fn from(value: (diary::Model, Vec<TagVisible>)) -> Self {
+        let (diary, tags) = value;
+        Self { id: diary.id, text: diary.text, date: diary.date, tags }
+    }
+}
+impl From<(DiaryWithTag, Vec<TagVisible>)> for DiaryVisibleWithTags {
+    fn from(value: (DiaryWithTag, Vec<TagVisible>)) -> Self {
         let (diary, tags) = value;
         Self { id: diary.id, text: diary.text, date: diary.date, tags }
     }

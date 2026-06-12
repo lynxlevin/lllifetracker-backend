@@ -1,3 +1,4 @@
+use db_adapters::reading_note_adapter::ReadingNoteWithTag;
 use entities::{prelude::ReadingNote, reading_note};
 use sea_orm::{DerivePartialModel, FromQueryResult};
 use serde::{Deserialize, Serialize};
@@ -43,6 +44,21 @@ pub struct ReadingNoteVisibleWithTags {
 }
 impl From<(reading_note::Model, Vec<TagVisible>)> for ReadingNoteVisibleWithTags {
     fn from(value: (reading_note::Model, Vec<TagVisible>)) -> Self {
+        let (reading_note, tags) = value;
+        Self {
+            id: reading_note.id,
+            title: reading_note.title,
+            page_number: reading_note.page_number,
+            text: reading_note.text,
+            date: reading_note.date,
+            created_at: reading_note.created_at,
+            updated_at: reading_note.updated_at,
+            tags,
+        }
+    }
+}
+impl From<(ReadingNoteWithTag, Vec<TagVisible>)> for ReadingNoteVisibleWithTags {
+    fn from(value: (ReadingNoteWithTag, Vec<TagVisible>)) -> Self {
         let (reading_note, tags) = value;
         Self {
             id: reading_note.id,

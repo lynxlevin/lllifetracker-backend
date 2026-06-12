@@ -19,12 +19,18 @@ pub fn reading_note(user_id: Uuid) -> reading_note::ActiveModel {
 
 pub trait ReadingNoteFactory {
     fn title(self, title: String) -> reading_note::ActiveModel;
+    fn text(self, text: String) -> reading_note::ActiveModel;
     fn date(self, date: NaiveDate) -> reading_note::ActiveModel;
 }
 
 impl ReadingNoteFactory for reading_note::ActiveModel {
     fn title(mut self, title: String) -> reading_note::ActiveModel {
         self.title = Set(title);
+        self
+    }
+
+    fn text(mut self, text: String) -> reading_note::ActiveModel {
+        self.text = Set(text);
         self
     }
 

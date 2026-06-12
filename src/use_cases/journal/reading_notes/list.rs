@@ -44,16 +44,7 @@ pub async fn list_reading_notes<'a>(
                 Some(_) => vec![Into::<TagVisible>::into(&reading_note)],
                 None => vec![],
             };
-            let res_reading_note = ReadingNoteVisibleWithTags {
-                id: reading_note.id,
-                title: reading_note.title,
-                page_number: reading_note.page_number,
-                text: reading_note.text,
-                date: reading_note.date,
-                created_at: reading_note.created_at,
-                updated_at: reading_note.updated_at,
-                tags,
-            };
+            let res_reading_note = ReadingNoteVisibleWithTags::from((reading_note, tags));
             res.push(res_reading_note);
         } else {
             if let Some(_) = reading_note.tag_id {
