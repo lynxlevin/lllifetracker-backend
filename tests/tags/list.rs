@@ -128,40 +128,40 @@ async fn happy_path() -> Result<(), DbErr> {
     let body: Vec<TagVisible> = test::read_body_json(resp).await;
     let expected = vec![
         TagVisible::from((
-            tags.get("archived_ambition_tag").unwrap(),
-            ambitions.get("archived_ambition").unwrap().name.clone(),
+            tags.get("ambition_null_ordering_tag").unwrap(),
+            ambitions.get("ambition_null_ordering").unwrap().name.clone(),
         )),
         TagVisible::from((
             tags.get("ambition_tag").unwrap(),
             ambitions.get("ambition").unwrap().name.clone(),
         )),
         TagVisible::from((
-            tags.get("ambition_null_ordering_tag").unwrap(),
-            ambitions.get("ambition_null_ordering").unwrap().name.clone(),
+            tags.get("archived_ambition_tag").unwrap(),
+            ambitions.get("archived_ambition").unwrap().name.clone(),
         )),
         TagVisible::from((
             tags.get("direction_null_ordering_tag").unwrap(),
             directions.get("direction_null_ordering").unwrap().name.clone(),
         )),
         TagVisible::from((
-            tags.get("archived_direction_tag").unwrap(),
-            directions.get("archived_direction").unwrap().name.clone(),
-        )),
-        TagVisible::from((
             tags.get("direction_tag").unwrap(),
             directions.get("direction").unwrap().name.clone(),
         )),
         TagVisible::from((
-            tags.get("archived_action_tag").unwrap(),
-            actions.get("archived_action").unwrap().name.clone(),
+            tags.get("archived_direction_tag").unwrap(),
+            directions.get("archived_direction").unwrap().name.clone(),
+        )),
+        TagVisible::from((
+            tags.get("action_null_ordering_tag").unwrap(),
+            actions.get("action_null_ordering").unwrap().name.clone(),
         )),
         TagVisible::from((
             tags.get("action_tag").unwrap(),
             actions.get("action").unwrap().name.clone(),
         )),
         TagVisible::from((
-            tags.get("action_null_ordering_tag").unwrap(),
-            actions.get("action_null_ordering").unwrap().name.clone(),
+            tags.get("archived_action_tag").unwrap(),
+            actions.get("archived_action").unwrap().name.clone(),
         )),
         TagVisible::from((
             tags.get("plain_tag").unwrap(),

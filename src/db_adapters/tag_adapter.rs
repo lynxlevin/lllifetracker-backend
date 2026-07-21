@@ -1,11 +1,9 @@
 use std::future::Future;
 
 use sea_orm::{
-    prelude::Expr,
-    sea_query::NullOrdering::{First, Last},
-    ActiveModelTrait, ColumnAsExpr, ColumnTrait, DbConn, DbErr, EntityTrait, FromQueryResult, IntoActiveModel,
-    JoinType::LeftJoin,
-    ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait, Select, Set,
+    prelude::Expr, sea_query::NullOrdering::First, ActiveModelTrait, ColumnAsExpr, ColumnTrait, DbConn, DbErr,
+    EntityTrait, FromQueryResult, IntoActiveModel, JoinType::LeftJoin, ModelTrait, Order, QueryFilter, QueryOrder,
+    QuerySelect, RelationTrait, Select, Set,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -64,28 +62,37 @@ impl TagFilter for TagAdapter<'_> {
 }
 
 pub trait TagOrder {
-    fn order_by_ambition_ordering_nulls_last(self, order: Order) -> Self;
+    fn order_by_ambition_ordering_nulls_first(self, order: Order) -> Self;
     fn order_by_direction_ordering_nulls_first(self, order: Order) -> Self;
-    fn order_by_action_ordering_nulls_last(self, order: Order) -> Self;
+    fn order_by_action_ordering_nulls_first(self, order: Order) -> Self;
     fn order_by_created_at(self, order: Order) -> Self;
     fn order_by_type(self, order: Order) -> Self;
 }
 
 impl TagOrder for TagAdapter<'_> {
-    fn order_by_ambition_ordering_nulls_last(mut self, order: Order) -> Self {
-        self.query = self.query.order_by_with_nulls(ambition::Column::Ordering, order, Last);
+    fn order_by_ambition_ordering_nulls_first(mut self, order: Order) -> Self {
+        self.query = self.query.order_by_asc(ambition::Column::Archived).order_by_with_nulls(
+            ambition::Column::Ordering,
+            order,
+            First,
+        );
         self
     }
 
     fn order_by_direction_ordering_nulls_first(mut self, order: Order) -> Self {
         self.query = self
             .query
+            .order_by_asc(direction::Column::Archived)
             .order_by_with_nulls(direction::Column::Ordering, order, First);
         self
     }
 
-    fn order_by_action_ordering_nulls_last(mut self, order: Order) -> Self {
-        self.query = self.query.order_by_with_nulls(action::Column::Ordering, order, Last);
+    fn order_by_action_ordering_nulls_first(mut self, order: Order) -> Self {
+        self.query = self.query.order_by_asc(action::Column::Archived).order_by_with_nulls(
+            action::Column::Ordering,
+            order,
+            First,
+        );
         self
     }
 

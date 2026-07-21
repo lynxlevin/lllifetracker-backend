@@ -16,9 +16,9 @@ pub async fn list_tags<'a>(
         .join_action()
         .filter_eq_user(&user)
         .order_by_type(Asc)
-        .order_by_ambition_ordering_nulls_last(Asc)
+        .order_by_ambition_ordering_nulls_first(Asc)
         .order_by_direction_ordering_nulls_first(Asc)
-        .order_by_action_ordering_nulls_last(Asc)
+        .order_by_action_ordering_nulls_first(Asc)
         .order_by_created_at(Asc)
         .get_all_tags()
         .await
