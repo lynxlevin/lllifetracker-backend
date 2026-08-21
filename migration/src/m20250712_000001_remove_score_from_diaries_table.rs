@@ -5,6 +5,7 @@ use sea_orm_migration::{
         DbErr, DeriveMigrationName, Expr, Index, MigrationTrait, SchemaManager, Table,
     },
     schema::tiny_unsigned_null,
+    sea_orm::ExprTrait,
 };
 
 const UNIQUE_INDEX_NAME: &str = "diaries_user_id_date_unique_index";

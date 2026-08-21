@@ -16,7 +16,7 @@ impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let schema = Schema::new(DbBackend::Postgres);
         manager
-            .create_type(schema.create_enum_from_active_enum::<TagType>())
+            .create_type(schema.create_enum_from_active_enum::<TagType>().expect("Postgres only"))
             .await?;
         manager
             .alter_table(

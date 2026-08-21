@@ -1,5 +1,6 @@
 mod encryptor;
 
+use migration::{Migrator, MigratorTrait};
 use sea_orm::{Database, DbConn};
 
 use crate::settings::types::Settings;
@@ -11,7 +12,6 @@ pub async fn init_db(settings: &Settings) -> DbConn {
         .await
         .expect("Failed to open DB connection.");
 
-    // MYMEMO: change this code
-    // Migrator::up(&db_conn, None).await.unwrap();
+    Migrator::up(&db, None).await.unwrap();
     db
 }

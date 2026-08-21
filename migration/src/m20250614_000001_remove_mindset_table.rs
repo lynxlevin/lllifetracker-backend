@@ -6,6 +6,7 @@ use sea_orm_migration::{
         SchemaManager, Table, TableForeignKey,
     },
     schema::{boolean, integer_null, string, string_null, timestamp_with_time_zone, uuid, uuid_null},
+    sea_orm::ExprTrait,
 };
 
 const TAGS_MINDSET_FOREIGN_KEY_NAME: &str = "fk-tags-mindset_id";

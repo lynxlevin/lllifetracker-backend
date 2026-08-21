@@ -101,7 +101,11 @@ async fn notification_type<'a>(manager: &SchemaManager<'_>, up: bool) -> Result<
             .drop_type(Type::drop().name(OldNotificationType::name()).to_owned())
             .await?;
         manager
-            .create_type(schema.create_enum_from_active_enum::<NotificationType>())
+            .create_type(
+                schema
+                    .create_enum_from_active_enum::<NotificationType>()
+                    .expect("Postgres only"),
+            )
             .await?;
         Ok(())
     } else {
@@ -109,7 +113,11 @@ async fn notification_type<'a>(manager: &SchemaManager<'_>, up: bool) -> Result<
             .drop_type(Type::drop().name(NotificationType::name()).to_owned())
             .await?;
         manager
-            .create_type(schema.create_enum_from_active_enum::<OldNotificationType>())
+            .create_type(
+                schema
+                    .create_enum_from_active_enum::<OldNotificationType>()
+                    .expect("Postgres only"),
+            )
             .await?;
         manager
             .alter_table(
@@ -134,7 +142,7 @@ async fn tag_type<'a>(manager: &SchemaManager<'_>, up: bool) -> Result<(), DbErr
             .alter_type(Type::alter().name("tag_type").rename_to("tag_type_old"))
             .await?;
         manager
-            .create_type(schema.create_enum_from_active_enum::<TagType>())
+            .create_type(schema.create_enum_from_active_enum::<TagType>().expect("Postgres only"))
             .await?;
         manager
             .alter_table(
@@ -183,7 +191,11 @@ async fn tag_type<'a>(manager: &SchemaManager<'_>, up: bool) -> Result<(), DbErr
             .alter_type(Type::alter().name(TagType::name()).rename_to("tag_type_new"))
             .await?;
         manager
-            .create_type(schema.create_enum_from_active_enum::<OldTagType>())
+            .create_type(
+                schema
+                    .create_enum_from_active_enum::<OldTagType>()
+                    .expect("Postgres only"),
+            )
             .await?;
         manager
             .alter_table(

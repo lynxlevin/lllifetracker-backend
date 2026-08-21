@@ -7,7 +7,7 @@ use sea_orm_migration::{
         SchemaManager, Table,
     },
     schema::{big_integer_null, small_integer, string, string_len, time, uuid, uuid_null},
-    sea_orm::{Condition, DbBackend, Schema},
+    sea_orm::{Condition, DbBackend, ExprTrait, Schema},
 };
 
 const WEB_PUSH_SUBSCRIPTION_INDEX_NAME: &str = "web_push_subscription_user_id_index";
@@ -21,7 +21,11 @@ impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let schema = Schema::new(DbBackend::Postgres);
         manager
-            .create_type(schema.create_enum_from_active_enum::<NotificationType>())
+            .create_type(
+                schema
+                    .create_enum_from_active_enum::<NotificationType>()
+                    .expect("Postgres only"),
+            )
             .await?;
         manager
             .create_table(

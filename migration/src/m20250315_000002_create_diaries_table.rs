@@ -6,6 +6,7 @@ use sea_orm_migration::{
         Table,
     },
     schema::{date, text_null, tiny_unsigned_null, uuid},
+    sea_orm::ExprTrait,
 };
 
 use crate::m20240722_000001_create_users_table::User;
