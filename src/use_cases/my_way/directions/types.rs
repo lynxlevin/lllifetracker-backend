@@ -1,11 +1,11 @@
 use chrono::{DateTime, FixedOffset};
-use sea_orm::{DerivePartialModel, FromQueryResult};
+use sea_orm::DerivePartialModel;
 
 use entities::{direction, prelude::Direction};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, DerivePartialModel, PartialEq, Debug)]
 #[sea_orm(entity = "Direction")]
 pub struct DirectionVisible {
     pub id: uuid::Uuid,

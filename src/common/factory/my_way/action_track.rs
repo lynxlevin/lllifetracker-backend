@@ -75,7 +75,7 @@ pub async fn create_action_tracks<'a>(
             .started_at(param.started_at)
             .duration(param.duration)
     });
-    let action_tracks = Entity::insert_many(action_tracks).exec_with_returning_many(db).await?;
+    let action_tracks = Entity::insert_many(action_tracks).exec_with_returning(db).await?;
 
     Ok(action_tracks
         .into_iter()

@@ -93,7 +93,7 @@ pub async fn create_directions<'a>(
             .ordering(param.ordering)
             .category_id(param.category_id)
     });
-    let directions = Entity::insert_many(directions).exec_with_returning_many(db).await?;
+    let directions = Entity::insert_many(directions).exec_with_returning(db).await?;
 
     Ok(directions
         .into_iter()

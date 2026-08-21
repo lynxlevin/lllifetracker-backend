@@ -2,8 +2,8 @@ use std::future::Future;
 
 use sea_orm::{
     prelude::Expr, sea_query::NullOrdering::First, ActiveModelTrait, ColumnAsExpr, ColumnTrait, DbConn, DbErr,
-    EntityTrait, FromQueryResult, IntoActiveModel, JoinType::LeftJoin, ModelTrait, Order, QueryFilter, QueryOrder,
-    QuerySelect, RelationTrait, Select, Set,
+    EntityTrait, ExprTrait, FromQueryResult, IntoActiveModel, JoinType::LeftJoin, ModelTrait, Order, QueryFilter,
+    QueryOrder, QuerySelect, RelationTrait, Select, Set,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

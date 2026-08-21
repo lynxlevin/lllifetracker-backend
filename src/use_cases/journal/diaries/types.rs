@@ -1,11 +1,11 @@
 use db_adapters::diary_adapter::{DiaryUpdateKey, DiaryWithTag};
 use entities::{diary, prelude::Diary};
-use sea_orm::{DerivePartialModel, FromQueryResult};
+use sea_orm::DerivePartialModel;
 use serde::{Deserialize, Serialize};
 
 use crate::{journal::types::IntoJournalVisibleWithTags, tags::types::TagVisible};
 
-#[derive(Serialize, Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, DerivePartialModel, PartialEq, Debug)]
 #[sea_orm(entity = "Diary")]
 pub struct DiaryVisible {
     pub id: uuid::Uuid,

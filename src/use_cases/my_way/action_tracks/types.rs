@@ -1,9 +1,9 @@
 use chrono::{DateTime, FixedOffset};
 use entities::{action_track, prelude::ActionTrack};
-use sea_orm::{DerivePartialModel, FromQueryResult};
+use sea_orm::DerivePartialModel;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, DerivePartialModel, PartialEq, Debug)]
 #[sea_orm(entity = "ActionTrack")]
 pub struct ActionTrackVisible {
     pub id: uuid::Uuid,

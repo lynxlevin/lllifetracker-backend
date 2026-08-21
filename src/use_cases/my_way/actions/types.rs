@@ -1,5 +1,5 @@
 use chrono::{DateTime, FixedOffset};
-use sea_orm::{DerivePartialModel, FromQueryResult};
+use sea_orm::DerivePartialModel;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -7,7 +7,7 @@ use entities::{action, action_goal, prelude::Action, sea_orm_active_enums::Actio
 
 use crate::my_way::action_goals::types::ActionGoalVisible;
 
-#[derive(Serialize, Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, DerivePartialModel, PartialEq, Debug)]
 #[sea_orm(entity = "Action")]
 pub struct ActionVisible {
     pub id: Uuid,

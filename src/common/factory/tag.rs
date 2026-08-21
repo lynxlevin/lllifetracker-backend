@@ -85,7 +85,7 @@ pub async fn create_tags<'a>(
         TagType::Action => tag(user.id).action(param.action.unwrap()),
         TagType::Plain => tag(user.id).name(Some(param.name.to_string())),
     });
-    let tags = Entity::insert_many(tags).exec_with_returning_many(db).await?;
+    let tags = Entity::insert_many(tags).exec_with_returning(db).await?;
 
     Ok(tags
         .into_iter()

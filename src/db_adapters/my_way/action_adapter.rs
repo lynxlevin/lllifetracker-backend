@@ -2,11 +2,9 @@ use std::future::Future;
 
 use chrono::Utc;
 use sea_orm::{
-    sea_query::{IntoCondition, NullOrdering::Last},
-    ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel,
-    JoinType::LeftJoin,
-    ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait, Select, Set, TransactionError,
-    TransactionTrait,
+    sea_query::NullOrdering::Last, ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel,
+    JoinType::LeftJoin, ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait, Select, Set,
+    TransactionError, TransactionTrait,
 };
 use uuid::Uuid;
 
@@ -39,7 +37,7 @@ impl ActionJoin for ActionAdapter<'_> {
             LeftJoin,
             Relation::ActionGoal
                 .def()
-                .on_condition(|_left, _right| action_goal::Column::ToDate.is_null().into_condition()),
+                .on_condition(|_left, _right| action_goal::Column::ToDate.is_null().into()),
         );
         self
     }

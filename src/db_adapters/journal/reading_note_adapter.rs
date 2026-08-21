@@ -2,10 +2,9 @@ use std::future::Future;
 
 use chrono::{DateTime, FixedOffset, NaiveDate, Utc};
 use sea_orm::{
-    prelude::Expr, sea_query::NullOrdering::Last, sqlx::error::Error::Database, ActiveModelTrait, ColumnAsExpr,
-    ColumnTrait, Condition, DbConn, DbErr, DeriveColumn, EntityTrait, EnumIter, FromQueryResult, IntoActiveModel,
-    JoinType::LeftJoin, ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
-    RuntimeErr::SqlxError, Select, Set,
+    prelude::Expr, sea_query::NullOrdering::Last, ActiveModelTrait, ColumnAsExpr, ColumnTrait, Condition, DbConn,
+    DbErr, DeriveColumn, EntityTrait, EnumIter, ExprTrait, FromQueryResult, IntoActiveModel, JoinType::LeftJoin,
+    ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait, RuntimeErr::SqlxError, Select, Set,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -319,14 +318,16 @@ impl ReadingNoteMutation for ReadingNoteAdapter<'_> {
             tag_id: Set(tag_id),
         });
         reading_notes_tags::Entity::insert_many(tag_links)
-            .on_empty_do_nothing()
             .exec(self.db)
             .await
             .map(|_| ())
             .map_err(|e| match &e {
-                DbErr::Exec(SqlxError(Database(err))) => match err.constraint() {
-                    Some("fk-book_excerpts_tags-tag_id") => DbErr::Custom(CustomDbErr::NotFound.to_string()),
-                    _ => e,
+                DbErr::Query(SqlxError(err)) => match err.as_database_error() {
+                    Some(db_err) => match db_err.constraint() {
+                        Some("fk-book_excerpts_tags-tag_id") => DbErr::Custom(CustomDbErr::NotFound.to_string()),
+                        _ => e,
+                    },
+                    None => e,
                 },
                 _ => e,
             })

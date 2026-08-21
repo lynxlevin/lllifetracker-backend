@@ -1,11 +1,11 @@
 use chrono::NaiveDate;
-use sea_orm::{DerivePartialModel, FromQueryResult};
+use sea_orm::DerivePartialModel;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use entities::{action_goal, prelude::ActionGoal};
 
-#[derive(Serialize, Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, DerivePartialModel, PartialEq, Debug)]
 #[sea_orm(entity = "ActionGoal")]
 pub struct ActionGoalVisible {
     pub id: Uuid,

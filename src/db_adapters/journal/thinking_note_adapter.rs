@@ -4,9 +4,8 @@ use chrono::{DateTime, FixedOffset, Utc};
 use sea_orm::{
     prelude::Expr,
     sea_query::NullOrdering::{First, Last},
-    sqlx::error::Error::Database,
-    ActiveModelTrait, ColumnAsExpr, ColumnTrait, Condition, DbConn, DbErr, EntityTrait, FromQueryResult,
-    IntoActiveModel,
+    ActiveModelTrait, ColumnAsExpr, ColumnTrait, Condition, DbConn, DbErr, EntityTrait, ExprTrait,
+    FromQueryResult, IntoActiveModel,
     JoinType::LeftJoin,
     ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
     RuntimeErr::SqlxError,
@@ -306,14 +305,16 @@ impl ThinkingNoteMutation for ThinkingNoteAdapter<'_> {
             tag_id: Set(tag_id),
         });
         thinking_note_tags::Entity::insert_many(tag_links)
-            .on_empty_do_nothing()
             .exec(self.db)
             .await
             .map(|_| ())
             .map_err(|e| match &e {
-                DbErr::Exec(SqlxError(Database(err))) => match err.constraint() {
-                    Some("fk-thinking_note_tags-tag_id") => DbErr::Custom(CustomDbErr::NotFound.to_string()),
-                    _ => e,
+                DbErr::Query(SqlxError(err)) => match err.as_database_error() {
+                    Some(db_err) => match db_err.constraint() {
+                        Some("fk-thinking_note_tags-tag_id") => DbErr::Custom(CustomDbErr::NotFound.to_string()),
+                        _ => e,
+                    },
+                    None => e,
                 },
                 _ => e,
             })

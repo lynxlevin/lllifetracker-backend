@@ -84,7 +84,7 @@ pub async fn create_ambitions<'a>(
             .archived(param.archived)
             .ordering(param.ordering)
     });
-    let ambitions = Entity::insert_many(ambitions).exec_with_returning_many(db).await?;
+    let ambitions = Entity::insert_many(ambitions).exec_with_returning(db).await?;
 
     Ok(ambitions
         .into_iter()

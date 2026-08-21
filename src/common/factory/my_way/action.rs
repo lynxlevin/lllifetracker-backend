@@ -95,7 +95,7 @@ pub async fn create_actions<'a>(
             .ordering(param.ordering)
             .track_type(param.track_type.clone().or(Some(ActionTrackType::TimeSpan)).unwrap())
     });
-    let actions = Entity::insert_many(actions).exec_with_returning_many(db).await?;
+    let actions = Entity::insert_many(actions).exec_with_returning(db).await?;
 
     Ok(actions
         .into_iter()
