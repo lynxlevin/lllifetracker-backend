@@ -3,6 +3,7 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+#[sea_orm::model]
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "web_push_subscription")]
 pub struct Model {
@@ -15,24 +16,8 @@ pub struct Model {
     pub expiration_epoch_time: Option<i64>,
     pub p256dh_key: String,
     pub auth_key: String,
-}
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {
-    #[sea_orm(
-        belongs_to = "super::user::Entity",
-        from = "Column::UserId",
-        to = "super::user::Column::Id",
-        on_update = "NoAction",
-        on_delete = "Restrict"
-    )]
-    User,
-}
-
-impl Related<super::user::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::User.def()
-    }
+    #[sea_orm(belongs_to, from = "user_id", to = "id", on_update = "NoAction", on_delete = "Restrict")]
+    pub user: HasOne<super::user::Entity>,
 }
 
 impl ActiveModelBehavior for ActiveModel {}

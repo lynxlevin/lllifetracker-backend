@@ -3,6 +3,7 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+#[sea_orm::model]
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "thinking_note_tags")]
 pub struct Model {
@@ -10,38 +11,10 @@ pub struct Model {
     pub thinking_note_id: Uuid,
     #[sea_orm(primary_key, auto_increment = false)]
     pub tag_id: Uuid,
-}
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {
-    #[sea_orm(
-        belongs_to = "super::tag::Entity",
-        from = "Column::TagId",
-        to = "super::tag::Column::Id",
-        on_update = "NoAction",
-        on_delete = "Cascade"
-    )]
-    Tag,
-    #[sea_orm(
-        belongs_to = "super::thinking_note::Entity",
-        from = "Column::ThinkingNoteId",
-        to = "super::thinking_note::Column::Id",
-        on_update = "NoAction",
-        on_delete = "Cascade"
-    )]
-    ThinkingNote,
-}
-
-impl Related<super::tag::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Tag.def()
-    }
-}
-
-impl Related<super::thinking_note::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::ThinkingNote.def()
-    }
+    #[sea_orm(belongs_to, from = "tag_id", to = "id", on_update = "NoAction", on_delete = "Cascade")]
+    pub tag: HasOne<super::tag::Entity>,
+    #[sea_orm(belongs_to, from = "thinking_note_id", to = "id", on_update = "NoAction", on_delete = "Cascade")]
+    pub thinking_note: HasOne<super::thinking_note::Entity>,
 }
 
 impl ActiveModelBehavior for ActiveModel {}

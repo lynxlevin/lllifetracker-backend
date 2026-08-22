@@ -5,6 +5,7 @@ use std::{fmt::Display, str::FromStr};
 use sea_orm::{entity::prelude::*, sea_query::ValueTypeErr};
 use serde::{Deserialize, Serialize};
 
+#[sea_orm::model]
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "action")]
 pub struct Model {
@@ -20,56 +21,16 @@ pub struct Model {
     pub color: String,
     pub track_type: ActionTrackType,
     pub memo: Option<String>,
-}
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {
-    #[sea_orm(has_many = "super::action_goal::Entity")]
-    ActionGoal,
-    #[sea_orm(has_many = "super::action_track::Entity")]
-    ActionTrack,
-    #[sea_orm(has_many = "super::notification_rule::Entity")]
-    NotificationRule,
-    #[sea_orm(has_one = "super::tag::Entity")]
-    Tag,
-    #[sea_orm(
-        belongs_to = "super::user::Entity",
-        from = "Column::UserId",
-        to = "super::user::Column::Id",
-        on_update = "NoAction",
-        on_delete = "Cascade"
-    )]
-    User,
-}
-
-impl Related<super::action_goal::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::ActionGoal.def()
-    }
-}
-
-impl Related<super::action_track::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::ActionTrack.def()
-    }
-}
-
-impl Related<super::notification_rule::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::NotificationRule.def()
-    }
-}
-
-impl Related<super::tag::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Tag.def()
-    }
-}
-
-impl Related<super::user::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::User.def()
-    }
+    #[sea_orm(has_many)]
+    pub action_goals: HasMany<super::action_goal::Entity>,
+    #[sea_orm(has_many)]
+    pub action_tracks: HasMany<super::action_track::Entity>,
+    #[sea_orm(has_many)]
+    pub notification_rules: HasMany<super::notification_rule::Entity>,
+    #[sea_orm(has_one)]
+    pub tag: HasOne<super::tag::Entity>,
+    #[sea_orm(belongs_to, from = "user_id", to = "id", on_update = "NoAction", on_delete = "Cascade")]
+    pub user: HasOne<super::user::Entity>,
 }
 
 #[derive(DeriveValueType, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

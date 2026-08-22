@@ -3,6 +3,7 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+#[sea_orm::model]
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "thinking_note")]
 pub struct Model {
@@ -16,41 +17,10 @@ pub struct Model {
     pub resolved_at: Option<DateTimeWithTimeZone>,
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-}
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {
-    #[sea_orm(has_many = "super::thinking_note_tags::Entity")]
-    ThinkingNoteTags,
-    #[sea_orm(
-        belongs_to = "super::user::Entity",
-        from = "Column::UserId",
-        to = "super::user::Column::Id",
-        on_update = "NoAction",
-        on_delete = "Cascade"
-    )]
-    User,
-}
-
-impl Related<super::thinking_note_tags::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::ThinkingNoteTags.def()
-    }
-}
-
-impl Related<super::user::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::User.def()
-    }
-}
-
-impl Related<super::tag::Entity> for Entity {
-    fn to() -> RelationDef {
-        super::thinking_note_tags::Relation::Tag.def()
-    }
-    fn via() -> Option<RelationDef> {
-        Some(super::thinking_note_tags::Relation::ThinkingNote.def().rev())
-    }
+    #[sea_orm(belongs_to, from = "user_id", to = "id", on_update = "NoAction", on_delete = "Cascade")]
+    pub user: HasOne<super::user::Entity>,
+    #[sea_orm(has_many, via = "thinking_note_tags")]
+    pub tags: HasMany<super::tag::Entity>,
 }
 
 impl ActiveModelBehavior for ActiveModel {}

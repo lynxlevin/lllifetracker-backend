@@ -3,6 +3,7 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+#[sea_orm::model]
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "direction_category")]
 pub struct Model {
@@ -11,32 +12,10 @@ pub struct Model {
     pub user_id: Uuid,
     pub name: String,
     pub ordering: Option<i32>,
-}
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {
-    #[sea_orm(has_many = "super::direction::Entity")]
-    Direction,
-    #[sea_orm(
-        belongs_to = "super::user::Entity",
-        from = "Column::UserId",
-        to = "super::user::Column::Id",
-        on_update = "NoAction",
-        on_delete = "Cascade"
-    )]
-    User,
-}
-
-impl Related<super::direction::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Direction.def()
-    }
-}
-
-impl Related<super::user::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::User.def()
-    }
+    #[sea_orm(has_many)]
+    pub directions: HasMany<super::direction::Entity>,
+    #[sea_orm(belongs_to, from = "user_id", to = "id", on_update = "NoAction", on_delete = "Cascade")]
+    pub user: HasOne<super::user::Entity>,
 }
 
 impl ActiveModelBehavior for ActiveModel {}

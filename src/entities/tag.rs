@@ -5,6 +5,7 @@ use std::{cmp::Ordering, fmt::Display, str::FromStr};
 use sea_orm::{entity::prelude::*, sea_query::ValueTypeErr};
 use serde::{Deserialize, Serialize};
 
+#[sea_orm::model]
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "tag")]
 pub struct Model {
@@ -20,117 +21,20 @@ pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub name: Option<String>,
     pub r#type: TagType,
-}
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {
-    #[sea_orm(
-        belongs_to = "super::action::Entity",
-        from = "Column::ActionId",
-        to = "super::action::Column::Id",
-        on_update = "NoAction",
-        on_delete = "Cascade"
-    )]
-    Action,
-    #[sea_orm(
-        belongs_to = "super::ambition::Entity",
-        from = "Column::AmbitionId",
-        to = "super::ambition::Column::Id",
-        on_update = "NoAction",
-        on_delete = "Cascade"
-    )]
-    Ambition,
-    #[sea_orm(has_many = "super::diaries_tags::Entity")]
-    DiariesTags,
-    #[sea_orm(
-        belongs_to = "super::direction::Entity",
-        from = "Column::DirectionId",
-        to = "super::direction::Column::Id",
-        on_update = "NoAction",
-        on_delete = "Cascade"
-    )]
-    Direction,
-    #[sea_orm(has_many = "super::reading_notes_tags::Entity")]
-    ReadingNotesTags,
-    #[sea_orm(has_many = "super::thinking_note_tags::Entity")]
-    ThinkingNoteTags,
-    #[sea_orm(
-        belongs_to = "super::user::Entity",
-        from = "Column::UserId",
-        to = "super::user::Column::Id",
-        on_update = "NoAction",
-        on_delete = "Cascade"
-    )]
-    User,
-}
-
-impl Related<super::action::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Action.def()
-    }
-}
-
-impl Related<super::ambition::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Ambition.def()
-    }
-}
-
-impl Related<super::diaries_tags::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::DiariesTags.def()
-    }
-}
-
-impl Related<super::direction::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Direction.def()
-    }
-}
-
-impl Related<super::reading_notes_tags::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::ReadingNotesTags.def()
-    }
-}
-
-impl Related<super::thinking_note_tags::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::ThinkingNoteTags.def()
-    }
-}
-
-impl Related<super::user::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::User.def()
-    }
-}
-
-impl Related<super::diary::Entity> for Entity {
-    fn to() -> RelationDef {
-        super::diaries_tags::Relation::Diary.def()
-    }
-    fn via() -> Option<RelationDef> {
-        Some(super::diaries_tags::Relation::Tag.def().rev())
-    }
-}
-
-impl Related<super::reading_note::Entity> for Entity {
-    fn to() -> RelationDef {
-        super::reading_notes_tags::Relation::ReadingNote.def()
-    }
-    fn via() -> Option<RelationDef> {
-        Some(super::reading_notes_tags::Relation::Tag.def().rev())
-    }
-}
-
-impl Related<super::thinking_note::Entity> for Entity {
-    fn to() -> RelationDef {
-        super::thinking_note_tags::Relation::ThinkingNote.def()
-    }
-    fn via() -> Option<RelationDef> {
-        Some(super::thinking_note_tags::Relation::Tag.def().rev())
-    }
+    #[sea_orm(belongs_to, from = "action_id", to = "id", on_update = "NoAction", on_delete = "Cascade")]
+    pub action_item: HasOne<super::action::Entity>,
+    #[sea_orm(belongs_to, from = "ambition_id", to = "id", on_update = "NoAction", on_delete = "Cascade")]
+    pub ambition: HasOne<super::ambition::Entity>,
+    #[sea_orm(belongs_to, from = "direction_id", to = "id", on_update = "NoAction", on_delete = "Cascade")]
+    pub direction: HasOne<super::direction::Entity>,
+    #[sea_orm(belongs_to, from = "user_id", to = "id", on_update = "NoAction", on_delete = "Cascade")]
+    pub user: HasOne<super::user::Entity>,
+    #[sea_orm(has_many, via = "diaries_tags")]
+    pub diaries: HasMany<super::diary::Entity>,
+    #[sea_orm(has_many, via = "reading_notes_tags")]
+    pub reading_notes: HasMany<super::reading_note::Entity>,
+    #[sea_orm(has_many, via = "thinking_note_tags")]
+    pub thinking_notes: HasMany<super::thinking_note::Entity>,
 }
 
 #[derive(DeriveValueType, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]

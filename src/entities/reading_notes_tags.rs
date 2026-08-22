@@ -3,6 +3,7 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+#[sea_orm::model]
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "reading_notes_tags")]
 pub struct Model {
@@ -10,38 +11,10 @@ pub struct Model {
     pub reading_note_id: Uuid,
     #[sea_orm(primary_key, auto_increment = false)]
     pub tag_id: Uuid,
-}
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {
-    #[sea_orm(
-        belongs_to = "super::reading_note::Entity",
-        from = "Column::ReadingNoteId",
-        to = "super::reading_note::Column::Id",
-        on_update = "NoAction",
-        on_delete = "Cascade"
-    )]
-    ReadingNote,
-    #[sea_orm(
-        belongs_to = "super::tag::Entity",
-        from = "Column::TagId",
-        to = "super::tag::Column::Id",
-        on_update = "NoAction",
-        on_delete = "Cascade"
-    )]
-    Tag,
-}
-
-impl Related<super::reading_note::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::ReadingNote.def()
-    }
-}
-
-impl Related<super::tag::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Tag.def()
-    }
+    #[sea_orm(belongs_to, from = "reading_note_id", to = "id", on_update = "NoAction", on_delete = "Cascade")]
+    pub reading_note: HasOne<super::reading_note::Entity>,
+    #[sea_orm(belongs_to, from = "tag_id", to = "id", on_update = "NoAction", on_delete = "Cascade")]
+    pub tag: HasOne<super::tag::Entity>,
 }
 
 impl ActiveModelBehavior for ActiveModel {}

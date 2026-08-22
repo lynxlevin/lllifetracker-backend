@@ -3,6 +3,7 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+#[sea_orm::model]
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "action_goal")]
 pub struct Model {
@@ -18,38 +19,10 @@ pub struct Model {
     pub to_date: Option<Date>,
     pub duration_seconds: Option<i32>,
     pub count: Option<i32>,
-}
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {
-    #[sea_orm(
-        belongs_to = "super::action::Entity",
-        from = "Column::ActionId",
-        to = "super::action::Column::Id",
-        on_update = "NoAction",
-        on_delete = "Cascade"
-    )]
-    Action,
-    #[sea_orm(
-        belongs_to = "super::user::Entity",
-        from = "Column::UserId",
-        to = "super::user::Column::Id",
-        on_update = "NoAction",
-        on_delete = "Cascade"
-    )]
-    User,
-}
-
-impl Related<super::action::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Action.def()
-    }
-}
-
-impl Related<super::user::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::User.def()
-    }
+    #[sea_orm(belongs_to, from = "action_id", to = "id", on_update = "NoAction", on_delete = "Cascade")]
+    pub action_item: HasOne<super::action::Entity>,
+    #[sea_orm(belongs_to, from = "user_id", to = "id", on_update = "NoAction", on_delete = "Cascade")]
+    pub user: HasOne<super::user::Entity>,
 }
 
 impl ActiveModelBehavior for ActiveModel {}

@@ -6,6 +6,7 @@ use chrono::{DateTime, FixedOffset, Utc};
 use sea_orm::{entity::prelude::*, sea_query::ValueTypeErr};
 use serde::{Deserialize, Serialize};
 
+#[sea_orm::model]
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "user")]
 pub struct Model {
@@ -21,106 +22,30 @@ pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
     pub first_track_at: Option<DateTimeWithTimeZone>,
-}
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {
-    #[sea_orm(has_many = "super::action::Entity")]
-    Action,
-    #[sea_orm(has_many = "super::action_goal::Entity")]
-    ActionGoal,
-    #[sea_orm(has_many = "super::action_track::Entity")]
-    ActionTrack,
-    #[sea_orm(has_many = "super::ambition::Entity")]
-    Ambition,
-    #[sea_orm(has_many = "super::diary::Entity")]
-    Diary,
-    #[sea_orm(has_many = "super::direction::Entity")]
-    Direction,
-    #[sea_orm(has_many = "super::direction_category::Entity")]
-    DirectionCategory,
-    #[sea_orm(has_many = "super::notification_rule::Entity")]
-    NotificationRule,
-    #[sea_orm(has_many = "super::reading_note::Entity")]
-    ReadingNote,
-    #[sea_orm(has_many = "super::tag::Entity")]
-    Tag,
-    #[sea_orm(has_many = "super::thinking_note::Entity")]
-    ThinkingNote,
-    #[sea_orm(has_one = "super::web_push_subscription::Entity")]
-    WebPushSubscription,
-}
-
-impl Related<super::action::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Action.def()
-    }
-}
-
-impl Related<super::action_goal::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::ActionGoal.def()
-    }
-}
-
-impl Related<super::action_track::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::ActionTrack.def()
-    }
-}
-
-impl Related<super::ambition::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Ambition.def()
-    }
-}
-
-impl Related<super::diary::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Diary.def()
-    }
-}
-
-impl Related<super::direction::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Direction.def()
-    }
-}
-
-impl Related<super::direction_category::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::DirectionCategory.def()
-    }
-}
-
-impl Related<super::notification_rule::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::NotificationRule.def()
-    }
-}
-
-impl Related<super::reading_note::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::ReadingNote.def()
-    }
-}
-
-impl Related<super::tag::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Tag.def()
-    }
-}
-
-impl Related<super::thinking_note::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::ThinkingNote.def()
-    }
-}
-
-impl Related<super::web_push_subscription::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::WebPushSubscription.def()
-    }
+    #[sea_orm(has_many)]
+    pub actions: HasMany<super::action::Entity>,
+    #[sea_orm(has_many)]
+    pub action_goals: HasMany<super::action_goal::Entity>,
+    #[sea_orm(has_many)]
+    pub action_tracks: HasMany<super::action_track::Entity>,
+    #[sea_orm(has_many)]
+    pub ambitions: HasMany<super::ambition::Entity>,
+    #[sea_orm(has_many)]
+    pub diaries: HasMany<super::diary::Entity>,
+    #[sea_orm(has_many)]
+    pub directions: HasMany<super::direction::Entity>,
+    #[sea_orm(has_many)]
+    pub direction_categories: HasMany<super::direction_category::Entity>,
+    #[sea_orm(has_many)]
+    pub notification_rules: HasMany<super::notification_rule::Entity>,
+    #[sea_orm(has_many)]
+    pub reading_notes: HasMany<super::reading_note::Entity>,
+    #[sea_orm(has_many)]
+    pub tags: HasMany<super::tag::Entity>,
+    #[sea_orm(has_many)]
+    pub thinking_notes: HasMany<super::thinking_note::Entity>,
+    #[sea_orm(has_one)]
+    pub web_push_subscription: HasOne<super::web_push_subscription::Entity>,
 }
 
 #[derive(DeriveValueType, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
