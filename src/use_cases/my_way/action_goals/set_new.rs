@@ -11,7 +11,8 @@ use db_adapters::{
     },
 };
 use entities::{
-    action, custom_methods::user::UserTimezoneTrait, sea_orm_active_enums::ActionTrackType, user as user_entity,
+    action::{self, ActionTrackType},
+    user as user_entity,
 };
 
 pub async fn set_new_action_goal<'a>(
@@ -102,7 +103,7 @@ fn _parse_params(
         return Err(UseCaseError::BadRequest(message.to_string()));
     }
 
-    let user_today = user.to_user_timezone(Utc::now()).date_naive();
+    let user_today = user.timezone.convert_utc(Utc::now()).date_naive();
 
     Ok((
         CreateActionGoalParams {

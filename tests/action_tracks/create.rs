@@ -1,5 +1,6 @@
 use actix_web::{http, test, HttpMessage};
 use chrono::{DateTime, SubsecRound, Utc};
+use entities::{action::ActionTrackType, action_track};
 use sea_orm::{ActiveModelTrait, DbErr, EntityTrait};
 use use_cases::my_way::action_tracks::types::{ActionTrackCreateRequest, ActionTrackVisible};
 
@@ -7,7 +8,6 @@ use crate::utils::Connections;
 
 use super::super::utils::init_app;
 use common::factory::{self, *};
-use entities::{sea_orm_active_enums::*, *};
 
 #[actix_web::test]
 async fn happy_path_time_span_type() -> Result<(), DbErr> {
@@ -111,6 +111,8 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 
 #[cfg(test)]
 mod user_first_track_at_update {
+    use entities::user;
+
     use super::*;
 
     #[actix_web::test]

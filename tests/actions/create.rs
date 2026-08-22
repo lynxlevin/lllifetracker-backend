@@ -7,9 +7,8 @@ use crate::utils::Connections;
 use super::super::utils::init_app;
 use common::factory;
 use entities::{
-    action,
-    sea_orm_active_enums::{ActionTrackType, TagType},
-    tag,
+    action::{self, ActionTrackType},
+    tag::{self, TagType},
 };
 
 #[actix_web::test]

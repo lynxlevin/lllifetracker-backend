@@ -6,10 +6,7 @@ use sea_orm::{
 };
 use uuid::Uuid;
 
-use entities::{
-    sea_orm_active_enums::TimezoneEnum,
-    user::{ActiveModel, Column, Entity, Model},
-};
+use entities::user::{ActiveModel, Column, Entity, Model, TimezoneEnum};
 
 #[derive(Clone)]
 pub struct UserAdapter<'a> {

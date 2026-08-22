@@ -3,7 +3,11 @@ use sea_orm::DerivePartialModel;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use entities::{action, action_goal, prelude::Action, sea_orm_active_enums::ActionTrackType};
+use entities::{
+    action::{self, ActionTrackType},
+    action_goal,
+    prelude::Action,
+};
 
 use crate::my_way::action_goals::types::ActionGoalVisible;
 

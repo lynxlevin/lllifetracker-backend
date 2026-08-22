@@ -8,7 +8,8 @@ use crate::utils::Connections;
 use super::super::utils::init_app;
 use common::factory::{self, *};
 use entities::{
-    action, action_goal, custom_methods::user::UserTimezoneTrait, sea_orm_active_enums::ActionTrackType,
+    action::{self, ActionTrackType},
+    action_goal,
 };
 
 #[actix_web::test]
@@ -160,7 +161,7 @@ async fn delete_todays_existing_action_goal() -> Result<(), DbErr> {
     let user = factory::user().insert(&db).await?;
     let action = factory::action(user.id).insert(&db).await?;
     let existing_goal = factory::action_goal(user.id, action.id)
-        .from_date(user.to_user_timezone(Utc::now()).date_naive())
+        .from_date(user.timezone.convert_utc(Utc::now()).date_naive())
         .insert(&db)
         .await?;
 

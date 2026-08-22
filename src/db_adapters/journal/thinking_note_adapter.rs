@@ -16,8 +16,7 @@ use uuid::Uuid;
 
 use entities::{
     action, ambition, direction,
-    sea_orm_active_enums::TagType,
-    tag,
+    tag::{self, TagType},
     thinking_note::{ActiveModel, Column, Entity, Model},
     thinking_note_tags, user,
 };

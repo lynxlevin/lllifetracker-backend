@@ -2,8 +2,7 @@ use std::collections::HashMap;
 
 use entities::{
     action, ambition, direction,
-    sea_orm_active_enums::TagType,
-    tag::{ActiveModel, Entity, Model},
+    tag::{ActiveModel, Entity, Model, TagType},
     user,
 };
 use sea_orm::{ActiveValue::NotSet, DbConn, DbErr, EntityTrait, Set};

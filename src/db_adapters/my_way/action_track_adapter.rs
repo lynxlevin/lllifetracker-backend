@@ -11,8 +11,7 @@ use crate::CustomDbErr;
 use entities::{
     action,
     action_track::{ActiveModel, Column, Entity, Model, Relation},
-    sea_orm_active_enums::TimezoneEnum,
-    user,
+    user::{self, TimezoneEnum},
 };
 
 #[derive(Clone)]

@@ -13,7 +13,7 @@ use db_adapters::{
         NotificationRuleAdapter, NotificationRuleFilter, NotificationRuleOrder, NotificationRuleQuery,
     },
 };
-use entities::{notification_rule, sea_orm_active_enums::NotificationType};
+use entities::notification_rule::{self, NotificationType};
 
 #[derive(Debug)]
 enum NotificationChoice {

@@ -13,8 +13,8 @@ use entities::{
     action, ambition, direction,
     reading_note::{ActiveModel, Column, Entity, Model},
     reading_notes_tags,
-    sea_orm_active_enums::TagType,
-    tag, user,
+    tag::{self, TagType},
+    user,
 };
 
 use crate::{tag_adapter::TagWithName, CustomDbErr};

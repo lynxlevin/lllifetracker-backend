@@ -17,8 +17,8 @@ use uuid::Uuid;
 use entities::{
     direction::{ActiveModel, Column, Entity, Model, Relation},
     direction_category,
-    sea_orm_active_enums::TagType,
-    tag, user,
+    tag::{self, TagType},
+    user,
 };
 
 #[derive(Clone)]

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 
 use chrono::{
     TimeDelta,
@@ -7,12 +7,7 @@ use chrono::{
 use db_adapters::notification_rule_adapter::{
     NotificationRuleAdapter, NotificationRuleFilter, NotificationRuleQuery,
 };
-use entities::{
-    custom_methods::{notification_rule::NotificationRuleTrait, user::UserTimezoneTrait},
-    sea_orm_active_enums::NotificationType,
-    user as user_entity,
-};
-use sea_orm::ActiveEnum;
+use entities::{notification_rule::NotificationType, user as user_entity};
 
 use crate::{
     notification::notification_rule::types::{NotificationRuleVisible, RecurrenceType},
@@ -29,7 +24,7 @@ pub async fn list_notification_rules<'a>(
         .await
         .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
 
-    let user_timezone_offset = user.get_user_timezone_offset();
+    let user_timezone_offset = user.timezone.to_timezone_offset();
     let mut res = notification_rules
         .iter()
         .fold(HashMap::new(), |mut acc, rule| {
@@ -43,7 +38,7 @@ pub async fn list_notification_rules<'a>(
                 weekday = weekday.pred()
             }
 
-            let key = (rule.r#type.to_value(), rule.action_id, time);
+            let key = (rule.r#type.to_string(), rule.action_id, time);
             acc.entry(key).or_insert(vec![]).push(weekday);
             acc
         })
@@ -58,13 +53,13 @@ pub async fn list_notification_rules<'a>(
                 _ => RecurrenceType::Unknown,
             };
             NotificationRuleVisible {
-                r#type: NotificationType::try_from_value(&rule_sets.0 .0).unwrap(),
+                r#type: NotificationType::from_str(&rule_sets.0 .0).unwrap(),
                 recurrence_type,
                 time: rule_sets.0 .2,
             }
         })
         .collect::<Vec<_>>();
 
-    res.sort_by_key(|rule| rule.r#type.clone().into_value());
+    res.sort_by_key(|rule| rule.r#type.clone().to_string());
     Ok(res)
 }

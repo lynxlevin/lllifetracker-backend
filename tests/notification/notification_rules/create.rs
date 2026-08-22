@@ -3,10 +3,7 @@ use chrono::{
     NaiveTime,
     Weekday::{self, Fri, Mon, Sat, Sun, Thu, Tue, Wed},
 };
-use entities::{
-    notification_rule::{Column, Entity},
-    sea_orm_active_enums::NotificationType,
-};
+use entities::notification_rule::{Column, Entity, NotificationType};
 use sea_orm::{ActiveModelTrait, ColumnTrait, DbErr, EntityTrait, QueryFilter, QueryOrder};
 use use_cases::notification::notification_rule::types::{NotificationRuleCreateRequest, RecurrenceType};
 

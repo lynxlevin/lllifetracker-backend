@@ -13,8 +13,8 @@ use entities::{
     action, ambition, diaries_tags,
     diary::{ActiveModel, Column, Entity, Model},
     direction,
-    sea_orm_active_enums::TagType,
-    tag, user,
+    tag::{self, TagType},
+    user,
 };
 
 use crate::{tag_adapter::TagWithName, CustomDbErr};

@@ -10,8 +10,7 @@ use uuid::Uuid;
 
 use entities::{
     action, ambition, direction,
-    sea_orm_active_enums::TagType,
-    tag::{self, ActiveModel, Column, Entity, Model, Relation},
+    tag::{ActiveModel, Column, Entity, Model, Relation, TagType},
     user,
 };
 
@@ -114,8 +113,8 @@ pub struct TagWithName {
     pub r#type: TagType,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
 }
-impl From<(&tag::Model, String)> for TagWithName {
-    fn from(value: (&tag::Model, String)) -> Self {
+impl From<(&Model, String)> for TagWithName {
+    fn from(value: (&Model, String)) -> Self {
         Self { id: value.0.id, name: value.1, r#type: value.0.r#type.clone(), created_at: value.0.created_at }
     }
 }

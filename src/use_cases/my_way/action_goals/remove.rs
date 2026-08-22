@@ -6,7 +6,7 @@ use db_adapters::{
         ActionGoalAdapter, ActionGoalFilter, ActionGoalMutation, ActionGoalQuery, UpdateActionGoalParams,
     },
 };
-use entities::{custom_methods::user::UserTimezoneTrait, user as user_entity};
+use entities::user as user_entity;
 use uuid::Uuid;
 
 pub async fn remove_action_goal<'a>(
@@ -36,7 +36,7 @@ pub async fn remove_action_goal<'a>(
 
     match active_action_goal {
         Some(active_action_goal) => {
-            let user_today = user.to_user_timezone(Utc::now()).date_naive();
+            let user_today = user.timezone.convert_utc(Utc::now()).date_naive();
             if active_action_goal.from_date == user_today {
                 action_goal_adapter
                     .delete(active_action_goal)

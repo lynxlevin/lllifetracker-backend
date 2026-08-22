@@ -9,10 +9,10 @@ use sea_orm::{
 use uuid::Uuid;
 
 use entities::{
-    action::{ActiveModel, Column, Entity, Model, Relation},
+    action::{ActionTrackType, ActiveModel, Column, Entity, Model, Relation},
     action_goal,
-    sea_orm_active_enums::{ActionTrackType, TagType},
-    tag, user,
+    tag::{self, TagType},
+    user,
 };
 
 #[derive(Clone)]

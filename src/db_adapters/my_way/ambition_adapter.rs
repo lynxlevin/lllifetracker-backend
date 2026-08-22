@@ -10,8 +10,8 @@ use uuid::Uuid;
 
 use entities::{
     ambition::{ActiveModel, Column, Entity, Model},
-    sea_orm_active_enums::TagType,
-    tag, user,
+    tag::{self, TagType},
+    user,
 };
 
 #[derive(Clone)]

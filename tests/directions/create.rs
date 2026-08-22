@@ -7,7 +7,10 @@ use crate::utils::Connections;
 
 use super::super::utils::init_app;
 use common::factory;
-use entities::{direction, sea_orm_active_enums::TagType, tag};
+use entities::{
+    direction,
+    tag::{self, TagType},
+};
 
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {

@@ -11,7 +11,7 @@ use db_adapters::{
     action_track_adapter::{ActionTrackAdapter, ActionTrackFilter, ActionTrackOrder, ActionTrackQuery},
     Order,
 };
-use entities::{custom_methods::user::UserTimezoneTrait, sea_orm_active_enums::TimezoneEnum, user as user_entity};
+use entities::user::{self as user_entity, TimezoneEnum};
 
 pub async fn aggregate_daily_action_tracks<'a>(
     user: user_entity::Model,
@@ -33,7 +33,7 @@ pub async fn aggregate_daily_action_tracks<'a>(
 
     let mut aggregation_items: Vec<ActionTrackDailyAggregationItem> = vec![];
     for track in action_tracks {
-        let date = user.to_user_timezone(track.started_at.to_utc()).day();
+        let date = user.timezone.convert_utc(track.started_at.to_utc()).day();
         if aggregation_items.is_empty() || aggregation_items.last().unwrap().date != date {
             aggregation_items.push(ActionTrackDailyAggregationItem {
                 date,

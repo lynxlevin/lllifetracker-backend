@@ -7,8 +7,7 @@ use sea_orm::{
 };
 
 use entities::{
-    notification_rule::{ActiveModel, Column, Entity, Model},
-    sea_orm_active_enums::NotificationType,
+    notification_rule::{ActiveModel, Column, Entity, Model, NotificationType},
     user,
 };
 use uuid::Uuid;

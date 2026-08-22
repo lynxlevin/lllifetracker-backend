@@ -1,6 +1,6 @@
 use chrono::NaiveTime;
 
-use entities::sea_orm_active_enums::NotificationType;
+use entities::notification_rule::NotificationType;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Debug, Serialize, PartialEq, Clone)]

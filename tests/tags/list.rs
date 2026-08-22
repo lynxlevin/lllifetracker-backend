@@ -1,5 +1,5 @@
 use actix_web::{http, test, HttpMessage};
-use entities::sea_orm_active_enums::TagType;
+use entities::tag::TagType;
 use sea_orm::{ActiveModelTrait, DbErr};
 use use_cases::tags::types::TagVisible;
 

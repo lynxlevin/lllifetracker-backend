@@ -1,8 +1,8 @@
 use chrono::Utc;
 use entities::{
     direction::{ActiveModel, Entity, Model},
-    sea_orm_active_enums::TagType,
-    tag, user,
+    tag::{self, TagType},
+    user,
 };
 use sea_orm::{ActiveModelTrait, ActiveValue::NotSet, DbConn, DbErr, EntityTrait, Set};
 use std::{collections::HashMap, future::Future};

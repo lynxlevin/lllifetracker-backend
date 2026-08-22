@@ -1,6 +1,6 @@
 use actix_web::{http, test, HttpMessage};
 use chrono::NaiveTime;
-use entities::sea_orm_active_enums::NotificationType;
+use entities::notification_rule::NotificationType;
 use sea_orm::{ActiveModelTrait, DbErr};
 use use_cases::notification::notification_rule::types::{NotificationRuleVisible, RecurrenceType};
 
