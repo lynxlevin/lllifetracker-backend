@@ -5,6 +5,7 @@ use std::{fmt::Display, str::FromStr};
 use sea_orm::{entity::prelude::*, sea_query::ValueTypeErr};
 use serde::{Deserialize, Serialize};
 
+// MYMEMO: マイグレーション問題なく動くか確認
 #[sea_orm::model]
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "action")]
@@ -18,6 +19,7 @@ pub struct Model {
     pub discipline: Option<String>,
     pub archived: bool,
     pub ordering: Option<i32>,
+    #[sea_orm(column_type = "String(StringLen::N(7))")]
     pub color: String,
     pub track_type: ActionTrackType,
     pub memo: Option<String>,

@@ -9,13 +9,12 @@ use serde::{Deserialize, Serialize};
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
-    #[sea_orm(unique_key = "action_goal_to_date_unique_index")]
+    #[sea_orm(unique_key = "action_goal_from_date_unique_index")]
     pub user_id: Uuid,
-    #[sea_orm(unique_key = "action_goal_to_date_unique_index")]
+    #[sea_orm(unique_key = "action_goal_from_date_unique_index")]
     pub action_id: Uuid,
     #[sea_orm(unique_key = "action_goal_from_date_unique_index")]
     pub from_date: Date,
-    #[sea_orm(unique_key = "action_goal_to_date_unique_index")]
     pub to_date: Option<Date>,
     pub duration_seconds: Option<i32>,
     pub count: Option<i32>,

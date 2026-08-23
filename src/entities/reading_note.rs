@@ -10,6 +10,7 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
     pub user_id: Uuid,
+    #[sea_orm(column_type = "String(StringLen::N(64))")]
     pub title: String,
     pub page_number: i16,
     #[sea_orm(column_type = "Text")]

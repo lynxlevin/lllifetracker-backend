@@ -11,6 +11,7 @@ pub struct Model {
     pub id: Uuid,
     #[sea_orm(unique)]
     pub user_id: Uuid,
+    #[sea_orm(column_type = "String(StringLen::N(64))")]
     pub device_name: String,
     pub endpoint: String,
     pub expiration_epoch_time: Option<i64>,
