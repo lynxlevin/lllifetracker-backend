@@ -7,6 +7,7 @@ use sea_orm_migration::{
     },
     schema::string,
     sea_orm::{ActiveEnum, DeriveActiveEnum},
+    sea_query::Index,
 };
 
 #[derive(DeriveMigrationName)]
@@ -61,6 +62,10 @@ impl MigrationTrait for Migration {
             .await?;
         manager
             .drop_type(Type::drop().if_exists().name(NotificationType::name()).to_owned())
+            .await?;
+
+        manager
+            .drop_index(Index::drop().name("action_goal_to_date_unique_index").to_owned())
             .await?;
         Ok(())
     }
