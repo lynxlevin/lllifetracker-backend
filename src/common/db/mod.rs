@@ -32,12 +32,22 @@ pub async fn init_test_db(settings: &Settings) -> () {
     db.db
         .execute_unprepared(
             "DROP TABLE IF EXISTS
-            friendship,
-            note,
-            note_permission,
             \"user\",
+            action_goal,
+            action,
+            action_track,
+            ambition,
+            diaries_tags,
+            diary,
+            direction,
+            direction_category,
+            notification_rule,
+            reading_note,
+            reading_notes_tags,
             tag,
-            tags_notes,
+            thinking_note,
+            thinking_note_tags,
+            web_push_subscription,
             CASCADE;
         ",
         )
