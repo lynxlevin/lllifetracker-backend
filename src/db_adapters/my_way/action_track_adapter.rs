@@ -175,6 +175,9 @@ impl ActionTrackMutation for ActionTrackAdapter<'_> {
                     Some("action_tracks_user_id_action_id_started_at_unique_index") => {
                         DbErr::Custom(CustomDbErr::Duplicate.to_string())
                     }
+                    Some("idx-action_track-action_tracks_user_id_action_id_started_at_uni") => {
+                        DbErr::Custom(CustomDbErr::Duplicate.to_string())
+                    }
                     _ => e,
                 },
                 None => e,
@@ -193,6 +196,9 @@ impl ActionTrackMutation for ActionTrackAdapter<'_> {
             DbErr::Query(SqlxError(err)) => match err.as_database_error() {
                 Some(db_err) => match db_err.constraint() {
                     Some("action_tracks_user_id_action_id_started_at_unique_index") => {
+                        DbErr::Custom(CustomDbErr::Duplicate.to_string())
+                    }
+                    Some("idx-action_track-action_tracks_user_id_action_id_started_at_uni") => {
                         DbErr::Custom(CustomDbErr::Duplicate.to_string())
                     }
                     _ => e,

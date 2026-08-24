@@ -325,6 +325,7 @@ impl ReadingNoteMutation for ReadingNoteAdapter<'_> {
                 DbErr::Query(SqlxError(err)) => match err.as_database_error() {
                     Some(db_err) => match db_err.constraint() {
                         Some("fk-book_excerpts_tags-tag_id") => DbErr::Custom(CustomDbErr::NotFound.to_string()),
+                        Some("fk-reading_notes_tags-tag_id") => DbErr::Custom(CustomDbErr::NotFound.to_string()),
                         _ => e,
                     },
                     None => e,

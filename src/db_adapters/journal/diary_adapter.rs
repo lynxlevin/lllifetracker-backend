@@ -254,16 +254,6 @@ impl DiaryMutation for DiaryAdapter<'_> {
         }
         .insert(self.db)
         .await
-        .map_err(|e| match &e {
-            DbErr::Query(SqlxError(err)) => match err.as_database_error() {
-                Some(db_err) => match db_err.constraint() {
-                    Some("diaries_user_id_date_unique_index") => DbErr::Custom(CustomDbErr::Duplicate.to_string()),
-                    _ => e,
-                },
-                None => e,
-            },
-            _ => e,
-        })
     }
 
     async fn partial_update(self, diary: Model, params: UpdateDiaryParams) -> Result<Model, DbErr> {
@@ -274,16 +264,7 @@ impl DiaryMutation for DiaryAdapter<'_> {
         if params.update_keys.contains(&DiaryUpdateKey::Date) {
             diary.date = Set(params.date);
         }
-        diary.update(self.db).await.map_err(|e| match &e {
-            DbErr::Query(SqlxError(err)) => match err.as_database_error() {
-                Some(db_err) => match db_err.constraint() {
-                    Some("diaries_user_id_date_unique_index") => DbErr::Custom(CustomDbErr::Duplicate.to_string()),
-                    _ => e,
-                },
-                None => e,
-            },
-            _ => e,
-        })
+        diary.update(self.db).await
     }
 
     async fn delete(self, diary: Model) -> Result<(), DbErr> {
