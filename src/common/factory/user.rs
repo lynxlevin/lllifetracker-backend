@@ -1,6 +1,8 @@
 use chrono::{DateTime, FixedOffset, Utc};
 use entities::user::{self, TimezoneEnum};
-use sea_orm::Set;
+use sea_orm::{ActiveModelTrait, DbErr, Set};
+
+use crate::db::Db;
 
 pub fn user() -> user::ActiveModel {
     let now = Utc::now();
@@ -16,6 +18,10 @@ pub fn user() -> user::ActiveModel {
         created_at: Set(now.into()),
         updated_at: Set(now.into()),
     }
+}
+
+pub async fn create_user(db: &Db) -> Result<user::Model, DbErr> {
+    user().insert(&db.db).await
 }
 
 pub trait UserFactory {

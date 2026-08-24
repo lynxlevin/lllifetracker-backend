@@ -4,9 +4,11 @@ use entities::{
     tag::{self, TagType},
     user,
 };
-use sea_orm::{ActiveModelTrait, ActiveValue::NotSet, DbConn, DbErr, EntityTrait, Set};
+use sea_orm::{ActiveModelTrait, ActiveValue::NotSet, DbErr, EntityTrait, Set};
 use std::{collections::HashMap, future::Future};
 use uuid::Uuid;
+
+use crate::db::Db;
 
 pub fn action(user_id: Uuid) -> ActiveModel {
     let now = Utc::now();
@@ -31,7 +33,7 @@ pub trait ActionFactory {
     fn archived(self, archived: bool) -> ActiveModel;
     fn ordering(self, ordering: Option<i32>) -> ActiveModel;
     fn track_type(self, track_type: ActionTrackType) -> ActiveModel;
-    fn insert_with_tag(self, db: &DbConn) -> impl Future<Output = Result<(Model, tag::Model), DbErr>> + Send;
+    fn insert_with_tag(self, db: &Db) -> impl Future<Output = Result<(Model, tag::Model), DbErr>> + Send;
 }
 
 impl ActionFactory for ActiveModel {
@@ -60,8 +62,8 @@ impl ActionFactory for ActiveModel {
         self
     }
 
-    async fn insert_with_tag(self, db: &DbConn) -> Result<(Model, tag::Model), DbErr> {
-        let action = self.insert(db).await?;
+    async fn insert_with_tag(self, db: &Db) -> Result<(Model, tag::Model), DbErr> {
+        let action = self.insert(&db.db).await?;
         let tag = tag::ActiveModel {
             id: Set(uuid::Uuid::now_v7()),
             user_id: Set(action.user_id),
@@ -69,7 +71,7 @@ impl ActionFactory for ActiveModel {
             r#type: Set(TagType::Action),
             ..Default::default()
         }
-        .insert(db)
+        .insert(&db.db)
         .await?;
         Ok((action, tag))
     }
@@ -86,7 +88,7 @@ pub struct ActionParam<'a> {
 pub async fn create_actions<'a>(
     params: Vec<ActionParam<'a>>,
     user: &'a user::Model,
-    db: &'a DbConn,
+    db: &'a Db,
 ) -> Result<HashMap<String, Model>, DbErr> {
     let actions = params.iter().map(|param| {
         action(user.id)
@@ -95,7 +97,7 @@ pub async fn create_actions<'a>(
             .ordering(param.ordering)
             .track_type(param.track_type.clone().or(Some(ActionTrackType::TimeSpan)).unwrap())
     });
-    let actions = Entity::insert_many(actions).exec_with_returning(db).await?;
+    let actions = Entity::insert_many(actions).exec_with_returning(&db.db).await?;
 
     Ok(actions
         .into_iter()
