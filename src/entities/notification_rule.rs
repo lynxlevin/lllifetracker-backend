@@ -3,7 +3,11 @@
 use std::{fmt::Display, str::FromStr};
 
 use chrono::Weekday;
-use sea_orm::{entity::prelude::*, sea_query::ValueTypeErr, ActiveValue::Set};
+use sea_orm::{
+    entity::prelude::{async_trait::async_trait, *},
+    sea_query::ValueTypeErr,
+    ActiveValue::Set,
+};
 use serde::{Deserialize, Serialize};
 
 #[sea_orm::model]
@@ -72,9 +76,22 @@ impl Model {
     }
 }
 
+#[async_trait]
 impl ActiveModelBehavior for ActiveModel {
     /// Create a new ActiveModel with default values. Also used by `Default::default()`.
     fn new() -> Self {
         Self { id: Set(Uuid::now_v7()), ..ActiveModelTrait::default() }
+    }
+
+    /// Will be triggered before insert / update
+    async fn before_save<C>(self, _db: &C, _insert: bool) -> Result<Self, DbErr>
+    where
+        C: ConnectionTrait,
+    {
+        if self.weekday.as_ref() < &0 || self.weekday.as_ref() > &6 {
+            Err(DbErr::Custom("[before_save] Invalid Weekday.".to_string()))
+        } else {
+            Ok(self)
+        }
     }
 }
