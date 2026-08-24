@@ -6,7 +6,7 @@ use actix_web::{
 use common::settings::types::Settings;
 use db_adapters::user_adapter::{UserAdapter, UserFilter, UserQuery};
 use deadpool_redis::Pool;
-use sea_orm::DbConn;
+use common::db::Db;
 
 use crate::utils::{emails::send_multipart_email, response_404, response_500};
 
@@ -17,7 +17,7 @@ struct RequestBody {
 #[tracing::instrument(skip(db, redis_pool, req, settings))]
 #[post("/resend-email")]
 pub async fn resend_email(
-    db: Data<DbConn>,
+    db: Data<Db>,
     redis_pool: Data<Pool>,
     req: Json<RequestBody>,
     settings: Data<Settings>,

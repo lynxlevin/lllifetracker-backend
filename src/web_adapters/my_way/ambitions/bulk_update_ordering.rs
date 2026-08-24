@@ -5,7 +5,7 @@ use actix_web::{
 };
 use db_adapters::ambition_adapter::AmbitionAdapter;
 use entities::user as user_entity;
-use sea_orm::DbConn;
+use common::db::Db;
 use use_cases::my_way::ambitions::{
     bulk_update_ordering::bulk_update_ambition_ordering, types::AmbitionBulkUpdateOrderingRequest,
 };
@@ -28,7 +28,7 @@ use crate::utils::{response_401, response_500};
 #[tracing::instrument(skip(db, user, req))]
 #[put("/bulk_update_ordering")]
 pub async fn bulk_update_ambition_ordering_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<AmbitionBulkUpdateOrderingRequest>,
 ) -> HttpResponse {

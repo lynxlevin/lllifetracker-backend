@@ -5,7 +5,7 @@ use actix_web::{
 };
 use db_adapters::thinking_note_adapter::ThinkingNoteAdapter;
 use entities::user as user_entity;
-use sea_orm::DbConn;
+use common::db::Db;
 use use_cases::{
     journal::thinking_notes::{create::create_thinking_note, types::ThinkingNoteCreateRequest},
     UseCaseError,
@@ -16,7 +16,7 @@ use crate::utils::{response_401, response_404, response_500};
 #[tracing::instrument(skip(db, user))]
 #[post("")]
 pub async fn create_thinking_note_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<ThinkingNoteCreateRequest>,
 ) -> HttpResponse {

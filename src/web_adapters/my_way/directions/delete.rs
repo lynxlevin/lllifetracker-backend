@@ -5,7 +5,7 @@ use actix_web::{
 };
 use db_adapters::direction_adapter::DirectionAdapter;
 use entities::user as user_entity;
-use sea_orm::DbConn;
+use common::db::Db;
 use use_cases::my_way::directions::delete::delete_direction;
 
 use crate::utils::{response_401, response_500};
@@ -18,7 +18,7 @@ struct PathParam {
 #[tracing::instrument(skip(db, user))]
 #[delete("/{direction_id}")]
 pub async fn delete_direction_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     path_param: Path<PathParam>,
 ) -> HttpResponse {

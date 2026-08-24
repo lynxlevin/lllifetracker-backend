@@ -1,6 +1,7 @@
 use std::future::Future;
 
 use chrono::Utc;
+use common::db::Db;
 use sea_orm::{
     sea_query::NullOrdering::Last, ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel,
     JoinType::LeftJoin, ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait, Select, Set,
@@ -22,8 +23,8 @@ pub struct ActionAdapter<'a> {
 }
 
 impl<'a> ActionAdapter<'a> {
-    pub fn init(db: &'a DbConn) -> Self {
-        Self { db, query: Entity::find() }
+    pub fn init(db: &'a Db) -> Self {
+        Self { db: &db.db, query: Entity::find() }
     }
 }
 

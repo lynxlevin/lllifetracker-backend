@@ -5,7 +5,7 @@ use actix_web::{
 };
 use db_adapters::reading_note_adapter::ReadingNoteAdapter;
 use entities::user as user_entity;
-use sea_orm::DbConn;
+use common::db::Db;
 use use_cases::{
     journal::reading_notes::{types::ReadingNoteUpdateRequest, update::update_reading_note},
     UseCaseError,
@@ -21,7 +21,7 @@ struct PathParam {
 #[tracing::instrument(skip(db, user, req))]
 #[put("/{reading_note_id}")]
 pub async fn update_reading_note_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<ReadingNoteUpdateRequest>,
     path_param: Path<PathParam>,

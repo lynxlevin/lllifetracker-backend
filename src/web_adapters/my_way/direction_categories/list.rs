@@ -5,7 +5,7 @@ use actix_web::{
 };
 use db_adapters::direction_category_adapter::DirectionCategoryAdapter;
 use entities::user as user_entity;
-use sea_orm::DbConn;
+use common::db::Db;
 use use_cases::my_way::direction_categories::list::list_direction_categories;
 
 use crate::utils::{response_401, response_500};
@@ -13,7 +13,7 @@ use crate::utils::{response_401, response_500};
 #[tracing::instrument(skip(db, user))]
 #[get("")]
 pub async fn list_direction_categories_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
 ) -> HttpResponse {
     match user {

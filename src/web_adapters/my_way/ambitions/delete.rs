@@ -5,7 +5,7 @@ use actix_web::{
 };
 use db_adapters::ambition_adapter::AmbitionAdapter;
 use entities::user as user_entity;
-use sea_orm::DbConn;
+use common::db::Db;
 use use_cases::my_way::ambitions::delete::delete_ambition;
 
 use crate::utils::{response_401, response_500};
@@ -18,7 +18,7 @@ struct PathParam {
 #[tracing::instrument(skip(db, user))]
 #[delete("/{ambition_id}")]
 pub async fn delete_ambition_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     path_param: Path<PathParam>,
 ) -> HttpResponse {

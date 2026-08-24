@@ -1,6 +1,7 @@
 use std::future::Future;
 
 use chrono::{DateTime, FixedOffset, NaiveDate, Utc};
+use common::db::Db;
 use sea_orm::{
     prelude::Expr, sea_query::NullOrdering::Last, ActiveModelTrait, ColumnAsExpr, ColumnTrait, Condition, DbConn,
     DbErr, DeriveColumn, EntityTrait, EnumIter, ExprTrait, FromQueryResult, IntoActiveModel, JoinType::LeftJoin,
@@ -26,8 +27,8 @@ pub struct ReadingNoteAdapter<'a> {
 }
 
 impl<'a> ReadingNoteAdapter<'a> {
-    pub fn init(db: &'a DbConn) -> Self {
-        Self { db, query: Entity::find() }
+    pub fn init(db: &'a Db) -> Self {
+        Self { db: &db.db, query: Entity::find() }
     }
 }
 

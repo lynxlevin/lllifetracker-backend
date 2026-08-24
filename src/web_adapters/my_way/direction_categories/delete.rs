@@ -5,7 +5,7 @@ use actix_web::{
 };
 use db_adapters::direction_category_adapter::DirectionCategoryAdapter;
 use entities::user as user_entity;
-use sea_orm::DbConn;
+use common::db::Db;
 use use_cases::my_way::direction_categories::delete::delete_direction_category;
 use uuid::Uuid;
 
@@ -19,7 +19,7 @@ struct PathParam {
 #[tracing::instrument(skip(db, user))]
 #[delete("/{category_id}")]
 pub async fn delete_direction_category_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     path_param: Path<PathParam>,
 ) -> HttpResponse {

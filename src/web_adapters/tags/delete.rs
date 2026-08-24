@@ -5,7 +5,7 @@ use actix_web::{
 };
 use db_adapters::tag_adapter::TagAdapter;
 use entities::user as user_entity;
-use sea_orm::DbConn;
+use common::db::Db;
 use use_cases::{tags::delete::delete_plain_tag, UseCaseError};
 
 use crate::utils::{response_400, response_401, response_500};
@@ -18,7 +18,7 @@ struct PathParam {
 #[tracing::instrument(skip(db, user))]
 #[delete("/plain/{tag_id}")]
 pub async fn delete_plain_tag_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     path_param: Path<PathParam>,
 ) -> HttpResponse {

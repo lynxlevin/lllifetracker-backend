@@ -5,7 +5,7 @@ use actix_web::{
 };
 use db_adapters::web_push_subscription_adapter::WebPushSubscriptionAdapter;
 use entities::user as user_entity;
-use sea_orm::DbConn;
+use common::db::Db;
 use use_cases::notification::web_push_subscription::list::list_web_push_subscription;
 
 use crate::utils::{response_401, response_500};
@@ -13,7 +13,7 @@ use crate::utils::{response_401, response_500};
 #[tracing::instrument(skip(db, user))]
 #[get("")]
 pub async fn list_web_push_subscription_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
 ) -> HttpResponse {
     match user {

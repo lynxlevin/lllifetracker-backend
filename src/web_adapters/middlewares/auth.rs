@@ -10,9 +10,9 @@ use actix_web::{
     web::Data,
     Error, HttpMessage,
 };
+use common::db::Db;
 use db_adapters::user_adapter::{UserAdapter, UserQuery};
 use futures::future::LocalBoxFuture;
-use sea_orm::DbConn;
 
 pub struct AuthenticateUser;
 
@@ -71,7 +71,7 @@ async fn set_user(req: &ServiceRequest) -> Result<(), String> {
         }
     };
 
-    let user = match req.app_data::<Data<DbConn>>() {
+    let user = match req.app_data::<Data<Db>>() {
         Some(data) => match UserAdapter::init(data).get_by_id(user_id).await {
             Ok(user) => match user {
                 Some(user) => user,
@@ -96,17 +96,16 @@ async fn set_user(req: &ServiceRequest) -> Result<(), String> {
 mod tests {
     use super::*;
     use actix_web::test;
-    use sea_orm::prelude::ActiveModelTrait;
 
     use crate::users::types::{USER_EMAIL_KEY, USER_ID_KEY};
-    use common::{db::init_db, factory, settings::get_test_settings};
+    use common::{db::get_db_connection, factory, settings::get_test_settings};
     use entities::user;
 
     #[actix_web::test]
     async fn test_set_user() -> Result<(), String> {
         let settings = get_test_settings();
-        let db = init_db(&settings).await;
-        let user = factory::user().insert(&db).await.unwrap();
+        let db = get_db_connection(&settings).await.unwrap();
+        let user = factory::create_user(&db).await.unwrap();
         let srv_req = test::TestRequest::default()
             .app_data(Data::new(db.clone()))
             .to_srv_request();

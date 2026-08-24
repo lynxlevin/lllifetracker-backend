@@ -5,7 +5,7 @@ use actix_web::{
 use common::settings::types::Settings;
 use db_adapters::user_adapter::{UserAdapter, UserFilter, UserQuery};
 use deadpool_redis::Pool;
-use sea_orm::DbConn;
+use common::db::Db;
 
 use crate::utils::{emails::send_multipart_email, response_404, response_500};
 
@@ -17,7 +17,7 @@ struct UserEmail {
 #[tracing::instrument(skip(db, redis_pool, settings))]
 #[actix_web::post("/email-verification")]
 pub async fn request_password_change(
-    db: Data<DbConn>,
+    db: Data<Db>,
     redis_pool: Data<Pool>,
     req: Json<UserEmail>,
     settings: Data<Settings>,

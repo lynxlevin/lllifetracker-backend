@@ -5,7 +5,7 @@ use actix_web::{
 };
 use db_adapters::reading_note_adapter::ReadingNoteAdapter;
 use entities::user as user_entity;
-use sea_orm::DbConn;
+use common::db::Db;
 use use_cases::journal::reading_notes::list_titles::list_reading_note_titles;
 
 use crate::utils::{response_401, response_500};
@@ -13,7 +13,7 @@ use crate::utils::{response_401, response_500};
 #[tracing::instrument(skip(db, user))]
 #[get("titles")]
 pub async fn list_reading_note_titles_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
 ) -> HttpResponse {
     match user {

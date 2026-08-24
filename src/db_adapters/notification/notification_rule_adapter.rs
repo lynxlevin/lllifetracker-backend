@@ -1,6 +1,7 @@
 use std::future::Future;
 
 use chrono::{NaiveTime, Weekday};
+use common::db::Db;
 use sea_orm::{
     ActiveValue::Set, ColumnTrait, DbConn, DbErr, EntityTrait, ModelTrait, PaginatorTrait, QueryFilter,
     QueryOrder, Select,
@@ -19,8 +20,8 @@ pub struct NotificationRuleAdapter<'a> {
 }
 
 impl<'a> NotificationRuleAdapter<'a> {
-    pub fn init(db: &'a DbConn) -> Self {
-        Self { db, query: Entity::find() }
+    pub fn init(db: &'a Db) -> Self {
+        Self { db: &db.db, query: Entity::find() }
     }
 }
 

@@ -5,7 +5,7 @@ use actix_web::{
 };
 use db_adapters::direction_category_adapter::DirectionCategoryAdapter;
 use entities::user as user_entity;
-use sea_orm::DbConn;
+use common::db::Db;
 use use_cases::my_way::direction_categories::{
     create::create_direction_category, types::DirectionCategoryCreateRequest,
 };
@@ -15,7 +15,7 @@ use crate::utils::{response_401, response_500};
 #[tracing::instrument(skip(db, user))]
 #[post("")]
 pub async fn create_direction_category_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<DirectionCategoryCreateRequest>,
 ) -> HttpResponse {

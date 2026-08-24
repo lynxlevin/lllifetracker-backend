@@ -5,7 +5,7 @@ use actix_web::{
 };
 use db_adapters::{action_adapter::ActionAdapter, action_goal_adapter::ActionGoalAdapter};
 use entities::user as user_entity;
-use sea_orm::DbConn;
+use common::db::Db;
 use use_cases::{
     my_way::actions::{convert_track_type::convert_action_track_type, types::ActionTrackTypeConversionRequest},
     UseCaseError,
@@ -21,7 +21,7 @@ struct PathParam {
 #[tracing::instrument(skip(db, user, req))]
 #[put("/{action_id}/track_type")]
 pub async fn convert_action_track_type_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<ActionTrackTypeConversionRequest>,
     path_param: Path<PathParam>,

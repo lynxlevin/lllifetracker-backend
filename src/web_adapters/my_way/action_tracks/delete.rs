@@ -3,7 +3,7 @@ use actix_web::{
     web::{Data, Path, ReqData},
     HttpResponse,
 };
-use sea_orm::DbConn;
+use common::db::Db;
 
 use crate::utils::{response_401, response_500};
 use db_adapters::{action_track_adapter::ActionTrackAdapter, user_adapter::UserAdapter};
@@ -18,7 +18,7 @@ struct PathParam {
 #[tracing::instrument(skip(db, user))]
 #[delete("/{action_track_id}")]
 pub async fn delete_action_track_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     path_param: Path<PathParam>,
 ) -> HttpResponse {

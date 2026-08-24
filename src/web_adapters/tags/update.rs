@@ -5,7 +5,7 @@ use actix_web::{
 };
 use db_adapters::tag_adapter::TagAdapter;
 use entities::user as user_entity;
-use sea_orm::DbConn;
+use common::db::Db;
 use use_cases::{
     tags::{types::TagUpdateRequest, update::update_plain_tag},
     UseCaseError,
@@ -21,7 +21,7 @@ struct PathParam {
 #[tracing::instrument(skip(db, user))]
 #[put("/plain/{tag_id}")]
 pub async fn update_plain_tag_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<TagUpdateRequest>,
     path_param: Path<PathParam>,

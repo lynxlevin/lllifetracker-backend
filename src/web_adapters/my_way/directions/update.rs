@@ -5,7 +5,7 @@ use actix_web::{
 };
 use db_adapters::{direction_adapter::DirectionAdapter, direction_category_adapter::DirectionCategoryAdapter};
 use entities::user as user_entity;
-use sea_orm::DbConn;
+use common::db::Db;
 use use_cases::{
     my_way::directions::{types::DirectionUpdateRequest, update::update_direction},
     UseCaseError,
@@ -21,7 +21,7 @@ struct PathParam {
 #[tracing::instrument(skip(db, user, req))]
 #[put("/{direction_id}")]
 pub async fn update_direction_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<DirectionUpdateRequest>,
     path_param: Path<PathParam>,

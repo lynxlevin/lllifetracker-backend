@@ -6,7 +6,7 @@ use actix_web::{
 use common::settings::types::Settings;
 use db_adapters::user_adapter::{UserAdapter, UserMutation, UserQuery};
 use deadpool_redis::Pool;
-use sea_orm::DbConn;
+use common::db::Db;
 
 use crate::utils::{
     auth::{password, tokens::verify_confirmation_token_pasetor},
@@ -22,7 +22,7 @@ struct Parameters {
 #[tracing::instrument(skip(db, redis_pool, req, settings))]
 #[post("")]
 pub async fn submit_password_change(
-    db: Data<DbConn>,
+    db: Data<Db>,
     redis_pool: Data<Pool>,
     req: Json<Parameters>,
     settings: Data<Settings>,

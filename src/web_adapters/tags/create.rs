@@ -5,7 +5,7 @@ use actix_web::{
 };
 use db_adapters::tag_adapter::TagAdapter;
 use entities::user as user_entity;
-use sea_orm::DbConn;
+use common::db::Db;
 use use_cases::tags::{create::create_plain_tag, types::TagCreateRequest};
 
 use crate::utils::{response_401, response_500};
@@ -13,7 +13,7 @@ use crate::utils::{response_401, response_500};
 #[tracing::instrument(skip(db, user))]
 #[post("/plain")]
 pub async fn create_plain_tag_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<TagCreateRequest>,
 ) -> HttpResponse {

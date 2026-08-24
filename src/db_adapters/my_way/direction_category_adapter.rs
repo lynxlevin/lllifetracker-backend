@@ -1,5 +1,6 @@
 use std::future::Future;
 
+use common::db::Db;
 use sea_orm::{
     sea_query::NullOrdering::Last, ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel,
     ModelTrait, Order, PaginatorTrait, QueryFilter, QueryOrder, Select, Set,
@@ -18,8 +19,8 @@ pub struct DirectionCategoryAdapter<'a> {
 }
 
 impl<'a> DirectionCategoryAdapter<'a> {
-    pub fn init(db: &'a DbConn) -> Self {
-        Self { db, query: Entity::find() }
+    pub fn init(db: &'a Db) -> Self {
+        Self { db: &db.db, query: Entity::find() }
     }
 }
 

@@ -1,6 +1,7 @@
 use std::future::Future;
 
 use chrono::Utc;
+use common::db::Db;
 use sea_orm::{
     sea_query::{Func, NullOrdering::Last, SimpleExpr},
     ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel, ModelTrait, Order, QueryFilter,
@@ -21,8 +22,8 @@ pub struct AmbitionAdapter<'a> {
 }
 
 impl<'a> AmbitionAdapter<'a> {
-    pub fn init(db: &'a DbConn) -> Self {
-        Self { db, query: Entity::find() }
+    pub fn init(db: &'a Db) -> Self {
+        Self { db: &db.db, query: Entity::find() }
     }
 }
 
