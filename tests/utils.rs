@@ -9,11 +9,11 @@ use actix_web::{
     App, Error,
 };
 use common::{
-    db::init_db,
+    db::{get_db_connection, Db},
     redis::init_redis_pool,
     settings::{get_test_settings, types::Settings},
 };
-use sea_orm::{DbConn, DbErr};
+use sea_orm::DbErr;
 use server::{
     auth_middleware::AuthenticateUser, get_preps_for_redis_session_store, get_routes,
     setup_session_middleware_builder,
@@ -23,7 +23,7 @@ pub struct Connections<
     S: Service<Request, Response = ServiceResponse<EitherBody<Encoder<BoxBody>>>, Error = Error>,
 > {
     pub app: S,
-    pub db: DbConn,
+    pub db: Db,
     pub settings: Settings,
 }
 
@@ -33,7 +33,7 @@ pub async fn init_app() -> Result<
 > {
     let settings = get_test_settings();
     // let _ = env_logger::try_init();
-    let db = init_db(&settings).await;
+    let db = get_db_connection(&settings).await.unwrap();
     let redis_pool = init_redis_pool(&settings).await.expect("Error on getting Redis pool.");
 
     let (redis_store, secret_key) = get_preps_for_redis_session_store(&settings, &settings.redis.url).await;

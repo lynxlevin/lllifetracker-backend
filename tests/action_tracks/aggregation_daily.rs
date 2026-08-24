@@ -13,7 +13,7 @@ use common::factory::{self, *};
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     let actions = create_actions(
         vec![
             ActionParam { name: "action_0", ..Default::default() },

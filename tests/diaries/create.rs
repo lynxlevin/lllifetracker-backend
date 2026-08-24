@@ -18,7 +18,7 @@ enum QueryAs {
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     let (_, tag_0) = factory::action(user.id)
         .name("action_0".to_string())
         .insert_with_tag(&db)
@@ -43,7 +43,7 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(res.text, diary_text.clone());
     assert_eq!(res.date, today);
 
-    let diary_in_db = diary::Entity::find_by_id(res.id).one(&db).await?.unwrap();
+    let diary_in_db = diary::Entity::find_by_id(res.id).one(&db.db).await?.unwrap();
     assert_eq!(diary_in_db.user_id, user.id);
     assert_eq!(DiaryVisible::from(diary_in_db), res);
 
@@ -51,7 +51,7 @@ async fn happy_path() -> Result<(), DbErr> {
         .column_as(diaries_tags::Column::TagId, QueryAs::TagId)
         .filter(diaries_tags::Column::DiaryId.eq(res.id))
         .into_values::<_, QueryAs>()
-        .all(&db)
+        .all(&db.db)
         .await?;
     assert_eq!(linked_tag_ids.len(), 2);
     assert!(linked_tag_ids.contains(&tag_0.id));
@@ -78,7 +78,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     let today = chrono::Utc::now().date_naive();
 
     let non_existent_tag_req = test::TestRequest::post()

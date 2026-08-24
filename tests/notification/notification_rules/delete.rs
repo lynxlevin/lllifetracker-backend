@@ -9,7 +9,7 @@ use common::factory;
 #[actix_web::test]
 async fn happy_path_delete_ambition() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     factory::create_everyday_rules(
         user.id,
         &db,
@@ -45,21 +45,21 @@ async fn happy_path_delete_ambition() -> Result<(), DbErr> {
     let rules_in_db_ambition = Entity::find()
         .filter(Column::UserId.eq(user.id))
         .filter(Column::Type.eq(NotificationType::Ambition))
-        .all(&db)
+        .all(&db.db)
         .await?;
     assert_eq!(rules_in_db_ambition.len(), 0);
 
     let rules_in_db_ambition_or_direction = Entity::find()
         .filter(Column::UserId.eq(user.id))
         .filter(Column::Type.eq(NotificationType::AmbitionOrDirection))
-        .all(&db)
+        .all(&db.db)
         .await?;
     assert_eq!(rules_in_db_ambition_or_direction.len(), 5);
 
     let rules_in_db_direction = Entity::find()
         .filter(Column::UserId.eq(user.id))
         .filter(Column::Type.eq(NotificationType::Direction))
-        .all(&db)
+        .all(&db.db)
         .await?;
     assert_eq!(rules_in_db_direction.len(), 2);
 
@@ -69,7 +69,7 @@ async fn happy_path_delete_ambition() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn happy_path_delete_ambition_or_direction() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     factory::create_everyday_rules(
         user.id,
         &db,
@@ -105,21 +105,21 @@ async fn happy_path_delete_ambition_or_direction() -> Result<(), DbErr> {
     let rules_in_db_ambition = Entity::find()
         .filter(Column::UserId.eq(user.id))
         .filter(Column::Type.eq(NotificationType::Ambition))
-        .all(&db)
+        .all(&db.db)
         .await?;
     assert_eq!(rules_in_db_ambition.len(), 7);
 
     let rules_in_db_ambition_or_direction = Entity::find()
         .filter(Column::UserId.eq(user.id))
         .filter(Column::Type.eq(NotificationType::AmbitionOrDirection))
-        .all(&db)
+        .all(&db.db)
         .await?;
     assert_eq!(rules_in_db_ambition_or_direction.len(), 0);
 
     let rules_in_db_direction = Entity::find()
         .filter(Column::UserId.eq(user.id))
         .filter(Column::Type.eq(NotificationType::Direction))
-        .all(&db)
+        .all(&db.db)
         .await?;
     assert_eq!(rules_in_db_direction.len(), 2);
 
@@ -129,7 +129,7 @@ async fn happy_path_delete_ambition_or_direction() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn happy_path_delete_direction() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     factory::create_everyday_rules(
         user.id,
         &db,
@@ -165,21 +165,21 @@ async fn happy_path_delete_direction() -> Result<(), DbErr> {
     let rules_in_db_ambition = Entity::find()
         .filter(Column::UserId.eq(user.id))
         .filter(Column::Type.eq(NotificationType::Ambition))
-        .all(&db)
+        .all(&db.db)
         .await?;
     assert_eq!(rules_in_db_ambition.len(), 7);
 
     let rules_in_db_ambition_or_direction = Entity::find()
         .filter(Column::UserId.eq(user.id))
         .filter(Column::Type.eq(NotificationType::AmbitionOrDirection))
-        .all(&db)
+        .all(&db.db)
         .await?;
     assert_eq!(rules_in_db_ambition_or_direction.len(), 5);
 
     let rules_in_db_direction = Entity::find()
         .filter(Column::UserId.eq(user.id))
         .filter(Column::Type.eq(NotificationType::Direction))
-        .all(&db)
+        .all(&db.db)
         .await?;
     assert_eq!(rules_in_db_direction.len(), 0);
 

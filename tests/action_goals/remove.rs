@@ -13,15 +13,15 @@ use entities::action_goal;
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let action = factory::action(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let action = factory::action(user.id).insert(&db.db).await?;
     let action_goal = factory::action_goal(user.id, action.id)
         .from_date(
             DateTime::parse_from_rfc3339("2025-07-01T00:00:00Z")
                 .unwrap()
                 .date_naive(),
         )
-        .insert(&db)
+        .insert(&db.db)
         .await?;
 
     let req = test::TestRequest::delete()
@@ -32,7 +32,10 @@ async fn happy_path() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::NO_CONTENT);
 
-    let action_goal_in_db = action_goal::Entity::find_by_id(action_goal.id).one(&db).await?.unwrap();
+    let action_goal_in_db = action_goal::Entity::find_by_id(action_goal.id)
+        .one(&db.db)
+        .await?
+        .unwrap();
     let user_yesterday =
         (Utc::now().with_timezone(&FixedOffset::east_opt(9 * 3600).unwrap()) - Duration::days(1)).date_naive();
     assert_eq!(Some(user_yesterday), action_goal_in_db.to_date);
@@ -43,12 +46,12 @@ async fn happy_path() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn from_date_is_today() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let action = factory::action(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let action = factory::action(user.id).insert(&db.db).await?;
     // MEMO: This test is flakey just around midnight, but the probability is so low I don't freeze now function.
     let action_goal = factory::action_goal(user.id, action.id)
         .from_date(user.timezone.convert_utc(Utc::now()).date_naive())
-        .insert(&db)
+        .insert(&db.db)
         .await?;
 
     let req = test::TestRequest::delete()
@@ -59,7 +62,7 @@ async fn from_date_is_today() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::NO_CONTENT);
 
-    let action_goal_in_db = action_goal::Entity::find_by_id(action_goal.id).one(&db).await?;
+    let action_goal_in_db = action_goal::Entity::find_by_id(action_goal.id).one(&db.db).await?;
     assert!(action_goal_in_db.is_none());
 
     Ok(())
@@ -68,8 +71,8 @@ async fn from_date_is_today() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn no_active_goal() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let action = factory::action(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let action = factory::action(user.id).insert(&db.db).await?;
 
     let req = test::TestRequest::delete()
         .uri(&format!("/api/action_goals?action_id={}", action.id))
@@ -100,9 +103,9 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn other_users_action() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let other_user = factory::user().insert(&db).await?;
-    let other_action = factory::action(other_user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let other_user = factory::user().insert(&db.db).await?;
+    let other_action = factory::action(other_user.id).insert(&db.db).await?;
 
     let req = test::TestRequest::delete()
         .uri(&format!("/api/action_goals?action_id={}", other_action.id))

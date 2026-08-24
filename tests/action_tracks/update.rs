@@ -12,9 +12,12 @@ use entities::{action_track, user};
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let action = factory::action(user.id).insert(&db).await?;
-    let action_track = factory::action_track(user.id).action_id(action.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let action = factory::action(user.id).insert(&db.db).await?;
+    let action_track = factory::action_track(user.id)
+        .action_id(action.id)
+        .insert(&db.db)
+        .await?;
     let ended_at = DateTime::parse_from_rfc3339("2025-07-08T00:00:00Z").unwrap();
     let duration = 180;
     let started_at = ended_at - chrono::TimeDelta::seconds(duration.into());
@@ -36,7 +39,7 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(res.duration, Some(duration));
 
     let action_track_in_db = action_track::Entity::find_by_id(action_track.id)
-        .one(&db)
+        .one(&db.db)
         .await?
         .unwrap();
     assert_eq!(action_track_in_db.user_id, user.id);
@@ -48,13 +51,16 @@ async fn happy_path() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn conflict_on_duplicate_starts_at() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let action = factory::action(user.id).insert(&db).await?;
-    let action_track = factory::action_track(user.id).action_id(action.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let action = factory::action(user.id).insert(&db.db).await?;
+    let action_track = factory::action_track(user.id)
+        .action_id(action.id)
+        .insert(&db.db)
+        .await?;
     let existing_action_track = factory::action_track(user.id)
         .started_at(action_track.started_at + TimeDelta::seconds(1))
         .action_id(action.id)
-        .insert(&db)
+        .insert(&db.db)
         .await?;
 
     let req = test::TestRequest::put()
@@ -76,9 +82,12 @@ async fn conflict_on_duplicate_starts_at() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let action = factory::action(user.id).insert(&db).await?;
-    let action_track = factory::action_track(user.id).action_id(action.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let action = factory::action(user.id).insert(&db.db).await?;
+    let action_track = factory::action_track(user.id)
+        .action_id(action.id)
+        .insert(&db.db)
+        .await?;
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/action_tracks/{}", action_track.id))
@@ -102,9 +111,12 @@ mod user_first_track_at_update {
     #[actix_web::test]
     async fn update_for_user_with_no_first_starts_at_sets_it() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
-        let user = factory::user().insert(&db).await?;
-        let action = factory::action(user.id).insert(&db).await?;
-        let action_track = factory::action_track(user.id).action_id(action.id).insert(&db).await?;
+        let user = factory::user().insert(&db.db).await?;
+        let action = factory::action(user.id).insert(&db.db).await?;
+        let action_track = factory::action_track(user.id)
+            .action_id(action.id)
+            .insert(&db.db)
+            .await?;
         let started_at = Utc::now().into();
 
         let req = test::TestRequest::put()
@@ -116,7 +128,7 @@ mod user_first_track_at_update {
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::OK);
 
-        let user_in_db = user::Entity::find_by_id(user.id).one(&db).await?.unwrap();
+        let user_in_db = user::Entity::find_by_id(user.id).one(&db.db).await?.unwrap();
         assert_eq!(user_in_db.first_track_at, Some(started_at.trunc_subsecs(0)));
 
         Ok(())
@@ -128,10 +140,13 @@ mod user_first_track_at_update {
         let original_first_track_at = Some(DateTime::parse_from_rfc3339("2025-01-01T00:00:00Z").unwrap());
         let user = factory::user()
             .first_track_at(original_first_track_at)
-            .insert(&db)
+            .insert(&db.db)
             .await?;
-        let action = factory::action(user.id).insert(&db).await?;
-        let action_track = factory::action_track(user.id).action_id(action.id).insert(&db).await?;
+        let action = factory::action(user.id).insert(&db.db).await?;
+        let action_track = factory::action_track(user.id)
+            .action_id(action.id)
+            .insert(&db.db)
+            .await?;
         let started_at = Utc::now().into();
 
         let req = test::TestRequest::put()
@@ -143,7 +158,7 @@ mod user_first_track_at_update {
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::OK);
 
-        let user_in_db = user::Entity::find_by_id(user.id).one(&db).await?.unwrap();
+        let user_in_db = user::Entity::find_by_id(user.id).one(&db.db).await?.unwrap();
         assert_eq!(user_in_db.first_track_at, original_first_track_at);
 
         Ok(())
@@ -154,10 +169,13 @@ mod user_first_track_at_update {
         let Connections { app, db, .. } = init_app().await?;
         let user = factory::user()
             .first_track_at(Some(DateTime::parse_from_rfc3339("2025-07-08T00:00:00Z").unwrap()))
-            .insert(&db)
+            .insert(&db.db)
             .await?;
-        let action = factory::action(user.id).insert(&db).await?;
-        let action_track = factory::action_track(user.id).action_id(action.id).insert(&db).await?;
+        let action = factory::action(user.id).insert(&db.db).await?;
+        let action_track = factory::action_track(user.id)
+            .action_id(action.id)
+            .insert(&db.db)
+            .await?;
 
         let started_at = DateTime::parse_from_rfc3339("2025-01-01T00:00:00Z").unwrap();
 
@@ -170,7 +188,7 @@ mod user_first_track_at_update {
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::OK);
 
-        let user_in_db = user::Entity::find_by_id(user.id).one(&db).await?.unwrap();
+        let user_in_db = user::Entity::find_by_id(user.id).one(&db.db).await?.unwrap();
         assert_eq!(user_in_db.first_track_at, Some(started_at));
 
         Ok(())
@@ -181,18 +199,18 @@ mod user_first_track_at_update {
         let Connections { app, db, .. } = init_app().await?;
         let user = factory::user()
             .first_track_at(Some(DateTime::parse_from_rfc3339("2025-07-08T00:00:00Z").unwrap()))
-            .insert(&db)
+            .insert(&db.db)
             .await?;
-        let action = factory::action(user.id).insert(&db).await?;
+        let action = factory::action(user.id).insert(&db.db).await?;
         let action_track = factory::action_track(user.id)
             .action_id(action.id)
             .started_at(DateTime::parse_from_rfc3339("2025-07-08T00:00:00Z").unwrap())
-            .insert(&db)
+            .insert(&db.db)
             .await?;
         let second_oldest_action_track = factory::action_track(user.id)
             .action_id(action.id)
             .started_at(DateTime::parse_from_rfc3339("2025-07-09T00:00:00Z").unwrap())
-            .insert(&db)
+            .insert(&db.db)
             .await?;
 
         let started_at = DateTime::parse_from_rfc3339("2025-07-10T00:00:00Z").unwrap();
@@ -206,7 +224,7 @@ mod user_first_track_at_update {
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::OK);
 
-        let user_in_db = user::Entity::find_by_id(user.id).one(&db).await?.unwrap();
+        let user_in_db = user::Entity::find_by_id(user.id).one(&db.db).await?.unwrap();
         assert_eq!(user_in_db.first_track_at, Some(second_oldest_action_track.started_at));
 
         Ok(())
@@ -217,13 +235,13 @@ mod user_first_track_at_update {
         let Connections { app, db, .. } = init_app().await?;
         let user = factory::user()
             .first_track_at(Some(DateTime::parse_from_rfc3339("2025-07-08T00:00:00Z").unwrap()))
-            .insert(&db)
+            .insert(&db.db)
             .await?;
-        let action = factory::action(user.id).insert(&db).await?;
+        let action = factory::action(user.id).insert(&db.db).await?;
         let action_track = factory::action_track(user.id)
             .action_id(action.id)
             .started_at(DateTime::parse_from_rfc3339("2025-07-08T00:00:00Z").unwrap())
-            .insert(&db)
+            .insert(&db.db)
             .await?;
 
         let started_at = DateTime::parse_from_rfc3339("2025-07-10T00:00:00Z").unwrap();
@@ -237,7 +255,7 @@ mod user_first_track_at_update {
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::OK);
 
-        let user_in_db = user::Entity::find_by_id(user.id).one(&db).await?.unwrap();
+        let user_in_db = user::Entity::find_by_id(user.id).one(&db.db).await?.unwrap();
         assert_eq!(user_in_db.first_track_at, Some(started_at));
 
         Ok(())
@@ -253,9 +271,12 @@ mod validation_errors {
     #[actix_web::test]
     async fn ended_at_earlier_than_started_at() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
-        let user = factory::user().insert(&db).await?;
-        let action = factory::action(user.id).insert(&db).await?;
-        let action_track = factory::action_track(user.id).action_id(action.id).insert(&db).await?;
+        let user = factory::user().insert(&db.db).await?;
+        let action = factory::action(user.id).insert(&db.db).await?;
+        let action_track = factory::action_track(user.id)
+            .action_id(action.id)
+            .insert(&db.db)
+            .await?;
         let ended_at = action_track.started_at - Duration::seconds(1);
 
         let req = test::TestRequest::put()

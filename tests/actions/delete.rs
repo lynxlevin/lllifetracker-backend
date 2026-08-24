@@ -10,7 +10,7 @@ use entities::{action, tag};
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     let (action, tag) = factory::action(user.id).insert_with_tag(&db).await?;
 
     let req = test::TestRequest::delete()
@@ -21,10 +21,10 @@ async fn happy_path() -> Result<(), DbErr> {
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), http::StatusCode::NO_CONTENT);
 
-    let action_in_db = action::Entity::find_by_id(action.id).one(&db).await?;
+    let action_in_db = action::Entity::find_by_id(action.id).one(&db.db).await?;
     assert!(action_in_db.is_none());
 
-    let tag_in_db = tag::Entity::find_by_id(tag.id).one(&db).await?;
+    let tag_in_db = tag::Entity::find_by_id(tag.id).one(&db.db).await?;
     assert!(tag_in_db.is_none());
 
     Ok(())
@@ -33,8 +33,8 @@ async fn happy_path() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let action = factory::action(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let action = factory::action(user.id).insert(&db.db).await?;
 
     let req = test::TestRequest::delete()
         .uri(&format!("/api/actions/{}", action.id))

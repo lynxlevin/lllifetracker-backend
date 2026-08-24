@@ -19,8 +19,8 @@ enum QueryAs {
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let diary = factory::diary(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let diary = factory::diary(user.id).insert(&db.db).await?;
     let (_, tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
     let form = DiaryUpdateRequest {
         text: None,
@@ -42,7 +42,7 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(res.text, form.text.clone());
     assert_eq!(res.date, form.date);
 
-    let diary_in_db = diary::Entity::find_by_id(res.id).one(&db).await?.unwrap();
+    let diary_in_db = diary::Entity::find_by_id(res.id).one(&db.db).await?.unwrap();
     assert_eq!(diary_in_db.user_id, user.id);
     assert_eq!(DiaryVisible::from(diary_in_db), res);
 
@@ -50,7 +50,7 @@ async fn happy_path() -> Result<(), DbErr> {
         .column_as(diaries_tags::Column::TagId, QueryAs::TagId)
         .filter(diaries_tags::Column::DiaryId.eq(res.id))
         .into_values::<_, QueryAs>()
-        .all(&db)
+        .all(&db.db)
         .await?;
     assert_eq!(linked_tag_ids.len(), 1);
     assert!(linked_tag_ids.contains(&tag.id));
@@ -61,7 +61,7 @@ async fn happy_path() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn not_found_if_invalid_id() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/diaries/{}", uuid::Uuid::now_v7()))
@@ -83,8 +83,8 @@ async fn not_found_if_invalid_id() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let diary = factory::diary(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let diary = factory::diary(user.id).insert(&db.db).await?;
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/diaries/{}", diary.id))
@@ -105,8 +105,8 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let diary = factory::diary(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let diary = factory::diary(user.id).insert(&db.db).await?;
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/diaries/{}", diary.id))

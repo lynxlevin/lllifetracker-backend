@@ -12,8 +12,8 @@ use entities::{action, user};
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let action = factory::action(user.id).archived(true).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let action = factory::action(user.id).archived(true).insert(&db.db).await?;
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/actions/{}/unarchive", action.id))
@@ -23,7 +23,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::OK);
 
-    let action_in_db = action::Entity::find_by_id(action.id).one(&db).await?.unwrap();
+    let action_in_db = action::Entity::find_by_id(action.id).one(&db.db).await?.unwrap();
     assert_eq!(action_in_db.user_id, user.id);
     assert_eq!(action_in_db.name, action.name);
     assert_eq!(action_in_db.created_at, action.created_at);
@@ -46,19 +46,19 @@ async fn happy_path_update_user_first_track_at() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user()
         .first_track_at(Some(DateTime::parse_from_rfc3339("2025-07-09T00:00:00Z").unwrap()))
-        .insert(&db)
+        .insert(&db.db)
         .await?;
-    let action_0 = factory::action(user.id).archived(true).insert(&db).await?;
-    let action_1 = factory::action(user.id).insert(&db).await?;
+    let action_0 = factory::action(user.id).archived(true).insert(&db.db).await?;
+    let action_1 = factory::action(user.id).insert(&db.db).await?;
     let action_track_0 = factory::action_track(user.id)
         .action_id(action_0.id)
         .started_at(DateTime::parse_from_rfc3339("2025-07-08T00:00:00Z").unwrap())
-        .insert(&db)
+        .insert(&db.db)
         .await?;
     let _action_track_1 = factory::action_track(user.id)
         .action_id(action_1.id)
         .started_at(DateTime::parse_from_rfc3339("2025-07-09T00:00:00Z").unwrap())
-        .insert(&db)
+        .insert(&db.db)
         .await?;
 
     let req = test::TestRequest::put()
@@ -69,7 +69,7 @@ async fn happy_path_update_user_first_track_at() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::OK);
 
-    let user_in_db = user::Entity::find_by_id(user.id).one(&db).await?.unwrap();
+    let user_in_db = user::Entity::find_by_id(user.id).one(&db.db).await?.unwrap();
     assert_eq!(user_in_db.first_track_at, Some(action_track_0.started_at));
 
     Ok(())
@@ -78,8 +78,8 @@ async fn happy_path_update_user_first_track_at() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let action = factory::action(user.id).archived(true).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let action = factory::action(user.id).archived(true).insert(&db.db).await?;
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/actions/{}/unarchive", action.id))

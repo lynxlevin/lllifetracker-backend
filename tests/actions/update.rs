@@ -11,8 +11,8 @@ use entities::action;
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let action = factory::action(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let action = factory::action(user.id).insert(&db.db).await?;
 
     let new_name = "action_after_update".to_string();
     let new_discipline = "Action after update.".to_string();
@@ -33,7 +33,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::OK);
 
-    let action_in_db = action::Entity::find_by_id(action.id).one(&db).await?.unwrap();
+    let action_in_db = action::Entity::find_by_id(action.id).one(&db.db).await?.unwrap();
     assert_eq!(action_in_db.user_id, user.id);
     assert_eq!(action_in_db.name, new_name);
     assert_eq!(action_in_db.created_at, action.created_at);
@@ -54,8 +54,8 @@ async fn happy_path() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let action = factory::action(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let action = factory::action(user.id).insert(&db.db).await?;
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/actions/{}", action.id))
@@ -79,8 +79,8 @@ mod validation_errors {
     #[actix_web::test]
     async fn long_name() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
-        let user = factory::user().insert(&db).await?;
-        let action = factory::action(user.id).insert(&db).await?;
+        let user = factory::user().insert(&db.db).await?;
+        let action = factory::action(user.id).insert(&db.db).await?;
 
         let long_name = "#1234567".to_string();
         let req = test::TestRequest::put()
@@ -103,8 +103,8 @@ mod validation_errors {
     #[actix_web::test]
     async fn short_name() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
-        let user = factory::user().insert(&db).await?;
-        let action = factory::action(user.id).insert(&db).await?;
+        let user = factory::user().insert(&db.db).await?;
+        let action = factory::action(user.id).insert(&db.db).await?;
 
         let short_name = "#12345".to_string();
         let req = test::TestRequest::put()
@@ -127,8 +127,8 @@ mod validation_errors {
     #[actix_web::test]
     async fn bad_format() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
-        let user = factory::user().insert(&db).await?;
-        let action = factory::action(user.id).insert(&db).await?;
+        let user = factory::user().insert(&db.db).await?;
+        let action = factory::action(user.id).insert(&db.db).await?;
 
         let bad_format = "$ffffff".to_string();
         let req = test::TestRequest::put()
@@ -151,8 +151,8 @@ mod validation_errors {
     #[actix_web::test]
     async fn bad_character() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
-        let user = factory::user().insert(&db).await?;
-        let action = factory::action(user.id).insert(&db).await?;
+        let user = factory::user().insert(&db.db).await?;
+        let action = factory::action(user.id).insert(&db.db).await?;
 
         let bad_character = "#gggggg".to_string();
         let req = test::TestRequest::put()

@@ -14,7 +14,7 @@ use common::{
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, settings } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
 
     let req_body = WebPushSubscriptionCreateRequest {
         device_name: "My iPhone".to_string(),
@@ -39,7 +39,7 @@ async fn happy_path() -> Result<(), DbErr> {
 
     let sub_in_db = web_push_subscription::Entity::find()
         .filter(web_push_subscription::Column::UserId.eq(user.id))
-        .one(&db)
+        .one(&db.db)
         .await?
         .unwrap();
     assert_eq!(sub_in_db.device_name, req_body.device_name);
@@ -75,8 +75,8 @@ async fn happy_path() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn happy_path_conflict_handling() -> Result<(), DbErr> {
     let Connections { app, db, settings } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let _subscription = factory::web_push_subscription(user.id, &settings).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let _subscription = factory::web_push_subscription(user.id, &settings).insert(&db.db).await?;
 
     let req_body = WebPushSubscriptionCreateRequest {
         device_name: "My iPhone".to_string(),
@@ -101,7 +101,7 @@ async fn happy_path_conflict_handling() -> Result<(), DbErr> {
 
     let sub_in_db = web_push_subscription::Entity::find()
         .filter(web_push_subscription::Column::UserId.eq(user.id))
-        .one(&db)
+        .one(&db.db)
         .await?
         .unwrap();
     assert_eq!(sub_in_db.device_name, req_body.device_name);

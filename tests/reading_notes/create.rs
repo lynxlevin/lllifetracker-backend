@@ -19,7 +19,7 @@ enum QueryAs {
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     let (_, tag_0) = factory::action(user.id)
         .name("action_0".to_string())
         .insert_with_tag(&db)
@@ -54,7 +54,7 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(res.text, reading_note_text.clone());
     assert_eq!(res.date, today);
 
-    let reading_note_in_db = reading_note::Entity::find_by_id(res.id).one(&db).await?.unwrap();
+    let reading_note_in_db = reading_note::Entity::find_by_id(res.id).one(&db.db).await?.unwrap();
     assert_eq!(reading_note_in_db.user_id, user.id);
     assert_eq!(ReadingNoteVisible::from(reading_note_in_db), res);
 
@@ -62,7 +62,7 @@ async fn happy_path() -> Result<(), DbErr> {
         .column_as(reading_notes_tags::Column::TagId, QueryAs::TagId)
         .filter(reading_notes_tags::Column::ReadingNoteId.eq(res.id))
         .into_values::<_, QueryAs>()
-        .all(&db)
+        .all(&db.db)
         .await?;
     assert_eq!(linked_tag_ids.len(), 2);
     assert!(linked_tag_ids.contains(&tag_0.id));
@@ -95,7 +95,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
 
     let non_existent_tag_req = test::TestRequest::post()
         .uri("/api/reading_notes")

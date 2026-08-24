@@ -15,10 +15,10 @@ use entities::{
 #[actix_web::test]
 async fn happy_path_time_span_to_count() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     let action = factory::action(user.id)
         .track_type(ActionTrackType::TimeSpan)
-        .insert(&db)
+        .insert(&db.db)
         .await?;
 
     let req = test::TestRequest::put()
@@ -30,7 +30,7 @@ async fn happy_path_time_span_to_count() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::OK);
 
-    let action_in_db = action::Entity::find_by_id(action.id).one(&db).await?.unwrap();
+    let action_in_db = action::Entity::find_by_id(action.id).one(&db.db).await?.unwrap();
     assert_eq!(action_in_db.user_id, user.id);
     assert_eq!(action_in_db.name, action.name);
     assert_eq!(action_in_db.created_at, action.created_at);
@@ -51,10 +51,10 @@ async fn happy_path_time_span_to_count() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn happy_path_count_to_time_span() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     let action = factory::action(user.id)
         .track_type(ActionTrackType::Count)
-        .insert(&db)
+        .insert(&db.db)
         .await?;
 
     let req = test::TestRequest::put()
@@ -66,7 +66,7 @@ async fn happy_path_count_to_time_span() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::OK);
 
-    let action_in_db = action::Entity::find_by_id(action.id).one(&db).await?.unwrap();
+    let action_in_db = action::Entity::find_by_id(action.id).one(&db.db).await?.unwrap();
     assert_eq!(action_in_db.user_id, user.id);
     assert_eq!(action_in_db.name, action.name);
     assert_eq!(action_in_db.created_at, action.created_at);
@@ -87,10 +87,10 @@ async fn happy_path_count_to_time_span() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn happy_path_no_change() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     let action = factory::action(user.id)
         .track_type(ActionTrackType::TimeSpan)
-        .insert(&db)
+        .insert(&db.db)
         .await?;
 
     let req = test::TestRequest::put()
@@ -102,7 +102,7 @@ async fn happy_path_no_change() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::OK);
 
-    let action_in_db = action::Entity::find_by_id(action.id).one(&db).await?.unwrap();
+    let action_in_db = action::Entity::find_by_id(action.id).one(&db.db).await?.unwrap();
     assert_eq!(action_in_db.user_id, user.id);
     assert_eq!(action_in_db.name, action.name);
     assert_eq!(action_in_db.created_at, action.created_at);
@@ -123,15 +123,15 @@ async fn happy_path_no_change() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn invalidate_existing_action_goal() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let action = factory::action(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let action = factory::action(user.id).insert(&db.db).await?;
     let existing_goal = factory::action_goal(user.id, action.id)
         .from_date(
             DateTime::parse_from_rfc3339("2025-07-01T00:00:00Z")
                 .unwrap()
                 .date_naive(),
         )
-        .insert(&db)
+        .insert(&db.db)
         .await?;
 
     let req = test::TestRequest::put()
@@ -147,7 +147,7 @@ async fn invalidate_existing_action_goal() -> Result<(), DbErr> {
         (Utc::now().with_timezone(&FixedOffset::east_opt(9 * 3600).unwrap()) - Duration::days(1)).date_naive();
 
     let existing_goal_in_db = action_goal::Entity::find_by_id(existing_goal.id)
-        .one(&db)
+        .one(&db.db)
         .await?
         .unwrap();
     assert_eq!(Some(user_yesterday), existing_goal_in_db.to_date);
@@ -158,11 +158,11 @@ async fn invalidate_existing_action_goal() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn delete_todays_existing_action_goal() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let action = factory::action(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let action = factory::action(user.id).insert(&db.db).await?;
     let existing_goal = factory::action_goal(user.id, action.id)
         .from_date(user.timezone.convert_utc(Utc::now()).date_naive())
-        .insert(&db)
+        .insert(&db.db)
         .await?;
 
     let req = test::TestRequest::put()
@@ -174,7 +174,7 @@ async fn delete_todays_existing_action_goal() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::OK);
 
-    let existing_goal_in_db = action_goal::Entity::find_by_id(existing_goal.id).one(&db).await?;
+    let existing_goal_in_db = action_goal::Entity::find_by_id(existing_goal.id).one(&db.db).await?;
     assert!(existing_goal_in_db.is_none());
 
     Ok(())
@@ -183,8 +183,8 @@ async fn delete_todays_existing_action_goal() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let action = factory::action(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let action = factory::action(user.id).insert(&db.db).await?;
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/actions/{}/track_type", action.id))

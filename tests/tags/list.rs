@@ -14,7 +14,7 @@ use common::factory::{
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
 
     let ambitions = create_ambitions(
         vec![

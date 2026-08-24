@@ -15,10 +15,10 @@ use entities::{
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     let name = "create_direction route happy path".to_string();
     let description = "Create direction route happy path.".to_string();
-    let category = factory::direction_category(user.id).insert(&db).await?;
+    let category = factory::direction_category(user.id).insert(&db.db).await?;
 
     let req = test::TestRequest::post()
         .uri("/api/directions")
@@ -34,7 +34,7 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(res.status(), http::StatusCode::CREATED);
 
     let res: DirectionVisible = test::read_body_json(res).await;
-    let direction_in_db = direction::Entity::find_by_id(res.id).one(&db).await?.unwrap();
+    let direction_in_db = direction::Entity::find_by_id(res.id).one(&db.db).await?.unwrap();
     assert_eq!(direction_in_db.user_id, user.id);
     assert_eq!(direction_in_db.name, name);
     assert_eq!(direction_in_db.description, Some(description));
@@ -50,7 +50,7 @@ async fn happy_path() -> Result<(), DbErr> {
         .filter(tag::Column::ActionId.is_null())
         .filter(tag::Column::UserId.eq(user.id))
         .filter(tag::Column::Type.eq(TagType::Direction))
-        .one(&db)
+        .one(&db.db)
         .await?;
     assert!(tag_in_db.is_some());
 
@@ -60,9 +60,9 @@ async fn happy_path() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn no_category_cases() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let other_user = factory::user().insert(&db).await?;
-    let other_user_category = factory::direction_category(other_user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let other_user = factory::user().insert(&db.db).await?;
+    let other_user_category = factory::direction_category(other_user.id).insert(&db.db).await?;
 
     for (category_id, case) in vec![
         (other_user_category.id, "other_user_category.id"),
@@ -84,7 +84,7 @@ async fn no_category_cases() -> Result<(), DbErr> {
 
         let res: DirectionVisible = test::read_body_json(res).await;
 
-        let direction_in_db = direction::Entity::find_by_id(res.id).one(&db).await?.unwrap();
+        let direction_in_db = direction::Entity::find_by_id(res.id).one(&db.db).await?.unwrap();
         assert_eq!(direction_in_db.user_id, user.id);
         assert_eq!(direction_in_db.name, String::default());
         assert_eq!(direction_in_db.description, None);

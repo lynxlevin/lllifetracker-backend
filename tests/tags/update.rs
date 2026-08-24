@@ -11,8 +11,8 @@ use common::factory::{self, *};
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let tag = factory::tag(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let tag = factory::tag(user.id).insert(&db.db).await?;
 
     let req_body = TagUpdateRequest { name: "new_name".to_string() };
 
@@ -29,7 +29,7 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(res.name, req_body.name.clone());
     assert_eq!(res.r#type, TagType::Plain);
 
-    let tag_in_db = tag::Entity::find_by_id(tag.id).one(&db).await?.unwrap();
+    let tag_in_db = tag::Entity::find_by_id(tag.id).one(&db.db).await?.unwrap();
     assert_eq!(tag_in_db.name, Some(req_body.name));
     assert_eq!(tag_in_db.user_id, user.id);
 
@@ -39,8 +39,8 @@ async fn happy_path() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let tag = factory::tag(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let tag = factory::tag(user.id).insert(&db.db).await?;
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/tags/plain/{}", tag.id))
@@ -56,7 +56,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn not_found_if_non_existent_tag_id() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/tags/plain/{}", uuid::Uuid::now_v7()))
@@ -73,7 +73,7 @@ async fn not_found_if_non_existent_tag_id() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn bad_request_if_not_plain_tag() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
 
     let req = test::TestRequest::put()

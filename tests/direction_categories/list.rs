@@ -10,16 +10,16 @@ use common::factory::{self, *};
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     let category_0 = factory::direction_category(user.id)
         .ordering(Some(2))
-        .insert(&db)
+        .insert(&db.db)
         .await?;
     let category_1 = factory::direction_category(user.id)
         .ordering(Some(1))
-        .insert(&db)
+        .insert(&db.db)
         .await?;
-    let category_2 = factory::direction_category(user.id).ordering(None).insert(&db).await?;
+    let category_2 = factory::direction_category(user.id).ordering(None).insert(&db.db).await?;
 
     let req = test::TestRequest::get().uri("/api/direction_categories").to_request();
     req.extensions_mut().insert(user.clone());

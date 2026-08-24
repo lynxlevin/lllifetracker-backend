@@ -10,8 +10,8 @@ use entities::{diaries_tags, diary};
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let diary = factory::diary(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let diary = factory::diary(user.id).insert(&db.db).await?;
     let (_, tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
     factory::link_diary_tag(&db, diary.id, tag.id).await?;
 
@@ -23,13 +23,13 @@ async fn happy_path() -> Result<(), DbErr> {
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), http::StatusCode::NO_CONTENT);
 
-    let diary_in_db = diary::Entity::find_by_id(diary.id).one(&db).await?;
+    let diary_in_db = diary::Entity::find_by_id(diary.id).one(&db.db).await?;
     assert!(diary_in_db.is_none());
 
     let diaries_tags_in_db = diaries_tags::Entity::find()
         .filter(diaries_tags::Column::DiaryId.eq(diary.id))
         .filter(diaries_tags::Column::TagId.eq(tag.id))
-        .one(&db)
+        .one(&db.db)
         .await?;
     assert!(diaries_tags_in_db.is_none());
 
@@ -39,8 +39,8 @@ async fn happy_path() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let diary = factory::diary(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let diary = factory::diary(user.id).insert(&db.db).await?;
 
     let req = test::TestRequest::delete()
         .uri(&format!("/api/diaries/{}", diary.id))

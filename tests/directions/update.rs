@@ -12,9 +12,9 @@ use entities::direction;
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let direction = factory::direction(user.id).insert(&db).await?;
-    let category = factory::direction_category(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let direction = factory::direction(user.id).insert(&db.db).await?;
+    let category = factory::direction_category(user.id).insert(&db.db).await?;
 
     let new_name = "direction_after_update".to_string();
     let new_description = "Direction after update.".to_string();
@@ -32,7 +32,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::OK);
 
-    let direction_in_db = direction::Entity::find_by_id(direction.id).one(&db).await?.unwrap();
+    let direction_in_db = direction::Entity::find_by_id(direction.id).one(&db.db).await?.unwrap();
     assert_eq!(direction_in_db.id, direction.id);
     assert_eq!(direction_in_db.user_id, user.id);
     assert_eq!(direction_in_db.name, new_name);
@@ -52,10 +52,10 @@ async fn happy_path() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn no_category_cases() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let other_user = factory::user().insert(&db).await?;
-    let direction = factory::direction(user.id).insert(&db).await?;
-    let other_user_category = factory::direction_category(other_user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let other_user = factory::user().insert(&db.db).await?;
+    let direction = factory::direction(user.id).insert(&db.db).await?;
+    let other_user_category = factory::direction_category(other_user.id).insert(&db.db).await?;
 
     for (category_id, case) in vec![
         (other_user_category.id, "other_user_category.id"),
@@ -79,7 +79,7 @@ async fn no_category_cases() -> Result<(), DbErr> {
         assert_eq!(res.id, direction.id);
         assert_eq!(res.category_id, None);
 
-        let direction_in_db = direction::Entity::find_by_id(direction.id).one(&db).await?.unwrap();
+        let direction_in_db = direction::Entity::find_by_id(direction.id).one(&db.db).await?.unwrap();
         assert_eq!(direction_in_db.id, direction.id);
         assert_eq!(direction_in_db.user_id, user.id);
         assert_eq!(direction_in_db.name, String::default());
@@ -99,8 +99,8 @@ async fn no_category_cases() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let direction = factory::direction(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let direction = factory::direction(user.id).insert(&db.db).await?;
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/directions/{}", direction.id))

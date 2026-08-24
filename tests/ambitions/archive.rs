@@ -11,8 +11,8 @@ use entities::ambition;
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let ambition = factory::ambition(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let ambition = factory::ambition(user.id).insert(&db.db).await?;
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/ambitions/{}/archive", ambition.id))
@@ -22,7 +22,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::OK);
 
-    let ambition_in_db = ambition::Entity::find_by_id(ambition.id).one(&db).await?.unwrap();
+    let ambition_in_db = ambition::Entity::find_by_id(ambition.id).one(&db.db).await?.unwrap();
     assert_eq!(ambition_in_db.id, ambition.id);
     assert_eq!(ambition_in_db.user_id, user.id);
     assert_eq!(ambition_in_db.name, ambition.name);
@@ -41,8 +41,8 @@ async fn happy_path() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let ambition = factory::ambition(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let ambition = factory::ambition(user.id).insert(&db.db).await?;
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/ambitions/{}/archive", ambition.id))

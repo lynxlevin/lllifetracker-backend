@@ -14,7 +14,7 @@ use entities::{
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
 
     let name = "Test create_ambition route".to_string();
     let description = Some("Test description".to_string());
@@ -28,7 +28,7 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(res.status(), http::StatusCode::CREATED);
 
     let res: AmbitionVisible = test::read_body_json(res).await;
-    let ambition_in_db = ambition::Entity::find_by_id(res.id).one(&db).await?.unwrap();
+    let ambition_in_db = ambition::Entity::find_by_id(res.id).one(&db.db).await?.unwrap();
     assert_eq!(ambition_in_db.user_id, user.id);
     assert_eq!(ambition_in_db.name, name);
     assert_eq!(ambition_in_db.description, description);
@@ -43,7 +43,7 @@ async fn happy_path() -> Result<(), DbErr> {
         .filter(tag::Column::DirectionId.is_null())
         .filter(tag::Column::ActionId.is_null())
         .filter(tag::Column::Type.eq(TagType::Ambition))
-        .one(&db)
+        .one(&db.db)
         .await?;
     assert!(tag_in_db.is_some());
 
@@ -53,7 +53,7 @@ async fn happy_path() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn happy_path_no_description() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
 
     let name = "Test create_ambition route".to_string();
     let req = test::TestRequest::post()
@@ -67,7 +67,7 @@ async fn happy_path_no_description() -> Result<(), DbErr> {
 
     let res: AmbitionVisible = test::read_body_json(res).await;
 
-    let ambition_in_db = ambition::Entity::find_by_id(res.id).one(&db).await?.unwrap();
+    let ambition_in_db = ambition::Entity::find_by_id(res.id).one(&db.db).await?.unwrap();
     assert_eq!(ambition_in_db.user_id, user.id);
     assert_eq!(ambition_in_db.name, name);
     assert_eq!(ambition_in_db.description, None);
@@ -82,7 +82,7 @@ async fn happy_path_no_description() -> Result<(), DbErr> {
         .filter(tag::Column::DirectionId.is_null())
         .filter(tag::Column::ActionId.is_null())
         .filter(tag::Column::Type.eq(TagType::Ambition))
-        .one(&db)
+        .one(&db.db)
         .await?;
     assert!(tag_in_db.is_some());
 

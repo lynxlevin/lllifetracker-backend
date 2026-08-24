@@ -8,8 +8,8 @@ use common::factory;
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, settings } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let subscription = factory::web_push_subscription(user.id, &settings).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let subscription = factory::web_push_subscription(user.id, &settings).insert(&db.db).await?;
 
     let req = test::TestRequest::get().uri("/api/web_push_subscription").to_request();
     req.extensions_mut().insert(user.clone());
@@ -31,7 +31,7 @@ async fn happy_path() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn happy_path_no_subscription() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
 
     let req = test::TestRequest::get().uri("/api/web_push_subscription").to_request();
     req.extensions_mut().insert(user.clone());
