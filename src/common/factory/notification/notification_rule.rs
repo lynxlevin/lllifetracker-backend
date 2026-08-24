@@ -2,7 +2,7 @@ use chrono::{
     NaiveTime,
     Weekday::{self, Fri, Mon, Sat, Sun, Thu, Tue, Wed},
 };
-use entities::{notification_rule, sea_orm_active_enums::NotificationType};
+use entities::notification_rule::{self, NotificationType};
 use sea_orm::{ActiveValue::NotSet, DbConn, DbErr, EntityTrait, Set};
 use uuid::Uuid;
 

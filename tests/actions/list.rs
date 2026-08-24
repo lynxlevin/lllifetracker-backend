@@ -1,6 +1,6 @@
 use actix_web::{http, test, HttpMessage};
 use chrono::NaiveDate;
-use entities::sea_orm_active_enums::ActionTrackType;
+use entities::action::ActionTrackType;
 use sea_orm::{ActiveModelTrait, DbErr};
 use use_cases::my_way::actions::types::ActionVisibleWithGoal;
 

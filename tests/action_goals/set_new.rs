@@ -8,7 +8,7 @@ use crate::utils::Connections;
 
 use super::super::utils::init_app;
 use common::factory::{self, ActionFactory, ActionGoalFactory};
-use entities::{action_goal, custom_methods::user::UserTimezoneTrait, sea_orm_active_enums::ActionTrackType};
+use entities::{action::ActionTrackType, action_goal};
 
 #[actix_web::test]
 async fn happy_path_time_span() -> Result<(), DbErr> {
@@ -126,7 +126,7 @@ async fn duplicate_from_date() -> Result<(), DbErr> {
     let user = factory::user().insert(&db).await?;
     let action = factory::action(user.id).insert(&db).await?;
     let existing_goal = factory::action_goal(user.id, action.id)
-        .from_date(user.to_user_timezone(Utc::now()).date_naive())
+        .from_date(user.timezone.convert_utc(Utc::now()).date_naive())
         .insert(&db)
         .await?;
 

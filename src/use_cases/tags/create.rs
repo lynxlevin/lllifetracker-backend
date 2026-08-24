@@ -1,5 +1,5 @@
 use db_adapters::tag_adapter::{CreatePlainTagParams, TagAdapter, TagMutation};
-use entities::{sea_orm_active_enums::TagType, user as user_entity};
+use entities::{tag::TagType, user as user_entity};
 
 use crate::{
     tags::types::{TagCreateRequest, TagVisible},

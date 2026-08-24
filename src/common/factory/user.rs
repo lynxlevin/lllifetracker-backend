@@ -1,10 +1,8 @@
 use chrono::{DateTime, FixedOffset, Utc};
-use entities::user;
+use entities::user::{self, TimezoneEnum};
 use sea_orm::Set;
 
 pub fn user() -> user::ActiveModel {
-    use entities::sea_orm_active_enums::TimezoneEnum;
-
     let now = Utc::now();
     user::ActiveModel {
         id: Set(uuid::Uuid::now_v7()),

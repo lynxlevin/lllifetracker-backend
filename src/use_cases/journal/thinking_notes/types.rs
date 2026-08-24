@@ -1,13 +1,13 @@
 use chrono::{DateTime, FixedOffset};
 use db_adapters::thinking_note_adapter::ThinkingNoteWithTag;
 use entities::{prelude::ThinkingNote, thinking_note};
-use sea_orm::{DerivePartialModel, FromQueryResult};
+use sea_orm::DerivePartialModel;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{journal::types::IntoJournalVisibleWithTags, tags::types::TagVisible};
 
-#[derive(Serialize, Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, DerivePartialModel, PartialEq, Debug)]
 #[sea_orm(entity = "ThinkingNote")]
 pub struct ThinkingNoteVisible {
     pub id: Uuid,

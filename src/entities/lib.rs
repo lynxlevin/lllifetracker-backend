@@ -1,4 +1,18 @@
-pub mod custom_methods;
-mod generated;
+pub mod prelude;
 
-pub use generated::*;
+pub mod action;
+pub mod action_goal;
+pub mod action_track;
+pub mod ambition;
+pub mod diaries_tags;
+pub mod diary;
+pub mod direction;
+pub mod direction_category;
+pub mod notification_rule;
+pub mod reading_note;
+pub mod reading_notes_tags;
+pub mod tag;
+pub mod thinking_note;
+pub mod thinking_note_tags;
+pub mod user;
+pub mod web_push_subscription;

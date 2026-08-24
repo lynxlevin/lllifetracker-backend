@@ -1,9 +1,9 @@
-use sea_orm::{DerivePartialModel, FromQueryResult};
+use sea_orm::DerivePartialModel;
 
 use entities::{direction_category, prelude::DirectionCategory};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, DerivePartialModel, PartialEq, Debug)]
 #[sea_orm(entity = "DirectionCategory")]
 pub struct DirectionCategoryVisible {
     pub id: uuid::Uuid,

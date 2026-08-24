@@ -1,8 +1,8 @@
 use chrono::Utc;
 use entities::{
     ambition::{ActiveModel, Entity, Model},
-    sea_orm_active_enums::TagType,
-    tag, user,
+    tag::{self, TagType},
+    user,
 };
 use sea_orm::{ActiveModelTrait, ActiveValue::NotSet, DbConn, DbErr, EntityTrait, Set};
 use std::{collections::HashMap, future::Future};
@@ -84,7 +84,7 @@ pub async fn create_ambitions<'a>(
             .archived(param.archived)
             .ordering(param.ordering)
     });
-    let ambitions = Entity::insert_many(ambitions).exec_with_returning_many(db).await?;
+    let ambitions = Entity::insert_many(ambitions).exec_with_returning(db).await?;
 
     Ok(ambitions
         .into_iter()

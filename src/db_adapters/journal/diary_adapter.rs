@@ -2,9 +2,9 @@ use std::future::Future;
 
 use chrono::{DateTime, FixedOffset, NaiveDate};
 use sea_orm::{
-    prelude::Expr, sea_query::NullOrdering::Last, sqlx::error::Error::Database, ActiveModelTrait, ColumnAsExpr,
-    ColumnTrait, Condition, DbConn, DbErr, EntityTrait, FromQueryResult, IntoActiveModel, JoinType::LeftJoin,
-    ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait, RuntimeErr::SqlxError, Select, Set,
+    prelude::Expr, sea_query::NullOrdering::Last, ActiveModelTrait, ColumnAsExpr, ColumnTrait, Condition, DbConn,
+    DbErr, EntityTrait, ExprTrait, FromQueryResult, IntoActiveModel, JoinType::LeftJoin, ModelTrait, Order,
+    QueryFilter, QueryOrder, QuerySelect, RelationTrait, RuntimeErr::SqlxError, Select, Set,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -13,8 +13,8 @@ use entities::{
     action, ambition, diaries_tags,
     diary::{ActiveModel, Column, Entity, Model},
     direction,
-    sea_orm_active_enums::TagType,
-    tag, user,
+    tag::{self, TagType},
+    user,
 };
 
 use crate::{tag_adapter::TagWithName, CustomDbErr};
@@ -254,13 +254,6 @@ impl DiaryMutation for DiaryAdapter<'_> {
         }
         .insert(self.db)
         .await
-        .map_err(|e| match &e {
-            DbErr::Query(SqlxError(Database(err))) => match err.constraint() {
-                Some("diaries_user_id_date_unique_index") => DbErr::Custom(CustomDbErr::Duplicate.to_string()),
-                _ => e,
-            },
-            _ => e,
-        })
     }
 
     async fn partial_update(self, diary: Model, params: UpdateDiaryParams) -> Result<Model, DbErr> {
@@ -271,13 +264,7 @@ impl DiaryMutation for DiaryAdapter<'_> {
         if params.update_keys.contains(&DiaryUpdateKey::Date) {
             diary.date = Set(params.date);
         }
-        diary.update(self.db).await.map_err(|e| match &e {
-            DbErr::Query(SqlxError(Database(err))) => match err.constraint() {
-                Some("diaries_user_id_date_unique_index") => DbErr::Custom(CustomDbErr::Duplicate.to_string()),
-                _ => e,
-            },
-            _ => e,
-        })
+        diary.update(self.db).await
     }
 
     async fn delete(self, diary: Model) -> Result<(), DbErr> {
@@ -289,14 +276,16 @@ impl DiaryMutation for DiaryAdapter<'_> {
             .into_iter()
             .map(|tag_id| diaries_tags::ActiveModel { diary_id: Set(diary.id), tag_id: Set(tag_id) });
         diaries_tags::Entity::insert_many(tag_links)
-            .on_empty_do_nothing()
             .exec(self.db)
             .await
             .map(|_| ())
             .map_err(|e| match &e {
-                DbErr::Exec(SqlxError(Database(err))) => match err.constraint() {
-                    Some("fk-diaries_tags-tag_id") => DbErr::Custom(CustomDbErr::NotFound.to_string()),
-                    _ => e,
+                DbErr::Query(SqlxError(err)) => match err.as_database_error() {
+                    Some(db_err) => match db_err.constraint() {
+                        Some("fk-diaries_tags-tag_id") => DbErr::Custom(CustomDbErr::NotFound.to_string()),
+                        _ => e,
+                    },
+                    None => e,
                 },
                 _ => e,
             })

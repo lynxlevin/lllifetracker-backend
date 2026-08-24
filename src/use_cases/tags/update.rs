@@ -1,5 +1,5 @@
 use db_adapters::tag_adapter::{TagAdapter, TagFilter, TagMutation, TagQuery, UpdatePlainTagParams};
-use entities::{sea_orm_active_enums::TagType, user as user_entity};
+use entities::{tag::TagType, user as user_entity};
 use uuid::Uuid;
 
 use crate::{

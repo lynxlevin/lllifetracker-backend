@@ -2,6 +2,7 @@
   "cSpell.words": [
     "actix",
     "chrono",
+    "codegen",
     "Datelike",
     "deadpool",
     "Deque",
@@ -23,7 +24,9 @@
     "sqlx",
     "Subsec",
     "subsecs",
+    "succ",
     "thiserror",
+    "Timelike",
     "trunc"
   ],
   "rest-client.followredirect": false,

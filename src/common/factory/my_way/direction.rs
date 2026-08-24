@@ -1,8 +1,8 @@
 use chrono::Utc;
 use entities::{
     direction::{ActiveModel, Entity, Model},
-    sea_orm_active_enums::TagType,
-    tag, user,
+    tag::{self, TagType},
+    user,
 };
 use sea_orm::{ActiveModelTrait, ActiveValue::NotSet, DbConn, DbErr, EntityTrait, Set};
 use std::{collections::HashMap, future::Future};
@@ -93,7 +93,7 @@ pub async fn create_directions<'a>(
             .ordering(param.ordering)
             .category_id(param.category_id)
     });
-    let directions = Entity::insert_many(directions).exec_with_returning_many(db).await?;
+    let directions = Entity::insert_many(directions).exec_with_returning(db).await?;
 
     Ok(directions
         .into_iter()

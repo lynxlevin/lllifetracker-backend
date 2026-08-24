@@ -6,9 +6,7 @@ use db_adapters::notification_rule_adapter::{
     CreateNotificationRuleParams, NotificationRuleAdapter, NotificationRuleFilter, NotificationRuleMutation,
     NotificationRuleQuery,
 };
-use entities::{
-    custom_methods::user::UserTimezoneTrait, sea_orm_active_enums::NotificationType, user as user_entity,
-};
+use entities::{notification_rule::NotificationType, user as user_entity};
 
 use crate::{
     notification::notification_rule::types::{NotificationRuleCreateRequest, RecurrenceType},
@@ -65,7 +63,7 @@ async fn parse_params<'a>(
         ));
     }
 
-    let user_timezone_offset = user.get_user_timezone_offset();
+    let user_timezone_offset = user.timezone.to_timezone_offset();
     let (utc_time, overflow) = params
         .time
         .overflowing_sub_signed(TimeDelta::hours(user_timezone_offset.into()));

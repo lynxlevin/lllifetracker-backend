@@ -1,9 +1,6 @@
 use actix_web::{http, test, HttpMessage};
 use chrono::NaiveTime;
-use entities::{
-    notification_rule::{Column, Entity},
-    sea_orm_active_enums::NotificationType,
-};
+use entities::notification_rule::{Column, Entity, NotificationType};
 use sea_orm::{ActiveModelTrait, ColumnTrait, DbErr, EntityTrait, QueryFilter};
 
 use crate::utils::{init_app, Connections};

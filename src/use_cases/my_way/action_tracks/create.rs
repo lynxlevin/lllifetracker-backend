@@ -12,7 +12,7 @@ use db_adapters::{
     user_adapter::UserAdapter,
     CustomDbErr,
 };
-use entities::{sea_orm_active_enums::ActionTrackType, user as user_entity};
+use entities::{action::ActionTrackType, user as user_entity};
 
 pub async fn create_action_track<'a>(
     user: user_entity::Model,

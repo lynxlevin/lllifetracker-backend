@@ -9,7 +9,6 @@ path = "lib.rs"
 
 [dependencies]
 entities = { path = "../entities", optional = true }
-migration = { path = "../../migration", optional = true }
 
 aes-gcm = { workspace = true, optional = true }
 base64 = { workspace = true, optional = true }
@@ -21,7 +20,7 @@ sea-orm = { workspace = true, optional = true }
 uuid = { workspace = true, optional = true }
 
 [features]
-db = ["dep:sea-orm", "dep:migration", "settings", "dep:aes-gcm", "dep:base64"]
+db = ["dep:sea-orm", "settings", "dep:aes-gcm", "dep:base64"]
 factory = ["dep:entities", "dep:sea-orm", "dep:uuid", "dep:chrono", "db", "settings"]
 redis = ["dep:deadpool-redis", "settings"]
 settings = ["dep:serde"]

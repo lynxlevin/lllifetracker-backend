@@ -1,10 +1,10 @@
 use chrono::{DateTime, FixedOffset};
-use sea_orm::{DerivePartialModel, FromQueryResult};
+use sea_orm::DerivePartialModel;
 
 use entities::{ambition, prelude::Ambition};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, DerivePartialModel, FromQueryResult, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, DerivePartialModel, PartialEq, Debug)]
 #[sea_orm(entity = "Ambition")]
 pub struct AmbitionVisible {
     pub id: uuid::Uuid,

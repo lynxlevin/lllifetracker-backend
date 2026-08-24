@@ -2,9 +2,8 @@ use std::future::Future;
 
 use chrono::{DateTime, Duration, FixedOffset, NaiveDate, Utc};
 use sea_orm::{
-    sqlx::error::Error::Database, ActiveModelTrait, ColumnTrait, Condition, DbConn, DbErr, EntityTrait,
-    IntoActiveModel, JoinType::LeftJoin, ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
-    RuntimeErr::SqlxError, Select, Set,
+    ActiveModelTrait, ColumnTrait, Condition, DbConn, DbErr, EntityTrait, IntoActiveModel, JoinType::LeftJoin,
+    ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait, RuntimeErr::SqlxError, Select, Set,
 };
 use uuid::Uuid;
 
@@ -12,8 +11,7 @@ use crate::CustomDbErr;
 use entities::{
     action,
     action_track::{ActiveModel, Column, Entity, Model, Relation},
-    sea_orm_active_enums::TimezoneEnum,
-    user,
+    user::{self, TimezoneEnum},
 };
 
 #[derive(Clone)]
@@ -172,11 +170,17 @@ impl ActionTrackMutation for ActionTrackAdapter<'_> {
         .insert(self.db)
         .await
         .map_err(|e| match &e {
-            DbErr::Query(SqlxError(Database(error))) => match error.constraint() {
-                Some("action_tracks_user_id_action_id_started_at_unique_index") => {
-                    DbErr::Custom(CustomDbErr::Duplicate.to_string())
-                }
-                _ => e,
+            DbErr::Query(SqlxError(err)) => match err.as_database_error() {
+                Some(db_err) => match db_err.constraint() {
+                    Some("action_tracks_user_id_action_id_started_at_unique_index") => {
+                        DbErr::Custom(CustomDbErr::Duplicate.to_string())
+                    }
+                    Some("idx-action_track-action_tracks_user_id_action_id_started_at_uni") => {
+                        DbErr::Custom(CustomDbErr::Duplicate.to_string())
+                    }
+                    _ => e,
+                },
+                None => e,
             },
             _ => e,
         })
@@ -189,11 +193,17 @@ impl ActionTrackMutation for ActionTrackAdapter<'_> {
         action_track.duration = Set(params.duration);
         action_track.action_id = Set(params.action_id);
         action_track.update(self.db).await.map_err(|e| match &e {
-            DbErr::Query(SqlxError(Database(error))) => match error.constraint() {
-                Some("action_tracks_user_id_action_id_started_at_unique_index") => {
-                    DbErr::Custom(CustomDbErr::Duplicate.to_string())
-                }
-                _ => e,
+            DbErr::Query(SqlxError(err)) => match err.as_database_error() {
+                Some(db_err) => match db_err.constraint() {
+                    Some("action_tracks_user_id_action_id_started_at_unique_index") => {
+                        DbErr::Custom(CustomDbErr::Duplicate.to_string())
+                    }
+                    Some("idx-action_track-action_tracks_user_id_action_id_started_at_uni") => {
+                        DbErr::Custom(CustomDbErr::Duplicate.to_string())
+                    }
+                    _ => e,
+                },
+                None => e,
             },
             _ => e,
         })

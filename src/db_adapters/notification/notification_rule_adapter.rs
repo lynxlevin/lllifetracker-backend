@@ -7,8 +7,7 @@ use sea_orm::{
 };
 
 use entities::{
-    notification_rule::{ActiveModel, Column, Entity, Model},
-    sea_orm_active_enums::NotificationType,
+    notification_rule::{ActiveModel, Column, Entity, Model, NotificationType},
     user,
 };
 use uuid::Uuid;
@@ -113,10 +112,7 @@ impl NotificationRuleMutation for NotificationRuleAdapter<'_> {
                 action_id: Set(param.action_id),
             })
             .collect::<Vec<_>>();
-        Entity::insert_many(notification_rules)
-            .on_empty_do_nothing()
-            .exec(self.db)
-            .await?;
+        Entity::insert_many(notification_rules).exec(self.db).await?;
         Ok(())
     }
 
