@@ -2,7 +2,8 @@
 
 use std::{fmt::Display, str::FromStr};
 
-use sea_orm::{entity::prelude::*, sea_query::ValueTypeErr};
+use chrono::Utc;
+use sea_orm::{entity::prelude::*, sea_query::ValueTypeErr, ActiveValue::Set};
 use serde::{Deserialize, Serialize};
 
 // MYMEMO: マイグレーション問題なく動くか確認
@@ -66,4 +67,16 @@ impl Display for ActionTrackType {
     }
 }
 
-impl ActiveModelBehavior for ActiveModel {}
+impl ActiveModelBehavior for ActiveModel {
+    /// Create a new ActiveModel with default values. Also used by `Default::default()`.
+    fn new() -> Self {
+        Self {
+            id: Set(Uuid::now_v7()),
+            archived: Set(false),
+            color: Set("#212121".to_string()),
+            created_at: Set(Utc::now().into()),
+            updated_at: Set(Utc::now().into()),
+            ..ActiveModelTrait::default()
+        }
+    }
+}

@@ -2,7 +2,8 @@
 
 use std::{cmp::Ordering, fmt::Display, str::FromStr};
 
-use sea_orm::{entity::prelude::*, sea_query::ValueTypeErr};
+use chrono::Utc;
+use sea_orm::{entity::prelude::*, sea_query::ValueTypeErr, ActiveValue::Set};
 use serde::{Deserialize, Serialize};
 
 #[sea_orm::model]
@@ -97,7 +98,17 @@ impl TagType {
     }
 }
 
-impl ActiveModelBehavior for ActiveModel {}
+impl ActiveModelBehavior for ActiveModel {
+    /// Create a new ActiveModel with default values. Also used by `Default::default()`.
+    fn new() -> Self {
+        Self {
+            id: Set(Uuid::now_v7()),
+            r#type: Set(TagType::Plain),
+            created_at: Set(Utc::now().into()),
+            ..ActiveModelTrait::default()
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {

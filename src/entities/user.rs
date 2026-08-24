@@ -3,7 +3,7 @@
 use std::{fmt::Display, str::FromStr};
 
 use chrono::{DateTime, FixedOffset, Utc};
-use sea_orm::{entity::prelude::*, sea_query::ValueTypeErr};
+use sea_orm::{entity::prelude::*, sea_query::ValueTypeErr, ActiveValue::Set};
 use serde::{Deserialize, Serialize};
 
 #[sea_orm::model]
@@ -95,4 +95,14 @@ impl TimezoneEnum {
     }
 }
 
-impl ActiveModelBehavior for ActiveModel {}
+impl ActiveModelBehavior for ActiveModel {
+    /// Create a new ActiveModel with default values. Also used by `Default::default()`.
+    fn new() -> Self {
+        Self {
+            id: Set(Uuid::now_v7()),
+            created_at: Set(Utc::now().into()),
+            updated_at: Set(Utc::now().into()),
+            ..ActiveModelTrait::default()
+        }
+    }
+}
