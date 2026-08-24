@@ -1,11 +1,10 @@
 use std::collections::HashMap;
 
-use common::settings::types::Settings;
+use common::{db::Db, settings::types::Settings};
 use db_adapters::web_push_subscription_adapter::{
     WebPushSubscriptionAdapter, WebPushSubscriptionFilter, WebPushSubscriptionMutation, WebPushSubscriptionQuery,
 };
 use entities::web_push_subscription;
-use sea_orm::DbConn;
 use tracing::{event, instrument, Level};
 use uuid::Uuid;
 
@@ -30,11 +29,11 @@ impl MessageWithUserId {
 
 // MYMEMO: nice to have a test, but to do that, need to create a messenger_builder to DI.
 #[instrument(skip_all)]
-pub async fn send_messages(messages: Vec<MessageWithUserId>, settings: &Settings, db: &DbConn) -> () {
+pub async fn send_messages(messages: Vec<MessageWithUserId>, settings: &Settings, db: &Db) -> () {
     let mut user_ids = messages.iter().map(|message| message.user_id).collect::<Vec<_>>();
     user_ids.dedup();
 
-    let mut web_push_subscriptions_by_user_id = match WebPushSubscriptionAdapter::init(db)
+    let mut web_push_subscriptions_by_user_id = match WebPushSubscriptionAdapter::init(&db)
         .filter_in_user_ids(user_ids)
         .get_all()
         .await
@@ -62,7 +61,7 @@ async fn send_web_push(
     message: MessageWithUserId,
     web_push_subscriptions_by_user_id: &mut HashMap<Uuid, web_push_subscription::Model>,
     settings: &Settings,
-    db: &DbConn,
+    db: &Db,
 ) -> () {
     let subscription = match web_push_subscriptions_by_user_id.remove(&message.user_id) {
         Some(subscription) => subscription,
@@ -91,7 +90,7 @@ async fn send_web_push(
                 );
 
                 // NOTE: iOS returns 201 even when it's unsubscribed.
-                if let Err(e) = WebPushSubscriptionAdapter::init(db).delete(subscription).await {
+                if let Err(e) = WebPushSubscriptionAdapter::init(&db).delete(subscription).await {
                     event!(Level::ERROR, "Error on deleting web_push_subscription: {e}")
                 }
             }

@@ -1,11 +1,10 @@
 use chrono::{NaiveTime, Weekday};
 use jwt_simple::reexports::rand::{seq::IteratorRandom, thread_rng};
-use sea_orm::DbConn;
 use tracing::{event, instrument, Level};
 use uuid::Uuid;
 
 use crate::notification::utils::{send_messages, MessageWithUserId};
-use common::settings::types::Settings;
+use common::{db::Db, settings::types::Settings};
 use db_adapters::{
     ambition_adapter::{AmbitionAdapter, AmbitionFilter, AmbitionQuery},
     direction_adapter::{DirectionAdapter, DirectionFilter, DirectionJoin, DirectionQuery},
@@ -22,7 +21,7 @@ enum NotificationChoice {
 }
 
 #[instrument(skip_all)]
-pub async fn my_way_reminder(settings: &Settings, db: &DbConn, weekday: Weekday, utc_time: NaiveTime) -> () {
+pub async fn my_way_reminder(settings: &Settings, db: &Db, weekday: Weekday, utc_time: NaiveTime) -> () {
     let notification_rules = match get_notification_rules(db, weekday, utc_time).await {
         Ok(notification_rules) => notification_rules,
         Err(_) => {
@@ -53,11 +52,11 @@ pub async fn my_way_reminder(settings: &Settings, db: &DbConn, weekday: Weekday,
 
 #[instrument(skip_all)]
 async fn get_notification_rules(
-    db: &DbConn,
+    db: &Db,
     weekday: Weekday,
     utc_time: NaiveTime,
 ) -> Result<Vec<notification_rule::Model>, ()> {
-    NotificationRuleAdapter::init(db)
+    NotificationRuleAdapter::init(&db)
         .filter_in_types(vec![
             NotificationType::AmbitionOrDirection,
             NotificationType::Ambition,
@@ -75,7 +74,7 @@ async fn get_notification_rules(
 }
 
 #[instrument(skip_all)]
-async fn get_messages(db: &DbConn, notification_rules: Vec<notification_rule::Model>) -> Vec<MessageWithUserId> {
+async fn get_messages(db: &Db, notification_rules: Vec<notification_rule::Model>) -> Vec<MessageWithUserId> {
     // MYMEMO: Is there a way to reduce DB query? If not, use stream. https://users.rust-lang.org/t/how-to-use-await-inside-vec-iter-map-in-an-async-fn/65416/3
     let mut messages: Vec<MessageWithUserId> = vec![];
     for rule in notification_rules.iter() {
@@ -122,11 +121,11 @@ async fn get_messages(db: &DbConn, notification_rules: Vec<notification_rule::Mo
 async fn get_random_message(
     notification_choice: &NotificationChoice,
     user_id: Uuid,
-    db: &DbConn,
+    db: &Db,
 ) -> Option<MessageWithUserId> {
     let (title, body) = match notification_choice {
         NotificationChoice::Ambition => {
-            let ambition = match AmbitionAdapter::init(db)
+            let ambition = match AmbitionAdapter::init(&db)
                 .filter_eq_user_id(user_id)
                 .filter_eq_archived(false)
                 .get_random()
@@ -151,7 +150,7 @@ async fn get_random_message(
             (title, body)
         }
         NotificationChoice::Direction => {
-            let (direction, category) = match DirectionAdapter::init(db)
+            let (direction, category) = match DirectionAdapter::init(&db)
                 .join_category()
                 .filter_eq_user_id(user_id)
                 .filter_eq_archived(false)
@@ -188,7 +187,7 @@ async fn get_random_message(
 #[cfg(test)]
 mod tests {
     use common::{
-        db::init_db,
+        db::get_db_connection,
         factory::{self, *},
         settings::get_test_settings,
     };
@@ -210,22 +209,22 @@ mod tests {
     #[actix_web::test]
     async fn test_get_notification_rules() -> Result<(), DbErr> {
         let settings = get_test_settings();
-        let db = init_db(&settings).await;
-        let user = factory::user().insert(&db).await?;
+        let db = get_db_connection(&settings).await.unwrap();
+        let user = factory::user().insert(&db.db).await?;
         let weekday = Weekday::Mon;
         let time = NaiveTime::from_hms_opt(0, 0, 0).unwrap();
         // FIXME: This has to be done in a better way.
-        notification_rule::Entity::delete_many().exec(&db).await?;
+        notification_rule::Entity::delete_many().exec(&db.db).await?;
         let notification_rule_0 = default_notification_rule(user.id, weekday.clone(), time.clone())
-            .insert(&db)
+            .insert(&db.db)
             .await?;
         let notification_rule_1 = default_notification_rule(user.id, weekday.clone(), time.clone())
             .r#type(NotificationType::Direction)
-            .insert(&db)
+            .insert(&db.db)
             .await?;
         let notification_rule_2 = default_notification_rule(user.id, weekday.clone(), time.clone())
             .r#type(NotificationType::AmbitionOrDirection)
-            .insert(&db)
+            .insert(&db.db)
             .await?;
         let no_use_notification_rule_0 = default_notification_rule(user.id, weekday.clone(), time.clone())
             .r#type(NotificationType::UnaccomplishedAction);
@@ -244,7 +243,7 @@ mod tests {
             no_use_notification_rule_3,
             no_use_notification_rule_4,
         ])
-        .exec(&db)
+        .exec(&db.db)
         .await?;
 
         let res = get_notification_rules(&db, weekday, time).await;
@@ -262,9 +261,9 @@ mod tests {
     #[actix_web::test]
     async fn test_get_random_message_case_ambition_no_description() -> Result<(), DbErr> {
         let settings = get_test_settings();
-        let db = init_db(&settings).await;
-        let user = factory::user().insert(&db).await?;
-        let ambition = factory::ambition(user.id).insert(&db).await?;
+        let db = get_db_connection(&settings).await.unwrap();
+        let user = factory::user().insert(&db.db).await?;
+        let ambition = factory::ambition(user.id).insert(&db.db).await?;
 
         let res = get_random_message(&NotificationChoice::Ambition, user.id, &db).await;
         assert!(res.is_some());
@@ -281,11 +280,11 @@ mod tests {
     #[actix_web::test]
     async fn test_get_random_message_case_ambition_with_description() -> Result<(), DbErr> {
         let settings = get_test_settings();
-        let db = init_db(&settings).await;
-        let user = factory::user().insert(&db).await?;
+        let db = get_db_connection(&settings).await.unwrap();
+        let user = factory::user().insert(&db.db).await?;
         let ambition = factory::ambition(user.id)
             .description(Some("Description".to_string()))
-            .insert(&db)
+            .insert(&db.db)
             .await?;
 
         let res = get_random_message(&NotificationChoice::Ambition, user.id, &db).await;
@@ -310,9 +309,9 @@ mod tests {
     #[actix_web::test]
     async fn test_get_random_message_case_direction_no_description() -> Result<(), DbErr> {
         let settings = get_test_settings();
-        let db = init_db(&settings).await;
-        let user = factory::user().insert(&db).await?;
-        let direction = factory::direction(user.id).insert(&db).await?;
+        let db = get_db_connection(&settings).await.unwrap();
+        let user = factory::user().insert(&db.db).await?;
+        let direction = factory::direction(user.id).insert(&db.db).await?;
 
         let res = get_random_message(&NotificationChoice::Direction, user.id, &db).await;
         assert!(res.is_some());
@@ -329,11 +328,11 @@ mod tests {
     #[actix_web::test]
     async fn test_get_random_message_case_direction_with_description() -> Result<(), DbErr> {
         let settings = get_test_settings();
-        let db = init_db(&settings).await;
-        let user = factory::user().insert(&db).await?;
+        let db = get_db_connection(&settings).await.unwrap();
+        let user = factory::user().insert(&db.db).await?;
         let direction = factory::direction(user.id)
             .description(Some("Description".to_string()))
-            .insert(&db)
+            .insert(&db.db)
             .await?;
 
         let res = get_random_message(&NotificationChoice::Direction, user.id, &db).await;
@@ -358,12 +357,12 @@ mod tests {
     #[actix_web::test]
     async fn test_get_random_message_case_direction_with_category() -> Result<(), DbErr> {
         let settings = get_test_settings();
-        let db = init_db(&settings).await;
-        let user = factory::user().insert(&db).await?;
-        let category = factory::direction_category(user.id).insert(&db).await?;
+        let db = get_db_connection(&settings).await.unwrap();
+        let user = factory::user().insert(&db.db).await?;
+        let category = factory::direction_category(user.id).insert(&db.db).await?;
         let direction = factory::direction(user.id)
             .category_id(Some(category.id))
-            .insert(&db)
+            .insert(&db.db)
             .await?;
 
         let res = get_random_message(&NotificationChoice::Direction, user.id, &db).await;
