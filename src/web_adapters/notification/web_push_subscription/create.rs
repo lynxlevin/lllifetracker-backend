@@ -3,10 +3,10 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use common::settings::types::Settings;
 use db_adapters::web_push_subscription_adapter::WebPushSubscriptionAdapter;
 use entities::user as user_entity;
-use common::db::Db;
 use use_cases::notification::web_push_subscription::{
     create::create_web_push_subscription, types::WebPushSubscriptionCreateRequest,
 };

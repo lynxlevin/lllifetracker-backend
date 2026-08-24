@@ -9,7 +9,9 @@ use common::factory;
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, settings } = init_app().await?;
     let user = factory::user().insert(&db.db).await?;
-    let _subscription = factory::web_push_subscription(user.id, &settings).insert(&db.db).await?;
+    let _subscription = factory::web_push_subscription(user.id, &settings)
+        .insert(&db.db)
+        .await?;
 
     let req = test::TestRequest::delete()
         .uri("/api/web_push_subscription")

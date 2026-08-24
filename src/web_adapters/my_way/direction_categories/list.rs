@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::direction_category_adapter::DirectionCategoryAdapter;
 use entities::user as user_entity;
-use common::db::Db;
 use use_cases::my_way::direction_categories::list::list_direction_categories;
 
 use crate::utils::{response_401, response_500};

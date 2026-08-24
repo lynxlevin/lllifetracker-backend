@@ -19,7 +19,10 @@ async fn happy_path() -> Result<(), DbErr> {
         .ordering(Some(1))
         .insert(&db.db)
         .await?;
-    let category_2 = factory::direction_category(user.id).ordering(None).insert(&db.db).await?;
+    let category_2 = factory::direction_category(user.id)
+        .ordering(None)
+        .insert(&db.db)
+        .await?;
 
     let req = test::TestRequest::get().uri("/api/direction_categories").to_request();
     req.extensions_mut().insert(user.clone());

@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::reading_note_adapter::ReadingNoteAdapter;
 use entities::user as user_entity;
-use common::db::Db;
 use use_cases::journal::reading_notes::delete::delete_reading_note;
 
 use crate::utils::{response_401, response_500};

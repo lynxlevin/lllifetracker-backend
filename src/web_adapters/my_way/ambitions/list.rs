@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::ambition_adapter::AmbitionAdapter;
 use entities::user as user_entity;
-use common::db::Db;
 use use_cases::my_way::ambitions::list::list_ambitions;
 
 use crate::utils::{response_401, response_500};

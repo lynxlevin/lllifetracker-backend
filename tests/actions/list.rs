@@ -111,7 +111,10 @@ mod list_with_goal {
     async fn return_action_with_no_active_goal() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
         let user = factory::user().insert(&db.db).await?;
-        let action_with_no_goal = factory::action(user.id).name("no_goal".to_string()).insert(&db.db).await?;
+        let action_with_no_goal = factory::action(user.id)
+            .name("no_goal".to_string())
+            .insert(&db.db)
+            .await?;
         let action_with_only_inactive_goal = factory::action(user.id).insert(&db.db).await?;
         let _inactive_action_goal = factory::action_goal(user.id, action_with_only_inactive_goal.id)
             .from_date(NaiveDate::from_ymd_opt(2025, 8, 12).unwrap())

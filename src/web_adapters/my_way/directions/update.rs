@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Json, Path, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::{direction_adapter::DirectionAdapter, direction_category_adapter::DirectionCategoryAdapter};
 use entities::user as user_entity;
-use common::db::Db;
 use use_cases::{
     my_way::directions::{types::DirectionUpdateRequest, update::update_direction},
     UseCaseError,

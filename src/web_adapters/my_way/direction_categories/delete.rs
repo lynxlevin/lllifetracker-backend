@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::direction_category_adapter::DirectionCategoryAdapter;
 use entities::user as user_entity;
-use common::db::Db;
 use use_cases::my_way::direction_categories::delete::delete_direction_category;
 use uuid::Uuid;
 

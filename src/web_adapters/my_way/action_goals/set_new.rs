@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::{action_adapter::ActionAdapter, action_goal_adapter::ActionGoalAdapter};
 use entities::user as user_entity;
-use common::db::Db;
 use use_cases::{
     my_way::action_goals::{set_new::set_new_action_goal, types::ActionGoalSetNewRequest},
     UseCaseError,

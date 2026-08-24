@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::notification_rule_adapter::NotificationRuleAdapter;
 use entities::user as user_entity;
-use common::db::Db;
 use use_cases::notification::notification_rule::list::list_notification_rules;
 
 use crate::utils::{response_401, response_500};

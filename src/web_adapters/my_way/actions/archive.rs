@@ -3,11 +3,11 @@ use actix_web::{
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::{
     action_adapter::ActionAdapter, action_track_adapter::ActionTrackAdapter, user_adapter::UserAdapter,
 };
 use entities::user as user_entity;
-use common::db::Db;
 use use_cases::{my_way::actions::archive::archive_action, UseCaseError};
 
 use crate::utils::{response_401, response_404, response_500};

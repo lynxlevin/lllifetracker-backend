@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::reading_note_adapter::ReadingNoteAdapter;
 use entities::user as user_entity;
-use common::db::Db;
 use use_cases::{
     journal::reading_notes::{create::create_reading_note, types::ReadingNoteCreateRequest},
     UseCaseError,

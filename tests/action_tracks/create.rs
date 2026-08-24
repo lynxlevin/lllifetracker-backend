@@ -77,7 +77,10 @@ async fn conflict_on_duplicate_creation() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db.db).await?;
     let action = factory::action(user.id).insert(&db.db).await?;
-    let existing_action_track = factory::action_track(user.id).action_id(action.id).insert(&db.db).await?;
+    let existing_action_track = factory::action_track(user.id)
+        .action_id(action.id)
+        .insert(&db.db)
+        .await?;
 
     let req = test::TestRequest::post()
         .uri("/api/action_tracks")

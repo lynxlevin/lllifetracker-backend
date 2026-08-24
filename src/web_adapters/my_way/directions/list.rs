@@ -3,19 +3,16 @@ use actix_web::{
     web::{Data, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::direction_adapter::DirectionAdapter;
 use entities::user as user_entity;
-use common::db::Db;
 use use_cases::my_way::directions::list::list_directions;
 
 use crate::utils::{response_401, response_500};
 
 #[tracing::instrument(skip(db, user))]
 #[get("")]
-pub async fn list_directions_endpoint(
-    db: Data<Db>,
-    user: Option<ReqData<user_entity::Model>>,
-) -> HttpResponse {
+pub async fn list_directions_endpoint(db: Data<Db>, user: Option<ReqData<user_entity::Model>>) -> HttpResponse {
     match user {
         Some(user) => match list_directions(user.into_inner(), DirectionAdapter::init(&db)).await {
             Ok(res) => HttpResponse::Ok().json(res),

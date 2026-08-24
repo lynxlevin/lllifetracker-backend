@@ -4,10 +4,10 @@ use actix_web::{
     web::{Data, Query},
     HttpResponse,
 };
+use common::db::Db;
 use common::settings::types::Settings;
 use db_adapters::user_adapter::{UserAdapter, UserMutation, UserQuery};
 use deadpool_redis::Pool;
-use common::db::Db;
 
 use crate::{utils::auth::tokens::verify_confirmation_token_pasetor, utils::ErrorResponse};
 

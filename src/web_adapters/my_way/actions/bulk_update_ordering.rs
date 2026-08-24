@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::action_adapter::ActionAdapter;
 use entities::user as user_entity;
-use common::db::Db;
 use use_cases::my_way::actions::{
     bulk_update_ordering::bulk_update_action_ordering, types::ActionBulkUpdateOrderRequest,
 };

@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::direction_adapter::DirectionAdapter;
 use entities::user as user_entity;
-use common::db::Db;
 use use_cases::my_way::directions::{
     bulk_update_ordering::bulk_update_direction_ordering, types::DirectionBulkUpdateOrderingRequest,
 };

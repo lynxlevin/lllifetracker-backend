@@ -4,13 +4,13 @@ use actix_web::{
     web::{Data, Json},
     HttpResponse,
 };
+use common::db::Db;
 use common::settings::types::Settings;
 use db_adapters::user_adapter::{UserAdapter, UserFilter, UserQuery};
 use deadpool_redis::{
     redis::{AsyncCommands, SetExpiry, SetOptions},
     Connection, Pool,
 };
-use common::db::Db;
 use use_cases::users::types::{LoginRequest, UserVisible};
 
 use crate::{

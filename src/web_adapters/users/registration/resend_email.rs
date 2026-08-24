@@ -3,10 +3,10 @@ use actix_web::{
     web::{Data, Json},
     HttpResponse,
 };
+use common::db::Db;
 use common::settings::types::Settings;
 use db_adapters::user_adapter::{UserAdapter, UserFilter, UserQuery};
 use deadpool_redis::Pool;
-use common::db::Db;
 
 use crate::utils::{emails::send_multipart_email, response_404, response_500};
 

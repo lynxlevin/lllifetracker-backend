@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::action_adapter::ActionAdapter;
 use entities::user as user_entity;
-use common::db::Db;
 use use_cases::my_way::actions::{create::create_action, types::ActionCreateRequest};
 
 use crate::utils::{response_401, response_500};

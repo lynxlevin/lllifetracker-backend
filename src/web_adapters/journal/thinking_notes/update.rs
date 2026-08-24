@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Json, Path, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::thinking_note_adapter::ThinkingNoteAdapter;
 use entities::user as user_entity;
-use common::db::Db;
 use use_cases::{
     journal::thinking_notes::{types::ThinkingNoteUpdateRequest, update::update_thinking_note},
     UseCaseError,

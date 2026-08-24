@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Query, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::notification_rule_adapter::NotificationRuleAdapter;
 use entities::user as user_entity;
-use common::db::Db;
 use use_cases::notification::notification_rule::{
     delete::delete_notification_rules, types::NotificationRuleDeleteQuery,
 };

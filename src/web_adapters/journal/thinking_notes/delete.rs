@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::thinking_note_adapter::ThinkingNoteAdapter;
 use entities::user as user_entity;
-use common::db::Db;
 use use_cases::journal::thinking_notes::delete::delete_thinking_note;
 
 use crate::utils::{response_401, response_500};

@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::tag_adapter::TagAdapter;
 use entities::user as user_entity;
-use common::db::Db;
 use use_cases::{tags::delete::delete_plain_tag, UseCaseError};
 
 use crate::utils::{response_400, response_401, response_500};
