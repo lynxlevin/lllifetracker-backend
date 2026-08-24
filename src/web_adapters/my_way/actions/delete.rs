@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::action_adapter::ActionAdapter;
 use entities::user as user_entity;
-use sea_orm::DbConn;
 use use_cases::my_way::actions::delete::delete_action;
 
 use crate::utils::{response_401, response_500};
@@ -18,7 +18,7 @@ struct PathParam {
 #[tracing::instrument(skip(db, user))]
 #[delete("/{action_id}")]
 pub async fn delete_action_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     path_param: Path<PathParam>,
 ) -> HttpResponse {

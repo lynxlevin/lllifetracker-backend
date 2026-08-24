@@ -7,14 +7,18 @@ edition = "2021"
 name = "life_tracker"
 path = "main.rs"
 
+[[bin]]
+name = "init_test_db"
+path = "init_test_db.rs"
+
 [dependencies]
 common = { path = "../common", features = ["db", "redis", "settings"] }
 cron_processes = { path = "../cron_processes" }
+entities = { path = "../entities" }
 server = { path = "../server" }
 
 actix-session.workspace = true
 actix-web.workspace = true
-sea-orm.workspace = true
 tracing.workspace = true
 tracing-appender.workspace = true
 tracing-subscriber.workspace = true

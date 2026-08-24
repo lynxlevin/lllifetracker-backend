@@ -1,6 +1,7 @@
 use std::future::Future;
 
 use chrono::{DateTime, FixedOffset, Utc};
+use common::db::Db;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DbConn, DbErr, EntityTrait, IntoActiveModel, QueryFilter, Select, Set,
 };
@@ -15,8 +16,8 @@ pub struct UserAdapter<'a> {
 }
 
 impl<'a> UserAdapter<'a> {
-    pub fn init(db: &'a DbConn) -> Self {
-        Self { db, query: Entity::find() }
+    pub fn init(db: &'a Db) -> Self {
+        Self { db: &db.db, query: Entity::find() }
     }
 }
 

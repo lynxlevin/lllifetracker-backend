@@ -10,7 +10,7 @@ use common::factory::{self, *};
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     let directions = create_directions(
         vec![
             DirectionParam { name: "direction_0", archived: false, ..Default::default() },
@@ -62,14 +62,14 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn ordering_with_category() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     let category_0 = factory::direction_category(user.id)
         .ordering(Some(2))
-        .insert(&db)
+        .insert(&db.db)
         .await?;
     let category_1 = factory::direction_category(user.id)
         .ordering(Some(1))
-        .insert(&db)
+        .insert(&db.db)
         .await?;
     let directions = create_directions(
         vec![

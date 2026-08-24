@@ -12,7 +12,7 @@ use common::factory::{self, *};
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     let mut actions = create_actions(
         vec![
             ActionParam { name: "action_0", track_type: None, archived: false, ..Default::default() },
@@ -33,11 +33,11 @@ async fn happy_path() -> Result<(), DbErr> {
     let archived_action = actions.remove("archived_action").unwrap();
     let action_goal_0 = factory::action_goal(user.id, action_0.id)
         .duration_seconds(Some(3600))
-        .insert(&db)
+        .insert(&db.db)
         .await?;
     let action_goal_1 = factory::action_goal(user.id, action_1.id)
         .count(Some(5))
-        .insert(&db)
+        .insert(&db.db)
         .await?;
 
     let req = test::TestRequest::get().uri("/api/actions").to_request();
@@ -79,16 +79,16 @@ mod list_with_goal {
     #[actix_web::test]
     async fn return_only_active_goal() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
-        let user = factory::user().insert(&db).await?;
-        let action = factory::action(user.id).insert(&db).await?;
+        let user = factory::user().insert(&db.db).await?;
+        let action = factory::action(user.id).insert(&db.db).await?;
         let _inactive_action_goal = factory::action_goal(user.id, action.id)
             .from_date(NaiveDate::from_ymd_opt(2025, 8, 12).unwrap())
             .to_date(Some(NaiveDate::from_ymd_opt(2025, 8, 12).unwrap()))
-            .insert(&db)
+            .insert(&db.db)
             .await?;
         let active_action_goal = factory::action_goal(user.id, action.id)
             .from_date(NaiveDate::from_ymd_opt(2025, 8, 13).unwrap())
-            .insert(&db)
+            .insert(&db.db)
             .await?;
 
         let req = test::TestRequest::get().uri("/api/actions").to_request();
@@ -110,13 +110,16 @@ mod list_with_goal {
     #[actix_web::test]
     async fn return_action_with_no_active_goal() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
-        let user = factory::user().insert(&db).await?;
-        let action_with_no_goal = factory::action(user.id).name("no_goal".to_string()).insert(&db).await?;
-        let action_with_only_inactive_goal = factory::action(user.id).insert(&db).await?;
+        let user = factory::user().insert(&db.db).await?;
+        let action_with_no_goal = factory::action(user.id)
+            .name("no_goal".to_string())
+            .insert(&db.db)
+            .await?;
+        let action_with_only_inactive_goal = factory::action(user.id).insert(&db.db).await?;
         let _inactive_action_goal = factory::action_goal(user.id, action_with_only_inactive_goal.id)
             .from_date(NaiveDate::from_ymd_opt(2025, 8, 12).unwrap())
             .to_date(Some(NaiveDate::from_ymd_opt(2025, 8, 12).unwrap()))
-            .insert(&db)
+            .insert(&db.db)
             .await?;
 
         let req = test::TestRequest::get().uri("/api/actions").to_request();

@@ -13,8 +13,8 @@ use entities::{action::ActionTrackType, action_goal};
 #[actix_web::test]
 async fn happy_path_time_span() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let action = factory::action(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let action = factory::action(user.id).insert(&db.db).await?;
 
     let user_today = Utc::now()
         .with_timezone(&FixedOffset::east_opt(9 * 3600).unwrap())
@@ -35,7 +35,7 @@ async fn happy_path_time_span() -> Result<(), DbErr> {
     assert_eq!(res.duration_seconds, duration_seconds);
     assert_eq!(res.count, None);
 
-    let action_goal_in_db = action_goal::Entity::find_by_id(res.id).one(&db).await?.unwrap();
+    let action_goal_in_db = action_goal::Entity::find_by_id(res.id).one(&db.db).await?.unwrap();
     assert_eq!(action_goal_in_db.user_id, user.id);
     assert_eq!(ActionGoalVisible::from(action_goal_in_db), res);
 
@@ -45,10 +45,10 @@ async fn happy_path_time_span() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn happy_path_count() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     let action = factory::action(user.id)
         .track_type(ActionTrackType::Count)
-        .insert(&db)
+        .insert(&db.db)
         .await?;
 
     let user_today = Utc::now()
@@ -70,7 +70,7 @@ async fn happy_path_count() -> Result<(), DbErr> {
     assert_eq!(res.duration_seconds, None);
     assert_eq!(res.count, count);
 
-    let action_goal_in_db = action_goal::Entity::find_by_id(res.id).one(&db).await?.unwrap();
+    let action_goal_in_db = action_goal::Entity::find_by_id(res.id).one(&db.db).await?.unwrap();
     assert_eq!(action_goal_in_db.user_id, user.id);
     assert_eq!(ActionGoalVisible::from(action_goal_in_db), res);
 
@@ -80,18 +80,18 @@ async fn happy_path_count() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn invalidate_existing_action_goal() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let action = factory::action(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let action = factory::action(user.id).insert(&db.db).await?;
     let existing_goal = factory::action_goal(user.id, action.id)
         .from_date(
             DateTime::parse_from_rfc3339("2025-07-01T00:00:00Z")
                 .unwrap()
                 .date_naive(),
         )
-        .insert(&db)
+        .insert(&db.db)
         .await?;
-    let other_action = factory::action(user.id).insert(&db).await?;
-    let existing_other_action_goal = factory::action_goal(user.id, other_action.id).insert(&db).await?;
+    let other_action = factory::action(user.id).insert(&db.db).await?;
+    let existing_other_action_goal = factory::action_goal(user.id, other_action.id).insert(&db.db).await?;
 
     let req = test::TestRequest::post()
         .uri("/api/action_goals")
@@ -106,13 +106,13 @@ async fn invalidate_existing_action_goal() -> Result<(), DbErr> {
         (Utc::now().with_timezone(&FixedOffset::east_opt(9 * 3600).unwrap()) - Duration::days(1)).date_naive();
 
     let existing_goal_in_db = action_goal::Entity::find_by_id(existing_goal.id)
-        .one(&db)
+        .one(&db.db)
         .await?
         .unwrap();
     assert_eq!(Some(user_yesterday), existing_goal_in_db.to_date);
 
     let existing_other_action_goal_in_db = action_goal::Entity::find_by_id(existing_other_action_goal.id)
-        .one(&db)
+        .one(&db.db)
         .await?
         .unwrap();
     assert_eq!(None, existing_other_action_goal_in_db.to_date);
@@ -123,11 +123,11 @@ async fn invalidate_existing_action_goal() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn duplicate_from_date() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let action = factory::action(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let action = factory::action(user.id).insert(&db.db).await?;
     let existing_goal = factory::action_goal(user.id, action.id)
         .from_date(user.timezone.convert_utc(Utc::now()).date_naive())
-        .insert(&db)
+        .insert(&db.db)
         .await?;
 
     let req = test::TestRequest::post()
@@ -143,7 +143,7 @@ async fn duplicate_from_date() -> Result<(), DbErr> {
     assert_eq!(existing_goal.id, res.id);
 
     let existing_goal_in_db = action_goal::Entity::find_by_id(existing_goal.id)
-        .one(&db)
+        .one(&db.db)
         .await?
         .unwrap();
     assert_eq!(Some(3600), existing_goal_in_db.duration_seconds);
@@ -173,9 +173,9 @@ mod not_found {
     #[actix_web::test]
     async fn other_users_action() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
-        let user = factory::user().insert(&db).await?;
-        let other_user = factory::user().insert(&db).await?;
-        let other_action = factory::action(other_user.id).insert(&db).await?;
+        let user = factory::user().insert(&db.db).await?;
+        let other_user = factory::user().insert(&db.db).await?;
+        let other_action = factory::action(other_user.id).insert(&db.db).await?;
 
         let req = test::TestRequest::post()
             .uri("/api/action_goals")
@@ -196,8 +196,8 @@ mod bad_request {
     #[actix_web::test]
     async fn duration_seconds_none_for_time_span_action() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
-        let user = factory::user().insert(&db).await?;
-        let action = factory::action(user.id).insert(&db).await?;
+        let user = factory::user().insert(&db.db).await?;
+        let action = factory::action(user.id).insert(&db.db).await?;
 
         let req = test::TestRequest::post()
             .uri("/api/action_goals")
@@ -214,8 +214,8 @@ mod bad_request {
     #[actix_web::test]
     async fn count_not_none_for_time_span_action() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
-        let user = factory::user().insert(&db).await?;
-        let action = factory::action(user.id).insert(&db).await?;
+        let user = factory::user().insert(&db.db).await?;
+        let action = factory::action(user.id).insert(&db.db).await?;
 
         let req = test::TestRequest::post()
             .uri("/api/action_goals")
@@ -232,10 +232,10 @@ mod bad_request {
     #[actix_web::test]
     async fn count_none_for_count_action() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
-        let user = factory::user().insert(&db).await?;
+        let user = factory::user().insert(&db.db).await?;
         let action = factory::action(user.id)
             .track_type(ActionTrackType::Count)
-            .insert(&db)
+            .insert(&db.db)
             .await?;
 
         let req = test::TestRequest::post()
@@ -253,10 +253,10 @@ mod bad_request {
     #[actix_web::test]
     async fn duration_seconds_not_none_for_count_action() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
-        let user = factory::user().insert(&db).await?;
+        let user = factory::user().insert(&db.db).await?;
         let action = factory::action(user.id)
             .track_type(ActionTrackType::Count)
-            .insert(&db)
+            .insert(&db.db)
             .await?;
 
         let req = test::TestRequest::post()

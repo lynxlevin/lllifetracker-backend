@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::web_push_subscription_adapter::WebPushSubscriptionAdapter;
 use entities::user as user_entity;
-use sea_orm::DbConn;
 use use_cases::notification::web_push_subscription::delete::delete_web_push_subscription;
 
 use crate::utils::{response_401, response_500};
@@ -13,7 +13,7 @@ use crate::utils::{response_401, response_500};
 #[tracing::instrument(skip(db, user))]
 #[delete("")]
 pub async fn delete_web_push_subscription_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
 ) -> HttpResponse {
     match user {

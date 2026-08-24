@@ -15,29 +15,29 @@ use use_cases::{
 #[actix_web::test]
 async fn test_order() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     let now = Utc::now();
     // NOTE: Active thinking_note comes first
     let thinking_note = factory::thinking_note(user.id)
         .updated_at((now - Duration::days(4)).into())
-        .insert(&db)
+        .insert(&db.db)
         .await?;
-    let diary = factory::diary(user.id).text(None).insert(&db).await?;
+    let diary = factory::diary(user.id).text(None).insert(&db.db).await?;
     // NOTE: resolved_thinking_note order is desc by resolved_at
     let resolved_thinking_note_0 = factory::thinking_note(user.id)
         .updated_at((now - Duration::days(1)).into())
         .resolved_at(Some((now - Duration::days(1)).into()))
-        .insert(&db)
+        .insert(&db.db)
         .await?;
     let reading_note = factory::reading_note(user.id)
         .date((now - Duration::days(2)).date_naive())
         .title("reading_note_0".to_string())
-        .insert(&db)
+        .insert(&db.db)
         .await?;
     let resolved_thinking_note_1 = factory::thinking_note(user.id)
         .updated_at((now - Duration::days(3)).into())
         .resolved_at(Some((now - Duration::days(3)).into()))
-        .insert(&db)
+        .insert(&db.db)
         .await?;
 
     let req = test::TestRequest::get().uri("/api/journals").to_request();
@@ -67,7 +67,7 @@ async fn test_order() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn test_tag_query() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     let mut tags = create_tags(
         vec![
             TagParam { name: "plain_tag_0", ..Default::default() },
@@ -82,18 +82,18 @@ async fn test_tag_query() -> Result<(), DbErr> {
     let plain_tag_1 = tags.remove("plain_tag_1").unwrap();
     let plain_tag_2 = tags.remove("plain_tag_2").unwrap();
 
-    let tagged_thinking_note = factory::thinking_note(user.id).insert(&db).await?;
-    let tagged_diary = factory::diary(user.id).insert(&db).await?;
-    let tagged_reading_note = factory::reading_note(user.id).insert(&db).await?;
+    let tagged_thinking_note = factory::thinking_note(user.id).insert(&db.db).await?;
+    let tagged_diary = factory::diary(user.id).insert(&db.db).await?;
+    let tagged_reading_note = factory::reading_note(user.id).insert(&db.db).await?;
     factory::link_thinking_note_tag(&db, tagged_thinking_note.id, plain_tag_0.id).await?;
     factory::link_thinking_note_tag(&db, tagged_thinking_note.id, plain_tag_2.id).await?;
     factory::link_diary_tag(&db, tagged_diary.id, plain_tag_0.id).await?;
     factory::link_reading_note_tag(&db, tagged_reading_note.id, plain_tag_1.id).await?;
 
-    let _thinking_note = factory::thinking_note(user.id).insert(&db).await?;
-    let _diary = factory::diary(user.id).insert(&db).await?;
-    let _reading_note = factory::reading_note(user.id).insert(&db).await?;
-    let different_tagged_thinking_note = factory::thinking_note(user.id).insert(&db).await?;
+    let _thinking_note = factory::thinking_note(user.id).insert(&db.db).await?;
+    let _diary = factory::diary(user.id).insert(&db.db).await?;
+    let _reading_note = factory::reading_note(user.id).insert(&db.db).await?;
+    let different_tagged_thinking_note = factory::thinking_note(user.id).insert(&db.db).await?;
     factory::link_thinking_note_tag(&db, different_tagged_thinking_note.id, plain_tag_2.id).await?;
 
     let req = test::TestRequest::get()

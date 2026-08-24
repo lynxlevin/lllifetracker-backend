@@ -12,8 +12,8 @@ use entities::direction_category;
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let category = factory::direction_category(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let category = factory::direction_category(user.id).insert(&db.db).await?;
 
     let new_name = "new name".to_string();
 
@@ -31,7 +31,7 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(res.name, new_name);
 
     let category_in_db = direction_category::Entity::find_by_id(category.id)
-        .one(&db)
+        .one(&db.db)
         .await?
         .unwrap();
     assert_eq!(category_in_db.user_id, user.id);
@@ -62,9 +62,9 @@ mod not_found {
     #[actix_web::test]
     async fn other_user_category() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
-        let user = factory::user().insert(&db).await?;
-        let other_user = factory::user().insert(&db).await?;
-        let other_user_category = factory::direction_category(other_user.id).insert(&db).await?;
+        let user = factory::user().insert(&db.db).await?;
+        let other_user = factory::user().insert(&db.db).await?;
+        let other_user_category = factory::direction_category(other_user.id).insert(&db.db).await?;
 
         let req = test::TestRequest::put()
             .uri(&format!("/api/direction_categories/{}", other_user_category.id))
@@ -80,7 +80,7 @@ mod not_found {
     #[actix_web::test]
     async fn non_existent_id() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
-        let user = factory::user().insert(&db).await?;
+        let user = factory::user().insert(&db.db).await?;
 
         let req = test::TestRequest::put()
             .uri(&format!("/api/direction_categories/{}", Uuid::now_v7()))

@@ -11,7 +11,7 @@ use common::factory;
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
 
     let req_body = TagCreateRequest { name: "new_tag".to_string() };
 
@@ -28,7 +28,7 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(res.name, req_body.name.clone());
     assert_eq!(res.r#type, TagType::Plain);
 
-    let tag_in_db = tag::Entity::find_by_id(res.id).one(&db).await?.unwrap();
+    let tag_in_db = tag::Entity::find_by_id(res.id).one(&db.db).await?.unwrap();
     assert_eq!(tag_in_db.name, Some(req_body.name));
     assert_eq!(tag_in_db.user_id, user.id);
 

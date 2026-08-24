@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Query, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::{action_adapter::ActionAdapter, action_goal_adapter::ActionGoalAdapter};
 use entities::user as user_entity;
-use sea_orm::DbConn;
 use use_cases::my_way::action_goals::{remove::remove_action_goal, types::ActionGoalRemoveQuery};
 
 use crate::utils::{response_401, response_500};
@@ -13,7 +13,7 @@ use crate::utils::{response_401, response_500};
 #[tracing::instrument(skip(db, user))]
 #[delete("")]
 pub async fn remove_action_goal_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     query: Query<ActionGoalRemoveQuery>,
 ) -> HttpResponse {

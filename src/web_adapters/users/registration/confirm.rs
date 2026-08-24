@@ -4,10 +4,10 @@ use actix_web::{
     web::{Data, Query},
     HttpResponse,
 };
+use common::db::Db;
 use common::settings::types::Settings;
 use db_adapters::user_adapter::{UserAdapter, UserMutation, UserQuery};
 use deadpool_redis::Pool;
-use sea_orm::DbConn;
 
 use crate::{utils::auth::tokens::verify_confirmation_token_pasetor, utils::ErrorResponse};
 
@@ -20,7 +20,7 @@ pub struct Parameters {
 #[get("/confirm")]
 pub async fn confirm(
     parameters: Query<Parameters>,
-    db: Data<DbConn>,
+    db: Data<Db>,
     redis_pool: Data<Pool>,
     settings: Data<Settings>,
 ) -> HttpResponse {

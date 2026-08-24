@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Json, Path, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::ambition_adapter::AmbitionAdapter;
 use entities::user as user_entity;
-use sea_orm::DbConn;
 use use_cases::{
     my_way::ambitions::{types::AmbitionUpdateRequest, update::update_ambition},
     UseCaseError,
@@ -21,7 +21,7 @@ struct PathParam {
 #[tracing::instrument(skip(db, user, req))]
 #[put("/{ambition_id}")]
 pub async fn update_ambition_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<AmbitionUpdateRequest>,
     path_param: Path<PathParam>,

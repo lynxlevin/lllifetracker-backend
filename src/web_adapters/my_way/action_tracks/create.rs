@@ -3,7 +3,7 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
-use sea_orm::DbConn;
+use common::db::Db;
 
 use crate::utils::{response_401, response_404, response_409, response_500};
 use db_adapters::{
@@ -18,7 +18,7 @@ use use_cases::{
 #[tracing::instrument(skip(db, user))]
 #[post("")]
 pub async fn create_action_track_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<ActionTrackCreateRequest>,
 ) -> HttpResponse {

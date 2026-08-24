@@ -5,8 +5,10 @@ use entities::{
     action_track::{ActiveModel, Entity, Model},
     user,
 };
-use sea_orm::{ActiveValue::NotSet, DbConn, DbErr, EntityTrait, Set};
+use sea_orm::{ActiveValue::NotSet, DbErr, EntityTrait, Set};
 use uuid::Uuid;
+
+use crate::db::Db;
 
 pub fn action_track(user_id: Uuid) -> ActiveModel {
     ActiveModel {
@@ -67,7 +69,7 @@ pub struct ActionTrackParam<'a> {
 pub async fn create_action_tracks<'a>(
     params: Vec<ActionTrackParam<'a>>,
     user: &'a user::Model,
-    db: &'a DbConn,
+    db: &'a Db,
 ) -> Result<HashMap<String, Model>, DbErr> {
     let action_tracks = params.iter().map(|param| {
         action_track(user.id)
@@ -75,7 +77,7 @@ pub async fn create_action_tracks<'a>(
             .started_at(param.started_at)
             .duration(param.duration)
     });
-    let action_tracks = Entity::insert_many(action_tracks).exec_with_returning(db).await?;
+    let action_tracks = Entity::insert_many(action_tracks).exec_with_returning(&db.db).await?;
 
     Ok(action_tracks
         .into_iter()

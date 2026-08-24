@@ -13,7 +13,7 @@ use common::factory;
 #[actix_web::test]
 async fn happy_path_everyday_utc_plus_9() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
 
     let req_body = NotificationRuleCreateRequest {
         r#type: NotificationType::Ambition,
@@ -35,7 +35,7 @@ async fn happy_path_everyday_utc_plus_9() -> Result<(), DbErr> {
         .filter(Column::Type.eq(NotificationType::Ambition))
         .filter(Column::ActionId.is_null())
         .order_by_asc(Column::Weekday)
-        .all(&db)
+        .all(&db.db)
         .await?;
     let expected_utc_time = NaiveTime::from_hms_opt(23, 0, 0).unwrap();
     for rule in &rules_in_db_ambition {
@@ -53,7 +53,7 @@ async fn happy_path_everyday_utc_plus_9() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn happy_path_weekday_utc_plus_9() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
 
     let req_body = NotificationRuleCreateRequest {
         r#type: NotificationType::Ambition,
@@ -75,7 +75,7 @@ async fn happy_path_weekday_utc_plus_9() -> Result<(), DbErr> {
         .filter(Column::Type.eq(NotificationType::Ambition))
         .filter(Column::ActionId.is_null())
         .order_by_asc(Column::Weekday)
-        .all(&db)
+        .all(&db.db)
         .await?;
     let expected_utc_time = NaiveTime::from_hms_opt(23, 0, 0).unwrap();
     for rule in &rules_in_db_ambition {
@@ -93,7 +93,7 @@ async fn happy_path_weekday_utc_plus_9() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn happy_path_weekend_utc_plus_9() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
 
     let req_body = NotificationRuleCreateRequest {
         r#type: NotificationType::Ambition,
@@ -115,7 +115,7 @@ async fn happy_path_weekend_utc_plus_9() -> Result<(), DbErr> {
         .filter(Column::Type.eq(NotificationType::Ambition))
         .filter(Column::ActionId.is_null())
         .order_by_asc(Column::Weekday)
-        .all(&db)
+        .all(&db.db)
         .await?;
     let expected_utc_time = NaiveTime::from_hms_opt(23, 0, 0).unwrap();
     for rule in &rules_in_db_ambition {
@@ -155,7 +155,7 @@ mod db_validations {
     #[actix_web::test]
     async fn same_type_exists() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
-        let user = factory::user().insert(&db).await?;
+        let user = factory::user().insert(&db.db).await?;
         factory::create_everyday_rules(
             user.id,
             &db,
@@ -189,7 +189,7 @@ mod params_validations {
     #[actix_web::test]
     async fn time_seconds_must_be_zero() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
-        let user = factory::user().insert(&db).await?;
+        let user = factory::user().insert(&db.db).await?;
 
         let req_body = NotificationRuleCreateRequest {
             r#type: NotificationType::Ambition,
@@ -212,7 +212,7 @@ mod params_validations {
     #[actix_web::test]
     async fn time_minutes_must_be_multiples_of_10() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
-        let user = factory::user().insert(&db).await?;
+        let user = factory::user().insert(&db.db).await?;
 
         let req_body = NotificationRuleCreateRequest {
             r#type: NotificationType::Ambition,

@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::direction_adapter::DirectionAdapter;
 use entities::user as user_entity;
-use sea_orm::DbConn;
 use use_cases::my_way::directions::{
     bulk_update_ordering::bulk_update_direction_ordering, types::DirectionBulkUpdateOrderingRequest,
 };
@@ -28,7 +28,7 @@ use crate::utils::{response_401, response_500};
 #[tracing::instrument(skip(db, user, req))]
 #[put("/bulk_update_ordering")]
 pub async fn bulk_update_direction_ordering_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<DirectionBulkUpdateOrderingRequest>,
 ) -> HttpResponse {

@@ -9,20 +9,20 @@ use common::factory::{self, *};
 #[actix_web::test]
 async fn test_order() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     let title_0 = "Title_0".to_string();
     let title_1 = "Title_1".to_string();
     let _reading_note_0 = factory::reading_note(user.id)
         .title(title_0.clone())
-        .insert(&db)
+        .insert(&db.db)
         .await?;
     let _reading_note_1 = factory::reading_note(user.id)
         .title(title_1.clone())
-        .insert(&db)
+        .insert(&db.db)
         .await?;
     let _another_reading_note_1 = factory::reading_note(user.id)
         .title(title_1.clone())
-        .insert(&db)
+        .insert(&db.db)
         .await?;
 
     let req = test::TestRequest::get().uri("/api/reading_notes/titles").to_request();

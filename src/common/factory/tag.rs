@@ -5,8 +5,10 @@ use entities::{
     tag::{ActiveModel, Entity, Model, TagType},
     user,
 };
-use sea_orm::{ActiveValue::NotSet, DbConn, DbErr, EntityTrait, Set};
+use sea_orm::{ActiveValue::NotSet, DbErr, EntityTrait, Set};
 use uuid::Uuid;
+
+use crate::db::Db;
 
 pub fn tag(user_id: Uuid) -> ActiveModel {
     ActiveModel {
@@ -76,7 +78,7 @@ impl Default for TagParam<'_> {
 pub async fn create_tags<'a>(
     params: Vec<TagParam<'a>>,
     user: &'a user::Model,
-    db: &'a DbConn,
+    db: &'a Db,
 ) -> Result<HashMap<String, Model>, DbErr> {
     let tags = params.iter().map(|param| match param.r#type {
         TagType::Ambition => tag(user.id).ambition(param.ambition.unwrap()),
@@ -84,7 +86,7 @@ pub async fn create_tags<'a>(
         TagType::Action => tag(user.id).action(param.action.unwrap()),
         TagType::Plain => tag(user.id).name(Some(param.name.to_string())),
     });
-    let tags = Entity::insert_many(tags).exec_with_returning(db).await?;
+    let tags = Entity::insert_many(tags).exec_with_returning(&db.db).await?;
 
     Ok(tags
         .into_iter()

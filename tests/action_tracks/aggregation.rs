@@ -11,7 +11,7 @@ use common::factory::{self, *};
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     let actions = create_actions(
         vec![
             ActionParam { name: "action_0", ..Default::default() },
@@ -101,7 +101,7 @@ async fn happy_path() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn started_at_gte_lte() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     let query_started_at_gte: DateTime<FixedOffset> =
         DateTime::parse_from_rfc3339("2025-01-27T00:00:00Z").unwrap();
     let query_started_at_lte: DateTime<FixedOffset> =

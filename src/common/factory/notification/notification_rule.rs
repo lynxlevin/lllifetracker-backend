@@ -3,8 +3,10 @@ use chrono::{
     Weekday::{self, Fri, Mon, Sat, Sun, Thu, Tue, Wed},
 };
 use entities::notification_rule::{self, NotificationType};
-use sea_orm::{ActiveValue::NotSet, DbConn, DbErr, EntityTrait, Set};
+use sea_orm::{ActiveValue::NotSet, DbErr, EntityTrait, Set};
 use uuid::Uuid;
+
+use crate::db::Db;
 
 pub fn notification_rule(user_id: Uuid) -> notification_rule::ActiveModel {
     notification_rule::ActiveModel {
@@ -52,7 +54,7 @@ pub struct NotificationRuleSet {
 
 pub async fn create_everyday_rules(
     user_id: Uuid,
-    db: &DbConn,
+    db: &Db,
     r#type: NotificationType,
     utc_time: NaiveTime,
 ) -> Result<(), DbErr> {
@@ -65,13 +67,13 @@ pub async fn create_everyday_rules(
                 .weekday(weekday),
         );
     }
-    notification_rule::Entity::insert_many(rules).exec(db).await?;
+    notification_rule::Entity::insert_many(rules).exec(&db.db).await?;
     Ok(())
 }
 
 pub async fn create_weekday_rules(
     user_id: Uuid,
-    db: &DbConn,
+    db: &Db,
     r#type: NotificationType,
     utc_time: NaiveTime,
     is_prev_day_in_utc: bool,
@@ -90,13 +92,13 @@ pub async fn create_weekday_rules(
                 .weekday(weekday),
         );
     }
-    notification_rule::Entity::insert_many(rules).exec(db).await?;
+    notification_rule::Entity::insert_many(rules).exec(&db.db).await?;
     Ok(())
 }
 
 pub async fn create_weekend_rules(
     user_id: Uuid,
-    db: &DbConn,
+    db: &Db,
     r#type: NotificationType,
     utc_time: NaiveTime,
     is_prev_day_in_utc: bool,
@@ -111,6 +113,6 @@ pub async fn create_weekend_rules(
                 .weekday(weekday),
         );
     }
-    notification_rule::Entity::insert_many(rules).exec(db).await?;
+    notification_rule::Entity::insert_many(rules).exec(&db.db).await?;
     Ok(())
 }

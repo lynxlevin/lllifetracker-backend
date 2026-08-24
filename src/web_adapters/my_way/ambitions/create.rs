@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::ambition_adapter::AmbitionAdapter;
 use entities::user as user_entity;
-use sea_orm::DbConn;
 use use_cases::my_way::ambitions::{create::create_ambition, types::AmbitionCreateRequest};
 
 use crate::utils::{response_401, response_500};
@@ -13,7 +13,7 @@ use crate::utils::{response_401, response_500};
 #[tracing::instrument(skip(db, user))]
 #[post("")]
 pub async fn create_ambition_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<AmbitionCreateRequest>,
 ) -> HttpResponse {

@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::ambition_adapter::AmbitionAdapter;
 use entities::user as user_entity;
-use sea_orm::DbConn;
 use use_cases::{my_way::ambitions::unarchive::unarchive_ambition, UseCaseError};
 
 use crate::utils::{response_401, response_404, response_500};
@@ -18,7 +18,7 @@ struct PathParam {
 #[tracing::instrument(skip(db, user))]
 #[put("/{ambition_id}/unarchive")]
 pub async fn unarchive_ambition_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     path_param: Path<PathParam>,
 ) -> HttpResponse {

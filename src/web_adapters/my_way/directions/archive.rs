@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Path, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::direction_adapter::DirectionAdapter;
 use entities::user as user_entity;
-use sea_orm::DbConn;
 use use_cases::{my_way::directions::archive::archive_direction, UseCaseError};
 
 use crate::utils::{response_401, response_404, response_500};
@@ -18,7 +18,7 @@ struct PathParam {
 #[tracing::instrument(skip(db, user))]
 #[put("/{direction_id}/archive")]
 pub async fn archive_direction_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     path_param: Path<PathParam>,
 ) -> HttpResponse {

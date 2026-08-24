@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Json, Path, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::thinking_note_adapter::ThinkingNoteAdapter;
 use entities::user as user_entity;
-use sea_orm::DbConn;
 use use_cases::{
     journal::thinking_notes::{types::ThinkingNoteUpdateRequest, update::update_thinking_note},
     UseCaseError,
@@ -21,7 +21,7 @@ struct PathParam {
 #[tracing::instrument(skip(db, user, req))]
 #[put("/{thinking_note_id}")]
 pub async fn update_thinking_note_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<ThinkingNoteUpdateRequest>,
     path_param: Path<PathParam>,

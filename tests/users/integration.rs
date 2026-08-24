@@ -11,7 +11,7 @@ async fn login_to_get_me_to_logout() -> Result<(), DbErr> {
     let password = "password";
     let hashed_password =
         "$argon2id$v=19$m=19456,t=2,p=1$r07vWFCaKrbNPrSgUrG/+Q$/2lBaeRWeox6ROMu6qAwOYmttdGXA3o4Uw2YHC/fvfY";
-    let user = factory::user().password(hashed_password).insert(&db).await?;
+    let user = factory::user().password(hashed_password).insert(&db.db).await?;
 
     let login_req = test::TestRequest::post()
         .uri("/api/users/login")

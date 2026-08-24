@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::notification_rule_adapter::NotificationRuleAdapter;
 use entities::user as user_entity;
-use sea_orm::DbConn;
 use use_cases::{
     notification::notification_rule::{create::create_notification_rules, types::NotificationRuleCreateRequest},
     UseCaseError,
@@ -16,7 +16,7 @@ use crate::utils::{response_400, response_401, response_409, response_500};
 #[tracing::instrument(skip(db, user))]
 #[post("")]
 pub async fn create_notification_rules_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<NotificationRuleCreateRequest>,
 ) -> HttpResponse {

@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, ReqData},
     HttpResponse,
 };
+use common::db::Db;
 use db_adapters::notification_rule_adapter::NotificationRuleAdapter;
 use entities::user as user_entity;
-use sea_orm::DbConn;
 use use_cases::notification::notification_rule::list::list_notification_rules;
 
 use crate::utils::{response_401, response_500};
@@ -13,7 +13,7 @@ use crate::utils::{response_401, response_500};
 #[tracing::instrument(skip(db, user))]
 #[get("")]
 pub async fn list_notification_rules_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
 ) -> HttpResponse {
     match user {

@@ -3,10 +3,10 @@ use actix_web::{
     web::{Data, Json},
     HttpResponse,
 };
+use common::db::Db;
 use common::settings::types::Settings;
 use db_adapters::user_adapter::{CreateUserParams, UserAdapter, UserMutation};
 use deadpool_redis::Pool;
-use sea_orm::DbConn;
 
 use crate::utils::{auth::password, emails::send_multipart_email, response_500};
 
@@ -26,7 +26,7 @@ fields(
 ))]
 #[post("")]
 pub async fn register(
-    db: Data<DbConn>,
+    db: Data<Db>,
     redis_pool: Data<Pool>,
     new_user: Json<RequestBody>,
     settings: Data<Settings>,

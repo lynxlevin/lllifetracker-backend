@@ -1,5 +1,6 @@
 use std::future::Future;
 
+use common::db::Db;
 use sea_orm::{
     prelude::Expr, sea_query::NullOrdering::First, ActiveModelTrait, ColumnAsExpr, ColumnTrait, DbConn, DbErr,
     EntityTrait, ExprTrait, FromQueryResult, IntoActiveModel, JoinType::LeftJoin, ModelTrait, Order, QueryFilter,
@@ -21,8 +22,8 @@ pub struct TagAdapter<'a> {
 }
 
 impl<'a> TagAdapter<'a> {
-    pub fn init(db: &'a DbConn) -> Self {
-        Self { db, query: Entity::find() }
+    pub fn init(db: &'a Db) -> Self {
+        Self { db: &db.db, query: Entity::find() }
     }
 }
 

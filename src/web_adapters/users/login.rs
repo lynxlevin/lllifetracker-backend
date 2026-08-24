@@ -4,13 +4,13 @@ use actix_web::{
     web::{Data, Json},
     HttpResponse,
 };
+use common::db::Db;
 use common::settings::types::Settings;
 use db_adapters::user_adapter::{UserAdapter, UserFilter, UserQuery};
 use deadpool_redis::{
     redis::{AsyncCommands, SetExpiry, SetOptions},
     Connection, Pool,
 };
-use sea_orm::DbConn;
 use use_cases::users::types::{LoginRequest, UserVisible};
 
 use crate::{
@@ -21,7 +21,7 @@ use crate::{
 #[tracing::instrument(skip_all)]
 #[post("/login")]
 async fn login_user(
-    db: Data<DbConn>,
+    db: Data<Db>,
     redis_pool: Data<Pool>,
     req_user: Json<LoginRequest>,
     session: actix_session::Session,

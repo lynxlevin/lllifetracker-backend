@@ -12,18 +12,18 @@ use common::factory::{self, *};
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let action = factory::action(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let action = factory::action(user.id).insert(&db.db).await?;
     let action_track_0 = factory::action_track(user.id)
         .duration(Some(120))
         .action_id(action.id)
-        .insert(&db)
+        .insert(&db.db)
         .await?;
     let action_track_1 = factory::action_track(user.id)
         .started_at(action_track_0.started_at + TimeDelta::seconds(1))
         .duration(Some(180))
         .action_id(action.id)
-        .insert(&db)
+        .insert(&db.db)
         .await?;
 
     let req = test::TestRequest::get().uri("/api/action_tracks").to_request();
@@ -49,17 +49,17 @@ async fn happy_path() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn happy_path_active_only() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let action = factory::action(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let action = factory::action(user.id).insert(&db.db).await?;
     let _inactive_action_track = factory::action_track(user.id)
         .duration(Some(120))
         .action_id(action.id)
-        .insert(&db)
+        .insert(&db.db)
         .await?;
     let active_action_track = factory::action_track(user.id)
         .started_at(_inactive_action_track.started_at + TimeDelta::seconds(1))
         .action_id(action.id)
-        .insert(&db)
+        .insert(&db.db)
         .await?;
 
     let req = test::TestRequest::get()
@@ -83,8 +83,8 @@ async fn happy_path_active_only() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn happy_path_started_at_lgte() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let action = factory::action(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let action = factory::action(user.id).insert(&db.db).await?;
     let now = Utc::now().trunc_subsecs(0);
     let action_tracks = (1..10)
         .map(|i| {
@@ -94,10 +94,10 @@ async fn happy_path_started_at_lgte() -> Result<(), DbErr> {
                 .action_id(action.id)
         })
         .collect::<Vec<action_track::ActiveModel>>();
-    action_track::Entity::insert_many(action_tracks).exec(&db).await?;
+    action_track::Entity::insert_many(action_tracks).exec(&db.db).await?;
     let action_tracks = action_track::Entity::find()
         .filter(action_track::Column::ActionId.eq(action.id))
-        .all(&db)
+        .all(&db.db)
         .await?;
     let expected = &action_tracks[3..7];
 

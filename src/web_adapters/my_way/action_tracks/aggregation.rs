@@ -3,7 +3,7 @@ use actix_web::{
     web::{Data, Query, ReqData},
     HttpResponse,
 };
-use sea_orm::DbConn;
+use common::db::Db;
 
 use crate::utils::{response_401, response_500};
 use db_adapters::action_track_adapter::ActionTrackAdapter;
@@ -13,7 +13,7 @@ use use_cases::my_way::action_tracks::{aggregation::aggregate_action_tracks, typ
 #[tracing::instrument(skip(db, user))]
 #[get("/aggregation")]
 pub async fn aggregate_action_tracks_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     query: Query<ActionTrackAggregationQuery>,
 ) -> HttpResponse {

@@ -11,12 +11,12 @@ use entities::direction_category;
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     let _other_category = factory::direction_category(user.id)
         .ordering(Some(1))
-        .insert(&db)
+        .insert(&db.db)
         .await?;
-    let _null_ordering_category = factory::direction_category(user.id).insert(&db).await?;
+    let _null_ordering_category = factory::direction_category(user.id).insert(&db.db).await?;
     let name = "new_category".to_string();
 
     let req = test::TestRequest::post()
@@ -31,7 +31,10 @@ async fn happy_path() -> Result<(), DbErr> {
     let res: DirectionCategoryVisible = test::read_body_json(res).await;
     assert_eq!(res.name, name);
 
-    let category_in_db = direction_category::Entity::find_by_id(res.id).one(&db).await?.unwrap();
+    let category_in_db = direction_category::Entity::find_by_id(res.id)
+        .one(&db.db)
+        .await?
+        .unwrap();
     assert_eq!(category_in_db.user_id, user.id);
     assert_eq!(category_in_db.ordering, Some(3));
     assert_eq!(DirectionCategoryVisible::from(category_in_db), res);

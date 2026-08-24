@@ -3,7 +3,7 @@ use actix_web::{
     web::{Data, Query, ReqData},
     HttpResponse,
 };
-use sea_orm::DbConn;
+use common::db::Db;
 
 use crate::utils::{response_401, response_500};
 use db_adapters::action_track_adapter::ActionTrackAdapter;
@@ -15,7 +15,7 @@ use use_cases::my_way::action_tracks::{
 #[tracing::instrument(skip(db, user))]
 #[get("/aggregation/daily")]
 pub async fn aggregate_daily_action_tracks_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     query: Query<ActionTrackAggregationDailyQuery>,
 ) -> HttpResponse {

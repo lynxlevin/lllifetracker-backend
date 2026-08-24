@@ -3,7 +3,7 @@ use actix_web::{
     web::{Data, Json, Path, ReqData},
     HttpResponse,
 };
-use sea_orm::DbConn;
+use common::db::Db;
 
 use crate::utils::{response_400, response_401, response_404, response_409, response_500};
 use db_adapters::{action_track_adapter::ActionTrackAdapter, user_adapter::UserAdapter};
@@ -21,7 +21,7 @@ struct PathParam {
 #[tracing::instrument(skip(db, user))]
 #[put("/{action_track_id}")]
 pub async fn update_action_track_endpoint(
-    db: Data<DbConn>,
+    db: Data<Db>,
     user: Option<ReqData<user_entity::Model>>,
     req: Json<ActionTrackUpdateRequest>,
     path_param: Path<PathParam>,

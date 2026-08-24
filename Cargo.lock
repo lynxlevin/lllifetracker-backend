@@ -1305,6 +1305,7 @@ name = "db_adapters"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "common",
  "entities",
  "sea-orm",
  "serde",
@@ -2654,7 +2655,7 @@ dependencies = [
  "actix-web",
  "common",
  "cron_processes",
- "sea-orm",
+ "entities",
  "server",
  "tracing",
  "tracing-appender",
@@ -5112,7 +5113,6 @@ dependencies = [
  "minijinja",
  "once_cell",
  "pasetors",
- "sea-orm",
  "serde",
  "serde_json",
  "tracing",

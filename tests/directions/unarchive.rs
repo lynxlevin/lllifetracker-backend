@@ -11,8 +11,8 @@ use entities::direction;
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let direction = factory::direction(user.id).archived(true).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let direction = factory::direction(user.id).archived(true).insert(&db.db).await?;
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/directions/{}/unarchive", direction.id))
@@ -22,7 +22,7 @@ async fn happy_path() -> Result<(), DbErr> {
     let res = test::call_service(&app, req).await;
     assert_eq!(res.status(), http::StatusCode::OK);
 
-    let direction_in_db = direction::Entity::find_by_id(direction.id).one(&db).await?.unwrap();
+    let direction_in_db = direction::Entity::find_by_id(direction.id).one(&db.db).await?.unwrap();
     assert_eq!(direction_in_db.id, direction.id);
     assert_eq!(direction_in_db.user_id, user.id);
     assert_eq!(direction_in_db.name, direction.name);
@@ -42,8 +42,8 @@ async fn happy_path() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let direction = factory::direction(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let direction = factory::direction(user.id).insert(&db.db).await?;
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/directions/{}/unarchive", direction.id))

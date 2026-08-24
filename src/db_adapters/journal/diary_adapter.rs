@@ -1,6 +1,7 @@
 use std::future::Future;
 
 use chrono::{DateTime, FixedOffset, NaiveDate};
+use common::db::Db;
 use sea_orm::{
     prelude::Expr, sea_query::NullOrdering::Last, ActiveModelTrait, ColumnAsExpr, ColumnTrait, Condition, DbConn,
     DbErr, EntityTrait, ExprTrait, FromQueryResult, IntoActiveModel, JoinType::LeftJoin, ModelTrait, Order,
@@ -26,8 +27,8 @@ pub struct DiaryAdapter<'a> {
 }
 
 impl<'a> DiaryAdapter<'a> {
-    pub fn init(db: &'a DbConn) -> Self {
-        Self { db, query: Entity::find() }
+    pub fn init(db: &'a Db) -> Self {
+        Self { db: &db.db, query: Entity::find() }
     }
 }
 

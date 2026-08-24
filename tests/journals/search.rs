@@ -25,36 +25,36 @@ fn get_client() -> TestRequest {
 #[actix_web::test]
 async fn texts_should_be_space_separated_and_condition() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     let search_text = "Find me";
     let hit_0 = factory::diary(user.id)
         .text(Some("Find me".to_string()))
-        .insert(&db)
+        .insert(&db.db)
         .await?;
     let hit_1 = factory::diary(user.id)
         .text(Some("Findme".to_string()))
-        .insert(&db)
+        .insert(&db.db)
         .await?;
     let hit_2 = factory::diary(user.id)
         .text(Some("me Find".to_string()))
-        .insert(&db)
+        .insert(&db.db)
         .await?;
     let hit_3 = factory::diary(user.id)
         .text(Some("xFind mex".to_string()))
-        .insert(&db)
+        .insert(&db.db)
         .await?;
     let hit_4 = factory::reading_note(user.id)
         .title("Find".to_string())
         .text("me".to_string())
-        .insert(&db)
+        .insert(&db.db)
         .await?;
     let _no_hit_0 = factory::diary(user.id)
         .text(Some("find me".to_string()))
-        .insert(&db)
+        .insert(&db.db)
         .await?;
     let _no_hit_1 = factory::diary(user.id)
         .text(Some("Find".to_string()))
-        .insert(&db)
+        .insert(&db.db)
         .await?;
 
     let req = get_client()
@@ -87,7 +87,7 @@ async fn texts_should_be_space_separated_and_condition() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn tags_should_be_or_condition() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
     let tags = create_tags(
         vec![
             TagParam { name: "tag_0", ..Default::default() },
@@ -101,25 +101,25 @@ async fn tags_should_be_or_condition() -> Result<(), DbErr> {
     let tag_0 = tags.get("tag_0").unwrap();
     let tag_1 = tags.get("tag_1").unwrap();
 
-    let hit_diary_0 = factory::diary(user.id).insert(&db).await?;
+    let hit_diary_0 = factory::diary(user.id).insert(&db.db).await?;
     factory::link_diary_tag(&db, hit_diary_0.id, tag_0.id).await?;
-    let hit_diary_1 = factory::diary(user.id).insert(&db).await?;
+    let hit_diary_1 = factory::diary(user.id).insert(&db.db).await?;
     factory::link_diary_tag(&db, hit_diary_1.id, tag_1.id).await?;
-    let no_hit_diary = factory::diary(user.id).insert(&db).await?;
+    let no_hit_diary = factory::diary(user.id).insert(&db.db).await?;
     factory::link_diary_tag(&db, no_hit_diary.id, tags.get("_no_hit_tag").unwrap().id).await?;
 
-    let hit_reading_note_0 = factory::reading_note(user.id).insert(&db).await?;
+    let hit_reading_note_0 = factory::reading_note(user.id).insert(&db.db).await?;
     factory::link_reading_note_tag(&db, hit_reading_note_0.id, tag_0.id).await?;
-    let hit_reading_note_1 = factory::reading_note(user.id).insert(&db).await?;
+    let hit_reading_note_1 = factory::reading_note(user.id).insert(&db.db).await?;
     factory::link_reading_note_tag(&db, hit_reading_note_1.id, tag_1.id).await?;
-    let no_hit_reading_note = factory::reading_note(user.id).insert(&db).await?;
+    let no_hit_reading_note = factory::reading_note(user.id).insert(&db.db).await?;
     factory::link_reading_note_tag(&db, no_hit_reading_note.id, tags.get("_no_hit_tag").unwrap().id).await?;
 
-    let hit_thinking_note_0 = factory::thinking_note(user.id).insert(&db).await?;
+    let hit_thinking_note_0 = factory::thinking_note(user.id).insert(&db.db).await?;
     factory::link_thinking_note_tag(&db, hit_thinking_note_0.id, tag_0.id).await?;
-    let hit_thinking_note_1 = factory::thinking_note(user.id).insert(&db).await?;
+    let hit_thinking_note_1 = factory::thinking_note(user.id).insert(&db.db).await?;
     factory::link_thinking_note_tag(&db, hit_thinking_note_1.id, tag_1.id).await?;
-    let no_hit_thinking_note = factory::thinking_note(user.id).insert(&db).await?;
+    let no_hit_thinking_note = factory::thinking_note(user.id).insert(&db.db).await?;
     factory::link_thinking_note_tag(&db, no_hit_thinking_note.id, tags.get("_no_hit_tag").unwrap().id).await?;
 
     let req = get_client()
@@ -171,44 +171,44 @@ async fn tags_should_be_or_condition() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn text_and_tag_combination_should_be_and_condition() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let tag = factory::tag(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let tag = factory::tag(user.id).insert(&db.db).await?;
     let search_text = "Find me";
 
     let hit_diary = factory::diary(user.id)
         .text(Some(search_text.to_string()))
-        .insert(&db)
+        .insert(&db.db)
         .await?;
     factory::link_diary_tag(&db, hit_diary.id, tag.id).await?;
     let _no_hit_text_only_diary = factory::diary(user.id)
         .text(Some(search_text.to_string()))
-        .insert(&db)
+        .insert(&db.db)
         .await?;
-    let no_hit_tag_only_diary = factory::diary(user.id).insert(&db).await?;
+    let no_hit_tag_only_diary = factory::diary(user.id).insert(&db.db).await?;
     factory::link_diary_tag(&db, no_hit_tag_only_diary.id, tag.id).await?;
 
     let hit_reading_note = factory::reading_note(user.id)
         .text(search_text.to_string())
-        .insert(&db)
+        .insert(&db.db)
         .await?;
     factory::link_reading_note_tag(&db, hit_reading_note.id, tag.id).await?;
     let _no_hit_text_only_reading_note = factory::reading_note(user.id)
         .text(search_text.to_string())
-        .insert(&db)
+        .insert(&db.db)
         .await?;
-    let no_hit_tag_only_reading_note = factory::reading_note(user.id).insert(&db).await?;
+    let no_hit_tag_only_reading_note = factory::reading_note(user.id).insert(&db.db).await?;
     factory::link_reading_note_tag(&db, no_hit_tag_only_reading_note.id, tag.id).await?;
 
     let hit_thinking_note = factory::thinking_note(user.id)
         .question(Some(search_text.to_string()))
-        .insert(&db)
+        .insert(&db.db)
         .await?;
     factory::link_thinking_note_tag(&db, hit_thinking_note.id, tag.id).await?;
     let _no_hit_text_only_thinking_note = factory::thinking_note(user.id)
         .question(Some(search_text.to_string()))
-        .insert(&db)
+        .insert(&db.db)
         .await?;
-    let no_hit_tag_only_thinking_note = factory::thinking_note(user.id).insert(&db).await?;
+    let no_hit_tag_only_thinking_note = factory::thinking_note(user.id).insert(&db.db).await?;
     factory::link_thinking_note_tag(&db, no_hit_tag_only_thinking_note.id, tag.id).await?;
 
     let req = get_client()

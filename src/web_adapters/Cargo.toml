@@ -13,7 +13,6 @@ entities = { path = "../entities" }
 use_cases = { path = "../use_cases" }
 
 actix-web.workspace = true
-sea-orm.workspace = true
 serde.workspace = true
 tracing.workspace = true
 uuid.workspace = true

@@ -19,8 +19,8 @@ enum QueryAs {
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let reading_note = factory::reading_note(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let reading_note = factory::reading_note(user.id).insert(&db.db).await?;
     let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
 
     let form = ReadingNoteUpdateRequest {
@@ -48,7 +48,7 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(res.created_at, reading_note.created_at);
     assert!(res.updated_at > reading_note.updated_at);
 
-    let reading_note_in_db = reading_note::Entity::find_by_id(res.id).one(&db).await?.unwrap();
+    let reading_note_in_db = reading_note::Entity::find_by_id(res.id).one(&db.db).await?.unwrap();
     assert_eq!(reading_note_in_db.user_id, user.id);
     assert_eq!(ReadingNoteVisible::from(reading_note_in_db), res);
 
@@ -56,7 +56,7 @@ async fn happy_path() -> Result<(), DbErr> {
         .column_as(reading_notes_tags::Column::TagId, QueryAs::TagId)
         .filter(reading_notes_tags::Column::ReadingNoteId.eq(res.id))
         .into_values::<_, QueryAs>()
-        .all(&db)
+        .all(&db.db)
         .await?;
     assert_eq!(linked_tag_ids.len(), 1);
     assert!(linked_tag_ids.contains(&ambition_tag.id));
@@ -67,7 +67,7 @@ async fn happy_path() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn not_found_if_invalid_id() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/reading_notes/{}", uuid::Uuid::now_v7()))
@@ -90,8 +90,8 @@ async fn not_found_if_invalid_id() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let reading_note = factory::reading_note(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let reading_note = factory::reading_note(user.id).insert(&db.db).await?;
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/reading_notes/{}", reading_note.id))
@@ -113,8 +113,8 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 #[actix_web::test]
 async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
-    let reading_note = factory::reading_note(user.id).insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
+    let reading_note = factory::reading_note(user.id).insert(&db.db).await?;
 
     let non_existent_tag_req = test::TestRequest::put()
         .uri(&format!("/api/reading_notes/{}", reading_note.id))

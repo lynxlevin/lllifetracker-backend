@@ -8,7 +8,7 @@ use common::factory;
 #[actix_web::test]
 async fn happy_path() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db).await?;
+    let user = factory::user().insert(&db.db).await?;
 
     let req = test::TestRequest::get().uri("/api/users/me").to_request();
     req.extensions_mut().insert(user.clone());

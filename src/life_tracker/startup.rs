@@ -1,11 +1,15 @@
 use actix_session::SessionMiddleware;
 use actix_web::{dev::Server, middleware::Compress, web::Data, App, HttpServer};
-use common::{db::init_db, redis::init_redis_pool, settings::types::Settings};
-use sea_orm::DatabaseConnection;
+use common::{
+    db::{init_db, Db},
+    redis::init_redis_pool,
+    settings::types::Settings,
+};
 use server::{
     auth_middleware::AuthenticateUser, get_preps_for_redis_session_store, get_routes,
     setup_session_middleware_builder, RequestLogger,
 };
+use tracing::{event, Level};
 
 pub struct Application {
     port: u16,
@@ -14,7 +18,10 @@ pub struct Application {
 
 impl Application {
     pub async fn build(settings: Settings) -> Result<Self, std::io::Error> {
-        let db = init_db(&settings).await;
+        let db = init_db(&settings)
+            .await
+            .map_err(|e| event!(Level::ERROR, "{:?}", e))
+            .unwrap();
         let address = format!("{}:{}", settings.application.host, settings.application.port);
 
         let listener = std::net::TcpListener::bind(&address)?;
@@ -33,11 +40,7 @@ impl Application {
     }
 }
 
-async fn run(
-    listener: std::net::TcpListener,
-    db: DatabaseConnection,
-    settings: Settings,
-) -> Result<Server, std::io::Error> {
+async fn run(listener: std::net::TcpListener, db: Db, settings: Settings) -> Result<Server, std::io::Error> {
     let redis_pool = init_redis_pool(&settings).await.expect("Cannot create deadpool redis.");
 
     let (redis_store, secret_key) = get_preps_for_redis_session_store(&settings, &settings.redis.url).await;

@@ -8,7 +8,10 @@ mod utils;
 
 #[instrument(skip_all)]
 pub async fn run_cron_processes(settings: Settings) -> Result<(), ()> {
-    let db = init_db(&settings).await;
+    let db = init_db(&settings)
+        .await
+        .map_err(|e| event!(Level::ERROR, "{:?}", e))
+        .unwrap();
 
     let scheduler = match JobScheduler::new().await {
         Ok(scheduler) => scheduler,
