@@ -15,7 +15,6 @@ struct PathParam {
     tag_id: uuid::Uuid,
 }
 
-#[tracing::instrument(skip(db, user))]
 #[delete("/plain/{tag_id}")]
 pub async fn delete_plain_tag_endpoint(
     db: Data<Db>,

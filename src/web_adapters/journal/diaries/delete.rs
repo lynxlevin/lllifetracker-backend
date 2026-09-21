@@ -15,7 +15,6 @@ struct PathParam {
     diary_id: uuid::Uuid,
 }
 
-#[tracing::instrument(skip(db, user))]
 #[delete("/{diary_id}")]
 pub async fn delete_diary_endpoint(
     db: Data<Db>,

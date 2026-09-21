@@ -15,7 +15,6 @@ use use_cases::{
     UseCaseError,
 };
 
-#[tracing::instrument(skip(db, user))]
 #[post("")]
 pub async fn create_action_track_endpoint(
     db: Data<Db>,

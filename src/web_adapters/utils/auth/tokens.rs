@@ -10,7 +10,6 @@ use pasetors::{local, Local};
 
 const SESSION_KEY_PREFIX: &str = "valid_session_key_for_{}";
 
-#[tracing::instrument(skip(redis_connection, settings))]
 pub async fn issue_confirmation_token_pasetors(
     user_id: uuid::Uuid,
     redis_connection: &mut deadpool_redis::Connection,

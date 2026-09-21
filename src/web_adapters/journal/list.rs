@@ -13,7 +13,6 @@ use use_cases::journal::{list::list_journals, types::JournalListQuery};
 
 use crate::utils::{response_401, response_500};
 
-#[tracing::instrument(skip(db, user))]
 #[get("")]
 pub async fn list_journals_endpoint(
     db: Data<Db>,

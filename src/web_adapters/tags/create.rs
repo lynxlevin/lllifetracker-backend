@@ -10,7 +10,6 @@ use use_cases::tags::{create::create_plain_tag, types::TagCreateRequest};
 
 use crate::utils::{response_401, response_500};
 
-#[tracing::instrument(skip(db, user))]
 #[post("/plain")]
 pub async fn create_plain_tag_endpoint(
     db: Data<Db>,

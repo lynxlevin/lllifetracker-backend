@@ -18,7 +18,6 @@ struct PathParam {
     ambition_id: uuid::Uuid,
 }
 
-#[tracing::instrument(skip(db, user, req))]
 #[put("/{ambition_id}")]
 pub async fn update_ambition_endpoint(
     db: Data<Db>,

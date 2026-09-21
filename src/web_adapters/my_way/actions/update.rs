@@ -18,7 +18,6 @@ struct PathParam {
     action_id: uuid::Uuid,
 }
 
-#[tracing::instrument(skip(db, user, req))]
 #[put("/{action_id}")]
 pub async fn update_action_endpoint(
     db: Data<Db>,

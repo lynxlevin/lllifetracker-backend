@@ -18,7 +18,6 @@ struct PathParam {
     action_id: uuid::Uuid,
 }
 
-#[tracing::instrument(skip(db, user, req))]
 #[put("/{action_id}/track_type")]
 pub async fn convert_action_track_type_endpoint(
     db: Data<Db>,

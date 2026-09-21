@@ -15,7 +15,6 @@ struct PathParam {
     ambition_id: uuid::Uuid,
 }
 
-#[tracing::instrument(skip(db, user))]
 #[delete("/{ambition_id}")]
 pub async fn delete_ambition_endpoint(
     db: Data<Db>,

@@ -12,7 +12,6 @@ use use_cases::my_way::action_tracks::{
     aggregation_daily::aggregate_daily_action_tracks, types::ActionTrackAggregationDailyQuery,
 };
 
-#[tracing::instrument(skip(db, user))]
 #[get("/aggregation/daily")]
 pub async fn aggregate_daily_action_tracks_endpoint(
     db: Data<Db>,

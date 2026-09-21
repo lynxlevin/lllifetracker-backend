@@ -22,7 +22,6 @@ pub struct Parameters {
     token: String,
 }
 
-#[tracing::instrument(skip(db, redis_pool, parameters, settings))]
 #[get("/confirm")]
 pub async fn confirm(
     parameters: Query<Parameters>,

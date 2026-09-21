@@ -18,7 +18,6 @@ use crate::{
     utils::{auth::password::verify_password, response_404, response_500},
 };
 
-#[tracing::instrument(skip_all)]
 #[post("/login")]
 async fn login_user(
     db: Data<Db>,
