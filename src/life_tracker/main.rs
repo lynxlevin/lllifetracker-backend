@@ -22,7 +22,7 @@ async fn main() -> std::io::Result<()> {
 
     let application = startup::Application::build(settings).await?;
 
-    tracing::event!(target: "backend", tracing::Level::INFO, "Listening on http:/127.0.0.1:{}/", application.port());
+    event!(target: "backend", Level::INFO, "Listening on http:/127.0.0.1:{}/", application.port());
 
     application.run_until_stopped().await?;
 

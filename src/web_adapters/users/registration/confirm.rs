@@ -8,10 +8,16 @@ use common::db::Db;
 use common::settings::types::Settings;
 use db_adapters::user_adapter::{UserAdapter, UserMutation, UserQuery};
 use deadpool_redis::Pool;
+use serde::{Deserialize, Serialize};
 
-use crate::{utils::auth::tokens::verify_confirmation_token_pasetor, utils::ErrorResponse};
+use crate::utils::auth::tokens::verify_confirmation_token_pasetor;
 
-#[derive(serde::Deserialize)]
+#[derive(Serialize, Deserialize)]
+struct ErrorResponse {
+    pub error: String,
+}
+
+#[derive(Deserialize)]
 pub struct Parameters {
     token: String,
 }

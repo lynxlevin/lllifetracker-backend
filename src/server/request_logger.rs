@@ -67,6 +67,7 @@ where
                     .and_then(header_value_to_string)
                     .unwrap_or("null".to_string()),
                 status_code: String::new(),
+                error: None,
             };
             let query = req.query_string().to_string();
 
@@ -74,6 +75,9 @@ where
 
             let req_end = Utc::now().timestamp_micros();
             http.status_code = res.status().to_string();
+            if !res.status().is_success() {
+                http.error = Some(format!("{:?}", res.response().error()));
+            }
             event!(
                 Level::INFO,
                 "RequestLogger: {{ duration_micro: {}, http: {}, query: {}  }}",
@@ -92,13 +96,14 @@ struct Http {
     useragent: String,
     referer: String,
     status_code: String,
+    error: Option<String>,
 }
 impl fmt::Display for Http {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{{ path: {}, method: {}, useragent: {}, referer: {}, status_code: {} }}",
-            self.path, self.method, self.useragent, self.referer, self.status_code,
+            "{{ path: {}, method: {}, useragent: {}, referer: {}, status_code: {}, error: {:?} }}",
+            self.path, self.method, self.useragent, self.referer, self.status_code, self.error,
         )
     }
 }
