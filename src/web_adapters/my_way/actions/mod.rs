@@ -3,7 +3,6 @@ mod bulk_update_ordering;
 mod convert_track_type;
 mod create;
 mod delete;
-mod get;
 mod list;
 mod unarchive;
 mod update;
@@ -14,7 +13,6 @@ pub fn action_routes(cfg: &mut ServiceConfig) {
     cfg.service(
         scope("/actions")
             .service(list::list_actions_endpoint)
-            .service(get::get_action_endpoint)
             .service(create::create_action_endpoint)
             .service(bulk_update_ordering::bulk_update_action_ordering_endpoint)
             .service(update::update_action_endpoint)
