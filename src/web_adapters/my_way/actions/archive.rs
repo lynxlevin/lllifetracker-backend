@@ -17,7 +17,6 @@ struct PathParam {
     action_id: uuid::Uuid,
 }
 
-#[tracing::instrument(skip(db, user))]
 #[put("/{action_id}/archive")]
 pub async fn archive_action_endpoint(
     db: Data<Db>,

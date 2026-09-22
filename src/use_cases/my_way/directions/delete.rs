@@ -4,6 +4,13 @@ use uuid::Uuid;
 
 use crate::UseCaseError;
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        direction_id = direction_id.to_string(),
+    ),
+    skip_all
+)]
 pub async fn delete_direction<'a>(
     user: user_entity::Model,
     direction_id: Uuid,

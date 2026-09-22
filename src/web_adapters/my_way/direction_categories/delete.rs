@@ -16,7 +16,6 @@ struct PathParam {
     category_id: Uuid,
 }
 
-#[tracing::instrument(skip(db, user))]
 #[delete("/{category_id}")]
 pub async fn delete_direction_category_endpoint(
     db: Data<Db>,

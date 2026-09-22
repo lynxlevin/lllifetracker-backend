@@ -11,6 +11,15 @@ use db_adapters::{
 };
 use entities::user as user_entity;
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        params.started_at_gte.is_some = params.started_at_gte.is_some(),
+        params.started_at_lte.is_some = params.started_at_lte.is_some(),
+        params.dates.is_some = params.dates.is_some(),
+    ),
+    skip_all
+)]
 pub async fn aggregate_action_tracks<'a>(
     user: user_entity::Model,
     params: ActionTrackAggregationQuery,

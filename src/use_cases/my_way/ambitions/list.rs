@@ -5,6 +5,12 @@ use db_adapters::{
 };
 use entities::user as user_entity;
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+    ),
+    skip_all
+)]
 pub async fn list_ambitions<'a>(
     user: user_entity::Model,
     ambition_adapter: AmbitionAdapter<'a>,

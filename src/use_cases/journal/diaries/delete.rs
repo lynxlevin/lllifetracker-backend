@@ -4,6 +4,13 @@ use uuid::Uuid;
 
 use crate::UseCaseError;
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        diary_id = diary_id.to_string(),
+    ),
+    skip_all
+)]
 pub async fn delete_diary<'a>(
     user: user_entity::Model,
     diary_id: Uuid,

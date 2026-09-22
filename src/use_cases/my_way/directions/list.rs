@@ -6,6 +6,12 @@ use entities::user as user_entity;
 
 use crate::{my_way::directions::types::DirectionVisible, UseCaseError};
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+    ),
+    skip_all
+)]
 pub async fn list_directions<'a>(
     user: user_entity::Model,
     direction_adapter: DirectionAdapter<'a>,

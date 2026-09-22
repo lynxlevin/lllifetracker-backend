@@ -15,7 +15,6 @@ struct PathParam {
     thinking_note_id: uuid::Uuid,
 }
 
-#[tracing::instrument(skip(db, user))]
 #[delete("/{thinking_note_id}")]
 pub async fn delete_thinking_note_endpoint(
     db: Data<Db>,

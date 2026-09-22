@@ -7,6 +7,17 @@ use crate::{
 use db_adapters::action_adapter::{ActionAdapter, ActionFilter, ActionMutation, ActionQuery, UpdateActionParams};
 use entities::user as user_entity;
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        action_id = action_id.to_string(),
+        params.name.len = params.name.len(),
+        params.discipline.is_some = params.discipline.is_some(),
+        params.memo.is_some = params.memo.is_some(),
+        params.color.is_some = params.color.is_some(),
+    ),
+    skip_all
+)]
 pub async fn update_action<'a>(
     user: user_entity::Model,
     params: ActionUpdateRequest,

@@ -5,6 +5,12 @@ use entities::user as user_entity;
 
 use crate::UseCaseError;
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+    ),
+    skip_all
+)]
 pub async fn delete_web_push_subscription<'a>(
     user: user_entity::Model,
     web_push_subscription_adapter: WebPushSubscriptionAdapter<'a>,

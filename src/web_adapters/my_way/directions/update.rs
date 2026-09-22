@@ -18,7 +18,6 @@ struct PathParam {
     direction_id: uuid::Uuid,
 }
 
-#[tracing::instrument(skip(db, user, req))]
 #[put("/{direction_id}")]
 pub async fn update_direction_endpoint(
     db: Data<Db>,

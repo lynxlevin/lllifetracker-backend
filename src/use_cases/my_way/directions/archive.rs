@@ -4,6 +4,13 @@ use uuid::Uuid;
 
 use crate::{my_way::directions::types::DirectionVisible, UseCaseError};
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        direction_id = direction_id.to_string(),
+    ),
+    skip_all
+)]
 pub async fn archive_direction<'a>(
     user: user_entity::Model,
     direction_id: Uuid,

@@ -15,7 +15,6 @@ struct PathParam {
     reading_note_id: uuid::Uuid,
 }
 
-#[tracing::instrument(skip(db, user))]
 #[delete("/{reading_note_id}")]
 pub async fn delete_reading_note_endpoint(
     db: Data<Db>,

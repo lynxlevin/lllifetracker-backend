@@ -12,6 +12,16 @@ use crate::{
     UseCaseError,
 };
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        direction_id = direction_id.to_string(),
+        params.name.len = params.name.len(),
+        params.description.is_some = params.description.is_some(),
+        params.category_id.is_some = params.category_id.is_some(),
+    ),
+    skip_all
+)]
 pub async fn update_direction<'a>(
     user: user_entity::Model,
     params: DirectionUpdateRequest,

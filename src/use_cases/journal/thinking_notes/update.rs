@@ -14,6 +14,18 @@ use crate::{
     UseCaseError,
 };
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        thinking_note_id = thinking_note_id.to_string(),
+        params.question.is_some = params.question.is_some(),
+        params.thought.is_some = params.thought.is_some(),
+        params.answer.is_some = params.answer.is_some(),
+        params.tag_ids.len = params.tag_ids.len(),
+        params.resolved_at.is_some = params.resolved_at.is_some(),
+    ),
+    skip_all
+)]
 pub async fn update_thinking_note<'a>(
     user: user_entity::Model,
     params: ThinkingNoteUpdateRequest,

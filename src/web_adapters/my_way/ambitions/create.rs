@@ -10,7 +10,6 @@ use use_cases::my_way::ambitions::{create::create_ambition, types::AmbitionCreat
 
 use crate::utils::{response_401, response_500};
 
-#[tracing::instrument(skip(db, user))]
 #[post("")]
 pub async fn create_ambition_endpoint(
     db: Data<Db>,

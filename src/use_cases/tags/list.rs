@@ -6,6 +6,12 @@ use entities::user as user_entity;
 
 use crate::{tags::types::TagVisible, UseCaseError};
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+    ),
+    skip_all
+)]
 pub async fn list_tags<'a>(
     user: user_entity::Model,
     tag_adapter: TagAdapter<'a>,

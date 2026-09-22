@@ -10,7 +10,6 @@ use lettre::{
 
 use crate::utils::auth::tokens::issue_confirmation_token_pasetors;
 
-#[tracing::instrument(skip_all)]
 pub async fn send_email(
     recipient_email: String,
     recipient_first_name: String,

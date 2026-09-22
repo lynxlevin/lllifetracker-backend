@@ -8,6 +8,15 @@ use db_adapters::{
 };
 use entities::user as user_entity;
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        params.active_only = params.active_only,
+        params.started_at_gte.is_some = params.started_at_gte.is_some(),
+        params.started_at_lte.is_some = params.started_at_lte.is_some(),
+    ),
+    skip_all
+)]
 pub async fn list_action_tracks<'a>(
     user: user_entity::Model,
     params: ActionTrackListQuery,

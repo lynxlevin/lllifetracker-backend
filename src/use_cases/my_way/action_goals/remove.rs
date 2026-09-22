@@ -9,6 +9,13 @@ use db_adapters::{
 use entities::user as user_entity;
 use uuid::Uuid;
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        action_id = action_id.to_string(),
+    ),
+    skip_all
+)]
 pub async fn remove_action_goal<'a>(
     user: user_entity::Model,
     action_id: Uuid,

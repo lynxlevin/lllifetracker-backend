@@ -10,7 +10,6 @@ use use_cases::my_way::direction_categories::list::list_direction_categories;
 
 use crate::utils::{response_401, response_500};
 
-#[tracing::instrument(skip(db, user))]
 #[get("")]
 pub async fn list_direction_categories_endpoint(
     db: Data<Db>,

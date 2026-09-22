@@ -9,6 +9,14 @@ use crate::{
     UseCaseError,
 };
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        params.device_name.len = params.device_name.len(),
+        params.expiration_epoch_time.is_some = params.expiration_epoch_time.is_some(),
+    ),
+    skip_all
+)]
 pub async fn create_web_push_subscription<'a>(
     user: user_entity::Model,
     settings: &Settings,

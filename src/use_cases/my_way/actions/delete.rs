@@ -4,6 +4,13 @@ use crate::UseCaseError;
 use db_adapters::action_adapter::{ActionAdapter, ActionFilter, ActionMutation, ActionQuery};
 use entities::user as user_entity;
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        action_id = action_id.to_string(),
+    ),
+    skip_all
+)]
 pub async fn delete_action<'a>(
     user: user_entity::Model,
     action_id: Uuid,

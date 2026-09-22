@@ -15,7 +15,6 @@ struct PathParam {
     ambition_id: uuid::Uuid,
 }
 
-#[tracing::instrument(skip(db, user))]
 #[put("/{ambition_id}/unarchive")]
 pub async fn unarchive_ambition_endpoint(
     db: Data<Db>,

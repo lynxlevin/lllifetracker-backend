@@ -4,6 +4,13 @@ use crate::{my_way::actions::types::ActionVisible, UseCaseError};
 use db_adapters::action_adapter::{ActionAdapter, ActionFilter, ActionQuery};
 use entities::user as user_entity;
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        action_id = action_id.to_string(),
+    ),
+    skip_all
+)]
 pub async fn get_action<'a>(
     user: user_entity::Model,
     action_id: Uuid,

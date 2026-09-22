@@ -6,6 +6,12 @@ use entities::user as user_entity;
 
 use crate::UseCaseError;
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+    ),
+    skip_all
+)]
 pub async fn list_reading_note_titles<'a>(
     user: user_entity::Model,
     reading_note_adapter: ReadingNoteAdapter<'a>,

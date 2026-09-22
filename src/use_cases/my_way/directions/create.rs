@@ -9,6 +9,15 @@ use crate::{
     UseCaseError,
 };
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        params.name.len = params.name.len(),
+        params.description.is_some = params.description.is_some(),
+        params.category_id.is_some = params.category_id.is_some(),
+    ),
+    skip_all
+)]
 pub async fn create_direction<'a>(
     user: user_entity::Model,
     params: DirectionCreateRequest,

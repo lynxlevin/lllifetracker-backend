@@ -10,6 +10,16 @@ use crate::{
     UseCaseError,
 };
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        params.question.is_some = params.question.is_some(),
+        params.thought.is_some = params.thought.is_some(),
+        params.answer.is_some = params.answer.is_some(),
+        params.tag_ids.len = params.tag_ids.len(),
+    ),
+    skip_all
+)]
 pub async fn create_thinking_note<'a>(
     user: user_entity::Model,
     params: ThinkingNoteCreateRequest,

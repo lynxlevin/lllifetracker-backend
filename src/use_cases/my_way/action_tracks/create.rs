@@ -14,6 +14,14 @@ use db_adapters::{
 };
 use entities::{action::ActionTrackType, user as user_entity};
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        req.started_at = req.started_at.to_string(),
+        req.action_id = req.action_id.to_string(),
+    ),
+    skip_all
+)]
 pub async fn create_action_track<'a>(
     user: user_entity::Model,
     req: ActionTrackCreateRequest,

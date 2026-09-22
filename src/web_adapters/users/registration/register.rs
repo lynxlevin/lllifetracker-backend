@@ -17,13 +17,6 @@ struct RequestBody {
     first_name: String,
     last_name: String,
 }
-#[tracing::instrument(name = "Adding a new user",
-skip(db, redis_pool, new_user, settings),
-fields(
-    new_user_mail = %new_user.email,
-    new_user_first_name = %new_user.first_name,
-    new_user_last_name = %new_user.last_name
-))]
 #[post("")]
 pub async fn register(
     db: Data<Db>,

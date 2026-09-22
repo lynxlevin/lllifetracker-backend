@@ -14,6 +14,12 @@ use crate::{
     UseCaseError,
 };
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+    ),
+    skip_all
+)]
 pub async fn list_notification_rules<'a>(
     user: user_entity::Model,
     notification_rule_adapter: NotificationRuleAdapter<'a>,

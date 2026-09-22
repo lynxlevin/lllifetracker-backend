@@ -18,6 +18,7 @@
     "minijinja",
     "pasetor",
     "pasetors",
+    "referer",
     "reqwest",
     "rustls",
     "serde",
@@ -27,7 +28,8 @@
     "succ",
     "thiserror",
     "Timelike",
-    "trunc"
+    "trunc",
+    "useragent"
   ],
   "rest-client.followredirect": false,
   "[rust]": {

@@ -14,7 +14,6 @@ struct UserEmail {
     email: String,
 }
 
-#[tracing::instrument(skip(db, redis_pool, settings))]
 #[actix_web::post("/email-verification")]
 pub async fn request_password_change(
     db: Data<Db>,

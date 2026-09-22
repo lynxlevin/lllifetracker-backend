@@ -12,7 +12,6 @@ use use_cases::notification::notification_rule::{
 
 use crate::utils::{response_401, response_500};
 
-#[tracing::instrument(skip(db, user))]
 #[delete("")]
 pub async fn delete_notification_rules_endpoint(
     db: Data<Db>,
