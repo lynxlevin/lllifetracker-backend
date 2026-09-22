@@ -17,6 +17,14 @@ use crate::{
     UseCaseError,
 };
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        params.resolved.is_some = params.resolved.is_some(),
+        params.tag_id_or.is_some = params.tag_id_or.is_some(),
+    ),
+    skip_all
+)]
 pub async fn list_thinking_notes<'a>(
     user: user_entity::Model,
     params: ThinkingNoteListQuery,

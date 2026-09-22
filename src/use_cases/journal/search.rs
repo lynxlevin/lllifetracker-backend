@@ -26,6 +26,14 @@ use crate::{
     UseCaseError,
 };
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        params.text.is_some = params.text.is_some(),
+        params.tag_ids.len = params.tag_ids.len(),
+    ),
+    skip_all
+)]
 pub async fn search_journals<'a>(
     user: user_entity::Model,
     params: JournalSearchRequest,

@@ -9,6 +9,15 @@ use db_adapters::ambition_adapter::{
 };
 use entities::user as user_entity;
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        ambition_id = ambition_id.to_string(),
+        params.name.len = params.name.len(),
+        params.description.is_some = params.description.is_some(),
+    ),
+    skip_all
+)]
 pub async fn update_ambition<'a>(
     user: user_entity::Model,
     params: AmbitionUpdateRequest,

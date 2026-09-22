@@ -13,6 +13,14 @@ use db_adapters::{
 };
 use entities::user as user_entity;
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        action_id = action_id.to_string(),
+        params.track_type = params.track_type.to_string(),
+    ),
+    skip_all
+)]
 pub async fn convert_action_track_type<'a>(
     user: user_entity::Model,
     params: ActionTrackTypeConversionRequest,

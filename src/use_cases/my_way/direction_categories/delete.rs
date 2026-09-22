@@ -7,6 +7,13 @@ use entities::user as user_entity;
 
 use crate::UseCaseError;
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        category_id = category_id.to_string(),
+    ),
+    skip_all
+)]
 pub async fn delete_direction_category<'a>(
     user: user_entity::Model,
     category_id: Uuid,

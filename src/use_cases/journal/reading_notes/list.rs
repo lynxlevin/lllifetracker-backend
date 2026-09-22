@@ -17,6 +17,13 @@ use crate::{
     UseCaseError,
 };
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        params.tag_id_or.is_some = params.tag_id_or.is_some(),
+    ),
+    skip_all
+)]
 pub async fn list_reading_notes<'a>(
     user: user_entity::Model,
     reading_note_adapter: ReadingNoteAdapter<'a>,

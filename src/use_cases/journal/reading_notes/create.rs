@@ -10,6 +10,17 @@ use crate::{
     UseCaseError,
 };
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        params.title.len = params.title.len(),
+        params.page_number = params.page_number,
+        params.text.len = params.text.len(),
+        params.date = params.date.to_string(),
+        params.tag_ids.len = params.tag_ids.len(),
+    ),
+    skip_all
+)]
 pub async fn create_reading_note<'a>(
     user: user_entity::Model,
     params: ReadingNoteCreateRequest,

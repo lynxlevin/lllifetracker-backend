@@ -13,6 +13,15 @@ use crate::{
     UseCaseError,
 };
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        params.r#type = params.r#type.to_string(),
+        params.recurrence_type = params.recurrence_type.to_string(),
+        params.time = params.time.to_string(),
+    ),
+    skip_all
+)]
 pub async fn create_notification_rules<'a>(
     user: user_entity::Model,
     notification_rule_adapter: NotificationRuleAdapter<'a>,

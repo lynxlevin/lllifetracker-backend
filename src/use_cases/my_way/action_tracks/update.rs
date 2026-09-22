@@ -16,6 +16,16 @@ use db_adapters::{
 };
 use entities::user as user_entity;
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        action_track_id = action_track_id.to_string(),
+        params.action_id = params.action_id.to_string(),
+        params.started_at.is_some = params.started_at.to_string(),
+        params.ended_at.is_some = params.ended_at.is_some(),
+    ),
+    skip_all
+)]
 pub async fn update_action_track<'a>(
     user: user_entity::Model,
     params: ActionTrackUpdateRequest,

@@ -15,6 +15,15 @@ use entities::{
     user as user_entity,
 };
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        params.action_id = params.action_id.to_string(),
+        params.duration_seconds = params.duration_seconds,
+        params.count = params.count,
+    ),
+    skip_all
+)]
 pub async fn set_new_action_goal<'a>(
     user: user_entity::Model,
     params: ActionGoalSetNewRequest,

@@ -7,6 +7,14 @@ use crate::{
     UseCaseError,
 };
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        tag_id = tag_id.to_string(),
+        params.name.len = params.name.len(),
+    ),
+    skip_all
+)]
 pub async fn update_plain_tag<'a>(
     user: user_entity::Model,
     params: TagUpdateRequest,

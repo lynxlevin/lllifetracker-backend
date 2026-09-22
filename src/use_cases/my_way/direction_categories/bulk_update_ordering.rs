@@ -17,6 +17,12 @@ use entities::user as user_entity;
 /// No need for handling ordering when creating, updating, archiving, un-archiving and deleting an direction_category.
 /// Ordering numbers need only be updated on this endpoint.
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+    ),
+    skip_all
+)]
 pub async fn bulk_update_direction_category_ordering<'a>(
     user: user_entity::Model,
     params: DirectionCategoryBulkUpdateOrderingRequest,

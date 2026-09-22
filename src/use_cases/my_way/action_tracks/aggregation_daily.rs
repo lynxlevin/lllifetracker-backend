@@ -13,6 +13,13 @@ use db_adapters::{
 };
 use entities::user::{self as user_entity, TimezoneEnum};
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        params.year_month = params.year_month,
+    ),
+    skip_all
+)]
 pub async fn aggregate_daily_action_tracks<'a>(
     user: user_entity::Model,
     params: ActionTrackAggregationDailyQuery,

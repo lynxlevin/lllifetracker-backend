@@ -8,6 +8,12 @@ use entities::user as user_entity;
 
 use crate::{my_way::direction_categories::types::DirectionCategoryVisible, UseCaseError};
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+    ),
+    skip_all
+)]
 pub async fn list_direction_categories<'a>(
     user: user_entity::Model,
     category_adapter: DirectionCategoryAdapter<'a>,

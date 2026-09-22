@@ -10,6 +10,12 @@ use crate::{
     UseCaseError,
 };
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+    ),
+    skip_all
+)]
 pub async fn create_diary<'a>(
     user: user_entity::Model,
     params: DiaryCreateRequest,

@@ -6,6 +6,13 @@ use uuid::Uuid;
 
 use crate::UseCaseError;
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        reading_note_id = reading_note_id.to_string(),
+    ),
+    skip_all
+)]
 pub async fn delete_reading_note<'a>(
     user: user_entity::Model,
     reading_note_id: Uuid,

@@ -4,6 +4,13 @@ use crate::{my_way::ambitions::types::AmbitionVisible, UseCaseError};
 use db_adapters::ambition_adapter::{AmbitionAdapter, AmbitionFilter, AmbitionMutation, AmbitionQuery};
 use entities::user as user_entity;
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        ambition_id = ambition_id.to_string(),
+    ),
+    skip_all
+)]
 pub async fn archive_ambition<'a>(
     user: user_entity::Model,
     ambition_id: Uuid,

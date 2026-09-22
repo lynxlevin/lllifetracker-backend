@@ -10,6 +10,14 @@ use db_adapters::direction_category_adapter::{
 };
 use entities::user as user_entity;
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        category_id = category_id.to_string(),
+        params.name.len = params.name.len(),
+    ),
+    skip_all
+)]
 pub async fn update_direction_category<'a>(
     user: user_entity::Model,
     params: DirectionCategoryUpdateRequest,

@@ -4,6 +4,13 @@ use uuid::Uuid;
 
 use crate::UseCaseError;
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        tag_id = tag_id.to_string(),
+    ),
+    skip_all
+)]
 pub async fn delete_plain_tag<'a>(
     user: user_entity::Model,
     tag_id: Uuid,

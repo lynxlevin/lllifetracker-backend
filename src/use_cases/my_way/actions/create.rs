@@ -5,6 +5,16 @@ use crate::{
 use db_adapters::action_adapter::{ActionAdapter, ActionMutation, CreateActionParams};
 use entities::user as user_entity;
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        params.name.len = params.name.len(),
+        params.discipline.is_some = params.discipline.is_some(),
+        params.memo.is_some = params.memo.is_some(),
+        params.track_type = params.track_type.to_string(),
+    ),
+    skip_all
+)]
 pub async fn create_action<'a>(
     user: user_entity::Model,
     params: ActionCreateRequest,

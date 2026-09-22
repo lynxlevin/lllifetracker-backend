@@ -5,6 +5,13 @@ use entities::user as user_entity;
 
 use crate::{notification::notification_rule::types::NotificationRuleDeleteQuery, UseCaseError};
 
+#[tracing::instrument(
+    fields(
+        user.id = user.id.to_string(),
+        query.r#type = query.r#type.to_string(),
+    ),
+    skip_all
+)]
 pub async fn delete_notification_rules<'a>(
     user: user_entity::Model,
     notification_rule_adapter: NotificationRuleAdapter<'a>,
