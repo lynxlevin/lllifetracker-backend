@@ -248,15 +248,15 @@ pub struct CreateReadingNoteParams {
 
 #[derive(Debug, Clone)]
 pub struct UpdateReadingNoteParams {
-    pub title: Option<String>,
-    pub page_number: Option<i16>,
-    pub text: Option<String>,
-    pub date: Option<NaiveDate>,
+    pub title: String,
+    pub page_number: i16,
+    pub text: String,
+    pub date: NaiveDate,
 }
 
 pub trait ReadingNoteMutation {
     fn create(self, params: CreateReadingNoteParams) -> impl Future<Output = Result<Model, DbErr>>;
-    fn partial_update(
+    fn update(
         self,
         reading_note: Model,
         params: UpdateReadingNoteParams,
@@ -291,20 +291,12 @@ impl ReadingNoteMutation for ReadingNoteAdapter<'_> {
         .await
     }
 
-    async fn partial_update(self, reading_note: Model, params: UpdateReadingNoteParams) -> Result<Model, DbErr> {
+    async fn update(self, reading_note: Model, params: UpdateReadingNoteParams) -> Result<Model, DbErr> {
         let mut reading_note = reading_note.into_active_model();
-        if let Some(title) = params.title {
-            reading_note.title = Set(title);
-        }
-        if let Some(page_number) = params.page_number {
-            reading_note.page_number = Set(page_number);
-        }
-        if let Some(text) = params.text {
-            reading_note.text = Set(text);
-        }
-        if let Some(date) = params.date {
-            reading_note.date = Set(date);
-        }
+        reading_note.title = Set(params.title);
+        reading_note.page_number = Set(params.page_number);
+        reading_note.text = Set(params.text);
+        reading_note.date = Set(params.date);
         reading_note.updated_at = Set(Utc::now().into());
         reading_note.update(self.db).await
     }

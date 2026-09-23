@@ -18,11 +18,10 @@ use crate::{
     fields(
         user.id = user.id.to_string(),
         reading_note_id = reading_note_id.to_string(),
-        params.title.is_some = params.title.is_some(),
-        params.page_number.is_some = params.page_number.is_some(),
-        params.text.is_some = params.text.is_some(),
-        params.date.is_some = params.date.is_some(),
-        params.tag_ids.is_some = params.tag_ids.is_some(),
+        params.title.len = params.title.len(),
+        params.text.len = params.text.len(),
+        params.date = params.date.to_string(),
+        params.tag_ids.len = params.tag_ids.len(),
     ),
     skip_all
 )]
@@ -46,7 +45,7 @@ pub async fn update_reading_note<'a>(
 
     let reading_note = reading_note_adapter
         .clone()
-        .partial_update(
+        .update(
             reading_note,
             UpdateReadingNoteParams {
                 title: params.title.clone(),
@@ -58,20 +57,18 @@ pub async fn update_reading_note<'a>(
         .await
         .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
 
-    if let Some(tag_ids) = params.tag_ids.clone() {
-        if let Err(e) = _update_tag_links(&reading_note, linked_tags, tag_ids, reading_note_adapter).await {
-            match &e {
-                DbErr::Custom(ce) => match CustomDbErr::from(ce) {
-                    CustomDbErr::NotFound => {
-                        return Err(UseCaseError::NotFound(
-                            "One or more of the tag_ids do not exist.".to_string(),
-                        ))
-                    }
-                    _ => return Err(UseCaseError::InternalServerError(format!("{:?}", e))),
-                },
-                // FIXME: reading_note creation should be canceled.
+    if let Err(e) = _update_tag_links(&reading_note, linked_tags, params.tag_ids, reading_note_adapter).await {
+        match &e {
+            DbErr::Custom(ce) => match CustomDbErr::from(ce) {
+                CustomDbErr::NotFound => {
+                    return Err(UseCaseError::NotFound(
+                        "One or more of the tag_ids do not exist.".to_string(),
+                    ))
+                }
                 _ => return Err(UseCaseError::InternalServerError(format!("{:?}", e))),
-            }
+            },
+            // FIXME: reading_note creation should be canceled.
+            _ => return Err(UseCaseError::InternalServerError(format!("{:?}", e))),
         }
     }
 

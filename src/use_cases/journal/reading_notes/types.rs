@@ -102,9 +102,9 @@ pub struct ReadingNoteCreateRequest {
 
 #[derive(Deserialize, Debug, Serialize)]
 pub struct ReadingNoteUpdateRequest {
-    pub title: Option<String>,
-    pub page_number: Option<i16>,
-    pub text: Option<String>,
-    pub date: Option<chrono::NaiveDate>,
-    pub tag_ids: Option<Vec<uuid::Uuid>>,
+    pub title: String,
+    pub page_number: i16,
+    pub text: String,
+    pub date: chrono::NaiveDate,
+    pub tag_ids: Vec<uuid::Uuid>,
 }
