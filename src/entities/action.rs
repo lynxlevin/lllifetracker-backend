@@ -6,6 +6,8 @@ use chrono::Utc;
 use sea_orm::{entity::prelude::*, sea_query::ValueTypeErr, ActiveValue::Set};
 use serde::{Deserialize, Serialize};
 
+pub const DEFAULT_ACTION_COLOR: &'static str = "#212121";
+
 // MYMEMO: マイグレーション問題なく動くか確認
 #[sea_orm::model]
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
@@ -73,7 +75,7 @@ impl ActiveModelBehavior for ActiveModel {
         Self {
             id: Set(Uuid::now_v7()),
             archived: Set(false),
-            color: Set("#212121".to_string()),
+            color: Set(DEFAULT_ACTION_COLOR.to_string()),
             created_at: Set(Utc::now().into()),
             updated_at: Set(Utc::now().into()),
             ..ActiveModelTrait::default()

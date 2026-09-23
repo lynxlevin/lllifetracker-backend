@@ -10,7 +10,7 @@ use sea_orm::{
 use uuid::Uuid;
 
 use entities::{
-    action::{ActionTrackType, ActiveModel, Column, Entity, Model, Relation},
+    action::{ActionTrackType, ActiveModel, Column, Entity, Model, Relation, DEFAULT_ACTION_COLOR},
     action_goal,
     tag::{self, TagType},
     user,
@@ -103,6 +103,7 @@ pub struct CreateActionParams {
     pub name: String,
     pub discipline: Option<String>,
     pub memo: Option<String>,
+    pub color: Option<String>,
     pub track_type: ActionTrackType,
     pub user_id: Uuid,
 }
@@ -148,6 +149,7 @@ impl ActionMutation for ActionAdapter<'_> {
                         name: Set(params.name.to_owned()),
                         discipline: Set(params.discipline.to_owned()),
                         memo: Set(params.memo.to_owned()),
+                        color: Set(params.color.unwrap_or(DEFAULT_ACTION_COLOR.to_string())),
                         track_type: Set(params.track_type),
                         ..Default::default()
                     }
