@@ -1,4 +1,4 @@
-use db_adapters::diary_adapter::{DiaryUpdateKey, DiaryWithTag};
+use db_adapters::diary_adapter::DiaryWithTag;
 use entities::{diary, prelude::Diary};
 use sea_orm::DerivePartialModel;
 use serde::{Deserialize, Serialize};
@@ -69,5 +69,4 @@ pub struct DiaryUpdateRequest {
     pub text: Option<String>,
     pub date: chrono::NaiveDate,
     pub tag_ids: Vec<uuid::Uuid>,
-    pub update_keys: Vec<DiaryUpdateKey>,
 }

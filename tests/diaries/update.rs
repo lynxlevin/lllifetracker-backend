@@ -1,5 +1,4 @@
 use actix_web::{http, test, HttpMessage};
-use db_adapters::diary_adapter::DiaryUpdateKey;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter, QueryFilter, QuerySelect,
 };
@@ -23,10 +22,9 @@ async fn happy_path() -> Result<(), DbErr> {
     let diary = factory::diary(user.id).insert(&db.db).await?;
     let (_, tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
     let form = DiaryUpdateRequest {
-        text: None,
+        text: Some("New text".to_string()),
         date: chrono::NaiveDate::from_ymd_opt(2024, 11, 3).unwrap(),
         tag_ids: vec![tag.id],
-        update_keys: vec![DiaryUpdateKey::Text, DiaryUpdateKey::Date, DiaryUpdateKey::TagIds],
     };
 
     let req = test::TestRequest::put()
@@ -65,12 +63,7 @@ async fn not_found_if_invalid_id() -> Result<(), DbErr> {
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/diaries/{}", uuid::Uuid::now_v7()))
-        .set_json(DiaryUpdateRequest {
-            text: None,
-            date: chrono::Utc::now().date_naive(),
-            tag_ids: vec![],
-            update_keys: vec![],
-        })
+        .set_json(DiaryUpdateRequest { text: None, date: chrono::Utc::now().date_naive(), tag_ids: vec![] })
         .to_request();
     req.extensions_mut().insert(user.clone());
 
@@ -88,12 +81,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/diaries/{}", diary.id))
-        .set_json(DiaryUpdateRequest {
-            text: None,
-            date: chrono::Utc::now().date_naive(),
-            tag_ids: vec![],
-            update_keys: vec![],
-        })
+        .set_json(DiaryUpdateRequest { text: diary.text, date: diary.date, tag_ids: vec![] })
         .to_request();
 
     let res = test::call_service(&app, req).await;
@@ -110,12 +98,7 @@ async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
 
     let req = test::TestRequest::put()
         .uri(&format!("/api/diaries/{}", diary.id))
-        .set_json(DiaryUpdateRequest {
-            text: None,
-            date: diary.date,
-            tag_ids: vec![uuid::Uuid::now_v7()],
-            update_keys: vec![DiaryUpdateKey::TagIds],
-        })
+        .set_json(DiaryUpdateRequest { text: diary.text, date: diary.date, tag_ids: vec![uuid::Uuid::now_v7()] })
         .to_request();
     req.extensions_mut().insert(user.clone());
 
