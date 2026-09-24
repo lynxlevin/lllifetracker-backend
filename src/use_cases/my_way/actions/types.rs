@@ -89,6 +89,7 @@ pub struct ActionCreateRequest {
     pub name: String,
     pub discipline: Option<String>,
     pub memo: Option<String>,
+    pub color: Option<String>,
     pub track_type: ActionTrackType,
 }
 
@@ -97,7 +98,7 @@ pub struct ActionUpdateRequest {
     pub name: String,
     pub discipline: Option<String>,
     pub memo: Option<String>,
-    pub color: Option<String>,
+    pub color: String,
 }
 
 #[derive(Deserialize, Debug, Serialize)]

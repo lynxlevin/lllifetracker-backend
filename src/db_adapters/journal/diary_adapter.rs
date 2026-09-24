@@ -214,24 +214,15 @@ pub struct CreateDiaryParams {
     pub user_id: Uuid,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
-pub enum DiaryUpdateKey {
-    Text,
-    Date,
-    TagIds, // FIXME: remove this key after removing from frontend
-}
-
 #[derive(Debug, Clone)]
 pub struct UpdateDiaryParams {
     pub text: Option<String>,
     pub date: NaiveDate,
-    pub update_keys: Vec<DiaryUpdateKey>,
 }
 
 pub trait DiaryMutation {
     fn create(self, params: CreateDiaryParams) -> impl Future<Output = Result<Model, DbErr>>;
-    fn partial_update(self, diary: Model, params: UpdateDiaryParams)
-        -> impl Future<Output = Result<Model, DbErr>>;
+    fn update(self, diary: Model, params: UpdateDiaryParams) -> impl Future<Output = Result<Model, DbErr>>;
     fn delete(self, diary: Model) -> impl Future<Output = Result<(), DbErr>>;
     fn link_tags(
         &self,
@@ -257,14 +248,10 @@ impl DiaryMutation for DiaryAdapter<'_> {
         .await
     }
 
-    async fn partial_update(self, diary: Model, params: UpdateDiaryParams) -> Result<Model, DbErr> {
+    async fn update(self, diary: Model, params: UpdateDiaryParams) -> Result<Model, DbErr> {
         let mut diary = diary.into_active_model();
-        if params.update_keys.contains(&DiaryUpdateKey::Text) {
-            diary.text = Set(params.text);
-        }
-        if params.update_keys.contains(&DiaryUpdateKey::Date) {
-            diary.date = Set(params.date);
-        }
+        diary.text = Set(params.text);
+        diary.date = Set(params.date);
         diary.update(self.db).await
     }
 

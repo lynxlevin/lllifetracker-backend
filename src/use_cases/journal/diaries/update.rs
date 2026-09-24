@@ -1,7 +1,5 @@
 use db_adapters::{
-    diary_adapter::{
-        DiaryAdapter, DiaryFilter, DiaryJoin, DiaryMutation, DiaryQuery, DiaryUpdateKey, UpdateDiaryParams,
-    },
+    diary_adapter::{DiaryAdapter, DiaryFilter, DiaryJoin, DiaryMutation, DiaryQuery, UpdateDiaryParams},
     CustomDbErr,
 };
 use entities::{diary, tag, user as user_entity};
@@ -38,13 +36,9 @@ pub async fn update_diary<'a>(
 
     let diary = match diary_adapter
         .clone()
-        .partial_update(
+        .update(
             diary,
-            UpdateDiaryParams {
-                text: params.text.clone(),
-                date: params.date,
-                update_keys: params.update_keys.clone(),
-            },
+            UpdateDiaryParams { text: params.text.clone(), date: params.date },
         )
         .await
     {
@@ -54,22 +48,20 @@ pub async fn update_diary<'a>(
         },
     };
 
-    if params.update_keys.contains(&DiaryUpdateKey::TagIds) {
-        if let Err(e) = _update_tag_links(&diary, linked_tags, params.tag_ids.clone(), diary_adapter).await {
-            // FIXME: diary creation should be canceled.
-            match &e {
-                DbErr::Custom(ce) => match CustomDbErr::from(ce) {
-                    CustomDbErr::NotFound => {
-                        return Err(UseCaseError::NotFound(
-                            "One or more of the tag_ids do not exist.".to_string(),
-                        ))
-                    }
-                    _ => return Err(UseCaseError::InternalServerError(format!("{:?}", e))),
-                },
+    if let Err(e) = _update_tag_links(&diary, linked_tags, params.tag_ids.clone(), diary_adapter).await {
+        // FIXME: diary creation should be canceled.
+        match &e {
+            DbErr::Custom(ce) => match CustomDbErr::from(ce) {
+                CustomDbErr::NotFound => {
+                    return Err(UseCaseError::NotFound(
+                        "One or more of the tag_ids do not exist.".to_string(),
+                    ))
+                }
                 _ => return Err(UseCaseError::InternalServerError(format!("{:?}", e))),
-            }
-        };
-    }
+            },
+            _ => return Err(UseCaseError::InternalServerError(format!("{:?}", e))),
+        }
+    };
     Ok(DiaryVisible::from(diary))
 }
 

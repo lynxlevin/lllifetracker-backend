@@ -25,6 +25,7 @@ pub async fn create_action<'a>(
             name: params.name.clone(),
             discipline: params.discipline.clone(),
             memo: params.memo.clone(),
+            color: params.color.clone(),
             track_type: params.track_type.clone(),
             user_id: user.id,
         })

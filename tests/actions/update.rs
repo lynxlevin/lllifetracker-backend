@@ -25,7 +25,7 @@ async fn happy_path() -> Result<(), DbErr> {
             name: new_name.clone(),
             discipline: Some(new_discipline.clone()),
             memo: Some(new_memo.clone()),
-            color: Some(new_color.clone()),
+            color: new_color.clone(),
         })
         .to_request();
     req.extensions_mut().insert(user.clone());
@@ -63,7 +63,7 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
             name: "action_after_update_route".to_string(),
             discipline: None,
             memo: None,
-            color: None,
+            color: action.color,
         })
         .to_request();
 
@@ -89,7 +89,7 @@ mod validation_errors {
                 name: "action_after_update_route".to_string(),
                 discipline: None,
                 memo: None,
-                color: Some(long_name),
+                color: long_name,
             })
             .to_request();
         req.extensions_mut().insert(user.clone());
@@ -113,7 +113,7 @@ mod validation_errors {
                 name: "action_after_update_route".to_string(),
                 discipline: None,
                 memo: None,
-                color: Some(short_name),
+                color: short_name,
             })
             .to_request();
         req.extensions_mut().insert(user.clone());
@@ -137,7 +137,7 @@ mod validation_errors {
                 name: "action_after_update_route".to_string(),
                 discipline: None,
                 memo: None,
-                color: Some(bad_format),
+                color: bad_format,
             })
             .to_request();
         req.extensions_mut().insert(user.clone());
@@ -161,7 +161,7 @@ mod validation_errors {
                 name: "action_after_update_route".to_string(),
                 discipline: None,
                 memo: None,
-                color: Some(bad_character),
+                color: bad_character,
             })
             .to_request();
         req.extensions_mut().insert(user.clone());

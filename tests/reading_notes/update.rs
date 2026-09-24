@@ -1,4 +1,5 @@
 use actix_web::{http, test, HttpMessage};
+use chrono::Utc;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DbErr, DeriveColumn, EntityTrait, EnumIter, QueryFilter, QuerySelect,
 };
@@ -24,11 +25,11 @@ async fn happy_path() -> Result<(), DbErr> {
     let (_, ambition_tag) = factory::ambition(user.id).insert_with_tag(&db).await?;
 
     let form = ReadingNoteUpdateRequest {
-        title: Some("reading note after update title".to_string()),
-        page_number: Some(998),
-        text: Some("reading note after update text".to_string()),
-        date: Some(chrono::NaiveDate::from_ymd_opt(2024, 11, 3).unwrap()),
-        tag_ids: Some(vec![ambition_tag.id]),
+        title: "reading note after update title".to_string(),
+        page_number: 998,
+        text: "reading note after update text".to_string(),
+        date: chrono::NaiveDate::from_ymd_opt(2024, 11, 3).unwrap(),
+        tag_ids: vec![ambition_tag.id],
     };
 
     let req = test::TestRequest::put()
@@ -41,10 +42,10 @@ async fn happy_path() -> Result<(), DbErr> {
     assert_eq!(res.status(), http::StatusCode::OK);
 
     let res: ReadingNoteVisible = test::read_body_json(res).await;
-    assert_eq!(res.title, form.title.clone().unwrap());
-    assert_eq!(res.page_number, form.page_number.unwrap());
-    assert_eq!(res.text, form.text.clone().unwrap());
-    assert_eq!(res.date, form.date.unwrap());
+    assert_eq!(res.title, form.title.clone());
+    assert_eq!(res.page_number, form.page_number);
+    assert_eq!(res.text, form.text.clone());
+    assert_eq!(res.date, form.date);
     assert_eq!(res.created_at, reading_note.created_at);
     assert!(res.updated_at > reading_note.updated_at);
 
@@ -72,11 +73,11 @@ async fn not_found_if_invalid_id() -> Result<(), DbErr> {
     let req = test::TestRequest::put()
         .uri(&format!("/api/reading_notes/{}", uuid::Uuid::now_v7()))
         .set_json(ReadingNoteUpdateRequest {
-            title: None,
-            page_number: None,
-            text: None,
-            date: None,
-            tag_ids: None,
+            title: String::default(),
+            page_number: 0,
+            text: String::default(),
+            date: Utc::now().date_naive(),
+            tag_ids: vec![],
         })
         .to_request();
     req.extensions_mut().insert(user.clone());
@@ -96,11 +97,11 @@ async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let req = test::TestRequest::put()
         .uri(&format!("/api/reading_notes/{}", reading_note.id))
         .set_json(ReadingNoteUpdateRequest {
-            title: None,
-            page_number: None,
-            text: None,
-            date: None,
-            tag_ids: None,
+            title: reading_note.title,
+            page_number: reading_note.page_number,
+            text: reading_note.text,
+            date: reading_note.date,
+            tag_ids: vec![],
         })
         .to_request();
 
@@ -119,11 +120,11 @@ async fn not_found_on_non_existent_tag_id() -> Result<(), DbErr> {
     let non_existent_tag_req = test::TestRequest::put()
         .uri(&format!("/api/reading_notes/{}", reading_note.id))
         .set_json(ReadingNoteUpdateRequest {
-            title: None,
-            page_number: None,
-            text: None,
-            date: None,
-            tag_ids: Some(vec![Uuid::now_v7()]),
+            title: reading_note.title,
+            page_number: reading_note.page_number,
+            text: reading_note.text,
+            date: reading_note.date,
+            tag_ids: vec![Uuid::now_v7()],
         })
         .to_request();
     non_existent_tag_req.extensions_mut().insert(user.clone());

@@ -3,7 +3,6 @@ mod bulk_update_ordering;
 mod convert_track_type;
 mod create;
 mod delete;
-mod get;
 mod list;
 mod unarchive;
 mod update;
