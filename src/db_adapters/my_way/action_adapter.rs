@@ -113,7 +113,7 @@ pub struct UpdateActionParams {
     pub name: String,
     pub discipline: Option<String>,
     pub memo: Option<String>,
-    pub color: Option<String>,
+    pub color: String,
 }
 
 pub trait ActionMutation {
@@ -176,9 +176,7 @@ impl ActionMutation for ActionAdapter<'_> {
         action.name = Set(params.name);
         action.discipline = Set(params.discipline);
         action.memo = Set(params.memo);
-        if let Some(color) = params.color {
-            action.color = Set(color);
-        }
+        action.color = Set(params.color);
         action.updated_at = Set(Utc::now().into());
         action.update(self.db).await
     }

@@ -14,7 +14,7 @@ use entities::user as user_entity;
         params.name.len = params.name.len(),
         params.discipline.is_some = params.discipline.is_some(),
         params.memo.is_some = params.memo.is_some(),
-        params.color.is_some = params.color.is_some(),
+        params.color = params.color,
     ),
     skip_all
 )]
@@ -50,17 +50,15 @@ pub async fn update_action<'a>(
 }
 
 fn _parse_params(params: ActionUpdateRequest) -> Result<ActionUpdateRequest, UseCaseError> {
-    if let Some(color) = &params.color {
-        if color.len() != 7 {
-            return Err(UseCaseError::BadRequest("color must be 7 characters long.".to_string()));
-        }
-        if !color.starts_with('#') {
+    if params.color.len() != 7 {
+        return Err(UseCaseError::BadRequest("color must be 7 characters long.".to_string()));
+    }
+    if !params.color.starts_with('#') {
+        return Err(UseCaseError::BadRequest("color must be hex color code.".to_string()));
+    }
+    for c in params.color.split_at(1).1.chars() {
+        if !c.is_ascii_hexdigit() {
             return Err(UseCaseError::BadRequest("color must be hex color code.".to_string()));
-        }
-        for c in color.split_at(1).1.chars() {
-            if !c.is_ascii_hexdigit() {
-                return Err(UseCaseError::BadRequest("color must be hex color code.".to_string()));
-            }
         }
     }
 

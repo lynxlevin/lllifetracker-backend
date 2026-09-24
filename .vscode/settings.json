@@ -10,6 +10,7 @@
     "dotenvy",
     "ecdh",
     "encryptor",
+    "hexdigit",
     "hkdf",
     "hmac",
     "Iden",
