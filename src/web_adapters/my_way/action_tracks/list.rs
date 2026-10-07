@@ -6,7 +6,7 @@ use actix_web::{
 use common::db::Db;
 use domain_services::action_track_service::ActionTrackService;
 
-use crate::utils::{response_401, response_500};
+use common::errors::error_responses::{response_401, response_500};
 use entities::user as user_entity;
 use use_cases::my_way::action_tracks::{list::list_action_tracks, types::ActionTrackListQuery};
 

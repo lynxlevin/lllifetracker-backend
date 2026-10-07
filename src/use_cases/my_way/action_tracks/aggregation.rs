@@ -1,15 +1,25 @@
-use crate::{
-    my_way::action_tracks::types::{
-        ActionTrackAggregation, ActionTrackAggregationDuration, ActionTrackAggregationQuery,
-    },
-    UseCaseError,
+use crate::my_way::action_tracks::types::{
+    ActionTrackAggregation, ActionTrackAggregationDuration, ActionTrackAggregationQuery,
 };
-use chrono::{DateTime, Datelike, FixedOffset, NaiveDate};
-use db_adapters::{
-    action_track_adapter::{ActionTrackAdapter, ActionTrackFilter, ActionTrackOrder, ActionTrackQuery},
-    Order,
+use chrono::{Datelike, NaiveDate};
+use domain_services::action_track_service::{
+    ActionTrackAggregateParams, ActionTrackService, ActionTrackServiceError, ActionTrackServiceQuery,
 };
 use entities::user as user_entity;
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum AggregateActionTracksError {
+    #[error("{0}")]
+    ValidationError(String),
+    #[error("{0}")]
+    InternalServerError(String),
+}
+impl From<ActionTrackServiceError> for AggregateActionTracksError {
+    fn from(e: ActionTrackServiceError) -> Self {
+        AggregateActionTracksError::InternalServerError(e.to_string())
+    }
+}
 
 #[tracing::instrument(
     fields(
@@ -23,55 +33,29 @@ use entities::user as user_entity;
 pub async fn aggregate_action_tracks<'a>(
     user: user_entity::Model,
     params: ActionTrackAggregationQuery,
-    action_track_adapter: ActionTrackAdapter<'a>,
-) -> Result<ActionTrackAggregation, UseCaseError> {
+    action_track_service: ActionTrackService<'a>,
+) -> Result<ActionTrackAggregation, AggregateActionTracksError> {
     let params = parse_params(params)?;
-    let mut query = action_track_adapter.filter_eq_user(&user);
-    if let Some(started_at_gte) = params.started_at_gte {
-        query = query.filter_started_at_gte(started_at_gte)
-    };
-    if let Some(started_at_lte) = params.started_at_lte {
-        query = query.filter_started_at_lte(started_at_lte)
-    };
-    if let Some(dates) = params.dates {
-        query = query.filter_started_at_in_dates(dates, user.timezone)
-    }
-    let action_tracks = query
-        .filter_ended_at_is_null(false)
-        .filter_eq_archived_action(false)
-        .order_by_action_id(Order::Asc)
-        .order_by_started_at(Order::Desc)
-        .get_all()
-        .await
-        .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
-
-    let mut res: Vec<ActionTrackAggregationDuration> = vec![];
-    for action_track in action_tracks {
-        if res.is_empty() || res.last().unwrap().action_id != action_track.action_id {
-            res.push(ActionTrackAggregationDuration {
-                action_id: action_track.action_id,
-                duration: action_track.duration.unwrap_or(0),
-                count: 1,
-            });
-        } else {
-            res.last_mut().unwrap().duration += action_track.duration.unwrap_or(0);
-            res.last_mut().unwrap().count += 1;
-        }
-    }
-    Ok(ActionTrackAggregation { durations_by_action: res })
+    let res = action_track_service.aggregate(user.id, user.timezone, params).await?;
+    Ok(ActionTrackAggregation {
+        durations_by_action: res
+            .durations_by_action
+            .iter()
+            .map(|d| ActionTrackAggregationDuration {
+                action_id: d.action_id,
+                duration: d.duration,
+                count: d.count,
+            })
+            .collect(),
+    })
 }
 
-#[derive(Default)]
-struct ParsedParams {
-    pub started_at_gte: Option<DateTime<FixedOffset>>,
-    pub started_at_lte: Option<DateTime<FixedOffset>>,
-    pub dates: Option<Vec<NaiveDate>>,
-}
-
-fn parse_params(params: ActionTrackAggregationQuery) -> Result<ParsedParams, UseCaseError> {
+fn parse_params(
+    params: ActionTrackAggregationQuery,
+) -> Result<ActionTrackAggregateParams, AggregateActionTracksError> {
     match params.dates {
         Some(dates) => match params.started_at_gte.is_some() || params.started_at_lte.is_some() {
-            true => Err(UseCaseError::BadRequest(
+            true => Err(AggregateActionTracksError::ValidationError(
                 "dates and started_at_gte/lte cannot be queried at the same time.".to_string(),
             )),
             false => {
@@ -90,13 +74,17 @@ fn parse_params(params: ActionTrackAggregationQuery) -> Result<ParsedParams, Use
                     .filter(|date| date.is_some())
                     .map(|date| date.unwrap())
                     .collect();
-                Ok(ParsedParams { dates: Some(parsed_dates), ..Default::default() })
+                Ok(ActionTrackAggregateParams {
+                    started_at_gte: None,
+                    started_at_lte: None,
+                    dates: Some(parsed_dates),
+                })
             }
         },
-        None => Ok(ParsedParams {
+        None => Ok(ActionTrackAggregateParams {
             started_at_gte: params.started_at_gte,
             started_at_lte: params.started_at_lte,
-            ..Default::default()
+            dates: None,
         }),
     }
 }
