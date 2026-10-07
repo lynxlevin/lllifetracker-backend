@@ -1000,6 +1000,7 @@ dependencies = [
 name = "common"
 version = "0.1.0"
 dependencies = [
+ "actix-web",
  "aes-gcm 0.10.3",
  "base64 0.22.1",
  "chrono",
@@ -1008,6 +1009,8 @@ dependencies = [
  "entities",
  "sea-orm",
  "serde",
+ "thiserror 2.0.20",
+ "tracing",
  "uuid",
 ]
 

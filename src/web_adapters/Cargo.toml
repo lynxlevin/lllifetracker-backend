@@ -8,6 +8,7 @@ name = "web_adapters"
 path = "lib.rs"
 
 [dependencies]
+common = { path="../common", features = ["errors"] }
 db_adapters = { path = "../db_adapters" }
 domain_services = { path = "../domain_services" }
 entities = { path = "../entities" }
@@ -19,7 +20,6 @@ tracing.workspace = true
 uuid.workspace = true
 
 # For utils::{auth, emails} and middlewares
-common = {path="../common"}
 lettre.workspace = true
 deadpool-redis.workspace = true
 actix-session.workspace = true
