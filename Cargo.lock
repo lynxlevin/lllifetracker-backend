@@ -1505,6 +1505,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "domain_services"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "common",
+ "entities",
+ "sea-orm",
+ "serde",
+ "thiserror 2.0.20",
+ "uuid",
+]
+
+[[package]]
 name = "dotenvy"
 version = "0.15.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4937,10 +4950,12 @@ dependencies = [
  "chrono",
  "common",
  "db_adapters",
+ "domain_services",
  "entities",
  "futures",
  "sea-orm",
  "serde",
+ "thiserror 2.0.20",
  "tracing",
  "uuid",
 ]
@@ -5107,6 +5122,7 @@ dependencies = [
  "common",
  "db_adapters",
  "deadpool-redis",
+ "domain_services",
  "entities",
  "futures",
  "hex",

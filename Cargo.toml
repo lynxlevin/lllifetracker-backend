@@ -6,6 +6,7 @@ members = [
     "src/common",
     "src/use_cases",
     "src/db_adapters",
+    "src/domain_services",
     "src/web_adapters",
     "src/server",
     "src/cron_processes",

@@ -9,6 +9,7 @@ path = "lib.rs"
 
 [dependencies]
 db_adapters = { path = "../db_adapters" }
+domain_services = { path = "../domain_services" }
 entities = { path = "../entities" }
 use_cases = { path = "../use_cases" }
 
