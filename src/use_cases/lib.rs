@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 
 pub mod journal;
 pub mod my_way;
@@ -15,4 +15,22 @@ pub enum UseCaseError {
     Conflict(String),            // 409
     Gone,                        // 410
     InternalServerError(String), // 500
+}
+
+impl Display for UseCaseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::BadRequest(message) => message,
+                Self::Unauthorized => "Unauthorized",
+                Self::Forbidden => "Forbidden",
+                Self::NotFound(message) => message,
+                Self::Conflict(message) => message,
+                Self::Gone => "Gone",
+                Self::InternalServerError(message) => message,
+            }
+        )
+    }
 }

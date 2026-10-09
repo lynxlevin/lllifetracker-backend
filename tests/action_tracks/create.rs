@@ -73,7 +73,7 @@ async fn happy_path_count_type() -> Result<(), DbErr> {
 }
 
 #[actix_web::test]
-async fn conflict_on_duplicate_creation() -> Result<(), DbErr> {
+async fn bad_request_on_duplicate_creation() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db.db).await?;
     let action = factory::action(user.id).insert(&db.db).await?;
@@ -92,7 +92,7 @@ async fn conflict_on_duplicate_creation() -> Result<(), DbErr> {
     req.extensions_mut().insert(user.clone());
 
     let res = test::call_service(&app, req).await;
-    assert_eq!(res.status(), http::StatusCode::CONFLICT);
+    assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
 
     Ok(())
 }

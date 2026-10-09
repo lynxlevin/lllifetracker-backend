@@ -12,7 +12,7 @@ pub enum ListActionTracksError {
 }
 impl From<ActionTrackServiceError> for ListActionTracksError {
     fn from(e: ActionTrackServiceError) -> Self {
-        ListActionTracksError::InternalServerError(e.to_string())
+        Self::InternalServerError(e.to_string())
     }
 }
 

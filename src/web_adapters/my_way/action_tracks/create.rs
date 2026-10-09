@@ -3,16 +3,15 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
-use common::db::Db;
+use common::{db::Db, errors::error_responses::response_400};
+use domain_services::action_track_service::ActionTrackService;
 
-use crate::utils::{response_401, response_404, response_409, response_500};
-use db_adapters::{
-    action_adapter::ActionAdapter, action_track_adapter::ActionTrackAdapter, user_adapter::UserAdapter,
-};
+use common::errors::error_responses::{response_401, response_404, response_500};
+use db_adapters::{action_track_adapter::ActionTrackAdapter, user_adapter::UserAdapter};
 use entities::user as user_entity;
-use use_cases::{
-    my_way::action_tracks::{create::create_action_track, types::ActionTrackCreateRequest},
-    UseCaseError,
+use use_cases::my_way::action_tracks::{
+    create::{create_action_track, CreateActionTracksError},
+    types::ActionTrackCreateRequest,
 };
 
 #[post("")]
@@ -27,16 +26,16 @@ pub async fn create_action_track_endpoint(
                 user.into_inner(),
                 req.into_inner(),
                 ActionTrackAdapter::init(&db),
-                ActionAdapter::init(&db),
                 UserAdapter::init(&db),
+                ActionTrackService::init(&db),
             )
             .await
             {
                 Ok(res) => HttpResponse::Created().json(res),
                 Err(e) => match &e {
-                    UseCaseError::NotFound(message) => response_404(message),
-                    UseCaseError::Conflict(message) => response_409(message),
-                    _ => response_500(e),
+                    CreateActionTracksError::ValidationError(message) => response_400(message),
+                    CreateActionTracksError::NotFound(message) => response_404(message),
+                    CreateActionTracksError::InternalServerError(_) => response_500(e),
                 },
             }
         }

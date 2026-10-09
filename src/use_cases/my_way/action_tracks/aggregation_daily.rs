@@ -19,7 +19,7 @@ pub enum AggregateDailyActionTracksError {
 }
 impl From<ActionTrackServiceError> for AggregateDailyActionTracksError {
     fn from(e: ActionTrackServiceError) -> Self {
-        AggregateDailyActionTracksError::InternalServerError(e.to_string())
+        Self::InternalServerError(e.to_string())
     }
 }
 

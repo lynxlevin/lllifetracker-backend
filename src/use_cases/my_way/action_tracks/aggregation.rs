@@ -17,7 +17,7 @@ pub enum AggregateActionTracksError {
 }
 impl From<ActionTrackServiceError> for AggregateActionTracksError {
     fn from(e: ActionTrackServiceError) -> Self {
-        AggregateActionTracksError::InternalServerError(e.to_string())
+        Self::InternalServerError(e.to_string())
     }
 }
 
