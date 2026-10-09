@@ -1,7 +1,7 @@
 use actix_web::{http, test, HttpMessage};
 use chrono::{DateTime, Duration, FixedOffset, Utc};
 use sea_orm::{ActiveModelTrait, DbErr};
-use use_cases::my_way::action_tracks::types::{ActionTrackAggregation, ActionTrackAggregationDuration};
+use use_cases::my_way::action_tracks::types::{ActionTrackAggregateDuration, ActionTrackAggregateResponse};
 
 use crate::utils::Connections;
 
@@ -75,17 +75,17 @@ async fn happy_path() -> Result<(), DbErr> {
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), http::StatusCode::OK);
 
-    let res: ActionTrackAggregation = test::read_body_json(resp).await;
+    let res: ActionTrackAggregateResponse = test::read_body_json(resp).await;
 
-    let expected = ActionTrackAggregation {
+    let expected = ActionTrackAggregateResponse {
         durations_by_action: vec![
-            ActionTrackAggregationDuration {
+            ActionTrackAggregateDuration {
                 action_id: action_0.id,
                 duration: action_tracks.get("action_0_track_0").unwrap().duration.unwrap()
                     + action_tracks.get("action_0_track_2").unwrap().duration.unwrap(),
                 count: 2,
             },
-            ActionTrackAggregationDuration {
+            ActionTrackAggregateDuration {
                 action_id: action_1.id,
                 duration: action_tracks.get("action_1_track_0").unwrap().duration.unwrap(),
                 count: 1,
@@ -168,17 +168,17 @@ async fn started_at_gte_lte() -> Result<(), DbErr> {
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), http::StatusCode::OK);
 
-    let res: ActionTrackAggregation = test::read_body_json(resp).await;
+    let res: ActionTrackAggregateResponse = test::read_body_json(resp).await;
 
-    let expected = ActionTrackAggregation {
+    let expected = ActionTrackAggregateResponse {
         durations_by_action: vec![
-            ActionTrackAggregationDuration {
+            ActionTrackAggregateDuration {
                 action_id: action_0.id,
                 duration: action_tracks.get("action_0_track_1").unwrap().duration.unwrap()
                     + action_tracks.get("action_0_track_2").unwrap().duration.unwrap(),
                 count: 2,
             },
-            ActionTrackAggregationDuration {
+            ActionTrackAggregateDuration {
                 action_id: action_1.id,
                 duration: action_tracks.get("action_1_track_0").unwrap().duration.unwrap(),
                 count: 1,

@@ -1,5 +1,5 @@
 use crate::my_way::action_tracks::types::{
-    ActionTrackAggregation, ActionTrackAggregationDuration, ActionTrackAggregationQuery,
+    ActionTrackAggregateDuration, ActionTrackAggregateResponse, ActionTrackAggregationQuery,
 };
 use chrono::{Datelike, NaiveDate};
 use domain_services::action_track_service::{
@@ -34,18 +34,14 @@ pub async fn aggregate_action_tracks<'a>(
     user: user_entity::Model,
     params: ActionTrackAggregationQuery,
     action_track_service: ActionTrackService<'a>,
-) -> Result<ActionTrackAggregation, AggregateActionTracksError> {
+) -> Result<ActionTrackAggregateResponse, AggregateActionTracksError> {
     let params = parse_params(params)?;
     let res = action_track_service.aggregate(user.id, user.timezone, params).await?;
-    Ok(ActionTrackAggregation {
+    Ok(ActionTrackAggregateResponse {
         durations_by_action: res
             .durations_by_action
             .iter()
-            .map(|d| ActionTrackAggregationDuration {
-                action_id: d.action_id,
-                duration: d.duration,
-                count: d.count,
-            })
+            .map(|d| ActionTrackAggregateDuration { action_id: d.action_id, duration: d.duration, count: d.count })
             .collect(),
     })
 }
