@@ -12,6 +12,8 @@ pub use action_track_query::*;
 pub enum ActionTrackServiceError {
     #[error(transparent)]
     DbErr(#[from] sea_orm::DbErr),
+    #[error("ActionTrack cannot be found.")]
+    ActionTrackNotFound(),
     #[error("Action cannot be found.")]
     ActionNotFound(),
     #[error("ActionTrack for same action and started_at already exists.")]

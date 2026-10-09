@@ -3,10 +3,10 @@ use std::future::Future;
 use chrono::{DateTime, FixedOffset, SubsecRound};
 use entities::{
     action::{self, ActionTrackType},
-    action_track::{ActiveModel, Model},
+    action_track::{ActiveModel, Column, Entity, Model},
     user,
 };
-use sea_orm::{ActiveModelTrait, ActiveValue::Set, ColumnTrait, EntityTrait, QueryFilter};
+use sea_orm::{ActiveModelTrait, ActiveValue::Set, ColumnTrait, EntityTrait, IntoActiveModel, QueryFilter};
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -18,11 +18,23 @@ pub struct ActionTrackCreateParams<'a> {
     pub action_id: Uuid,
     pub started_at: DateTime<FixedOffset>,
 }
+#[derive(Serialize, Debug, Clone)]
+pub struct ActionTrackUpdateParams<'a> {
+    pub user: &'a user::Model,
+    pub action_track_id: Uuid,
+    pub action_id: Uuid,
+    pub started_at: DateTime<FixedOffset>,
+    pub ended_at: Option<DateTime<FixedOffset>>,
+}
 pub trait ActionTrackServiceMutation {
     fn create(
         &self,
         params: ActionTrackCreateParams,
     ) -> impl Future<Output = Result<Model, ActionTrackServiceError>>;
+    fn update(
+        &self,
+        params: ActionTrackUpdateParams,
+    ) -> impl Future<Output = Result<(Model, Model), ActionTrackServiceError>>;
 }
 
 impl ActionTrackServiceMutation for ActionTrackService<'_> {
@@ -52,6 +64,36 @@ impl ActionTrackServiceMutation for ActionTrackService<'_> {
         .map_err(handle_unique_constraint)?;
 
         Ok(action_track)
+    }
+
+    async fn update(
+        &self,
+        params: ActionTrackUpdateParams<'_>,
+    ) -> Result<(Model, Model), ActionTrackServiceError> {
+        let action_track = Entity::find_by_id(params.action_track_id)
+            .filter(Column::UserId.eq(params.user.id))
+            .one(self.db)
+            .await?
+            .ok_or(ActionTrackServiceError::ActionTrackNotFound())?;
+        // MYMEMO: add test for this
+        let action = action::Entity::find_by_id(params.action_id)
+            .filter(action::Column::UserId.eq(params.user.id))
+            .one(self.db)
+            .await?
+            .ok_or(ActionTrackServiceError::ActionNotFound())?;
+
+        let started_at = params.started_at.trunc_subsecs(0);
+        let ended_at = params.ended_at.and_then(|e| Some(e.trunc_subsecs(0)));
+
+        let before_update = action_track.clone();
+        let mut action_track = action_track.into_active_model();
+        action_track.started_at = Set(started_at);
+        action_track.ended_at = Set(ended_at);
+        action_track.duration = Set(ended_at.and_then(|e| Some((e - started_at).num_seconds())));
+        action_track.action_id = Set(action.id);
+        let after_update = action_track.update(self.db).await.map_err(handle_unique_constraint)?;
+
+        Ok((after_update, before_update))
     }
 
     // async fn link_tags(&self, params: ActionTrackLinkTagsParams) -> Result<(), ActionTrackServiceError> {

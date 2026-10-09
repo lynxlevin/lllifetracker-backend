@@ -49,37 +49,6 @@ async fn happy_path() -> Result<(), DbErr> {
 }
 
 #[actix_web::test]
-async fn conflict_on_duplicate_starts_at() -> Result<(), DbErr> {
-    let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db.db).await?;
-    let action = factory::action(user.id).insert(&db.db).await?;
-    let action_track = factory::action_track(user.id)
-        .action_id(action.id)
-        .insert(&db.db)
-        .await?;
-    let existing_action_track = factory::action_track(user.id)
-        .started_at(action_track.started_at + TimeDelta::seconds(1))
-        .action_id(action.id)
-        .insert(&db.db)
-        .await?;
-
-    let req = test::TestRequest::put()
-        .uri(&format!("/api/action_tracks/{}", action_track.id))
-        .set_json(ActionTrackUpdateRequest {
-            action_id: action.id,
-            started_at: existing_action_track.started_at,
-            ended_at: None,
-        })
-        .to_request();
-    req.extensions_mut().insert(user.clone());
-
-    let res = test::call_service(&app, req).await;
-    assert_eq!(res.status(), http::StatusCode::CONFLICT);
-
-    Ok(())
-}
-
-#[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let Connections { app, db, .. } = init_app().await?;
     let user = factory::user().insert(&db.db).await?;
@@ -269,6 +238,37 @@ mod validation_errors {
     use super::*;
 
     #[actix_web::test]
+    async fn duplicate_starts_at() -> Result<(), DbErr> {
+        let Connections { app, db, .. } = init_app().await?;
+        let user = factory::user().insert(&db.db).await?;
+        let action = factory::action(user.id).insert(&db.db).await?;
+        let action_track = factory::action_track(user.id)
+            .action_id(action.id)
+            .insert(&db.db)
+            .await?;
+        let existing_action_track = factory::action_track(user.id)
+            .started_at(action_track.started_at + TimeDelta::seconds(1))
+            .action_id(action.id)
+            .insert(&db.db)
+            .await?;
+
+        let req = test::TestRequest::put()
+            .uri(&format!("/api/action_tracks/{}", action_track.id))
+            .set_json(ActionTrackUpdateRequest {
+                action_id: action.id,
+                started_at: existing_action_track.started_at,
+                ended_at: None,
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
     async fn ended_at_earlier_than_started_at() -> Result<(), DbErr> {
         let Connections { app, db, .. } = init_app().await?;
         let user = factory::user().insert(&db.db).await?;
@@ -291,6 +291,65 @@ mod validation_errors {
 
         let res = test::call_service(&app, req).await;
         assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod not_found {
+    use uuid::Uuid;
+
+    use super::*;
+
+    #[actix_web::test]
+    async fn wrong_action_track_id() -> Result<(), DbErr> {
+        let Connections { app, db, .. } = init_app().await?;
+        let user = factory::user().insert(&db.db).await?;
+        let action = factory::action(user.id).insert(&db.db).await?;
+        let action_track = factory::action_track(user.id)
+            .action_id(action.id)
+            .insert(&db.db)
+            .await?;
+
+        let req = test::TestRequest::put()
+            .uri(&format!("/api/action_tracks/{}", Uuid::now_v7()))
+            .set_json(ActionTrackUpdateRequest {
+                action_id: action.id,
+                started_at: action_track.started_at,
+                ended_at: None,
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::NOT_FOUND);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn wrong_action_id() -> Result<(), DbErr> {
+        let Connections { app, db, .. } = init_app().await?;
+        let user = factory::user().insert(&db.db).await?;
+        let action = factory::action(user.id).insert(&db.db).await?;
+        let action_track = factory::action_track(user.id)
+            .action_id(action.id)
+            .insert(&db.db)
+            .await?;
+
+        let req = test::TestRequest::put()
+            .uri(&format!("/api/action_tracks/{}", action_track.id))
+            .set_json(ActionTrackUpdateRequest {
+                action_id: Uuid::now_v7(),
+                started_at: action_track.started_at,
+                ended_at: None,
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::NOT_FOUND);
 
         Ok(())
     }
