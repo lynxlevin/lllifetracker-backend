@@ -3,7 +3,9 @@ use std::collections::HashMap;
 use actix_web::{http, test, HttpMessage};
 use chrono::{DateTime, Days};
 use sea_orm::{ActiveModelTrait, DbErr};
-use use_cases::my_way::action_tracks::types::{ActionTrackAggregationDuration, ActionTrackDailyAggregationItem};
+use use_cases::my_way::action_tracks::types::{
+    ActionTrackAggregateByDateResponseItem, ActionTrackAggregateDuration,
+};
 
 use crate::utils::Connections;
 
@@ -73,26 +75,26 @@ async fn happy_path() -> Result<(), DbErr> {
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), http::StatusCode::OK);
 
-    let res: HashMap<String, Vec<ActionTrackDailyAggregationItem>> = test::read_body_json(resp).await;
+    let res: HashMap<String, Vec<ActionTrackAggregateByDateResponseItem>> = test::read_body_json(resp).await;
 
     let expected_items = vec![
-        ActionTrackDailyAggregationItem {
+        ActionTrackAggregateByDateResponseItem {
             date: 28,
-            aggregation: vec![ActionTrackAggregationDuration {
+            aggregation: vec![ActionTrackAggregateDuration {
                 action_id: action_0.id,
                 duration: action_tracks.get("action_0_track_2").unwrap().duration.unwrap(),
                 count: 1,
             }],
         },
-        ActionTrackDailyAggregationItem {
+        ActionTrackAggregateByDateResponseItem {
             date: 1,
             aggregation: vec![
-                ActionTrackAggregationDuration {
+                ActionTrackAggregateDuration {
                     action_id: action_0.id,
                     duration: action_tracks.get("action_0_track_1").unwrap().duration.unwrap(),
                     count: 1,
                 },
-                ActionTrackAggregationDuration {
+                ActionTrackAggregateDuration {
                     action_id: action_1.id,
                     duration: action_tracks.get("action_1_track_0").unwrap().duration.unwrap(),
                     count: 1,

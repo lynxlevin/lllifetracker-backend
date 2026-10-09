@@ -1,6 +1,6 @@
 use std::future::Future;
 
-use chrono::{DateTime, Duration, FixedOffset, NaiveDate, Utc};
+use chrono::{DateTime, Datelike, Duration, FixedOffset, NaiveDate, Utc};
 use entities::{
     action,
     action_track::{Column, Entity, Model, Relation},
@@ -36,6 +36,16 @@ pub struct ActionTrackAggregateDuration {
     pub duration: i64,
     pub count: i64,
 }
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ActionTrackAggregateByDateParams {
+    pub started_at_gte: DateTime<FixedOffset>,
+    pub started_at_lte: DateTime<FixedOffset>,
+}
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub struct ActionTrackAggregateByDateResponseItem {
+    pub date: u32,
+    pub aggregation: Vec<ActionTrackAggregateDuration>,
+}
 pub trait ActionTrackServiceQuery {
     fn list(
         &self,
@@ -48,6 +58,12 @@ pub trait ActionTrackServiceQuery {
         user_timezone: TimezoneEnum,
         params: ActionTrackAggregateParams,
     ) -> impl Future<Output = Result<ActionTrackAggregateResponse, ActionTrackServiceError>>;
+    fn aggregate_by_date(
+        &self,
+        user_id: Uuid,
+        user_timezone: TimezoneEnum,
+        params: ActionTrackAggregateByDateParams,
+    ) -> impl Future<Output = Result<Vec<ActionTrackAggregateByDateResponseItem>, ActionTrackServiceError>>;
 }
 
 impl ActionTrackServiceQuery for ActionTrackService<'_> {
@@ -73,6 +89,7 @@ impl ActionTrackServiceQuery for ActionTrackService<'_> {
 
         Ok(action_tracks)
     }
+
     async fn aggregate(
         &self,
         user_id: Uuid,
@@ -80,8 +97,8 @@ impl ActionTrackServiceQuery for ActionTrackService<'_> {
         params: ActionTrackAggregateParams,
     ) -> Result<ActionTrackAggregateResponse, ActionTrackServiceError> {
         let mut query = Entity::find()
-            .join(LeftJoin, Relation::Action.def())
             .filter(Column::UserId.eq(user_id))
+            .join(LeftJoin, Relation::Action.def())
             .filter(action::Column::Archived.eq(false))
             .filter(Column::EndedAt.is_not_null());
         if let Some(started_at_gte) = params.started_at_gte {
@@ -119,6 +136,56 @@ impl ActionTrackServiceQuery for ActionTrackService<'_> {
                 duration
             });
         Ok(ActionTrackAggregateResponse { durations_by_action: duration })
+    }
+
+    async fn aggregate_by_date(
+        &self,
+        user_id: Uuid,
+        user_timezone: TimezoneEnum,
+        params: ActionTrackAggregateByDateParams,
+    ) -> Result<Vec<ActionTrackAggregateByDateResponseItem>, ActionTrackServiceError> {
+        let action_tracks = Entity::find()
+            .filter(Column::UserId.eq(user_id))
+            .join(LeftJoin, Relation::Action.def())
+            .filter(action::Column::Archived.eq(false))
+            .filter(Column::EndedAt.is_not_null())
+            .filter(Column::StartedAt.gte(params.started_at_gte))
+            .filter(Column::StartedAt.lte(params.started_at_lte))
+            .order_by_desc(Column::StartedAt)
+            .order_by_asc(Column::ActionId)
+            .all(self.db)
+            .await?;
+
+        let res: Vec<ActionTrackAggregateByDateResponseItem> =
+            action_tracks.into_iter().fold(vec![], |mut acc, track| {
+                let date = user_timezone.convert_utc(track.started_at.to_utc()).day();
+                if acc.is_empty() || acc.last().unwrap().date != date {
+                    acc.push(ActionTrackAggregateByDateResponseItem {
+                        date,
+                        aggregation: vec![ActionTrackAggregateDuration {
+                            action_id: track.action_id,
+                            duration: track.duration.unwrap(),
+                            count: 1,
+                        }],
+                    })
+                } else {
+                    let item = acc.last_mut().unwrap();
+                    match item.aggregation.iter_mut().find(|agg| agg.action_id == track.action_id) {
+                        Some(agg_item) => {
+                            agg_item.duration += track.duration.unwrap();
+                            agg_item.count += 1;
+                        }
+                        None => item.aggregation.push(ActionTrackAggregateDuration {
+                            action_id: track.action_id,
+                            duration: track.duration.unwrap(),
+                            count: 1,
+                        }),
+                    }
+                }
+                acc
+            });
+
+        Ok(res)
     }
 }
 
