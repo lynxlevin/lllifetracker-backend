@@ -4,11 +4,11 @@ use actix_web::{
     HttpResponse,
 };
 use common::db::Db;
-use db_adapters::action_adapter::ActionAdapter;
+use domain_services::action_service::ActionService;
 use entities::user as user_entity;
-use use_cases::my_way::actions::delete::delete_action;
+use use_cases::my_way::actions::delete::{delete_action, DeleteActionError};
 
-use crate::utils::{response_401, response_500};
+use common::errors::error_responses::{response_401, response_404, response_500};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -23,9 +23,12 @@ pub async fn delete_action_endpoint(
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            match delete_action(user.into_inner(), path_param.action_id, ActionAdapter::init(&db)).await {
+            match delete_action(user.into_inner(), path_param.action_id, ActionService::init(&db)).await {
                 Ok(_) => HttpResponse::NoContent().finish(),
-                Err(e) => response_500(e),
+                Err(e) => match e {
+                    DeleteActionError::NotFound(message) => response_404(message),
+                    DeleteActionError::InternalServerError(_) => response_500(e),
+                },
             }
         }
         None => response_401(),

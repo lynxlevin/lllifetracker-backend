@@ -8,7 +8,7 @@ use common::db::Db;
 use common::errors::error_responses::{response_401, response_404, response_500};
 use domain_services::action_track_service::ActionTrackService;
 use entities::user as user_entity;
-use use_cases::my_way::action_tracks::delete::{delete_action_track, DeleteActionTracksError};
+use use_cases::my_way::action_tracks::delete::{delete_action_track, DeleteActionTrackError};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -32,8 +32,8 @@ pub async fn delete_action_track_endpoint(
             {
                 Ok(_) => HttpResponse::NoContent().finish(),
                 Err(e) => match e {
-                    DeleteActionTracksError::NotFound(message) => response_404(message),
-                    DeleteActionTracksError::InternalServerError(_) => response_500(e),
+                    DeleteActionTrackError::NotFound(message) => response_404(message),
+                    DeleteActionTrackError::InternalServerError(_) => response_500(e),
                 },
             }
         }

@@ -7,13 +7,13 @@ use uuid::Uuid;
 use entities::user as user_entity;
 
 #[derive(Debug, Error)]
-pub enum DeleteActionTracksError {
+pub enum DeleteActionTrackError {
     #[error("{0}")]
     NotFound(String),
     #[error("{0}")]
     InternalServerError(String),
 }
-impl From<ActionTrackServiceError> for DeleteActionTracksError {
+impl From<ActionTrackServiceError> for DeleteActionTrackError {
     fn from(e: ActionTrackServiceError) -> Self {
         match e {
             ActionTrackServiceError::ActionTrackNotFound() => Self::NotFound(e.to_string()),
@@ -33,7 +33,7 @@ pub async fn delete_action_track<'a>(
     user: user_entity::Model,
     action_track_id: Uuid,
     action_track_service: ActionTrackService<'a>,
-) -> Result<(), DeleteActionTracksError> {
+) -> Result<(), DeleteActionTrackError> {
     action_track_service
         .delete(ActionTrackDeleteParams { user, action_track_id })
         .await?;
