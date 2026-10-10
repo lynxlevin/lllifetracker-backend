@@ -2,8 +2,10 @@ use std::future::Future;
 
 use chrono::{DateTime, FixedOffset, Utc};
 use entities::{
-    action::{Column, Entity, Model},
-    action_track, user,
+    action::{ActionTrackType, ActiveModel, Column, Entity, Model, DEFAULT_ACTION_COLOR},
+    action_track,
+    tag::{self, TagType},
+    user,
 };
 use sea_orm::{
     ActiveModelTrait, ActiveValue::Set, ColumnTrait, ConnectionTrait, EntityTrait, IntoActiveModel,
@@ -14,6 +16,15 @@ use uuid::Uuid;
 
 use crate::action_service::{ActionService, ActionServiceError};
 
+#[derive(Serialize, Debug, Clone)]
+pub struct ActionCreateParams {
+    pub name: String,
+    pub discipline: Option<String>,
+    pub memo: Option<String>,
+    pub color: Option<String>,
+    pub track_type: ActionTrackType,
+    pub user_id: Uuid,
+}
 #[derive(Serialize, Debug, Clone)]
 pub struct ActionArchiveParams {
     pub user: user::Model,
@@ -30,12 +41,49 @@ pub struct ActionDeleteParams {
     pub action_id: Uuid,
 }
 pub trait ActionServiceMutation {
+    fn create(&self, params: ActionCreateParams) -> impl Future<Output = Result<Model, ActionServiceError>>;
     fn archive(&self, params: ActionArchiveParams) -> impl Future<Output = Result<Model, ActionServiceError>>;
     fn unarchive(&self, params: ActionUnarchiveParams) -> impl Future<Output = Result<Model, ActionServiceError>>;
     fn delete(&self, params: ActionDeleteParams) -> impl Future<Output = Result<(), ActionServiceError>>;
 }
 
 impl ActionServiceMutation for ActionService<'_> {
+    async fn create(&self, params: ActionCreateParams) -> Result<Model, ActionServiceError> {
+        let action = self
+            .db
+            .transaction(|txn| {
+                Box::pin(async move {
+                    let action = ActiveModel {
+                        id: Set(Uuid::now_v7()),
+                        user_id: Set(params.user_id),
+                        name: Set(params.name.to_owned()),
+                        discipline: Set(params.discipline.to_owned()),
+                        memo: Set(params.memo.to_owned()),
+                        color: Set(params.color.unwrap_or(DEFAULT_ACTION_COLOR.to_string())),
+                        track_type: Set(params.track_type),
+                        ..Default::default()
+                    }
+                    .insert(txn)
+                    .await?;
+
+                    tag::ActiveModel {
+                        id: Set(uuid::Uuid::now_v7()),
+                        user_id: Set(params.user_id),
+                        action_id: Set(Some(action.id)),
+                        r#type: Set(TagType::Action),
+                        ..Default::default()
+                    }
+                    .insert(txn)
+                    .await?;
+
+                    Ok(action)
+                })
+            })
+            .await?;
+
+        Ok(action)
+    }
+
     async fn archive(&self, params: ActionArchiveParams) -> Result<Model, ActionServiceError> {
         let action = Entity::find_by_id(params.action_id)
             .filter(Column::UserId.eq(params.user.id))

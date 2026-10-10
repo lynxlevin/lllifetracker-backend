@@ -1,9 +1,22 @@
-use crate::{
-    my_way::actions::types::{ActionCreateRequest, ActionVisible},
-    UseCaseError,
+use crate::my_way::actions::types::{ActionCreateRequest, ActionVisible};
+use domain_services::action_service::{
+    ActionCreateParams, ActionService, ActionServiceError, ActionServiceMutation,
 };
-use db_adapters::action_adapter::{ActionAdapter, ActionMutation, CreateActionParams};
 use entities::user as user_entity;
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum CreateActionError {
+    #[error("{0}")]
+    InternalServerError(String),
+}
+impl From<ActionServiceError> for CreateActionError {
+    fn from(e: ActionServiceError) -> Self {
+        match e {
+            _ => Self::InternalServerError(e.to_string()),
+        }
+    }
+}
 
 #[tracing::instrument(
     fields(
@@ -18,10 +31,10 @@ use entities::user as user_entity;
 pub async fn create_action<'a>(
     user: user_entity::Model,
     params: ActionCreateRequest,
-    action_adapter: ActionAdapter<'a>,
-) -> Result<ActionVisible, UseCaseError> {
-    action_adapter
-        .create_with_tag(CreateActionParams {
+    action_service: ActionService<'a>,
+) -> Result<ActionVisible, CreateActionError> {
+    let action = action_service
+        .create(ActionCreateParams {
             name: params.name.clone(),
             discipline: params.discipline.clone(),
             memo: params.memo.clone(),
@@ -29,7 +42,7 @@ pub async fn create_action<'a>(
             track_type: params.track_type.clone(),
             user_id: user.id,
         })
-        .await
-        .map(|action| ActionVisible::from(action))
-        .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
+        .await?;
+
+    Ok(ActionVisible::from(action))
 }
