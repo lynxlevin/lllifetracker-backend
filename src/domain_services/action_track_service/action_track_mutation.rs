@@ -7,8 +7,8 @@ use entities::{
     user,
 };
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::Set, ColumnTrait, DbConn, EntityTrait, IntoActiveModel, JoinType::LeftJoin,
-    ModelTrait, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
+    ActiveModelTrait, ActiveValue::Set, ColumnTrait, ConnectionTrait, EntityTrait, IntoActiveModel,
+    JoinType::LeftJoin, ModelTrait, QueryFilter, QueryOrder, QuerySelect, RelationTrait, TransactionTrait,
 };
 use serde::Serialize;
 use uuid::Uuid;
@@ -61,22 +61,31 @@ impl ActionTrackServiceMutation for ActionTrackService<'_> {
             ActionTrackType::Count => (Some(started_at), Some(0)),
         };
 
-        let action_track = ActiveModel {
-            id: Set(uuid::Uuid::now_v7()),
-            user_id: Set(params.user.id),
-            action_id: Set(params.action_id),
-            started_at: Set(started_at),
-            ended_at: Set(ended_at),
-            duration: Set(duration),
-        }
-        .insert(self.db)
-        .await
-        .map_err(handle_unique_constraint)?;
+        let action_track = self
+            .db
+            .transaction(|txn| {
+                Box::pin(async move {
+                    let action_track = ActiveModel {
+                        id: Set(uuid::Uuid::now_v7()),
+                        user_id: Set(params.user.id),
+                        action_id: Set(params.action_id),
+                        started_at: Set(started_at),
+                        ended_at: Set(ended_at),
+                        duration: Set(duration),
+                    }
+                    .insert(txn)
+                    .await
+                    .map_err(handle_unique_constraint)?;
 
-        let should_update_first_track_at = params.user.first_track_at.is_none_or(|t| t > started_at);
-        if should_update_first_track_at {
-            update_user_first_track_at(self.db, params.user, Some(started_at)).await?;
-        }
+                    let should_update_first_track_at = params.user.first_track_at.is_none_or(|t| t > started_at);
+                    if should_update_first_track_at {
+                        update_user_first_track_at(txn, params.user, Some(started_at)).await?;
+                    }
+
+                    Ok(action_track)
+                })
+            })
+            .await?;
 
         Ok(action_track)
     }
@@ -102,19 +111,29 @@ impl ActionTrackServiceMutation for ActionTrackService<'_> {
         action_track.ended_at = Set(ended_at);
         action_track.duration = Set(ended_at.and_then(|e| Some((e - started_at).num_seconds())));
         action_track.action_id = Set(action.id);
-        let after_update = action_track.update(self.db).await.map_err(handle_unique_constraint)?;
 
-        let should_update_first_track_at = match params.user.first_track_at {
-            Some(u) => {
-                (u == before_update.started_at && before_update.started_at != after_update.started_at)
-                    || u > after_update.started_at
-            }
-            None => true,
-        };
-        if should_update_first_track_at {
-            let first_track_at = resolve_first_track_at(self.db, &params.user).await?;
-            update_user_first_track_at(self.db, params.user, first_track_at).await?;
-        }
+        let after_update = self
+            .db
+            .transaction(|txn| {
+                Box::pin(async move {
+                    let after_update = action_track.update(txn).await.map_err(handle_unique_constraint)?;
+
+                    let should_update_first_track_at = match params.user.first_track_at {
+                        Some(u) => {
+                            (u == before_update.started_at && before_update.started_at != after_update.started_at)
+                                || u > after_update.started_at
+                        }
+                        None => true,
+                    };
+                    if should_update_first_track_at {
+                        let first_track_at = resolve_first_track_at(txn, &params.user).await?;
+                        update_user_first_track_at(txn, params.user, first_track_at).await?;
+                    }
+
+                    Ok(after_update)
+                })
+            })
+            .await?;
 
         Ok(after_update)
     }
@@ -126,75 +145,29 @@ impl ActionTrackServiceMutation for ActionTrackService<'_> {
             .await?
             .ok_or(ActionTrackServiceError::ActionTrackNotFound())?;
 
-        action_track.clone().delete(self.db).await?;
+        self.db
+            .transaction(|txn| {
+                Box::pin(async move {
+                    action_track.clone().delete(txn).await?;
 
-        let should_update_first_track_at =
-            params.user.first_track_at.is_some_and(|t| t == action_track.started_at);
-        if should_update_first_track_at {
-            let first_track_at = resolve_first_track_at(self.db, &params.user).await?;
-            update_user_first_track_at(self.db, params.user, first_track_at).await?;
-        }
+                    let should_update_first_track_at =
+                        params.user.first_track_at.is_some_and(|t| t == action_track.started_at);
+                    if should_update_first_track_at {
+                        let first_track_at = resolve_first_track_at(txn, &params.user).await?;
+                        update_user_first_track_at(txn, params.user, first_track_at).await?;
+                    }
+
+                    Ok(())
+                })
+            })
+            .await?;
 
         Ok(())
     }
-
-    // async fn link_tags(&self, params: ActionTrackLinkTagsParams) -> Result<(), ActionTrackServiceError> {
-    //     let note_exists = Entity::find_by_id(params.note_id)
-    //         .filter(get_viewing_permission_filter(params.user_open_id))
-    //         .exists(self.db)
-    //         .await?;
-    //     if !note_exists {
-    //         return Err(ActionTrackServiceError::ActionTrackNotFound());
-    //     }
-    //     let tags = tag::Entity::find()
-    //         .filter(tag::Column::UserId.eq(params.user_id))
-    //         .filter(tag::Column::Id.is_in(params.tag_ids.clone()))
-    //         .all(self.db)
-    //         .await?;
-    //     let currently_linked_tag_ids = tags_notes::Entity::find()
-    //         .filter(tags_notes::Column::ActionTrackId.eq(params.note_id))
-    //         .all(self.db)
-    //         .await?
-    //         .iter()
-    //         .map(|link| link.tag_id)
-    //         .collect::<Vec<_>>();
-    //     let tag_ids_to_unlink = currently_linked_tag_ids
-    //         .clone()
-    //         .into_iter()
-    //         .filter(|id| !params.tag_ids.contains(id))
-    //         .collect::<Vec<_>>();
-
-    //     self.db
-    //         .transaction::<_, (), ActionTrackServiceError>(|txn| {
-    //             Box::pin(async move {
-    //                 for tag in tags {
-    //                     let already_linked = currently_linked_tag_ids.contains(&tag.id);
-    //                     if already_linked {
-    //                         continue;
-    //                     }
-    //                     tags_notes::ActiveModel::builder()
-    //                         .set_note_id(params.note_id)
-    //                         .set_tag_id(tag.id)
-    //                         .insert(txn)
-    //                         .await?;
-    //                 }
-    //                 tags_notes::Entity::delete_many()
-    //                     .filter(tags_notes::Column::ActionTrackId.eq(params.note_id))
-    //                     .filter(tags_notes::Column::TagId.is_in(tag_ids_to_unlink))
-    //                     .exec(txn)
-    //                     .await?;
-
-    //                 Ok(())
-    //             })
-    //         })
-    //         .await?;
-
-    //     Ok(())
-    // }
 }
 
 async fn resolve_first_track_at(
-    db: &DbConn,
+    db: &impl ConnectionTrait,
     user: &user::Model,
 ) -> Result<Option<DateTime<FixedOffset>>, ActionTrackServiceError> {
     Entity::find()
@@ -211,7 +184,7 @@ async fn resolve_first_track_at(
 }
 
 async fn update_user_first_track_at(
-    db: &DbConn,
+    db: &impl ConnectionTrait,
     user: user::Model,
     first_track_at: Option<DateTime<FixedOffset>>,
 ) -> Result<user::Model, ActionTrackServiceError> {
