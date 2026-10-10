@@ -123,19 +123,37 @@ mod user_first_track_at_update {
             .insert(&db.db)
             .await?;
         let action = factory::action(user.id).insert(&db.db).await?;
-        let action_track = factory::action_track(user.id)
-            .action_id(action.id)
-            .started_at(DateTime::parse_from_rfc3339("2025-07-08T00:00:00Z").unwrap())
-            .insert(&db.db)
-            .await?;
-        let second_oldest_action_track = factory::action_track(user.id)
-            .action_id(action.id)
-            .started_at(DateTime::parse_from_rfc3339("2025-07-09T00:00:00Z").unwrap())
-            .insert(&db.db)
-            .await?;
+        let action_tracks = factory::create_action_tracks(
+            vec![
+                ActionTrackParam {
+                    name: "oldest",
+                    action_id: action.id,
+                    started_at: DateTime::parse_from_rfc3339("2025-07-08T00:00:00Z").unwrap(),
+                    duration: None,
+                },
+                ActionTrackParam {
+                    name: "second_oldest",
+                    action_id: action.id,
+                    started_at: DateTime::parse_from_rfc3339("2025-07-09T00:00:00Z").unwrap(),
+                    duration: None,
+                },
+                ActionTrackParam {
+                    name: "third_oldest",
+                    action_id: action.id,
+                    started_at: DateTime::parse_from_rfc3339("2025-07-10T00:00:00Z").unwrap(),
+                    duration: None,
+                },
+            ],
+            &user,
+            &db,
+        )
+        .await?;
 
         let req = test::TestRequest::delete()
-            .uri(&format!("/api/action_tracks/{}", action_track.id))
+            .uri(&format!(
+                "/api/action_tracks/{}",
+                action_tracks.get("oldest").unwrap().id
+            ))
             .to_request();
         req.extensions_mut().insert(user.clone());
 
@@ -143,7 +161,10 @@ mod user_first_track_at_update {
         assert_eq!(res.status(), http::StatusCode::NO_CONTENT);
 
         let user_in_db = user::Entity::find_by_id(user.id).one(&db.db).await?.unwrap();
-        assert_eq!(user_in_db.first_track_at, Some(second_oldest_action_track.started_at));
+        assert_eq!(
+            user_in_db.first_track_at,
+            Some(action_tracks.get("second_oldest").unwrap().started_at)
+        );
 
         Ok(())
     }

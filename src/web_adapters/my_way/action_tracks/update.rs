@@ -7,7 +7,6 @@ use common::db::Db;
 use domain_services::action_track_service::ActionTrackService;
 
 use common::errors::error_responses::{response_400, response_401, response_404, response_500};
-use db_adapters::{action_track_adapter::ActionTrackAdapter, user_adapter::UserAdapter};
 use entities::user as user_entity;
 use use_cases::my_way::action_tracks::{
     types::ActionTrackUpdateRequest,
@@ -32,8 +31,6 @@ pub async fn update_action_track_endpoint(
                 user.into_inner(),
                 req.into_inner(),
                 path_param.action_track_id,
-                ActionTrackAdapter::init(&db),
-                UserAdapter::init(&db),
                 ActionTrackService::init(&db),
             )
             .await

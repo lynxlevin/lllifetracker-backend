@@ -6,7 +6,6 @@ use actix_web::{
 use common::db::Db;
 
 use common::errors::error_responses::{response_401, response_404, response_500};
-use db_adapters::{action_track_adapter::ActionTrackAdapter, user_adapter::UserAdapter};
 use domain_services::action_track_service::ActionTrackService;
 use entities::user as user_entity;
 use use_cases::my_way::action_tracks::delete::{delete_action_track, DeleteActionTracksError};
@@ -27,8 +26,6 @@ pub async fn delete_action_track_endpoint(
             match delete_action_track(
                 user.into_inner(),
                 path_param.action_track_id,
-                ActionTrackAdapter::init(&db),
-                UserAdapter::init(&db),
                 ActionTrackService::init(&db),
             )
             .await

@@ -3,11 +3,7 @@ use domain_services::action_track_service::{
 };
 use thiserror::Error;
 
-use crate::{
-    my_way::action_tracks::types::{ActionTrackCreateRequest, ActionTrackVisible},
-    users::first_track_at_synchronizer::FirstTrackAtSynchronizer,
-};
-use db_adapters::{action_track_adapter::ActionTrackAdapter, user_adapter::UserAdapter};
+use crate::my_way::action_tracks::types::{ActionTrackCreateRequest, ActionTrackVisible};
 use entities::user as user_entity;
 
 #[derive(Debug, Error)]
@@ -40,19 +36,11 @@ impl From<ActionTrackServiceError> for CreateActionTracksError {
 pub async fn create_action_track<'a>(
     user: user_entity::Model,
     req: ActionTrackCreateRequest,
-    action_track_adapter: ActionTrackAdapter<'a>,
-    user_adapter: UserAdapter<'a>,
     action_track_service: ActionTrackService<'a>,
 ) -> Result<ActionTrackVisible, CreateActionTracksError> {
     let action_track = action_track_service
-        .create(ActionTrackCreateParams { user: &user, action_id: req.action_id, started_at: req.started_at })
+        .create(ActionTrackCreateParams { user, action_id: req.action_id, started_at: req.started_at })
         .await?;
-
-    // MYMEMO: Incorporate this into the service.
-    FirstTrackAtSynchronizer::init(action_track_adapter, user_adapter, user)
-        .update_user_first_track_at(None, Some(action_track.clone()))
-        .await
-        .map_err(|e| CreateActionTracksError::InternalServerError(e.to_string()))?;
 
     Ok(ActionTrackVisible::from(action_track))
 }

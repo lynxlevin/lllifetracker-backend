@@ -8,7 +8,6 @@ use serde::{Deserialize, Serialize};
 
 pub const DEFAULT_ACTION_COLOR: &'static str = "#212121";
 
-// MYMEMO: マイグレーション問題なく動くか確認
 #[sea_orm::model]
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "action")]

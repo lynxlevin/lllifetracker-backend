@@ -1,13 +1,14 @@
 use std::future::Future;
 
-use chrono::{DateTime, FixedOffset, SubsecRound};
+use chrono::{DateTime, FixedOffset, SubsecRound, Utc};
 use entities::{
     action::{self, ActionTrackType},
-    action_track::{ActiveModel, Column, Entity, Model},
+    action_track::{ActiveModel, Column, Entity, Model, Relation},
     user,
 };
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::Set, ColumnTrait, EntityTrait, IntoActiveModel, ModelTrait, QueryFilter,
+    ActiveModelTrait, ActiveValue::Set, ColumnTrait, DbConn, EntityTrait, IntoActiveModel, JoinType::LeftJoin,
+    ModelTrait, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
 };
 use serde::Serialize;
 use uuid::Uuid;
@@ -15,22 +16,22 @@ use uuid::Uuid;
 use crate::action_track_service::{handle_unique_constraint, ActionTrackService, ActionTrackServiceError};
 
 #[derive(Serialize, Debug, Clone)]
-pub struct ActionTrackCreateParams<'a> {
-    pub user: &'a user::Model,
+pub struct ActionTrackCreateParams {
+    pub user: user::Model,
     pub action_id: Uuid,
     pub started_at: DateTime<FixedOffset>,
 }
 #[derive(Serialize, Debug, Clone)]
-pub struct ActionTrackUpdateParams<'a> {
-    pub user: &'a user::Model,
+pub struct ActionTrackUpdateParams {
+    pub user: user::Model,
     pub action_track_id: Uuid,
     pub action_id: Uuid,
     pub started_at: DateTime<FixedOffset>,
     pub ended_at: Option<DateTime<FixedOffset>>,
 }
 #[derive(Serialize, Debug, Clone)]
-pub struct ActionTrackDeleteParams<'a> {
-    pub user: &'a user::Model,
+pub struct ActionTrackDeleteParams {
+    pub user: user::Model,
     pub action_track_id: Uuid,
 }
 pub trait ActionTrackServiceMutation {
@@ -41,15 +42,13 @@ pub trait ActionTrackServiceMutation {
     fn update(
         &self,
         params: ActionTrackUpdateParams,
-    ) -> impl Future<Output = Result<(Model, Model), ActionTrackServiceError>>;
-    fn delete(
-        &self,
-        params: ActionTrackDeleteParams,
     ) -> impl Future<Output = Result<Model, ActionTrackServiceError>>;
+    fn delete(&self, params: ActionTrackDeleteParams)
+        -> impl Future<Output = Result<(), ActionTrackServiceError>>;
 }
 
 impl ActionTrackServiceMutation for ActionTrackService<'_> {
-    async fn create(&self, params: ActionTrackCreateParams<'_>) -> Result<Model, ActionTrackServiceError> {
+    async fn create(&self, params: ActionTrackCreateParams) -> Result<Model, ActionTrackServiceError> {
         let action = action::Entity::find_by_id(params.action_id)
             .filter(action::Column::UserId.eq(params.user.id))
             .one(self.db)
@@ -74,19 +73,20 @@ impl ActionTrackServiceMutation for ActionTrackService<'_> {
         .await
         .map_err(handle_unique_constraint)?;
 
+        let should_update_first_track_at = params.user.first_track_at.is_none_or(|t| t > started_at);
+        if should_update_first_track_at {
+            update_user_first_track_at(self.db, params.user, Some(started_at)).await?;
+        }
+
         Ok(action_track)
     }
 
-    async fn update(
-        &self,
-        params: ActionTrackUpdateParams<'_>,
-    ) -> Result<(Model, Model), ActionTrackServiceError> {
+    async fn update(&self, params: ActionTrackUpdateParams) -> Result<Model, ActionTrackServiceError> {
         let action_track = Entity::find_by_id(params.action_track_id)
             .filter(Column::UserId.eq(params.user.id))
             .one(self.db)
             .await?
             .ok_or(ActionTrackServiceError::ActionTrackNotFound())?;
-        // MYMEMO: add test for this
         let action = action::Entity::find_by_id(params.action_id)
             .filter(action::Column::UserId.eq(params.user.id))
             .one(self.db)
@@ -104,10 +104,22 @@ impl ActionTrackServiceMutation for ActionTrackService<'_> {
         action_track.action_id = Set(action.id);
         let after_update = action_track.update(self.db).await.map_err(handle_unique_constraint)?;
 
-        Ok((after_update, before_update))
+        let should_update_first_track_at = match params.user.first_track_at {
+            Some(u) => {
+                (u == before_update.started_at && before_update.started_at != after_update.started_at)
+                    || u > after_update.started_at
+            }
+            None => true,
+        };
+        if should_update_first_track_at {
+            let first_track_at = resolve_first_track_at(self.db, &params.user).await?;
+            update_user_first_track_at(self.db, params.user, first_track_at).await?;
+        }
+
+        Ok(after_update)
     }
 
-    async fn delete(&self, params: ActionTrackDeleteParams<'_>) -> Result<Model, ActionTrackServiceError> {
+    async fn delete(&self, params: ActionTrackDeleteParams) -> Result<(), ActionTrackServiceError> {
         let action_track = Entity::find_by_id(params.action_track_id)
             .filter(Column::UserId.eq(params.user.id))
             .one(self.db)
@@ -116,7 +128,14 @@ impl ActionTrackServiceMutation for ActionTrackService<'_> {
 
         action_track.clone().delete(self.db).await?;
 
-        Ok(action_track)
+        let should_update_first_track_at =
+            params.user.first_track_at.is_some_and(|t| t == action_track.started_at);
+        if should_update_first_track_at {
+            let first_track_at = resolve_first_track_at(self.db, &params.user).await?;
+            update_user_first_track_at(self.db, params.user, first_track_at).await?;
+        }
+
+        Ok(())
     }
 
     // async fn link_tags(&self, params: ActionTrackLinkTagsParams) -> Result<(), ActionTrackServiceError> {
@@ -172,4 +191,32 @@ impl ActionTrackServiceMutation for ActionTrackService<'_> {
 
     //     Ok(())
     // }
+}
+
+async fn resolve_first_track_at(
+    db: &DbConn,
+    user: &user::Model,
+) -> Result<Option<DateTime<FixedOffset>>, ActionTrackServiceError> {
+    Entity::find()
+        .select_only()
+        .column(Column::StartedAt)
+        .filter(Column::UserId.eq(user.id))
+        .join(LeftJoin, Relation::Action.def())
+        .filter(action::Column::Archived.eq(false))
+        .order_by_asc(Column::StartedAt)
+        .into_tuple()
+        .one(db)
+        .await
+        .map_err(|e| e.into())
+}
+
+async fn update_user_first_track_at(
+    db: &DbConn,
+    user: user::Model,
+    first_track_at: Option<DateTime<FixedOffset>>,
+) -> Result<user::Model, ActionTrackServiceError> {
+    let mut user = user.into_active_model();
+    user.first_track_at = Set(first_track_at);
+    user.updated_at = Set(Utc::now().into());
+    user.update(db).await.map_err(|e| e.into())
 }

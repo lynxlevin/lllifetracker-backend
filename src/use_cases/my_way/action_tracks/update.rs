@@ -4,11 +4,7 @@ use domain_services::action_track_service::{
 use thiserror::Error;
 use uuid::Uuid;
 
-use crate::{
-    my_way::action_tracks::types::{ActionTrackUpdateRequest, ActionTrackVisible},
-    users::first_track_at_synchronizer::FirstTrackAtSynchronizer,
-};
-use db_adapters::{action_track_adapter::ActionTrackAdapter, user_adapter::UserAdapter};
+use crate::my_way::action_tracks::types::{ActionTrackUpdateRequest, ActionTrackVisible};
 use entities::user as user_entity;
 
 #[derive(Debug, Error)]
@@ -45,15 +41,13 @@ pub async fn update_action_track<'a>(
     user: user_entity::Model,
     params: ActionTrackUpdateRequest,
     action_track_id: Uuid,
-    action_track_adapter: ActionTrackAdapter<'a>,
-    user_adapter: UserAdapter<'a>,
     action_track_service: ActionTrackService<'a>,
 ) -> Result<ActionTrackVisible, UpdateActionTracksError> {
     let params = _parse_params(params)?;
 
-    let (new_action_track, old_action_track) = action_track_service
+    let action_track = action_track_service
         .update(ActionTrackUpdateParams {
-            user: &user,
+            user,
             action_track_id: action_track_id,
             action_id: params.action_id,
             started_at: params.started_at,
@@ -61,13 +55,7 @@ pub async fn update_action_track<'a>(
         })
         .await?;
 
-    // MYMEMO: Incorporate this into the service.
-    FirstTrackAtSynchronizer::init(action_track_adapter, user_adapter, user)
-        .update_user_first_track_at(Some(old_action_track), Some(new_action_track.clone()))
-        .await
-        .map_err(|e| UpdateActionTracksError::InternalServerError(e.to_string()))?;
-
-    Ok(ActionTrackVisible::from(new_action_track))
+    Ok(ActionTrackVisible::from(action_track))
 }
 
 fn _parse_params(params: ActionTrackUpdateRequest) -> Result<ActionTrackUpdateRequest, UpdateActionTracksError> {
