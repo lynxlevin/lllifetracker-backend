@@ -4,11 +4,9 @@ use actix_web::{
     HttpResponse,
 };
 use common::db::Db;
-use db_adapters::{
-    action_adapter::ActionAdapter, action_track_adapter::ActionTrackAdapter, user_adapter::UserAdapter,
-};
+use domain_services::action_service::ActionService;
 use entities::user as user_entity;
-use use_cases::{my_way::actions::unarchive::unarchive_action, UseCaseError};
+use use_cases::my_way::actions::unarchive::{unarchive_action, UnarchiveActionError};
 
 use crate::utils::{response_401, response_404, response_500};
 
@@ -25,19 +23,11 @@ pub async fn unarchive_action_endpoint(
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            match unarchive_action(
-                user.into_inner(),
-                path_param.action_id,
-                ActionAdapter::init(&db),
-                UserAdapter::init(&db),
-                ActionTrackAdapter::init(&db),
-            )
-            .await
-            {
+            match unarchive_action(user.into_inner(), path_param.action_id, ActionService::init(&db)).await {
                 Ok(res) => HttpResponse::Ok().json(res),
                 Err(e) => match &e {
-                    UseCaseError::NotFound(message) => response_404(message),
-                    _ => response_500(e),
+                    UnarchiveActionError::NotFound(message) => response_404(message),
+                    UnarchiveActionError::InternalServerError(_) => response_500(e),
                 },
             }
         }

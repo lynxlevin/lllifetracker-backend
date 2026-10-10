@@ -20,12 +20,18 @@ pub struct ActionArchiveParams {
     pub action_id: Uuid,
 }
 #[derive(Serialize, Debug, Clone)]
+pub struct ActionUnarchiveParams {
+    pub user: user::Model,
+    pub action_id: Uuid,
+}
+#[derive(Serialize, Debug, Clone)]
 pub struct ActionDeleteParams {
     pub user: user::Model,
     pub action_id: Uuid,
 }
 pub trait ActionServiceMutation {
     fn archive(&self, params: ActionArchiveParams) -> impl Future<Output = Result<Model, ActionServiceError>>;
+    fn unarchive(&self, params: ActionUnarchiveParams) -> impl Future<Output = Result<Model, ActionServiceError>>;
     fn delete(&self, params: ActionDeleteParams) -> impl Future<Output = Result<(), ActionServiceError>>;
 }
 
@@ -39,6 +45,34 @@ impl ActionServiceMutation for ActionService<'_> {
 
         let mut action = action.into_active_model();
         action.archived = Set(true);
+        action.updated_at = Set(Utc::now().into());
+
+        let action = self
+            .db
+            .transaction(|txn| {
+                Box::pin(async move {
+                    let action = action.update(txn).await?;
+
+                    let first_track_at = resolve_first_track_at(txn, &params.user).await?;
+                    update_user_first_track_at(txn, params.user, first_track_at).await?;
+
+                    Ok(action)
+                })
+            })
+            .await?;
+
+        Ok(action)
+    }
+
+    async fn unarchive(&self, params: ActionUnarchiveParams) -> Result<Model, ActionServiceError> {
+        let action = Entity::find_by_id(params.action_id)
+            .filter(Column::UserId.eq(params.user.id))
+            .one(self.db)
+            .await?
+            .ok_or(ActionServiceError::ActionNotFound())?;
+
+        let mut action = action.into_active_model();
+        action.archived = Set(false);
         action.updated_at = Set(Utc::now().into());
 
         let action = self
