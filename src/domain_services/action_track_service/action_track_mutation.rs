@@ -6,7 +6,9 @@ use entities::{
     action_track::{ActiveModel, Column, Entity, Model},
     user,
 };
-use sea_orm::{ActiveModelTrait, ActiveValue::Set, ColumnTrait, EntityTrait, IntoActiveModel, QueryFilter};
+use sea_orm::{
+    ActiveModelTrait, ActiveValue::Set, ColumnTrait, EntityTrait, IntoActiveModel, ModelTrait, QueryFilter,
+};
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -26,6 +28,11 @@ pub struct ActionTrackUpdateParams<'a> {
     pub started_at: DateTime<FixedOffset>,
     pub ended_at: Option<DateTime<FixedOffset>>,
 }
+#[derive(Serialize, Debug, Clone)]
+pub struct ActionTrackDeleteParams<'a> {
+    pub user: &'a user::Model,
+    pub action_track_id: Uuid,
+}
 pub trait ActionTrackServiceMutation {
     fn create(
         &self,
@@ -35,6 +42,10 @@ pub trait ActionTrackServiceMutation {
         &self,
         params: ActionTrackUpdateParams,
     ) -> impl Future<Output = Result<(Model, Model), ActionTrackServiceError>>;
+    fn delete(
+        &self,
+        params: ActionTrackDeleteParams,
+    ) -> impl Future<Output = Result<Model, ActionTrackServiceError>>;
 }
 
 impl ActionTrackServiceMutation for ActionTrackService<'_> {
@@ -94,6 +105,18 @@ impl ActionTrackServiceMutation for ActionTrackService<'_> {
         let after_update = action_track.update(self.db).await.map_err(handle_unique_constraint)?;
 
         Ok((after_update, before_update))
+    }
+
+    async fn delete(&self, params: ActionTrackDeleteParams<'_>) -> Result<Model, ActionTrackServiceError> {
+        let action_track = Entity::find_by_id(params.action_track_id)
+            .filter(Column::UserId.eq(params.user.id))
+            .one(self.db)
+            .await?
+            .ok_or(ActionTrackServiceError::ActionTrackNotFound())?;
+
+        action_track.clone().delete(self.db).await?;
+
+        Ok(action_track)
     }
 
     // async fn link_tags(&self, params: ActionTrackLinkTagsParams) -> Result<(), ActionTrackServiceError> {

@@ -148,3 +148,48 @@ mod user_first_track_at_update {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod not_found {
+    use uuid::Uuid;
+
+    use super::*;
+
+    #[actix_web::test]
+    async fn non_existent_action_track_id() -> Result<(), DbErr> {
+        let Connections { app, db, .. } = init_app().await?;
+        let user = factory::user().insert(&db.db).await?;
+
+        let req = test::TestRequest::delete()
+            .uri(&format!("/api/action_tracks/{}", Uuid::now_v7()))
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::NOT_FOUND);
+
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn other_user_action_track() -> Result<(), DbErr> {
+        let Connections { app, db, .. } = init_app().await?;
+        let user = factory::create_user(&db).await?;
+        let other_user = factory::create_user(&db).await?;
+        let action = factory::action(user.id).insert(&db.db).await?;
+        let other_user_action_track = factory::action_track(other_user.id)
+            .action_id(action.id)
+            .insert(&db.db)
+            .await?;
+
+        let req = test::TestRequest::delete()
+            .uri(&format!("/api/action_tracks/{}", other_user_action_track.id))
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::NOT_FOUND);
+
+        Ok(())
+    }
+}

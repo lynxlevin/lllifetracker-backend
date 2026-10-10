@@ -5,10 +5,11 @@ use actix_web::{
 };
 use common::db::Db;
 
-use crate::utils::{response_401, response_500};
+use common::errors::error_responses::{response_401, response_404, response_500};
 use db_adapters::{action_track_adapter::ActionTrackAdapter, user_adapter::UserAdapter};
+use domain_services::action_track_service::ActionTrackService;
 use entities::user as user_entity;
-use use_cases::my_way::action_tracks::delete::delete_action_track;
+use use_cases::my_way::action_tracks::delete::{delete_action_track, DeleteActionTracksError};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -28,11 +29,15 @@ pub async fn delete_action_track_endpoint(
                 path_param.action_track_id,
                 ActionTrackAdapter::init(&db),
                 UserAdapter::init(&db),
+                ActionTrackService::init(&db),
             )
             .await
             {
                 Ok(_) => HttpResponse::NoContent().finish(),
-                Err(e) => response_500(e),
+                Err(e) => match e {
+                    DeleteActionTracksError::NotFound(message) => response_404(message),
+                    DeleteActionTracksError::InternalServerError(_) => response_500(e),
+                },
             }
         }
         None => response_401(),
