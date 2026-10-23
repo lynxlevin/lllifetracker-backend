@@ -1,9 +1,9 @@
 use std::future::Future;
 
-use chrono::{DateTime, FixedOffset, Utc};
+use chrono::{DateTime, Duration, FixedOffset, Utc};
 use entities::{
     action::{ActionTrackType, ActiveModel, Column, Entity, Model, DEFAULT_ACTION_COLOR},
-    action_track,
+    action_goal, action_track,
     tag::{self, TagType},
     user,
 };
@@ -26,6 +26,12 @@ pub struct ActionCreateParams {
     pub user_id: Uuid,
 }
 #[derive(Serialize, Debug, Clone)]
+pub struct ActionConvertTrackTypeParams {
+    pub user: user::Model,
+    pub action_id: Uuid,
+    pub track_type: ActionTrackType,
+}
+#[derive(Serialize, Debug, Clone)]
 pub struct ActionArchiveParams {
     pub user: user::Model,
     pub action_id: Uuid,
@@ -42,6 +48,10 @@ pub struct ActionDeleteParams {
 }
 pub trait ActionServiceMutation {
     fn create(&self, params: ActionCreateParams) -> impl Future<Output = Result<Model, ActionServiceError>>;
+    fn convert_track_type(
+        &self,
+        params: ActionConvertTrackTypeParams,
+    ) -> impl Future<Output = Result<Model, ActionServiceError>>;
     fn archive(&self, params: ActionArchiveParams) -> impl Future<Output = Result<Model, ActionServiceError>>;
     fn unarchive(&self, params: ActionUnarchiveParams) -> impl Future<Output = Result<Model, ActionServiceError>>;
     fn delete(&self, params: ActionDeleteParams) -> impl Future<Output = Result<(), ActionServiceError>>;
@@ -75,6 +85,52 @@ impl ActionServiceMutation for ActionService<'_> {
                     }
                     .insert(txn)
                     .await?;
+
+                    Ok(action)
+                })
+            })
+            .await?;
+
+        Ok(action)
+    }
+
+    async fn convert_track_type(&self, params: ActionConvertTrackTypeParams) -> Result<Model, ActionServiceError> {
+        let action = Entity::find_by_id(params.action_id)
+            .filter(Column::UserId.eq(params.user.id))
+            .one(self.db)
+            .await?
+            .ok_or(ActionServiceError::ActionNotFound())?;
+
+        if action.track_type == params.track_type {
+            return Ok(action);
+        }
+
+        let action_goal = action_goal::Entity::find()
+            .filter(action_goal::Column::ActionId.eq(action.id))
+            .filter(action_goal::Column::UserId.eq(params.user.id))
+            .filter(action_goal::Column::ToDate.is_null())
+            .one(self.db)
+            .await?;
+
+        let action = self
+            .db
+            .transaction(|txn| {
+                Box::pin(async move {
+                    let mut action = action.into_active_model();
+                    action.track_type = Set(params.track_type);
+                    action.updated_at = Set(Utc::now().into());
+                    let action = action.update(txn).await?;
+
+                    if let Some(active_action_goal) = action_goal {
+                        let user_today = params.user.timezone.convert_utc(Utc::now()).date_naive();
+                        if active_action_goal.from_date == user_today {
+                            active_action_goal.delete(txn).await?;
+                        } else {
+                            let mut active_action_goal = active_action_goal.into_active_model();
+                            active_action_goal.to_date = Set(Some(user_today - Duration::days(1)));
+                            active_action_goal.update(txn).await?;
+                        }
+                    }
 
                     Ok(action)
                 })
