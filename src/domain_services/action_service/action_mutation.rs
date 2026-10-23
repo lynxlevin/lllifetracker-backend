@@ -26,6 +26,15 @@ pub struct ActionCreateParams {
     pub user_id: Uuid,
 }
 #[derive(Serialize, Debug, Clone)]
+pub struct ActionUpdateParams {
+    pub name: String,
+    pub discipline: Option<String>,
+    pub memo: Option<String>,
+    pub color: String,
+    pub user_id: Uuid,
+    pub action_id: Uuid,
+}
+#[derive(Serialize, Debug, Clone)]
 pub struct ActionConvertTrackTypeParams {
     pub user: user::Model,
     pub action_id: Uuid,
@@ -48,6 +57,7 @@ pub struct ActionDeleteParams {
 }
 pub trait ActionServiceMutation {
     fn create(&self, params: ActionCreateParams) -> impl Future<Output = Result<Model, ActionServiceError>>;
+    fn update(&self, params: ActionUpdateParams) -> impl Future<Output = Result<Model, ActionServiceError>>;
     fn convert_track_type(
         &self,
         params: ActionConvertTrackTypeParams,
@@ -90,6 +100,24 @@ impl ActionServiceMutation for ActionService<'_> {
                 })
             })
             .await?;
+
+        Ok(action)
+    }
+
+    async fn update(&self, params: ActionUpdateParams) -> Result<Model, ActionServiceError> {
+        let action = Entity::find_by_id(params.action_id)
+            .filter(Column::UserId.eq(params.user_id))
+            .one(self.db)
+            .await?
+            .ok_or(ActionServiceError::ActionNotFound())?;
+
+        let mut action = action.into_active_model();
+        action.name = Set(params.name);
+        action.discipline = Set(params.discipline);
+        action.memo = Set(params.memo);
+        action.color = Set(params.color);
+        action.updated_at = Set(Utc::now().into());
+        let action = action.update(self.db).await?;
 
         Ok(action)
     }

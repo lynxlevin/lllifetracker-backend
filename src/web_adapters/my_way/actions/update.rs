@@ -4,14 +4,14 @@ use actix_web::{
     HttpResponse,
 };
 use common::db::Db;
-use db_adapters::action_adapter::ActionAdapter;
+use domain_services::action_service::ActionService;
 use entities::user as user_entity;
-use use_cases::{
-    my_way::actions::{types::ActionUpdateRequest, update::update_action},
-    UseCaseError,
+use use_cases::my_way::actions::{
+    types::ActionUpdateRequest,
+    update::{update_action, UpdateActionError},
 };
 
-use crate::utils::{response_400, response_401, response_404, response_500};
+use common::errors::error_responses::{response_400, response_401, response_404, response_500};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -31,15 +31,15 @@ pub async fn update_action_endpoint(
                 user.into_inner(),
                 req.into_inner(),
                 path_param.action_id,
-                ActionAdapter::init(&db),
+                ActionService::init(&db),
             )
             .await
             {
                 Ok(res) => HttpResponse::Ok().json(res),
                 Err(e) => match &e {
-                    UseCaseError::BadRequest(message) => response_400(message),
-                    UseCaseError::NotFound(message) => response_404(message),
-                    _ => response_500(e),
+                    UpdateActionError::BadRequest(message) => response_400(message),
+                    UpdateActionError::NotFound(message) => response_404(message),
+                    UpdateActionError::InternalServerError(_) => response_500(e),
                 },
             }
         }
