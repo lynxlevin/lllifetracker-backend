@@ -41,6 +41,11 @@ pub struct ActionConvertTrackTypeParams {
     pub track_type: ActionTrackType,
 }
 #[derive(Serialize, Debug, Clone)]
+pub struct ActionBulkUpdateOrderingParams {
+    pub user_id: Uuid,
+    pub action_ids_in_order: Vec<Uuid>,
+}
+#[derive(Serialize, Debug, Clone)]
 pub struct ActionArchiveParams {
     pub user: user::Model,
     pub action_id: Uuid,
@@ -62,6 +67,10 @@ pub trait ActionServiceMutation {
         &self,
         params: ActionConvertTrackTypeParams,
     ) -> impl Future<Output = Result<Model, ActionServiceError>>;
+    fn bulk_update_ordering(
+        &self,
+        params: ActionBulkUpdateOrderingParams,
+    ) -> impl Future<Output = Result<(), ActionServiceError>>;
     fn archive(&self, params: ActionArchiveParams) -> impl Future<Output = Result<Model, ActionServiceError>>;
     fn unarchive(&self, params: ActionUnarchiveParams) -> impl Future<Output = Result<Model, ActionServiceError>>;
     fn delete(&self, params: ActionDeleteParams) -> impl Future<Output = Result<(), ActionServiceError>>;
@@ -166,6 +175,33 @@ impl ActionServiceMutation for ActionService<'_> {
             .await?;
 
         Ok(action)
+    }
+
+    async fn bulk_update_ordering(
+        &self,
+        params: ActionBulkUpdateOrderingParams,
+    ) -> Result<(), ActionServiceError> {
+        let actions = Entity::find()
+            .filter(Column::UserId.eq(params.user_id))
+            .filter(Column::Id.is_in(params.action_ids_in_order.clone()))
+            .all(self.db)
+            .await?;
+
+        self.db
+            .transaction_async(async |txn| {
+                for action in actions {
+                    let order = params.action_ids_in_order.iter().position(|id| id == &action.id);
+                    if let Some(order) = order {
+                        let mut action = action.into_active_model();
+                        action.ordering = Set(Some((order + 1) as i32));
+                        action.update(txn).await?;
+                    }
+                }
+                Ok(())
+            })
+            .await?;
+
+        Ok(())
     }
 
     async fn archive(&self, params: ActionArchiveParams) -> Result<Model, ActionServiceError> {

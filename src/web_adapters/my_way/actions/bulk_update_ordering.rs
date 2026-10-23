@@ -4,13 +4,14 @@ use actix_web::{
     HttpResponse,
 };
 use common::db::Db;
-use db_adapters::action_adapter::ActionAdapter;
+use domain_services::action_service::ActionService;
 use entities::user as user_entity;
 use use_cases::my_way::actions::{
-    bulk_update_ordering::bulk_update_action_ordering, types::ActionBulkUpdateOrderRequest,
+    bulk_update_ordering::{bulk_update_action_ordering, BulkUpdateOrderingActionError},
+    types::ActionBulkUpdateOrderRequest,
 };
 
-use crate::utils::{response_401, response_500};
+use common::errors::error_responses::{response_401, response_500};
 
 /// Fuzzy Ordering Design Decision
 /// Ordering doesn’t need to be correctly serialized in the backend
@@ -33,10 +34,12 @@ pub async fn bulk_update_action_ordering_endpoint(
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            match bulk_update_action_ordering(user.into_inner(), req.into_inner(), ActionAdapter::init(&db)).await
+            match bulk_update_action_ordering(user.into_inner(), req.into_inner(), ActionService::init(&db)).await
             {
                 Ok(_) => HttpResponse::Ok().finish(),
-                Err(e) => response_500(e),
+                Err(e) => match e {
+                    BulkUpdateOrderingActionError::InternalServerError(_) => response_500(e),
+                },
             }
         }
         None => response_401(),
