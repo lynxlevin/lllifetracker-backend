@@ -3,10 +3,10 @@ use sea_orm::{DbConn, TransactionError};
 use thiserror::Error;
 
 mod action_mutation;
-// mod action_query;
+mod action_query;
 
 pub use action_mutation::*;
-// pub use action_query::*;
+pub use action_query::*;
 
 #[derive(Debug, Error)]
 pub enum ActionServiceError {
