@@ -9,7 +9,7 @@ use entities::{
 };
 use sea_orm::{
     ActiveModelTrait, ActiveValue::Set, ColumnTrait, ConnectionTrait, EntityTrait, IntoActiveModel,
-    JoinType::LeftJoin, ModelTrait, QueryFilter, QueryOrder, QuerySelect, RelationTrait, TransactionTrait,
+    JoinType::LeftJoin, ModelTrait, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
 };
 use serde::Serialize;
 use uuid::Uuid;
@@ -80,33 +80,31 @@ impl ActionServiceMutation for ActionService<'_> {
     async fn create(&self, params: ActionCreateParams) -> Result<Model, ActionServiceError> {
         let action = self
             .db
-            .transaction(|txn| {
-                Box::pin(async move {
-                    let action = ActiveModel {
-                        id: Set(Uuid::now_v7()),
-                        user_id: Set(params.user_id),
-                        name: Set(params.name.to_owned()),
-                        discipline: Set(params.discipline.to_owned()),
-                        memo: Set(params.memo.to_owned()),
-                        color: Set(params.color.unwrap_or(DEFAULT_ACTION_COLOR.to_string())),
-                        track_type: Set(params.track_type),
-                        ..Default::default()
-                    }
-                    .insert(txn)
-                    .await?;
+            .transaction_async(async |txn| {
+                let action = ActiveModel {
+                    id: Set(Uuid::now_v7()),
+                    user_id: Set(params.user_id),
+                    name: Set(params.name.to_owned()),
+                    discipline: Set(params.discipline.to_owned()),
+                    memo: Set(params.memo.to_owned()),
+                    color: Set(params.color.unwrap_or(DEFAULT_ACTION_COLOR.to_string())),
+                    track_type: Set(params.track_type),
+                    ..Default::default()
+                }
+                .insert(txn)
+                .await?;
 
-                    tag::ActiveModel {
-                        id: Set(uuid::Uuid::now_v7()),
-                        user_id: Set(params.user_id),
-                        action_id: Set(Some(action.id)),
-                        r#type: Set(TagType::Action),
-                        ..Default::default()
-                    }
-                    .insert(txn)
-                    .await?;
+                tag::ActiveModel {
+                    id: Set(uuid::Uuid::now_v7()),
+                    user_id: Set(params.user_id),
+                    action_id: Set(Some(action.id)),
+                    r#type: Set(TagType::Action),
+                    ..Default::default()
+                }
+                .insert(txn)
+                .await?;
 
-                    Ok(action)
-                })
+                Ok(action)
             })
             .await?;
 
@@ -151,26 +149,24 @@ impl ActionServiceMutation for ActionService<'_> {
 
         let action = self
             .db
-            .transaction(|txn| {
-                Box::pin(async move {
-                    let mut action = action.into_active_model();
-                    action.track_type = Set(params.track_type);
-                    action.updated_at = Set(Utc::now().into());
-                    let action = action.update(txn).await?;
+            .transaction_async(async |txn| {
+                let mut action = action.into_active_model();
+                action.track_type = Set(params.track_type);
+                action.updated_at = Set(Utc::now().into());
+                let action = action.update(txn).await?;
 
-                    if let Some(active_action_goal) = action_goal {
-                        let user_today = params.user.timezone.convert_utc(Utc::now()).date_naive();
-                        if active_action_goal.from_date == user_today {
-                            active_action_goal.delete(txn).await?;
-                        } else {
-                            let mut active_action_goal = active_action_goal.into_active_model();
-                            active_action_goal.to_date = Set(Some(user_today - Duration::days(1)));
-                            active_action_goal.update(txn).await?;
-                        }
+                if let Some(active_action_goal) = action_goal {
+                    let user_today = params.user.timezone.convert_utc(Utc::now()).date_naive();
+                    if active_action_goal.from_date == user_today {
+                        active_action_goal.delete(txn).await?;
+                    } else {
+                        let mut active_action_goal = active_action_goal.into_active_model();
+                        active_action_goal.to_date = Set(Some(user_today - Duration::days(1)));
+                        active_action_goal.update(txn).await?;
                     }
+                }
 
-                    Ok(action)
-                })
+                Ok(action)
             })
             .await?;
 
@@ -217,15 +213,13 @@ impl ActionServiceMutation for ActionService<'_> {
 
         let action = self
             .db
-            .transaction(|txn| {
-                Box::pin(async move {
-                    let action = action.update(txn).await?;
+            .transaction_async(async |txn| {
+                let action = action.update(txn).await?;
 
-                    let first_track_at = resolve_first_track_at(txn, &params.user).await?;
-                    update_user_first_track_at(txn, params.user, first_track_at).await?;
+                let first_track_at = resolve_first_track_at(txn, &params.user).await?;
+                update_user_first_track_at(txn, params.user, first_track_at).await?;
 
-                    Ok(action)
-                })
+                Ok(action)
             })
             .await?;
 
@@ -245,15 +239,13 @@ impl ActionServiceMutation for ActionService<'_> {
 
         let action = self
             .db
-            .transaction(|txn| {
-                Box::pin(async move {
-                    let action = action.update(txn).await?;
+            .transaction_async(async |txn| {
+                let action = action.update(txn).await?;
 
-                    let first_track_at = resolve_first_track_at(txn, &params.user).await?;
-                    update_user_first_track_at(txn, params.user, first_track_at).await?;
+                let first_track_at = resolve_first_track_at(txn, &params.user).await?;
+                update_user_first_track_at(txn, params.user, first_track_at).await?;
 
-                    Ok(action)
-                })
+                Ok(action)
             })
             .await?;
 
@@ -268,15 +260,13 @@ impl ActionServiceMutation for ActionService<'_> {
             .ok_or(ActionServiceError::ActionNotFound())?;
 
         self.db
-            .transaction(|txn| {
-                Box::pin(async move {
-                    action.clone().delete(txn).await?;
+            .transaction_async(async |txn| {
+                action.clone().delete(txn).await?;
 
-                    let first_track_at = resolve_first_track_at(txn, &params.user).await?;
-                    update_user_first_track_at(txn, params.user, first_track_at).await?;
+                let first_track_at = resolve_first_track_at(txn, &params.user).await?;
+                update_user_first_track_at(txn, params.user, first_track_at).await?;
 
-                    Ok(())
-                })
+                Ok(())
             })
             .await?;
 

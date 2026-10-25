@@ -8,7 +8,7 @@ use entities::{
 };
 use sea_orm::{
     ActiveModelTrait, ActiveValue::Set, ColumnTrait, ConnectionTrait, EntityTrait, IntoActiveModel,
-    JoinType::LeftJoin, ModelTrait, QueryFilter, QueryOrder, QuerySelect, RelationTrait, TransactionTrait,
+    JoinType::LeftJoin, ModelTrait, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
 };
 use serde::Serialize;
 use uuid::Uuid;
@@ -63,27 +63,25 @@ impl ActionTrackServiceMutation for ActionTrackService<'_> {
 
         let action_track = self
             .db
-            .transaction(|txn| {
-                Box::pin(async move {
-                    let action_track = ActiveModel {
-                        id: Set(uuid::Uuid::now_v7()),
-                        user_id: Set(params.user.id),
-                        action_id: Set(params.action_id),
-                        started_at: Set(started_at),
-                        ended_at: Set(ended_at),
-                        duration: Set(duration),
-                    }
-                    .insert(txn)
-                    .await
-                    .map_err(handle_unique_constraint)?;
+            .transaction_async(async |txn| {
+                let action_track = ActiveModel {
+                    id: Set(uuid::Uuid::now_v7()),
+                    user_id: Set(params.user.id),
+                    action_id: Set(params.action_id),
+                    started_at: Set(started_at),
+                    ended_at: Set(ended_at),
+                    duration: Set(duration),
+                }
+                .insert(txn)
+                .await
+                .map_err(handle_unique_constraint)?;
 
-                    let should_update_first_track_at = params.user.first_track_at.is_none_or(|t| t > started_at);
-                    if should_update_first_track_at {
-                        update_user_first_track_at(txn, params.user, Some(started_at)).await?;
-                    }
+                let should_update_first_track_at = params.user.first_track_at.is_none_or(|t| t > started_at);
+                if should_update_first_track_at {
+                    update_user_first_track_at(txn, params.user, Some(started_at)).await?;
+                }
 
-                    Ok(action_track)
-                })
+                Ok(action_track)
             })
             .await?;
 
@@ -114,24 +112,22 @@ impl ActionTrackServiceMutation for ActionTrackService<'_> {
 
         let after_update = self
             .db
-            .transaction(|txn| {
-                Box::pin(async move {
-                    let after_update = action_track.update(txn).await.map_err(handle_unique_constraint)?;
+            .transaction_async(async |txn| {
+                let after_update = action_track.update(txn).await.map_err(handle_unique_constraint)?;
 
-                    let should_update_first_track_at = match params.user.first_track_at {
-                        Some(u) => {
-                            (u == before_update.started_at && before_update.started_at != after_update.started_at)
-                                || u > after_update.started_at
-                        }
-                        None => true,
-                    };
-                    if should_update_first_track_at {
-                        let first_track_at = resolve_first_track_at(txn, &params.user).await?;
-                        update_user_first_track_at(txn, params.user, first_track_at).await?;
+                let should_update_first_track_at = match params.user.first_track_at {
+                    Some(u) => {
+                        (u == before_update.started_at && before_update.started_at != after_update.started_at)
+                            || u > after_update.started_at
                     }
+                    None => true,
+                };
+                if should_update_first_track_at {
+                    let first_track_at = resolve_first_track_at(txn, &params.user).await?;
+                    update_user_first_track_at(txn, params.user, first_track_at).await?;
+                }
 
-                    Ok(after_update)
-                })
+                Ok(after_update)
             })
             .await?;
 
@@ -146,19 +142,17 @@ impl ActionTrackServiceMutation for ActionTrackService<'_> {
             .ok_or(ActionTrackServiceError::ActionTrackNotFound())?;
 
         self.db
-            .transaction(|txn| {
-                Box::pin(async move {
-                    action_track.clone().delete(txn).await?;
+            .transaction_async(async |txn| {
+                action_track.clone().delete(txn).await?;
 
-                    let should_update_first_track_at =
-                        params.user.first_track_at.is_some_and(|t| t == action_track.started_at);
-                    if should_update_first_track_at {
-                        let first_track_at = resolve_first_track_at(txn, &params.user).await?;
-                        update_user_first_track_at(txn, params.user, first_track_at).await?;
-                    }
+                let should_update_first_track_at =
+                    params.user.first_track_at.is_some_and(|t| t == action_track.started_at);
+                if should_update_first_track_at {
+                    let first_track_at = resolve_first_track_at(txn, &params.user).await?;
+                    update_user_first_track_at(txn, params.user, first_track_at).await?;
+                }
 
-                    Ok(())
-                })
+                Ok(())
             })
             .await?;
 
