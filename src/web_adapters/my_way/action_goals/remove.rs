@@ -4,11 +4,11 @@ use actix_web::{
     HttpResponse,
 };
 use common::db::Db;
-use db_adapters::{action_adapter::ActionAdapter, action_goal_adapter::ActionGoalAdapter};
+use domain_services::action_goal_service::ActionGoalService;
 use entities::user as user_entity;
 use use_cases::my_way::action_goals::{remove::remove_action_goal, types::ActionGoalRemoveQuery};
 
-use crate::utils::{response_401, response_500};
+use common::errors::error_responses::{response_401, response_500};
 
 #[delete("")]
 pub async fn remove_action_goal_endpoint(
@@ -18,14 +18,7 @@ pub async fn remove_action_goal_endpoint(
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            match remove_action_goal(
-                user.into_inner(),
-                query.action_id,
-                ActionAdapter::init(&db),
-                ActionGoalAdapter::init(&db),
-            )
-            .await
-            {
+            match remove_action_goal(user.into_inner(), query.action_id, ActionGoalService::init(&db)).await {
                 Ok(_) => HttpResponse::NoContent().finish(),
                 Err(e) => match e {
                     _ => response_500(e),

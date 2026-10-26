@@ -14,26 +14,6 @@ pub enum ActionServiceError {
     DbErr(#[from] sea_orm::DbErr),
     #[error("Action cannot be found.")]
     ActionNotFound(),
-    // #[error("Action cannot be found.")]
-    // ActionNotFound(),
-    // #[error("Friend cannot be found.")]
-    // FriendNotFound(),
-    // #[error("{0}")]
-    // RelatedRecordNotFound(String),
-    // #[error("User (open_id: {0}) does not own this note (id: {1}).")]
-    // NoOwnerPermission(OpenId, Uuid),
-    // #[error("User (open_id: {0}) is not authorized to edit this note (id: {1}).")]
-    // NoEditorPermission(OpenId, Uuid),
-    // #[error("User (open_id: {0}) is not authorized to access this note (id: {1}).")]
-    // UnauthorizedAccess(OpenId, Uuid),
-    // #[error("User (open_id: {0}) does not have lock on this note (id: {1}).")]
-    // UserHasNoLock(OpenId, Uuid),
-    // #[error("User (open_id: {0}) already has lock on this note (id: {1}).")]
-    // LockedByOther(OpenId, Uuid),
-    // #[error("Action (id: {0}) is shared with others.")]
-    // SharedWithOther(Uuid),
-    // #[error("Action (id: {0}) is secret.")]
-    // SecretAction(Uuid),
 }
 impl From<TransactionError<ActionServiceError>> for ActionServiceError {
     fn from(value: TransactionError<ActionServiceError>) -> Self {
