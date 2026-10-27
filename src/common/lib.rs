@@ -1,5 +1,7 @@
 #[cfg(feature = "db")]
 pub mod db;
+#[cfg(feature = "errors")]
+pub mod errors;
 #[cfg(feature = "factory")]
 pub mod factory;
 #[cfg(feature = "redis")]

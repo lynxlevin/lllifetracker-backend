@@ -73,31 +73,6 @@ async fn happy_path_count_type() -> Result<(), DbErr> {
 }
 
 #[actix_web::test]
-async fn conflict_on_duplicate_creation() -> Result<(), DbErr> {
-    let Connections { app, db, .. } = init_app().await?;
-    let user = factory::user().insert(&db.db).await?;
-    let action = factory::action(user.id).insert(&db.db).await?;
-    let existing_action_track = factory::action_track(user.id)
-        .action_id(action.id)
-        .insert(&db.db)
-        .await?;
-
-    let req = test::TestRequest::post()
-        .uri("/api/action_tracks")
-        .set_json(ActionTrackCreateRequest {
-            started_at: existing_action_track.started_at,
-            action_id: existing_action_track.action_id,
-        })
-        .to_request();
-    req.extensions_mut().insert(user.clone());
-
-    let res = test::call_service(&app, req).await;
-    assert_eq!(res.status(), http::StatusCode::CONFLICT);
-
-    Ok(())
-}
-
-#[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let Connections { app, .. } = init_app().await?;
 
@@ -190,6 +165,36 @@ mod user_first_track_at_update {
 
         let user_in_db = user::Entity::find_by_id(user.id).one(&db.db).await?.unwrap();
         assert_eq!(user_in_db.first_track_at, Some(started_at.trunc_subsecs(0)));
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod validation_errors {
+    use super::*;
+
+    #[actix_web::test]
+    async fn bad_request_on_duplicate_creation() -> Result<(), DbErr> {
+        let Connections { app, db, .. } = init_app().await?;
+        let user = factory::user().insert(&db.db).await?;
+        let action = factory::action(user.id).insert(&db.db).await?;
+        let existing_action_track = factory::action_track(user.id)
+            .action_id(action.id)
+            .insert(&db.db)
+            .await?;
+
+        let req = test::TestRequest::post()
+            .uri("/api/action_tracks")
+            .set_json(ActionTrackCreateRequest {
+                started_at: existing_action_track.started_at,
+                action_id: existing_action_track.action_id,
+            })
+            .to_request();
+        req.extensions_mut().insert(user.clone());
+
+        let res = test::call_service(&app, req).await;
+        assert_eq!(res.status(), http::StatusCode::BAD_REQUEST);
 
         Ok(())
     }

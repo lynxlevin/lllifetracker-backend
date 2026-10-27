@@ -1,11 +1,29 @@
+use domain_services::action_service::{
+    ActionService, ActionServiceError, ActionServiceMutation, ActionUpdateParams,
+};
+use thiserror::Error;
 use uuid::Uuid;
 
-use crate::{
-    my_way::actions::types::{ActionUpdateRequest, ActionVisible},
-    UseCaseError,
-};
-use db_adapters::action_adapter::{ActionAdapter, ActionFilter, ActionMutation, ActionQuery, UpdateActionParams};
+use crate::my_way::actions::types::{ActionUpdateRequest, ActionVisible};
 use entities::user as user_entity;
+
+#[derive(Debug, Error)]
+pub enum UpdateActionError {
+    #[error("{0}")]
+    BadRequest(String),
+    #[error("{0}")]
+    NotFound(String),
+    #[error("{0}")]
+    InternalServerError(String),
+}
+impl From<ActionServiceError> for UpdateActionError {
+    fn from(e: ActionServiceError) -> Self {
+        match e {
+            ActionServiceError::ActionNotFound() => Self::NotFound(e.to_string()),
+            _ => Self::InternalServerError(e.to_string()),
+        }
+    }
+}
 
 #[tracing::instrument(
     fields(
@@ -22,43 +40,40 @@ pub async fn update_action<'a>(
     user: user_entity::Model,
     params: ActionUpdateRequest,
     action_id: Uuid,
-    action_adapter: ActionAdapter<'a>,
-) -> Result<ActionVisible, UseCaseError> {
+    action_service: ActionService<'a>,
+) -> Result<ActionVisible, UpdateActionError> {
     let params = _parse_params(params)?;
 
-    let action = action_adapter
-        .clone()
-        .filter_eq_user(&user)
-        .get_by_id(action_id)
-        .await
-        .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?
-        .ok_or(UseCaseError::NotFound("Action with this id was not found".to_string()))?;
+    let action = action_service
+        .update(ActionUpdateParams {
+            name: params.name,
+            discipline: params.discipline,
+            memo: params.memo,
+            color: params.color,
+            user_id: user.id,
+            action_id,
+        })
+        .await?;
 
-    action_adapter
-        .update(
-            action,
-            UpdateActionParams {
-                name: params.name.clone(),
-                discipline: params.discipline.clone(),
-                memo: params.memo.clone(),
-                color: params.color.clone(),
-            },
-        )
-        .await
-        .map(|action| ActionVisible::from(action))
-        .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
+    Ok(ActionVisible::from(action))
 }
 
-fn _parse_params(params: ActionUpdateRequest) -> Result<ActionUpdateRequest, UseCaseError> {
+fn _parse_params(params: ActionUpdateRequest) -> Result<ActionUpdateRequest, UpdateActionError> {
     if params.color.len() != 7 {
-        return Err(UseCaseError::BadRequest("color must be 7 characters long.".to_string()));
+        return Err(UpdateActionError::BadRequest(
+            "color must be 7 characters long.".to_string(),
+        ));
     }
     if !params.color.starts_with('#') {
-        return Err(UseCaseError::BadRequest("color must be hex color code.".to_string()));
+        return Err(UpdateActionError::BadRequest(
+            "color must be hex color code.".to_string(),
+        ));
     }
     for c in params.color.split_at(1).1.chars() {
         if !c.is_ascii_hexdigit() {
-            return Err(UseCaseError::BadRequest("color must be hex color code.".to_string()));
+            return Err(UpdateActionError::BadRequest(
+                "color must be hex color code.".to_string(),
+            ));
         }
     }
 

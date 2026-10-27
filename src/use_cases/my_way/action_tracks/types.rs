@@ -1,4 +1,7 @@
 use chrono::{DateTime, FixedOffset};
+pub use domain_services::action_track_service::{
+    ActionTrackAggregateByDateResponseItem, ActionTrackAggregateDuration, ActionTrackAggregateResponse,
+};
 use entities::{action_track, prelude::ActionTrack};
 use sea_orm::DerivePartialModel;
 use serde::{Deserialize, Serialize};
@@ -48,24 +51,6 @@ pub struct ActionTrackAggregationQuery {
 #[derive(Deserialize, Debug)]
 pub struct ActionTrackAggregationDailyQuery {
     pub year_month: String,
-}
-
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
-pub struct ActionTrackAggregation {
-    pub durations_by_action: Vec<ActionTrackAggregationDuration>,
-}
-
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
-pub struct ActionTrackAggregationDuration {
-    pub action_id: uuid::Uuid,
-    pub duration: i64,
-    pub count: i64,
-}
-
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
-pub struct ActionTrackDailyAggregationItem {
-    pub date: u32,
-    pub aggregation: Vec<ActionTrackAggregationDuration>,
 }
 
 #[derive(Deserialize, Debug, Serialize)]

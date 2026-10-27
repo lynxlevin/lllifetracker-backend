@@ -4,14 +4,14 @@ use actix_web::{
     HttpResponse,
 };
 use common::db::Db;
-use db_adapters::{action_adapter::ActionAdapter, action_goal_adapter::ActionGoalAdapter};
+use domain_services::action_service::ActionService;
 use entities::user as user_entity;
-use use_cases::{
-    my_way::actions::{convert_track_type::convert_action_track_type, types::ActionTrackTypeConversionRequest},
-    UseCaseError,
+use use_cases::my_way::actions::{
+    convert_track_type::{convert_action_track_type, ConvertTrackTypeActionError},
+    types::ActionTrackTypeConversionRequest,
 };
 
-use crate::utils::{response_401, response_404, response_500};
+use common::errors::error_responses::{response_401, response_404, response_500};
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
 struct PathParam {
@@ -31,15 +31,14 @@ pub async fn convert_action_track_type_endpoint(
                 user.into_inner(),
                 req.into_inner(),
                 path_param.action_id,
-                ActionAdapter::init(&db),
-                ActionGoalAdapter::init(&db),
+                ActionService::init(&db),
             )
             .await
             {
                 Ok(res) => HttpResponse::Ok().json(res),
                 Err(e) => match &e {
-                    UseCaseError::NotFound(message) => response_404(message),
-                    _ => response_500(e),
+                    ConvertTrackTypeActionError::NotFound(message) => response_404(message),
+                    ConvertTrackTypeActionError::InternalServerError(_) => response_500(e),
                 },
             }
         }

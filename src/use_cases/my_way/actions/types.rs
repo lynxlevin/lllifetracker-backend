@@ -61,26 +61,34 @@ pub struct ActionVisibleWithGoal {
     pub updated_at: DateTime<FixedOffset>,
 }
 
-impl From<&(action::Model, Option<action_goal::Model>)> for ActionVisibleWithGoal {
-    fn from(value: &(action::Model, Option<action_goal::Model>)) -> Self {
+impl From<&action::Model> for ActionVisibleWithGoal {
+    fn from(value: &action::Model) -> Self {
         ActionVisibleWithGoal {
-            id: value.0.id,
-            name: value.0.name.clone(),
-            discipline: value.0.discipline.clone(),
-            memo: value.0.memo.clone(),
-            color: value.0.color.clone(),
-            track_type: value.0.track_type.clone(),
-            archived: value.0.archived,
-            goal: value.1.as_ref().and_then(|goal| Some(ActionGoalVisible::from(goal))),
-            created_at: value.0.created_at,
-            updated_at: value.0.updated_at,
+            id: value.id,
+            name: value.name.clone(),
+            discipline: value.discipline.clone(),
+            memo: value.memo.clone(),
+            color: value.color.clone(),
+            track_type: value.track_type.clone(),
+            archived: value.archived,
+            goal: None,
+            created_at: value.created_at,
+            updated_at: value.updated_at,
         }
     }
 }
-
-impl From<(action::Model, Option<action_goal::Model>)> for ActionVisibleWithGoal {
-    fn from(value: (action::Model, Option<action_goal::Model>)) -> Self {
-        ActionVisibleWithGoal::from(&(value.0, value.1))
+impl From<action::Model> for ActionVisibleWithGoal {
+    fn from(value: action::Model) -> Self {
+        ActionVisibleWithGoal::from(&value)
+    }
+}
+impl ActionVisibleWithGoal {
+    pub fn with_goal(mut self, goal: Option<action_goal::Model>) -> Self {
+        self.goal = match goal {
+            Some(goal) => Some(ActionGoalVisible::from(goal)),
+            None => None,
+        };
+        self
     }
 }
 

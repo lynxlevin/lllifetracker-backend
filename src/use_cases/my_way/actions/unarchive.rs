@@ -1,15 +1,27 @@
+use domain_services::action_service::{
+    ActionService, ActionServiceError, ActionServiceMutation, ActionUnarchiveParams,
+};
+use thiserror::Error;
 use uuid::Uuid;
 
-use crate::{
-    my_way::actions::types::ActionVisible, users::first_track_at_synchronizer::FirstTrackAtSynchronizer,
-    UseCaseError,
-};
-use db_adapters::{
-    action_adapter::{ActionAdapter, ActionFilter, ActionMutation, ActionQuery},
-    action_track_adapter::ActionTrackAdapter,
-    user_adapter::UserAdapter,
-};
+use crate::my_way::actions::types::ActionVisible;
 use entities::user as user_entity;
+
+#[derive(Debug, Error)]
+pub enum UnarchiveActionError {
+    #[error("{0}")]
+    NotFound(String),
+    #[error("{0}")]
+    InternalServerError(String),
+}
+impl From<ActionServiceError> for UnarchiveActionError {
+    fn from(e: ActionServiceError) -> Self {
+        match e {
+            ActionServiceError::ActionNotFound() => Self::NotFound(e.to_string()),
+            _ => Self::InternalServerError(e.to_string()),
+        }
+    }
+}
 
 #[tracing::instrument(
     fields(
@@ -21,25 +33,10 @@ use entities::user as user_entity;
 pub async fn unarchive_action<'a>(
     user: user_entity::Model,
     action_id: Uuid,
-    action_adapter: ActionAdapter<'a>,
-    user_adapter: UserAdapter<'a>,
-    action_track_adapter: ActionTrackAdapter<'a>,
-) -> Result<ActionVisible, UseCaseError> {
-    let action = action_adapter
-        .clone()
-        .filter_eq_user(&user)
-        .get_by_id(action_id)
-        .await
-        .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?
-        .ok_or(UseCaseError::NotFound("Action with this id was not found".to_string()))?;
-
-    let action = action_adapter
-        .unarchive(action)
-        .await
-        .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
-
-    FirstTrackAtSynchronizer::init(action_track_adapter, user_adapter, user)
-        .update_user_first_track_at(None, None)
+    action_service: ActionService<'a>,
+) -> Result<ActionVisible, UnarchiveActionError> {
+    let action = action_service
+        .unarchive(ActionUnarchiveParams { user, action_id })
         .await?;
 
     Ok(ActionVisible::from(action))

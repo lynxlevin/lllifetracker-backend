@@ -49,9 +49,9 @@ async fn happy_path() -> Result<(), DbErr> {
     let res: Vec<ActionVisibleWithGoal> = test::read_body_json(resp).await;
 
     let expected = vec![
-        ActionVisibleWithGoal::from((action_0, Some(action_goal_0))),
-        ActionVisibleWithGoal::from((action_1, Some(action_goal_1))),
-        ActionVisibleWithGoal::from((archived_action, None)),
+        ActionVisibleWithGoal::from(action_0).with_goal(Some(action_goal_0)),
+        ActionVisibleWithGoal::from(action_1).with_goal(Some(action_goal_1)),
+        ActionVisibleWithGoal::from(archived_action),
     ];
 
     assert_eq!(res.len(), expected.len());
@@ -99,7 +99,7 @@ mod list_with_goal {
 
         let res: Vec<ActionVisibleWithGoal> = test::read_body_json(resp).await;
 
-        let expected = vec![ActionVisibleWithGoal::from((action, Some(active_action_goal)))];
+        let expected = vec![ActionVisibleWithGoal::from(action).with_goal(Some(active_action_goal))];
 
         assert_eq!(res.len(), expected.len());
         assert_eq!(res[0], expected[0]);
@@ -131,8 +131,8 @@ mod list_with_goal {
         let res: Vec<ActionVisibleWithGoal> = test::read_body_json(resp).await;
 
         let expected = vec![
-            ActionVisibleWithGoal::from((action_with_no_goal, None)),
-            ActionVisibleWithGoal::from((action_with_only_inactive_goal, None)),
+            ActionVisibleWithGoal::from(action_with_no_goal),
+            ActionVisibleWithGoal::from(action_with_only_inactive_goal),
         ];
         dbg!(&res);
 

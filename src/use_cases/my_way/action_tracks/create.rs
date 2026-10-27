@@ -1,18 +1,29 @@
-use chrono::SubsecRound;
-use sea_orm::DbErr;
+use domain_services::action_track_service::{
+    ActionTrackCreateParams, ActionTrackService, ActionTrackServiceError, ActionTrackServiceMutation,
+};
+use thiserror::Error;
 
-use crate::{
-    my_way::action_tracks::types::{ActionTrackCreateRequest, ActionTrackVisible},
-    users::first_track_at_synchronizer::FirstTrackAtSynchronizer,
-    UseCaseError,
-};
-use db_adapters::{
-    action_adapter::{ActionAdapter, ActionFilter, ActionQuery},
-    action_track_adapter::{ActionTrackAdapter, ActionTrackMutation, CreateActionTrackParams},
-    user_adapter::UserAdapter,
-    CustomDbErr,
-};
-use entities::{action::ActionTrackType, user as user_entity};
+use crate::my_way::action_tracks::types::{ActionTrackCreateRequest, ActionTrackVisible};
+use entities::user as user_entity;
+
+#[derive(Debug, Error)]
+pub enum CreateActionTracksError {
+    #[error("{0}")]
+    ValidationError(String),
+    #[error("{0}")]
+    NotFound(String),
+    #[error("{0}")]
+    InternalServerError(String),
+}
+impl From<ActionTrackServiceError> for CreateActionTracksError {
+    fn from(e: ActionTrackServiceError) -> Self {
+        match e {
+            ActionTrackServiceError::DuplicateCreation() => Self::ValidationError(e.to_string()),
+            ActionTrackServiceError::ActionNotFound() => Self::NotFound(e.to_string()),
+            _ => Self::InternalServerError(e.to_string()),
+        }
+    }
+}
 
 #[tracing::instrument(
     fields(
@@ -25,51 +36,10 @@ use entities::{action::ActionTrackType, user as user_entity};
 pub async fn create_action_track<'a>(
     user: user_entity::Model,
     req: ActionTrackCreateRequest,
-    action_track_adapter: ActionTrackAdapter<'a>,
-    action_adapter: ActionAdapter<'a>,
-    user_adapter: UserAdapter<'a>,
-) -> Result<ActionTrackVisible, UseCaseError> {
-    let action = action_adapter
-        .filter_eq_user(&user)
-        .get_by_id(req.action_id)
-        .await
-        .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?
-        .ok_or(UseCaseError::NotFound(
-            "An action with that id does not exist.".to_string(),
-        ))?;
-
-    let params = match action.track_type {
-        ActionTrackType::TimeSpan => CreateActionTrackParams {
-            started_at: req.started_at.trunc_subsecs(0),
-            ended_at: None,
-            duration: None,
-            action_id: req.action_id,
-            user_id: user.id,
-        },
-        ActionTrackType::Count => CreateActionTrackParams {
-            started_at: req.started_at.trunc_subsecs(0),
-            ended_at: Some(req.started_at.trunc_subsecs(0)),
-            duration: Some(0),
-            action_id: req.action_id,
-            user_id: user.id,
-        },
-    };
-    let action_track = action_track_adapter
-        .clone()
-        .create(params)
-        .await
-        .map_err(|e| match &e {
-            DbErr::Custom(message) => match CustomDbErr::from(message) {
-                CustomDbErr::Duplicate => UseCaseError::Conflict(
-                    "A track for the same action which starts at the same time exists.".to_string(),
-                ),
-                _ => UseCaseError::InternalServerError(format!("{:?}", e)),
-            },
-            _ => UseCaseError::InternalServerError(format!("{:?}", e)),
-        })?;
-
-    FirstTrackAtSynchronizer::init(action_track_adapter, user_adapter, user)
-        .update_user_first_track_at(None, Some(action_track.clone()))
+    action_track_service: ActionTrackService<'a>,
+) -> Result<ActionTrackVisible, CreateActionTracksError> {
+    let action_track = action_track_service
+        .create(ActionTrackCreateParams { user, action_id: req.action_id, started_at: req.started_at })
         .await?;
 
     Ok(ActionTrackVisible::from(action_track))

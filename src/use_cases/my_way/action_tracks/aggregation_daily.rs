@@ -1,17 +1,27 @@
 use std::collections::HashMap;
 
-use crate::{
-    my_way::action_tracks::types::{
-        ActionTrackAggregationDailyQuery, ActionTrackAggregationDuration, ActionTrackDailyAggregationItem,
-    },
-    UseCaseError,
+use crate::my_way::action_tracks::types::{
+    ActionTrackAggregateByDateResponseItem, ActionTrackAggregationDailyQuery,
 };
-use chrono::{DateTime, Datelike, Duration, FixedOffset};
-use db_adapters::{
-    action_track_adapter::{ActionTrackAdapter, ActionTrackFilter, ActionTrackOrder, ActionTrackQuery},
-    Order,
+use chrono::{DateTime, Duration, FixedOffset};
+use domain_services::action_track_service::{
+    ActionTrackAggregateByDateParams, ActionTrackService, ActionTrackServiceError, ActionTrackServiceQuery,
 };
 use entities::user::{self as user_entity, TimezoneEnum};
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum AggregateDailyActionTracksError {
+    #[error("{0}")]
+    ValidationError(String),
+    #[error("{0}")]
+    InternalServerError(String),
+}
+impl From<ActionTrackServiceError> for AggregateDailyActionTracksError {
+    fn from(e: ActionTrackServiceError) -> Self {
+        Self::InternalServerError(e.to_string())
+    }
+}
 
 #[tracing::instrument(
     fields(
@@ -23,50 +33,18 @@ use entities::user::{self as user_entity, TimezoneEnum};
 pub async fn aggregate_daily_action_tracks<'a>(
     user: user_entity::Model,
     params: ActionTrackAggregationDailyQuery,
-    action_track_adapter: ActionTrackAdapter<'a>,
-) -> Result<HashMap<String, Vec<ActionTrackDailyAggregationItem>>, UseCaseError> {
+    action_track_service: ActionTrackService<'a>,
+) -> Result<HashMap<String, Vec<ActionTrackAggregateByDateResponseItem>>, AggregateDailyActionTracksError> {
     let params = parse_params(params, &user.timezone)?;
-    let action_tracks = action_track_adapter
-        .filter_eq_user(&user)
-        .filter_started_at_gte(params.start)
-        .filter_started_at_lte(params.end)
-        .filter_ended_at_is_null(false)
-        .filter_eq_archived_action(false)
-        .order_by_started_at(Order::Desc)
-        .order_by_action_id(Order::Asc)
-        .get_all()
-        .await
-        .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
+    let aggregation_items = action_track_service
+        .aggregate_by_date(
+            user.id,
+            user.timezone,
+            ActionTrackAggregateByDateParams { started_at_gte: params.start, started_at_lte: params.end },
+        )
+        .await?;
 
-    let mut aggregation_items: Vec<ActionTrackDailyAggregationItem> = vec![];
-    for track in action_tracks {
-        let date = user.timezone.convert_utc(track.started_at.to_utc()).day();
-        if aggregation_items.is_empty() || aggregation_items.last().unwrap().date != date {
-            aggregation_items.push(ActionTrackDailyAggregationItem {
-                date,
-                aggregation: vec![ActionTrackAggregationDuration {
-                    action_id: track.action_id,
-                    duration: track.duration.unwrap(),
-                    count: 1,
-                }],
-            })
-        } else {
-            let item = aggregation_items.last_mut().unwrap();
-            match item.aggregation.iter_mut().find(|agg| agg.action_id == track.action_id) {
-                Some(agg_item) => {
-                    agg_item.duration += track.duration.unwrap();
-                    agg_item.count += 1;
-                }
-                None => item.aggregation.push(ActionTrackAggregationDuration {
-                    action_id: track.action_id,
-                    duration: track.duration.unwrap(),
-                    count: 1,
-                }),
-            }
-        }
-    }
-
-    let mut res: HashMap<String, Vec<ActionTrackDailyAggregationItem>> = HashMap::new();
+    let mut res: HashMap<String, Vec<ActionTrackAggregateByDateResponseItem>> = HashMap::new();
     res.insert(params.year_month, aggregation_items);
     Ok(res)
 }
@@ -83,22 +61,22 @@ const INVALID_YEAR_MONTH_MESSAGE: &str = "Year_month cannot be parsed into a dat
 fn parse_params(
     params: ActionTrackAggregationDailyQuery,
     user_timezone: &TimezoneEnum,
-) -> Result<ParsedParams, UseCaseError> {
+) -> Result<ParsedParams, AggregateDailyActionTracksError> {
     let year: u32 = params.year_month[0..4]
         .parse()
-        .map_err(|_| UseCaseError::BadRequest(INVALID_YEAR_MONTH_MESSAGE.to_string()))?;
+        .map_err(|_| AggregateDailyActionTracksError::ValidationError(INVALID_YEAR_MONTH_MESSAGE.to_string()))?;
     let month: u32 = params.year_month[4..6]
         .parse()
-        .map_err(|_| UseCaseError::BadRequest(INVALID_YEAR_MONTH_MESSAGE.to_string()))?;
+        .map_err(|_| AggregateDailyActionTracksError::ValidationError(INVALID_YEAR_MONTH_MESSAGE.to_string()))?;
 
     let utc_start = DateTime::parse_from_rfc3339(&format!("{year}-{:0>2}-01T00:00:00Z", month))
-        .map_err(|_| UseCaseError::BadRequest(INVALID_YEAR_MONTH_MESSAGE.to_string()))?;
+        .map_err(|_| AggregateDailyActionTracksError::ValidationError(INVALID_YEAR_MONTH_MESSAGE.to_string()))?;
 
     let utc_end = match month == 12 {
         true => DateTime::parse_from_rfc3339(&format!("{}-01-01T23:59:59Z", year + 1)),
         false => DateTime::parse_from_rfc3339(&format!("{year}-{:0>2}-01T23:59:59Z", month + 1)),
     }
-    .map_err(|_| UseCaseError::BadRequest(INVALID_YEAR_MONTH_MESSAGE.to_string()))?
+    .map_err(|_| AggregateDailyActionTracksError::ValidationError(INVALID_YEAR_MONTH_MESSAGE.to_string()))?
         - Duration::days(1);
 
     match user_timezone {

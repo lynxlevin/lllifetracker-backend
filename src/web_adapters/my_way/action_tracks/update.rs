@@ -4,13 +4,13 @@ use actix_web::{
     HttpResponse,
 };
 use common::db::Db;
+use domain_services::action_track_service::ActionTrackService;
 
-use crate::utils::{response_400, response_401, response_404, response_409, response_500};
-use db_adapters::{action_track_adapter::ActionTrackAdapter, user_adapter::UserAdapter};
+use common::errors::error_responses::{response_400, response_401, response_404, response_500};
 use entities::user as user_entity;
-use use_cases::{
-    my_way::action_tracks::{types::ActionTrackUpdateRequest, update::update_action_track},
-    UseCaseError,
+use use_cases::my_way::action_tracks::{
+    types::ActionTrackUpdateRequest,
+    update::{update_action_track, UpdateActionTracksError},
 };
 
 #[derive(serde::Deserialize, Debug, serde::Serialize)]
@@ -31,17 +31,15 @@ pub async fn update_action_track_endpoint(
                 user.into_inner(),
                 req.into_inner(),
                 path_param.action_track_id,
-                ActionTrackAdapter::init(&db),
-                UserAdapter::init(&db),
+                ActionTrackService::init(&db),
             )
             .await
             {
                 Ok(res) => HttpResponse::Ok().json(res),
                 Err(e) => match &e {
-                    UseCaseError::BadRequest(message) => response_400(message),
-                    UseCaseError::NotFound(message) => response_404(message),
-                    UseCaseError::Conflict(message) => response_409(message),
-                    _ => response_500(e),
+                    UpdateActionTracksError::ValidationError(message) => response_400(message),
+                    UpdateActionTracksError::NotFound(message) => response_404(message),
+                    UpdateActionTracksError::InternalServerError(_) => response_500(e),
                 },
             }
         }

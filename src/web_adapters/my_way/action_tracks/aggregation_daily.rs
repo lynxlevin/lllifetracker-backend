@@ -4,12 +4,13 @@ use actix_web::{
     HttpResponse,
 };
 use common::db::Db;
+use domain_services::action_track_service::ActionTrackService;
 
-use crate::utils::{response_401, response_500};
-use db_adapters::action_track_adapter::ActionTrackAdapter;
+use common::errors::error_responses::{response_400, response_401, response_500};
 use entities::user as user_entity;
 use use_cases::my_way::action_tracks::{
-    aggregation_daily::aggregate_daily_action_tracks, types::ActionTrackAggregationDailyQuery,
+    aggregation_daily::{aggregate_daily_action_tracks, AggregateDailyActionTracksError},
+    types::ActionTrackAggregationDailyQuery,
 };
 
 #[get("/aggregation/daily")]
@@ -23,12 +24,15 @@ pub async fn aggregate_daily_action_tracks_endpoint(
             match aggregate_daily_action_tracks(
                 user.into_inner(),
                 query.into_inner(),
-                ActionTrackAdapter::init(&db),
+                ActionTrackService::init(&db),
             )
             .await
             {
                 Ok(res) => HttpResponse::Ok().json(res),
-                Err(e) => response_500(e),
+                Err(e) => match e {
+                    AggregateDailyActionTracksError::ValidationError(message) => response_400(&message),
+                    AggregateDailyActionTracksError::InternalServerError(_) => response_500(e),
+                },
             }
         }
         None => response_401(),

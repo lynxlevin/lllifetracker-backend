@@ -1,6 +1,22 @@
-use crate::{my_way::actions::types::ActionBulkUpdateOrderRequest, UseCaseError};
-use db_adapters::action_adapter::{ActionAdapter, ActionFilter, ActionMutation, ActionQuery};
+use crate::my_way::actions::types::ActionBulkUpdateOrderRequest;
+use domain_services::action_service::{
+    ActionBulkUpdateOrderingParams, ActionService, ActionServiceError, ActionServiceMutation,
+};
 use entities::user as user_entity;
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum BulkUpdateOrderingActionError {
+    #[error("{0}")]
+    InternalServerError(String),
+}
+impl From<ActionServiceError> for BulkUpdateOrderingActionError {
+    fn from(e: ActionServiceError) -> Self {
+        match e {
+            _ => Self::InternalServerError(e.to_string()),
+        }
+    }
+}
 
 /// Fuzzy Ordering Design Decision
 /// Ordering doesn’t need to be correctly serialized in the backend
@@ -24,19 +40,14 @@ use entities::user as user_entity;
 pub async fn bulk_update_action_ordering<'a>(
     user: user_entity::Model,
     params: ActionBulkUpdateOrderRequest,
-    action_adapter: ActionAdapter<'a>,
-) -> Result<(), UseCaseError> {
-    let actions = action_adapter
-        .clone()
-        .filter_eq_user(&user)
-        .filter_in_ids(params.ordering.clone())
-        .get_all()
-        .await
-        .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))?;
+    action_service: ActionService<'a>,
+) -> Result<(), BulkUpdateOrderingActionError> {
+    action_service
+        .bulk_update_ordering(ActionBulkUpdateOrderingParams {
+            user_id: user.id,
+            action_ids_in_order: params.ordering,
+        })
+        .await?;
 
-    action_adapter
-        .bulk_update_ordering(actions, params.ordering.clone())
-        .await
-        .map(|_| ())
-        .map_err(|e| UseCaseError::InternalServerError(format!("{:?}", e)))
+    Ok(())
 }
