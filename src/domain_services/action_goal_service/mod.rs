@@ -14,26 +14,14 @@ pub enum ActionGoalServiceError {
     ActionNotFound(),
     #[error("ActionGoal cannot be found.")]
     ActionGoalNotFound(),
-    // #[error("ActionGoal cannot be found.")]
-    // ActionGoalNotFound(),
-    // #[error("Friend cannot be found.")]
-    // FriendNotFound(),
-    // #[error("{0}")]
-    // RelatedRecordNotFound(String),
-    // #[error("User (open_id: {0}) does not own this note (id: {1}).")]
-    // NoOwnerPermission(OpenId, Uuid),
-    // #[error("User (open_id: {0}) is not authorized to edit this note (id: {1}).")]
-    // NoEditorPermission(OpenId, Uuid),
-    // #[error("User (open_id: {0}) is not authorized to access this note (id: {1}).")]
-    // UnauthorizedAccess(OpenId, Uuid),
-    // #[error("User (open_id: {0}) does not have lock on this note (id: {1}).")]
-    // UserHasNoLock(OpenId, Uuid),
-    // #[error("User (open_id: {0}) already has lock on this note (id: {1}).")]
-    // LockedByOther(OpenId, Uuid),
-    // #[error("ActionGoal (id: {0}) is shared with others.")]
-    // SharedWithOther(Uuid),
-    // #[error("ActionGoal (id: {0}) is secret.")]
-    // SecretActionGoal(Uuid),
+    #[error("For TimeSpan-type action, duration_seconds must be set.")]
+    DurationSecondsNullForTimeSpanAction(),
+    #[error("For TimeSpan-type action, count cannot be set.")]
+    CountNotNullForTimeSpanAction(),
+    #[error("For Count-type action, count must be set.")]
+    CountNullForCountAction(),
+    #[error("For Count-type action, duration_seconds cannot be set.")]
+    DurationSecondsNotNullForCountAction(),
 }
 impl From<TransactionError<ActionGoalServiceError>> for ActionGoalServiceError {
     fn from(value: TransactionError<ActionGoalServiceError>) -> Self {

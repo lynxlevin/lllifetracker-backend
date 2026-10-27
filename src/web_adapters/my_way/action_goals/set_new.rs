@@ -4,14 +4,14 @@ use actix_web::{
     HttpResponse,
 };
 use common::db::Db;
-use db_adapters::{action_adapter::ActionAdapter, action_goal_adapter::ActionGoalAdapter};
+use domain_services::action_goal_service::ActionGoalService;
 use entities::user as user_entity;
-use use_cases::{
-    my_way::action_goals::{set_new::set_new_action_goal, types::ActionGoalSetNewRequest},
-    UseCaseError,
+use use_cases::my_way::action_goals::{
+    set_new::{set_new_action_goal, SetNewActionGoalError},
+    types::ActionGoalSetNewRequest,
 };
 
-use crate::utils::{response_400, response_401, response_404, response_500};
+use common::errors::error_responses::{response_400, response_401, response_404, response_500};
 
 #[post("")]
 pub async fn set_new_action_goal_endpoint(
@@ -21,18 +21,11 @@ pub async fn set_new_action_goal_endpoint(
 ) -> HttpResponse {
     match user {
         Some(user) => {
-            match set_new_action_goal(
-                user.into_inner(),
-                req.into_inner(),
-                ActionAdapter::init(&db),
-                ActionGoalAdapter::init(&db),
-            )
-            .await
-            {
+            match set_new_action_goal(user.into_inner(), req.into_inner(), ActionGoalService::init(&db)).await {
                 Ok(res) => HttpResponse::Created().json(res),
                 Err(e) => match e {
-                    UseCaseError::BadRequest(message) => response_400(&message),
-                    UseCaseError::NotFound(message) => response_404(&message),
+                    SetNewActionGoalError::ValidationError(message) => response_400(&message),
+                    SetNewActionGoalError::NotFound(message) => response_404(&message),
                     _ => response_500(e),
                 },
             }
