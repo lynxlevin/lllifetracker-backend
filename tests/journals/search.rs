@@ -246,6 +246,77 @@ async fn text_and_tag_combination_should_be_and_condition() -> Result<(), DbErr>
 }
 
 #[actix_web::test]
+async fn all_linked_tags_other_than_queried_should_be_returned() -> Result<(), DbErr> {
+    let Connections { app, db, .. } = init_app().await?;
+    let user = factory::user().insert(&db.db).await?;
+    let tags = create_tags(
+        vec![
+            TagParam { name: "tag_0", ..Default::default() },
+            TagParam { name: "tag_1", ..Default::default() },
+        ],
+        &user,
+        &db,
+    )
+    .await?;
+    let tag_0 = tags.get("tag_0").unwrap();
+    let tag_1 = tags.get("tag_1").unwrap();
+
+    let diary = factory::diary(user.id).insert(&db.db).await?;
+    factory::link_diary_tag(&db, diary.id, tag_0.id).await?;
+    factory::link_diary_tag(&db, diary.id, tag_1.id).await?;
+
+    let reading_note = factory::reading_note(user.id).insert(&db.db).await?;
+    factory::link_reading_note_tag(&db, reading_note.id, tag_0.id).await?;
+    factory::link_reading_note_tag(&db, reading_note.id, tag_1.id).await?;
+
+    let thinking_note = factory::thinking_note(user.id).insert(&db.db).await?;
+    factory::link_thinking_note_tag(&db, thinking_note.id, tag_0.id).await?;
+    factory::link_thinking_note_tag(&db, thinking_note.id, tag_1.id).await?;
+
+    let req = get_client()
+        .uri(URI)
+        .set_json(JournalSearchRequest { text: None, tag_ids: vec![tag_0.id] })
+        .to_request();
+    req.extensions_mut().insert(user.clone());
+
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), http::StatusCode::OK);
+
+    let body: Vec<JournalVisibleWithTags> = test::read_body_json(resp).await;
+    let expected = vec![
+        JournalVisibleWithTags::from(DiaryVisibleWithTags::from((
+            diary,
+            vec![
+                TagVisible::from((tag_0, tag_0.name.clone().unwrap())),
+                TagVisible::from((tag_1, tag_1.name.clone().unwrap())),
+            ],
+        ))),
+        JournalVisibleWithTags::from(ReadingNoteVisibleWithTags::from((
+            reading_note,
+            vec![
+                TagVisible::from((tag_0, tag_0.name.clone().unwrap())),
+                TagVisible::from((tag_1, tag_1.name.clone().unwrap())),
+            ],
+        ))),
+        JournalVisibleWithTags::from(ThinkingNoteVisibleWithTags::from((
+            thinking_note,
+            vec![
+                TagVisible::from((tag_0, tag_0.name.clone().unwrap())),
+                TagVisible::from((tag_1, tag_1.name.clone().unwrap())),
+            ],
+        ))),
+    ];
+
+    assert_eq!(body.len(), expected.len());
+    for i in 0..body.len() {
+        dbg!(i);
+        assert_eq!(body[i], expected[i]);
+    }
+
+    Ok(())
+}
+
+#[actix_web::test]
 async fn unauthorized_if_not_logged_in() -> Result<(), DbErr> {
     let Connections { app, .. } = init_app().await?;
 

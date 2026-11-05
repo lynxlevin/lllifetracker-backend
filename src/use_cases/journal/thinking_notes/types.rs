@@ -1,5 +1,6 @@
 use chrono::{DateTime, FixedOffset};
-use db_adapters::thinking_note_adapter::ThinkingNoteWithTag;
+use db_adapters::thinking_note_adapter::ThinkingNoteWithTag as ThinkingNoteWithTagOld;
+use domain_services::thinking_note_service::ThinkingNoteWithTag;
 use entities::{prelude::ThinkingNote, thinking_note};
 use sea_orm::DerivePartialModel;
 use serde::{Deserialize, Serialize};
@@ -61,6 +62,21 @@ impl From<(thinking_note::Model, Vec<TagVisible>)> for ThinkingNoteVisibleWithTa
 }
 impl From<(ThinkingNoteWithTag, Vec<TagVisible>)> for ThinkingNoteVisibleWithTags {
     fn from(value: (ThinkingNoteWithTag, Vec<TagVisible>)) -> Self {
+        let (thinking_note, tags) = value;
+        Self {
+            id: thinking_note.id,
+            question: thinking_note.question,
+            thought: thinking_note.thought,
+            answer: thinking_note.answer,
+            resolved_at: thinking_note.resolved_at,
+            created_at: thinking_note.created_at,
+            updated_at: thinking_note.updated_at,
+            tags,
+        }
+    }
+}
+impl From<(ThinkingNoteWithTagOld, Vec<TagVisible>)> for ThinkingNoteVisibleWithTags {
+    fn from(value: (ThinkingNoteWithTagOld, Vec<TagVisible>)) -> Self {
         let (thinking_note, tags) = value;
         Self {
             id: thinking_note.id,
