@@ -3,8 +3,8 @@ use std::future::Future;
 use chrono::{DateTime, FixedOffset, NaiveDate, Utc};
 use common::db::Db;
 use sea_orm::{
-    prelude::Expr, sea_query::NullOrdering::Last, ActiveModelTrait, ColumnAsExpr, ColumnTrait, Condition, DbConn,
-    DbErr, DeriveColumn, EntityTrait, EnumIter, ExprTrait, FromQueryResult, IntoActiveModel, JoinType::LeftJoin,
+    prelude::Expr, sea_query::NullOrdering::Last, ActiveModelTrait, ColumnAsExpr, ColumnTrait, DbConn, DbErr,
+    DeriveColumn, EntityTrait, EnumIter, ExprTrait, FromQueryResult, IntoActiveModel, JoinType::LeftJoin,
     ModelTrait, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait, RuntimeErr::SqlxError, Select, Set,
 };
 use serde::{Deserialize, Serialize};
@@ -59,8 +59,6 @@ impl ReadingNoteJoin for ReadingNoteAdapter<'_> {
 pub trait ReadingNoteFilter {
     fn filter_eq_id(self, id: Uuid) -> Self;
     fn filter_eq_user(self, user: &user::Model) -> Self;
-    fn filter_contains_texts(self, texts: Vec<String>) -> Self;
-    fn filter_contains_tags(self, tag_ids: Vec<Uuid>) -> Self;
 }
 
 impl ReadingNoteFilter for ReadingNoteAdapter<'_> {
@@ -71,24 +69,6 @@ impl ReadingNoteFilter for ReadingNoteAdapter<'_> {
 
     fn filter_eq_user(mut self, user: &user::Model) -> Self {
         self.query = self.query.filter(Column::UserId.eq(user.id));
-        self
-    }
-
-    fn filter_contains_texts(mut self, texts: Vec<String>) -> Self {
-        let mut text_cond = Condition::all();
-        for text in texts {
-            text_cond = text_cond.add(
-                Condition::any()
-                    .add(Column::Title.contains(&text))
-                    .add(Column::Text.contains(&text)),
-            );
-        }
-        self.query = self.query.filter(text_cond);
-        self
-    }
-
-    fn filter_contains_tags(mut self, tag_ids: Vec<Uuid>) -> Self {
-        self.query = self.query.filter(tag::Column::Id.is_in(tag_ids));
         self
     }
 }

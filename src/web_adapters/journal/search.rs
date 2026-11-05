@@ -4,14 +4,14 @@ use actix_web::{
     HttpResponse,
 };
 use common::db::Db;
-use db_adapters::{
-    diary_adapter::DiaryAdapter, reading_note_adapter::ReadingNoteAdapter,
-    thinking_note_adapter::ThinkingNoteAdapter,
+use domain_services::{
+    diary_service::DiaryService, reading_note_service::ReadingNoteService,
+    thinking_note_service::ThinkingNoteService,
 };
 use entities::user as user_entity;
 use use_cases::journal::{search::search_journals, types::JournalSearchRequest};
 
-use crate::utils::{response_401, response_500};
+use common::errors::error_responses::{response_401, response_500};
 
 #[post("search")]
 pub async fn search_journals_endpoint(
@@ -23,9 +23,9 @@ pub async fn search_journals_endpoint(
         Some(user) => match search_journals(
             user.into_inner(),
             params.into_inner(),
-            DiaryAdapter::init(&db),
-            ReadingNoteAdapter::init(&db),
-            ThinkingNoteAdapter::init(&db),
+            DiaryService::init(&db),
+            ReadingNoteService::init(&db),
+            ThinkingNoteService::init(&db),
         )
         .await
         {

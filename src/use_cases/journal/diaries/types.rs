@@ -1,4 +1,5 @@
-use db_adapters::diary_adapter::DiaryWithTag;
+use db_adapters::diary_adapter::DiaryWithTag as DiaryWithTagOld;
+use domain_services::diary_service::DiaryWithTag;
 use entities::{diary, prelude::Diary};
 use sea_orm::DerivePartialModel;
 use serde::{Deserialize, Serialize};
@@ -34,6 +35,12 @@ impl From<(diary::Model, Vec<TagVisible>)> for DiaryVisibleWithTags {
 }
 impl From<(DiaryWithTag, Vec<TagVisible>)> for DiaryVisibleWithTags {
     fn from(value: (DiaryWithTag, Vec<TagVisible>)) -> Self {
+        let (diary, tags) = value;
+        Self { id: diary.id, text: diary.text, date: diary.date, tags }
+    }
+}
+impl From<(DiaryWithTagOld, Vec<TagVisible>)> for DiaryVisibleWithTags {
+    fn from(value: (DiaryWithTagOld, Vec<TagVisible>)) -> Self {
         let (diary, tags) = value;
         Self { id: diary.id, text: diary.text, date: diary.date, tags }
     }
