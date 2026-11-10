@@ -13,7 +13,6 @@ path = "init_test_db.rs"
 
 [dependencies]
 common = { path = "../common", features = ["db", "redis", "settings"] }
-cron_processes = { path = "../cron_processes" }
 entities = { path = "../entities" }
 server = { path = "../server" }
 
