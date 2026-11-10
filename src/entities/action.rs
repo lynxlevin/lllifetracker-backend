@@ -29,8 +29,6 @@ pub struct Model {
     pub action_goals: HasMany<super::action_goal::Entity>,
     #[sea_orm(has_many)]
     pub action_tracks: HasMany<super::action_track::Entity>,
-    #[sea_orm(has_many)]
-    pub notification_rules: HasMany<super::notification_rule::Entity>,
     #[sea_orm(has_one)]
     pub tag: HasOne<super::tag::Entity>,
     #[sea_orm(belongs_to, from = "user_id", to = "id", on_update = "NoAction", on_delete = "Cascade")]

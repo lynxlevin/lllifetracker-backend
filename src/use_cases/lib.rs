@@ -2,7 +2,6 @@ use std::fmt::{Debug, Display};
 
 pub mod journal;
 pub mod my_way;
-pub mod notification;
 pub mod tags;
 pub mod users;
 

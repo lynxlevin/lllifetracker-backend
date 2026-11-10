@@ -7,8 +7,8 @@ use actix_web::{cookie, web::scope, Scope};
 use common::settings::types::Settings;
 use web_adapters::{
     action_goal_routes, action_routes, action_track_routes, ambition_routes, auth_routes, diary_routes,
-    direction_category_routes, direction_routes, journal_routes, notification_rule_routes, reading_note_routes,
-    tag_routes, thinking_note_routes, web_push_subscription_routes,
+    direction_category_routes, direction_routes, journal_routes, reading_note_routes, tag_routes,
+    thinking_note_routes,
 };
 
 pub use request_logger::RequestLogger;
@@ -63,8 +63,6 @@ pub fn get_routes() -> Scope {
         .configure(direction_category_routes)
         .configure(action_goal_routes)
         .configure(thinking_note_routes)
-        .configure(web_push_subscription_routes)
-        .configure(notification_rule_routes)
 }
 
 #[actix_web::get("/health-check")]

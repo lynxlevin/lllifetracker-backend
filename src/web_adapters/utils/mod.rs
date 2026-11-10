@@ -46,14 +46,6 @@ pub fn response_404(error_message: &str) -> HttpResponse {
     })
 }
 
-/// Conflict
-pub fn response_409(error_message: &str) -> HttpResponse {
-    HttpResponse::from_error(ErrorResponse {
-        message: error_message.to_string(),
-        status_code: StatusCode::CONFLICT,
-    })
-}
-
 /// Internal Server Error: with logging
 pub fn response_500<T: Debug>(e: T) -> HttpResponse {
     event!(target: "backend", Level::ERROR, "{:?}", e);

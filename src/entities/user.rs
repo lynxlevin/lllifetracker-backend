@@ -37,15 +37,11 @@ pub struct Model {
     #[sea_orm(has_many)]
     pub direction_categories: HasMany<super::direction_category::Entity>,
     #[sea_orm(has_many)]
-    pub notification_rules: HasMany<super::notification_rule::Entity>,
-    #[sea_orm(has_many)]
     pub reading_notes: HasMany<super::reading_note::Entity>,
     #[sea_orm(has_many)]
     pub tags: HasMany<super::tag::Entity>,
     #[sea_orm(has_many)]
     pub thinking_notes: HasMany<super::thinking_note::Entity>,
-    #[sea_orm(has_one)]
-    pub web_push_subscription: HasOne<super::web_push_subscription::Entity>,
 }
 
 #[derive(DeriveValueType, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -84,13 +80,6 @@ impl TimezoneEnum {
         match self {
             TimezoneEnum::AsiaTokyo => datetime.with_timezone(&FixedOffset::east_opt(9 * 3600).unwrap()),
             TimezoneEnum::Utc => datetime.fixed_offset(),
-        }
-    }
-
-    pub fn to_timezone_offset(&self) -> i32 {
-        match self {
-            TimezoneEnum::AsiaTokyo => 9,
-            TimezoneEnum::Utc => 0,
         }
     }
 }
