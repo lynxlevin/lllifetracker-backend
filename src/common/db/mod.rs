@@ -1,10 +1,6 @@
-mod encryptor;
-
 use sea_orm::{ConnectionTrait, Database, DbConn, DbErr};
 
 use crate::settings::types::Settings;
-
-pub use encryptor::{decode_and_decrypt, encrypt_and_encode};
 
 #[derive(Clone)]
 pub struct Db {
