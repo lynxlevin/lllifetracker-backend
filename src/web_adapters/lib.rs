@@ -1,7 +1,6 @@
 mod journal;
 mod middlewares;
 mod my_way;
-mod notification;
 mod tags;
 mod users;
 mod utils;
@@ -13,9 +12,6 @@ pub use journal::{
 pub use my_way::{
     action_goals::action_goal_routes, action_tracks::action_track_routes, actions::action_routes,
     ambitions::ambition_routes, direction_categories::direction_category_routes, directions::direction_routes,
-};
-pub use notification::{
-    notification_rule::notification_rule_routes, web_push_subscription::web_push_subscription_routes,
 };
 pub use tags::tag_routes;
 pub use users::auth_routes;

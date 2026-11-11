@@ -29,16 +29,12 @@ pub struct ApplicationSettings {
     pub max_log_files: usize,
     pub max_login_attempts: u64,
     pub login_attempts_cool_time_seconds: u64,
-    pub vapid_private_key: String,
-    pub app_owner_email: String,
     pub session_lifetime_days: i64,
 }
 
 #[derive(Deserialize, Clone, Default, Debug)]
 pub struct DatabaseSettings {
     pub url: String,
-    pub encryption_key: String,
-    pub encryption_nonce: String,
 }
 
 #[derive(Deserialize, Clone, Debug, Default)]

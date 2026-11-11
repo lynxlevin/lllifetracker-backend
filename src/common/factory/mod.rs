@@ -1,6 +1,5 @@
 mod journal;
 mod my_way;
-mod notification;
 mod tag;
 mod user;
 
@@ -14,7 +13,5 @@ pub use my_way::action_track::*;
 pub use my_way::ambition::*;
 pub use my_way::direction::*;
 pub use my_way::direction_category::*;
-pub use notification::notification_rule::*;
-pub use notification::web_push_subscription::*;
 pub use tag::*;
 pub use user::*;

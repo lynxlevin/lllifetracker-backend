@@ -1,10 +1,6 @@
-mod encryptor;
-
 use sea_orm::{ConnectionTrait, Database, DbConn, DbErr};
 
 use crate::settings::types::Settings;
-
-pub use encryptor::{decode_and_decrypt, encrypt_and_encode};
 
 #[derive(Clone)]
 pub struct Db {
@@ -41,13 +37,11 @@ pub async fn init_test_db(settings: &Settings) -> () {
             diary,
             direction,
             direction_category,
-            notification_rule,
             reading_note,
             reading_notes_tags,
             tag,
             thinking_note,
             thinking_note_tags,
-            web_push_subscription,
             CASCADE;
         ",
         )

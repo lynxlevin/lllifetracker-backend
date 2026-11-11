@@ -66,15 +66,9 @@ fn merge_env(s: Settings) -> Result<Settings, String> {
             login_attempts_cool_time_seconds: get_env_var("LOGIN_ATTEMPTS_COOL_TIME_SECONDS")?
                 .parse::<u64>()
                 .map_err(|e| e.to_string())?,
-            vapid_private_key: get_env_var("VAPID_PRIVATE_KEY")?,
-            app_owner_email: get_env_var("APP_OWNER_EMAIL")?,
             ..s.application
         },
-        database: DatabaseSettings {
-            url: get_env_var("DATABASE_URL")?,
-            encryption_key: get_env_var("DATABASE_ENCRYPTION_KEY")?,
-            encryption_nonce: get_env_var("DATABASE_ENCRYPTION_NONCE")?,
-        },
+        database: DatabaseSettings { url: get_env_var("DATABASE_URL")? },
         debug: match env::var("APP_DEBUG") {
             Ok(debug) => &debug == "true",
             Err(_) => s.debug,

@@ -9,7 +9,6 @@ members = [
     "src/domain_services",
     "src/web_adapters",
     "src/server",
-    "src/cron_processes",
     "src/life_tracker",
     "tests",
 ]
@@ -19,24 +18,16 @@ default-members = ["src/life_tracker"]
 actix-http = "3.*"
 actix-session = { version = "^0.11.0", features = ["redis-session"] }
 actix-web = "^4.8.0"
-aes-gcm = { version = "0.10.3", default-features = false, features = ["aes", "alloc", "getrandom", "rand_core"]}
 argon2 = { version = "^0.5.3", default-features = false, features = [
     "alloc",
     "password-hash",
 ] }
-base64 = { version = "0.22.1", default-features = false }
 chrono = "^0.4.40"
 deadpool-redis = "^0.22.0"
 dotenvy = "^0.15.7"
-ece = "2.3.1" # Depends on openssl. For easy compile, use only for dev-dependencies.
 env_logger = "0.11.8"
 futures = { version = "^0.3.28", default-features = false, features = ["async-await"]}
 hex = { version = "^0.4.3", default-features = false }
-hkdf = "0.12.4"
-http = "1.3.1"
-jwt-simple = { version = "0.12.12", default-features = false, features = [
-    "pure-rust",
-] }
 lettre = { version = "^0.11.10", default-features = false, features = [
     "builder",
     "pool",
@@ -52,8 +43,6 @@ pasetors = { version = "^0.6.8", features = [
     "v4",
 ], default-features = false }
 once_cell = { version = "^1.19.0", default-features = false }
-p256 = { version = "0.13.2", features = ["ecdh"] }
-reqwest = { version = "0.12.28", default-features = false, features = ["rustls-tls-webpki-roots"]}
 sea-orm = { version = "^2.0.0", default-features = false, features = [
     "sqlx-postgres",
     "runtime-tokio-rustls",
@@ -66,9 +55,7 @@ sea-orm = { version = "^2.0.0", default-features = false, features = [
 ] }
 serde = "^1.0.219"
 serde_json = "^1.0.120"
-sha2 = "0.10.9"
 thiserror = "2.0.17"
-tokio-cron-scheduler = { version = "0.15.1", default-features = false }
 tracing = "^0.1.40"
 tracing-appender = "^0.2.3"
 tracing-subscriber = { version = "^0.3.18", features = [

@@ -1,12 +1,10 @@
 mod journal;
 mod my_way;
-mod notification;
 pub mod tag_adapter;
 pub mod user_adapter;
 
 pub use journal::*;
 pub use my_way::*;
-pub use notification::*;
 
 use core::fmt;
 pub use sea_orm::Order;

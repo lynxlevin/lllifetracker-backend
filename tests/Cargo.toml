@@ -14,7 +14,6 @@ common = { path = "../src/common", features = [
     "redis",
     "settings",
 ] }
-db_adapters = { path = "../src/db_adapters" }
 entities = { path = "../src/entities" }
 server = { path = "../src/server" }
 use_cases = { path = "../src/use_cases" }
@@ -23,11 +22,8 @@ actix-http.workspace = true
 actix-session.workspace = true
 actix-web.workspace = true
 chrono.workspace = true
-dotenvy.workspace = true
 env_logger.workspace = true
 sea-orm.workspace = true
-serde.workspace = true
-serde_json.workspace = true
 tracing.workspace = true
 urlencoding.workspace = true
 uuid.workspace = true

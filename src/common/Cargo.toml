@@ -11,20 +11,17 @@ path = "lib.rs"
 entities = { path = "../entities", optional = true }
 
 actix-web = { workspace = true, optional = true }
-aes-gcm = { workspace = true, optional = true }
-base64 = { workspace = true, optional = true }
 chrono = { workspace = true, optional = true }
 deadpool-redis = { workspace = true, optional = true }
 dotenvy.workspace = true
 serde = { workspace = true, optional = true }
 sea-orm = { workspace = true, optional = true }
-thiserror = { workspace = true, optional = true }
 tracing = { workspace = true, optional = true }
 uuid = { workspace = true, optional = true }
 
 [features]
-db = ["dep:sea-orm", "settings", "dep:aes-gcm", "dep:base64"]
+db = ["dep:sea-orm", "settings"]
 errors = ["dep:actix-web", "dep:serde", "dep:tracing"]
-factory = ["dep:entities", "dep:sea-orm", "dep:uuid", "dep:chrono", "db", "settings"]
+factory = ["dep:entities", "dep:sea-orm", "dep:uuid", "dep:chrono", "db"]
 redis = ["dep:deadpool-redis", "settings"]
 settings = ["dep:serde"]
